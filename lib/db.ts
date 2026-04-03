@@ -34,7 +34,7 @@ pool.on('connect', () => {
   }
 });
 
-export async function query(text: string, params?: (string | number | boolean | null)[]): Promise<QueryResult> {
+export async function query(text: string, params?: (string | number | boolean | null | string[])[]): Promise<QueryResult> {
   const start = Date.now();
   try {
     const result = await pool.query(text, params);

@@ -28,7 +28,7 @@ async function handlePost(req: AuthenticatedRequest) {
 
     const result = await query(
       'INSERT INTO faqs (question, answer, order_position, created_by) VALUES ($1, $2, $3, $4) RETURNING id, question, answer, order_position, is_active, created_at',
-      [question.trim(), answer.trim(), nextPos, req.user?.userId]
+      [question.trim(), answer.trim(), nextPos, req.user?.userId ?? null]
     );
 
     return successResponse({ faq: result.rows[0] }, 201);

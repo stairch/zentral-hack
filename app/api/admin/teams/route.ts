@@ -53,7 +53,7 @@ async function handlePost(req: AuthenticatedRequest) {
 
     const result = await query(
       'INSERT INTO teams (name, description, category_id, created_by) VALUES ($1, $2, $3, $4) RETURNING id, name, description, category_id, created_at',
-      [name, description || null, categoryId, req.user?.userId]
+      [name, description || null, categoryId, req.user?.userId ?? null]
     );
 
     return successResponse({

@@ -62,16 +62,16 @@ async function handler(req: AuthenticatedRequest) {
           'SELECT DISTINCT users.email FROM users JOIN registrations ON users.id = registrations.user_id WHERE registrations.category_id = $1',
           [categoryId]
         );
-        recipients = result.rows.map(r => r.email);
+        recipients = result.rows.map((r: { email: string }) => r.email);
       } else if (campaignType === 'newsletter_subscribers') {
         const subscribersResult = await query('SELECT email FROM newsletter_subscribers WHERE subscribed = true');
-        recipients = subscribersResult.rows.map(r => r.email);
+        recipients = subscribersResult.rows.map((r: { email: string }) => r.email);
       } else if (campaignType === 'central_updates') {
         const registeredResult = await query('SELECT DISTINCT email FROM users WHERE role = $1', ['user']);
         const subscribersResult = await query('SELECT email FROM newsletter_subscribers WHERE subscribed = true');
         recipients = [
-          ...registeredResult.rows.map(r => r.email),
-          ...subscribersResult.rows.map(r => r.email),
+          ...registeredResult.rows.map((r: { email: string }) => r.email),
+          ...subscribersResult.rows.map((r: { email: string }) => r.email),
         ];
         recipients = [...new Set(recipients)];
       }
@@ -82,7 +82,7 @@ async function handler(req: AuthenticatedRequest) {
 
       const result = await query(
         'INSERT INTO email_campaigns (subject, content, html_content, campaign_type, category_id, created_by, sent_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id',
-        [subject, content, htmlContent, campaignType, categoryId || null, req.user?.userId]
+        [subject, content, htmlContent, campaignType, categoryId || null, req.user?.userId ?? null]
       );
 
       await sendCampaignEmail(recipients, subject, htmlContent);

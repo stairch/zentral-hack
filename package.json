@@ -46,6 +46,7 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^22",
     "@types/nodemailer": "^6.4.14",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8.5",

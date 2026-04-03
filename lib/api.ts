@@ -4,6 +4,7 @@ export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
+  errors?: Record<string, string>;
   message?: string;
 }
 
@@ -27,8 +28,15 @@ export function errorResponse(error: string, status = 400): NextResponse<ApiResp
   );
 }
 
-export function validationError(message: string): NextResponse<ApiResponse<null>> {
-  return errorResponse(message, 400);
+export function validationError(message: string, errors?: Record<string, string>): NextResponse<ApiResponse<null>> {
+  return NextResponse.json(
+    {
+      success: false,
+      error: message,
+      ...(errors && { errors }),
+    },
+    { status: 400 }
+  );
 }
 
 export function unauthorizedError(message = 'Unauthorized'): NextResponse<ApiResponse<null>> {

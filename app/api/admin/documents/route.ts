@@ -93,7 +93,7 @@ async function handlePost(req: AuthenticatedRequest) {
     // Save to database
     const result = await query(
       'INSERT INTO category_documents (name, file_path, file_size, category_id, uploaded_by) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, file_path, file_size, created_at',
-      [docName, relativePath, file.size, categoryId, req.user?.userId]
+      [docName, relativePath, file.size, categoryId, req.user?.userId ?? null]
     );
 
     return successResponse({ document: result.rows[0] }, 201);

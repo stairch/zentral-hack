@@ -263,7 +263,6 @@ export function SponsorshipModal({ isOpen, onClose }: SponsorshipModalProps) {
                             onChange={handleChange}
                             required
                             placeholder="Dein Unternehmen"
-                            size="sm"
                           />
                         </div>
                         <div className="space-y-2">
@@ -277,7 +276,6 @@ export function SponsorshipModal({ isOpen, onClose }: SponsorshipModalProps) {
                             onChange={handleChange}
                             required
                             placeholder="Dein Name"
-                            size="sm"
                           />
                         </div>
                       </div>
@@ -295,7 +293,6 @@ export function SponsorshipModal({ isOpen, onClose }: SponsorshipModalProps) {
                             onChange={handleChange}
                             required
                             placeholder="deine@email.ch"
-                            size="sm"
                           />
                         </div>
                         <div className="space-y-2">
@@ -309,7 +306,6 @@ export function SponsorshipModal({ isOpen, onClose }: SponsorshipModalProps) {
                             value={formData.phone}
                             onChange={handleChange}
                             placeholder="+41 XX XXX XX XX"
-                            size="sm"
                           />
                         </div>
                       </div>

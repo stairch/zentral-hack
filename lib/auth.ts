@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 
@@ -7,8 +7,8 @@ if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required');
 }
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRATION = process.env.JWT_EXPIRATION || '24h';
+const JWT_SECRET = process.env.JWT_SECRET as string;
+const JWT_EXPIRATION = (process.env.JWT_EXPIRATION || '24h') as SignOptions['expiresIn'];
 
 export interface JWTPayload {
   userId: string;
@@ -26,7 +26,7 @@ export function generateJWT(payload: JWTPayload): string {
 
 export function generateTwoFAToken(): string {
   return jwt.sign({ type: '2fa' }, JWT_SECRET, {
-    expiresIn: process.env.TWO_FA_EXPIRATION || '15m',
+    expiresIn: (process.env.TWO_FA_EXPIRATION || '15m') as SignOptions['expiresIn'],
   });
 }
 
