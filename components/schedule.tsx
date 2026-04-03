@@ -53,7 +53,14 @@ function TimelineItem({
             <item.icon className="w-5 h-5 text-violet" />
           </div>
           <div>
-            <span className="text-yellow font-bold text-lg">{item.time}</span>
+            <span
+              className="text-yellow font-bold text-lg"
+              style={{
+                textShadow: "0 1px 2px rgba(0, 0, 0, 1)",
+              }}
+            >
+              {item.time}
+            </span>
             <h4 className="font-display font-bold text-foreground">{item.event}</h4>
           </div>
         </div>
@@ -69,8 +76,6 @@ function TimelineItem({
           transition={{ duration: 0.3, delay: index * 0.1 + 0.2 }}
         />
       </div>
-
-      {/* Spacer for alternating layout */}
       <div className="hidden md:block flex-1" />
     </motion.div>
   )
@@ -109,8 +114,6 @@ export function Schedule() {
             Ein intensives Wochenende voller Code, Kreativität und Zusammenarbeit.
           </p>
         </motion.div>
-
-        {/* Day Selector */}
         <div className="flex justify-center gap-4 mb-12">
           <motion.button
             onClick={() => setActiveDay(1)}

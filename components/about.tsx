@@ -107,7 +107,7 @@ export function About() {
           transition={{ duration: 0.6, delay: 0.3 }}
         >
           {[
-            { value: 24, suffix: "h+", label: "Hacken" },
+            { value: 24, suffix: "h", label: "Hacken" },
             { value: 4, suffix: "", label: "Kategorien" },
             { value: 200, suffix: "+", label: "Teilnehmer" },
             { value: 1, suffix: "", label: "Ziel" },
