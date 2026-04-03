@@ -2,63 +2,21 @@
 
 import { useRef, useEffect, useState } from "react"
 import { motion, useInView } from "framer-motion"
-import { Sparkles, Brain, GraduationCap, Mountain } from "lucide-react"
-
-// Static styling/metadata per category slug
-const categoryMeta: Record<string, {
-  icon: typeof Sparkles;
-  color: string;
-  textColor: string;
-  partner: string;
-  fallbackDescription: string;
-}> = {
-  "young-talents": {
-    icon: Sparkles,
-    color: "bg-yellow",
-    textColor: "text-foreground",
-    partner: "ICT Berufsbildung Zentralschweiz & UMB AG",
-    fallbackDescription: "Für den Nachwuchs der ICT-Branche. Zeige dein Können und starte deine Karriere.",
-  },
-  "ai-agentic": {
-    icon: Brain,
-    color: "bg-violet",
-    textColor: "text-white",
-    partner: "ICT Berufsbildung Zentralschweiz, Digital & AI Community & getAbstract",
-    fallbackDescription: "Entwickle innovative KI-Lösungen und intelligente Agenten der Zukunft.",
-  },
-  "campus-challenge": {
-    icon: GraduationCap,
-    color: "bg-light-violet",
-    textColor: "text-violet",
-    partner: "STAIR",
-    fallbackDescription: "Die Herausforderung für Studierende. Kreativität trifft auf akademische Exzellenz.",
-  },
-  "regional-impact": {
-    icon: Mountain,
-    color: "bg-violet",
-    textColor: "text-white",
-    partner: "SchwyzNext",
-    fallbackDescription: "Löse echte Probleme der Zentralschweiz. Dein Code für die Region.",
-  },
-}
-
-// Display order for categories
-const slugOrder = ["young-talents", "ai-agentic", "campus-challenge", "regional-impact"]
-
-interface DBCategory {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-}
+import {
+  categoryDisplayOrder,
+  getCategoryPresentation,
+  type CategoryRecord,
+} from "@/lib/category-config"
 
 interface DisplayCategory {
+  id?: string;
+  slug: string;
   title: string;
   description: string;
-  icon: typeof Sparkles;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
   textColor: string;
-  partner: string;
+  partnerName: string;
 }
 
 function CategoryCard({
@@ -78,7 +36,8 @@ function CategoryCard({
       animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
       transition={{ duration: 0.6, delay: index * 0.15 }}
       whileHover={{ y: -10, scale: 1.02 }}
-      className={`${category.color} ${category.textColor} rounded-2xl p-8 relative overflow-hidden group cursor-pointer`}
+      className="rounded-2xl p-8 relative overflow-hidden group cursor-pointer"
+      style={{ backgroundColor: category.color, color: category.textColor }}
     >
       {/* Animated background pattern */}
       <motion.div
@@ -110,7 +69,7 @@ function CategoryCard({
       <div className="relative z-10">
         <h3 className="font-display text-2xl font-bold mb-3">{category.title}</h3>
         <p className="opacity-90 mb-4 leading-relaxed">{category.description}</p>
-        <p className="text-sm opacity-70">Partner: {category.partner}</p>
+        <p className="text-sm opacity-70">Partner: {category.partnerName}</p>
       </div>
 
       {/* Hover effect */}
@@ -126,43 +85,27 @@ export function Categories() {
   const headerRef = useRef(null)
   const isHeaderInView = useInView(headerRef, { once: true })
   const [displayCategories, setDisplayCategories] = useState<DisplayCategory[]>(() =>
-    // Start with fallback data so it renders immediately
-    slugOrder.map((slug) => {
-      const meta = categoryMeta[slug]!;
-      return {
-        title: slug.replace(/-/g, ' ').toUpperCase(),
-        description: meta.fallbackDescription,
-        icon: meta.icon,
-        color: meta.color,
-        textColor: meta.textColor,
-        partner: meta.partner,
-      };
-    })
+    categoryDisplayOrder.map((slug) => getCategoryPresentation({ slug }))
   );
 
-  // Fetch descriptions from DB (admin-editable)
+  // Fetch category content from DB (admin-editable)
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await fetch('/api/categories');
         if (!res.ok) return;
         const data = await res.json();
-        const dbCategories: DBCategory[] = data.data?.categories || [];
+        const dbCategories: CategoryRecord[] = data.data?.categories || [];
 
         if (dbCategories.length === 0) return;
 
-        // Merge DB descriptions with static styling
-        const merged = slugOrder.map((slug) => {
-          const meta = categoryMeta[slug]!;
-          const dbCat = dbCategories.find((c) => c.slug === slug);
-          return {
-            title: dbCat?.name || slug.replace(/-/g, ' ').toUpperCase(),
-            description: dbCat?.description || meta.fallbackDescription,
-            icon: meta.icon,
-            color: meta.color,
-            textColor: meta.textColor,
-            partner: meta.partner,
-          };
+        const orderedSlugs = Array.from(
+          new Set([...categoryDisplayOrder, ...dbCategories.map((category) => category.slug)])
+        );
+
+        const merged = orderedSlugs.map((slug) => {
+          const dbCategory = dbCategories.find((category) => category.slug === slug);
+          return getCategoryPresentation(dbCategory || { slug });
         });
 
         setDisplayCategories(merged);
@@ -203,7 +146,7 @@ export function Categories() {
         {/* Categories Grid */}
         <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
           {displayCategories.map((category, index) => (
-            <CategoryCard key={category.title} category={category} index={index} />
+            <CategoryCard key={category.slug} category={category} index={index} />
           ))}
         </div>
       </div>

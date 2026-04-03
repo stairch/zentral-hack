@@ -7,6 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -14,31 +21,46 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Sparkles, Bot, GraduationCap, MapPin, Edit2, Loader2, Check } from 'lucide-react';
+import { Edit2, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  categoryIconMap,
+  categoryIconOptions,
+  getCategoryPresentation,
+  hexToRgba,
+  normalizeHexColor,
+} from '@/lib/category-config';
 
 interface Category {
   id: string;
   name: string;
   slug: string;
   description: string;
+  partner_name?: string | null;
+  color?: string | null;
+  icon?: string | null;
+}
+
+interface EditFormState {
+  name: string;
+  description: string;
+  partnerName: string;
   color: string;
   icon: string;
 }
-
-const iconMap: Record<string, React.ReactNode> = {
-  sparkles: <Sparkles className="w-6 h-6" />,
-  bot: <Bot className="w-6 h-6" />,
-  'graduation-cap': <GraduationCap className="w-6 h-6" />,
-  'map-pin': <MapPin className="w-6 h-6" />,
-};
 
 export function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [editForm, setEditForm] = useState({ description: '' });
+  const [editForm, setEditForm] = useState<EditFormState>({
+    name: '',
+    description: '',
+    partnerName: '',
+    color: '#530A5D',
+    icon: 'sparkles',
+  });
   const [saved, setSaved] = useState(false);
 
   // Fetch categories
@@ -46,7 +68,7 @@ export function AdminCategoriesPage() {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/categories', {
+        const res = await fetch('/api/admin/categories', {
           credentials: 'include',
         });
         if (res.ok) {
@@ -64,10 +86,14 @@ export function AdminCategoriesPage() {
     fetchCategories();
   }, []);
 
-  // Save category description
-  const handleSaveDescription = async (categoryId: string) => {
-    if (!editForm.description.trim()) {
-      toast.error('Beschreibung erforderlich');
+  const updateEditForm = (field: keyof EditFormState, value: string) => {
+    setEditForm((current) => ({ ...current, [field]: value }));
+  };
+
+  // Save category content
+  const handleSaveCategory = async (categoryId: string) => {
+    if (!editForm.name.trim()) {
+      toast.error('Titel erforderlich');
       return;
     }
 
@@ -79,7 +105,11 @@ export function AdminCategoriesPage() {
         credentials: 'include',
         body: JSON.stringify({
           id: categoryId,
+          name: editForm.name,
           description: editForm.description,
+          partnerName: editForm.partnerName,
+          color: normalizeHexColor(editForm.color),
+          icon: editForm.icon,
         }),
       });
 
@@ -89,11 +119,20 @@ export function AdminCategoriesPage() {
       }
 
       setSaved(true);
-      toast.success('Beschreibung aktualisiert');
+      toast.success('Kategorie aktualisiert');
       
       // Update local state
-      setCategories(categories.map(c => 
-        c.id === categoryId ? { ...c, description: editForm.description } : c
+      setCategories(categories.map((category) =>
+        category.id === categoryId
+          ? {
+              ...category,
+              name: editForm.name,
+              description: editForm.description,
+              partner_name: editForm.partnerName,
+              color: normalizeHexColor(editForm.color),
+              icon: editForm.icon,
+            }
+          : category
       ));
 
       setTimeout(() => {
@@ -131,25 +170,42 @@ export function AdminCategoriesPage() {
         {categories?.length > 0 ? (
           categories.map((category) => (
             <Card key={category.id} className="overflow-hidden">
-              <div className="h-2" style={{ backgroundColor: category.color }} />
+              <div className="h-2" style={{ backgroundColor: getCategoryPresentation(category).color }} />
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
+                    {(() => {
+                      const presentation = getCategoryPresentation(category);
+                      const Icon = presentation.icon;
+
+                      return (
                     <div
                       className="w-12 h-12 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: category.color + '20', color: category.color }}
+                      style={{
+                        backgroundColor: hexToRgba(presentation.color, 0.14),
+                        color: presentation.color,
+                      }}
                     >
-                      {iconMap[category.icon] || <Sparkles className="w-6 h-6" />}
+                          <Icon className="w-6 h-6" />
                     </div>
+                      );
+                    })()}
                     <div>
-                      <CardTitle>{category.name}</CardTitle>
+                      <CardTitle>{getCategoryPresentation(category).title}</CardTitle>
                       <CardDescription>{category.slug}</CardDescription>
                     </div>
                   </div>
                   <Dialog open={editingId === category.id} onOpenChange={(open) => {
                     if (open) {
+                      const presentation = getCategoryPresentation(category);
                       setEditingId(category.id);
-                      setEditForm({ description: category.description });
+                      setEditForm({
+                        name: category.name,
+                        description: category.description || '',
+                        partnerName: category.partner_name || '',
+                        color: presentation.color,
+                        icon: presentation.iconName,
+                      });
                     } else {
                       setEditingId(null);
                     }
@@ -161,9 +217,9 @@ export function AdminCategoriesPage() {
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Beschreibung bearbeiten</DialogTitle>
+                        <DialogTitle>Kategorie bearbeiten</DialogTitle>
                         <DialogDescription>
-                          Aktualisiere die Beschreibung für &quot;{category.name}&quot;
+                          Aktualisiere Titel, Partner, Icon, Farbe und Beschreibung für &quot;{category.name}&quot;
                         </DialogDescription>
                       </DialogHeader>
 
@@ -174,18 +230,116 @@ export function AdminCategoriesPage() {
                         </div>
                       ) : (
                         <div className="space-y-4">
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div>
+                              <Label htmlFor="name">Titel</Label>
+                              <Input
+                                id="name"
+                                value={editForm.name}
+                                onChange={(e) => updateEditForm('name', e.target.value)}
+                                placeholder="Name der Kategorie"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="partnerName">Partner</Label>
+                              <Input
+                                id="partnerName"
+                                value={editForm.partnerName}
+                                onChange={(e) => updateEditForm('partnerName', e.target.value)}
+                                placeholder="Partnername"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_160px]">
+                            <div>
+                              <Label htmlFor="icon">Icon</Label>
+                              <Select value={editForm.icon} onValueChange={(value) => updateEditForm('icon', value)}>
+                                <SelectTrigger id="icon">
+                                  <SelectValue placeholder="Icon wählen" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {categoryIconOptions.map((option) => {
+                                    const Icon = categoryIconMap[option.value];
+
+                                    return (
+                                      <SelectItem key={option.value} value={option.value}>
+                                        <span className="flex items-center gap-2">
+                                          <Icon className="w-4 h-4" />
+                                          <span>{option.label}</span>
+                                        </span>
+                                      </SelectItem>
+                                    );
+                                  })}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label htmlFor="color">Farbe</Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  id="color"
+                                  type="color"
+                                  value={normalizeHexColor(editForm.color)}
+                                  onChange={(e) => updateEditForm('color', e.target.value)}
+                                  className="h-10 w-14 p-1"
+                                />
+                                <Input
+                                  value={editForm.color}
+                                  onChange={(e) => updateEditForm('color', e.target.value)}
+                                  placeholder="#530A5D"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
                           <div>
                             <Label htmlFor="description">Beschreibung</Label>
                             <Textarea
                               id="description"
                               value={editForm.description}
-                              onChange={(e) => setEditForm({ description: e.target.value })}
+                              onChange={(e) => updateEditForm('description', e.target.value)}
                               placeholder="Beschreibe diese Kategorie und ihre Herausforderungen..."
                               rows={6}
                             />
                           </div>
+
+                          <div
+                            className="rounded-xl border p-4"
+                            style={{
+                              backgroundColor: normalizeHexColor(editForm.color),
+                              color: getCategoryPresentation({ slug: category.slug, ...editForm, partner_name: editForm.partnerName }).textColor,
+                            }}
+                          >
+                            {(() => {
+                              const preview = getCategoryPresentation({
+                                slug: category.slug,
+                                name: editForm.name,
+                                description: editForm.description,
+                                partner_name: editForm.partnerName,
+                                color: editForm.color,
+                                icon: editForm.icon,
+                              });
+                              const Icon = preview.icon;
+
+                              return (
+                                <div className="space-y-3">
+                                  <div className="flex items-center gap-3">
+                                    <Icon className="w-5 h-5" />
+                                    <p className="font-semibold">Vorschau</p>
+                                  </div>
+                                  <div>
+                                    <p className="font-display text-xl font-bold">{preview.title}</p>
+                                    <p className="mt-2 text-sm opacity-90">{preview.description}</p>
+                                    <p className="mt-3 text-xs opacity-75">Partner: {preview.partnerName}</p>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+
                           <Button
-                            onClick={() => handleSaveDescription(category.id)}
+                            onClick={() => handleSaveCategory(category.id)}
                             disabled={saving}
                             className="w-full bg-violet hover:bg-violet/90"
                           >
@@ -205,6 +359,7 @@ export function AdminCategoriesPage() {
                 </div>
               </CardHeader>
               <CardContent>
+                <p className="text-sm font-medium mb-2">Partner: {getCategoryPresentation(category).partnerName}</p>
                 <p className="text-muted-foreground text-sm line-clamp-3">{category.description}</p>
               </CardContent>
             </Card>

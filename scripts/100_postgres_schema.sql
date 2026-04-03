@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS categories (
   name TEXT NOT NULL UNIQUE,
   slug TEXT NOT NULL UNIQUE,
   description TEXT,
+  partner_name TEXT,
+  color VARCHAR(7),
+  icon VARCHAR(50),
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
