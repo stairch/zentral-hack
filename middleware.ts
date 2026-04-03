@@ -17,10 +17,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (pathname === '/auth/login' && token) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
   // Security headers
   const response = NextResponse.next();
   response.headers.set('X-Content-Type-Options', 'nosniff');

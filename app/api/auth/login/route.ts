@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();
-    
+
     // Validate input
     const validation = validateRequest(LoginSchema, body);
     if (!validation.success) {
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const { email, password } = validation.data;
 
     const result = await query(
-      'SELECT id, email, password_hash, role, is_active FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, role, is_active, email_verified FROM users WHERE email = $1',
       [email.toLowerCase()]
     );
 
@@ -34,6 +34,11 @@ export async function POST(request: NextRequest) {
     }
 
     const user = result.rows[0];
+
+    if (!user.email_verified) {
+      return validationError("E-Mail not verified")
+    }
+
     if (!user.is_active) {
       return validationError('Account disabled');
     }
@@ -46,7 +51,7 @@ export async function POST(request: NextRequest) {
     // Generate 2FA code for ALL users
     const code = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-    
+
     // Save 2FA code to database
     await query(
       'INSERT INTO two_fa_tokens (user_id, token, code, expires_at) VALUES ($1, $2, $3, $4)',

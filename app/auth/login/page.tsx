@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -13,7 +13,7 @@ import { toast } from "sonner"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login } = useAuth()
+  const { login, user, isLoading } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -21,34 +21,29 @@ export default function LoginPage() {
   const [show2FA, setShow2FA] = useState(false)
   const [code2FA, setCode2FA] = useState("")
 
+  useEffect(() => {
+    if (isLoading) return;
+    if (user) {
+      console.log('[Login] User found, redirecting to dashboard');
+      router.push('/dashboard');
+    }
+  }, [user, isLoading, router]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Login fehlgeschlagen')
-      }
-      
-      // 2FA is required for all users
-      if (data.data?.requiresTwoFa) {
-        setShow2FA(true)
-        toast.success('2FA Code wurde an deine E-Mail gesendet')
-        return
+      // Try to sign up first
+      try {
+        await login(email, password);
+      } catch (signupError) {
+        throw new Error(signupError instanceof Error ? signupError.message : 'Registrierung fehlgeschlagen');
       }
 
-      // Should not reach here - 2FA is always required
-      throw new Error('Unexpected login state')
+      setShow2FA(true)
+      toast.success('2FA Code wurde an deine E-Mail gesendet')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login fehlgeschlagen'
       setError(message)
@@ -82,12 +77,12 @@ export default function LoginPage() {
 
       const data = await res.json()
       console.log('[Login] 2FA response:', data);
-      
+
       toast.success('2FA erfolgreich verifiziert')
-      
+
       // Wait a moment to ensure cookie is set, then navigate to dashboard
       // The httpOnly cookie is now set by the server and will be sent automatically
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 300));
       router.push('/dashboard')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Fehler bei der Verifizierung'

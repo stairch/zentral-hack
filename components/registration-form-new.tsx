@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowRight, ArrowLeft, Check, Loader2, Home } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, Loader2, Home, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Category {
@@ -28,6 +28,8 @@ export function RegistrationForm() {
   const [success, setSuccess] = useState(false);
   const { signup } = useAuth();
   const router = useRouter();
+  const [show2FA, setShow2FA] = useState(false)
+  const [code2FA, setCode2FA] = useState("")
 
   const [formData, setFormData] = useState({
     // Persönliche Infos
@@ -36,16 +38,16 @@ export function RegistrationForm() {
     email: '',
     password: '',
     confirmPassword: '',
-    
+
     // Universitäts-Infos
     university: '',
     studyProgram: '',
     semester: '',
-    
+
     // Gesundheit
     allergies: '',
     intolerances: '',
-    
+
     // Kategorie
     categoryId: '',
     newsletter: true,
@@ -139,18 +141,46 @@ export function RegistrationForm() {
 
     try {
       // Try to sign up first
-      let isNewUser = true;
       try {
         await signup(formData.email, formData.password, formData.firstName, formData.lastName);
       } catch (signupError) {
-        const msg = signupError instanceof Error ? signupError.message : '';
-        if (msg.includes('bereits registriert') || msg.includes('already')) {
-          // User already exists — still proceed with registration
-          isNewUser = false;
-        } else {
-          throw signupError;
-        }
+        throw new Error(signupError instanceof Error ? signupError.message : 'Registrierung fehlgeschlagen');
       }
+
+      // Verification is required for all users
+      setShow2FA(true)
+      toast.success('2FA Code wurde an deine E-Mail gesendet')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Registrierung fehlgeschlagen';
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify2FA = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+
+    try {
+      if (!code2FA.trim()) {
+        throw new Error('Bitte geben Sie den 2FA Code ein')
+      }
+
+      const res = await fetch('/api/auth/2fa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: formData.email, code: code2FA.toUpperCase() }),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.data?.error || errorData.error || '2FA Verifizierung fehlgeschlagen')
+      }
+
+      const data = await res.json()
+      console.log('[Login] 2FA response:', data);
 
       // Complete registration with category and details
       const registerRes = await fetch('/api/hackathon/register', {
@@ -178,16 +208,18 @@ export function RegistrationForm() {
 
       setSuccess(true);
       toast.success('Registrierung erfolgreich! Bestätigungsemail versendet.');
-      setTimeout(() => {
-        router.push(isNewUser ? '/dashboard' : '/auth/login');
-      }, 2000);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Registrierung fehlgeschlagen';
-      toast.error(message);
+
+      // Wait a moment to ensure cookie is set, then navigate to dashboard
+      // The httpOnly cookie is now set by the server and will be sent automatically
+      await new Promise(resolve => setTimeout(resolve, 300));
+      router.push('/dashboard')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Fehler bei der Verifizierung'
+      toast.error(message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   if (success) {
     return (
@@ -207,246 +239,314 @@ export function RegistrationForm() {
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-2xl space-y-6"
     >
-      {/* Progress */}
-      <div className="flex justify-between mb-8">
-        {[1, 2, 3, 4].map((s) => (
-          <div key={s} className={`h-2 flex-1 rounded-full mx-1 ${s <= step ? 'bg-[#530A5D]' : 'bg-muted'}`} />
-        ))}
-      </div>
+      {!show2FA ? (
+        <>
+          {/* Progress */}
+          <div className="flex justify-between mb-8">
+            {[1, 2, 3, 4].map((s) => (
+              <div key={s} className={`h-2 flex-1 rounded-full mx-1 ${s <= step ? 'bg-[#530A5D]' : 'bg-muted'}`} />
+            ))}
+          </div>
 
-      <AnimatePresence mode="wait">
-        {/* Step 1: Persönliche Infos */}
-        {step === 1 && (
-          <motion.div
-            key="step1"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-4"
-          >
-            <h2 className="text-2xl font-bold">Persönliche Informationen</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">Vorname *</Label>
-                <Input
-                  id="firstName"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  placeholder="John"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Nachname *</Label>
-                <Input
-                  id="lastName"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  placeholder="Doe"
-                />
-              </div>
-            </div>
-          </motion.div>
-        )}
+          <AnimatePresence mode="wait">
+            {/* Step 1: Persönliche Infos */}
+            {step === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-4"
+              >
+                <h2 className="text-2xl font-bold">Persönliche Informationen</h2>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">Vorname *</Label>
+                    <Input
+                      id="firstName"
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange('firstName', e.target.value)}
+                      placeholder="John"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Nachname *</Label>
+                    <Input
+                      id="lastName"
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange('lastName', e.target.value)}
+                      placeholder="Doe"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
-        {/* Step 2: Anmeldedaten */}
-        {step === 2 && (
-          <motion.div
-            key="step2"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-4"
-          >
-            <h2 className="text-2xl font-bold">Anmeldedaten</h2>
-            <div className="space-y-2">
-              <Label htmlFor="email">E-Mail *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="deine@email.ch"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Passwort *</Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
-                placeholder="••••••••"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Passwort bestätigen *</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                placeholder="••••••••"
-              />
-            </div>
-          </motion.div>
-        )}
+            {/* Step 2: Anmeldedaten */}
+            {step === 2 && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-4"
+              >
+                <h2 className="text-2xl font-bold">Anmeldedaten</h2>
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-Mail *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    placeholder="deine@email.ch"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Passwort *</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Passwort bestätigen *</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                    placeholder="••••••••"
+                  />
+                </div>
+              </motion.div>
+            )}
 
-        {/* Step 3: Universitäts-Infos */}
-        {step === 3 && (
-          <motion.div
-            key="step3"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-4"
-          >
-            <h2 className="text-2xl font-bold">Universitäts-Informationen</h2>
-            
-            <div className="space-y-2">
-              <Label htmlFor="university">Universität/Schule *</Label>
-              <Input
-                id="university"
-                value={formData.university}
-                onChange={(e) => handleInputChange('university', e.target.value)}
-                placeholder="z.B. HSLU, ETH Zürich, etc."
-              />
+            {/* Step 3: Universitäts-Infos */}
+            {step === 3 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-4"
+              >
+                <h2 className="text-2xl font-bold">Universitäts-Informationen</h2>
+
+                <div className="space-y-2">
+                  <Label htmlFor="university">Universität/Schule *</Label>
+                  <Input
+                    id="university"
+                    value={formData.university}
+                    onChange={(e) => handleInputChange('university', e.target.value)}
+                    placeholder="z.B. HSLU, ETH Zürich, etc."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="studyProgram">Studiengang *</Label>
+                  <Input
+                    id="studyProgram"
+                    value={formData.studyProgram}
+                    onChange={(e) => handleInputChange('studyProgram', e.target.value)}
+                    placeholder="z.B. Informatik, Wirtschaft, etc."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="semester">Semester *</Label>
+                  <Input
+                    id="semester"
+                    type="number"
+                    value={formData.semester}
+                    onChange={(e) => handleInputChange('semester', e.target.value)}
+                    placeholder="z.B. 3"
+                    min="1"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="allergies">Allergien (optional)</Label>
+                  <Textarea
+                    id="allergies"
+                    value={formData.allergies}
+                    onChange={(e) => handleInputChange('allergies', e.target.value)}
+                    placeholder="z.B. Erdnussallergie, Shellfish..."
+                    rows={2}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="intolerances">Unverträglichkeiten (optional)</Label>
+                  <Textarea
+                    id="intolerances"
+                    value={formData.intolerances}
+                    onChange={(e) => handleInputChange('intolerances', e.target.value)}
+                    placeholder="z.B. Laktose, Gluten..."
+                    rows={2}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 4: Kategorie & Einstellungen */}
+            {step === 4 && (
+              <motion.div
+                key="step4"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-4"
+              >
+                <h2 className="text-2xl font-bold">Kategorie & Einstellungen</h2>
+
+                <div className="space-y-2">
+                  <Label htmlFor="category">Wähle eine Kategorie *</Label>
+                  <Select value={formData.categoryId} onValueChange={(value) => handleInputChange('categoryId', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Kategorie wählen..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          <div>
+                            <div className="font-semibold">{cat.name}</div>
+                            <div className="text-xs text-muted-foreground">{cat.description}</div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center space-x-2 mt-4 p-3 bg-muted rounded">
+                  <Checkbox
+                    id="newsletter"
+                    checked={formData.newsletter}
+                    onCheckedChange={(checked) => handleInputChange('newsletter', checked === true)}
+                  />
+                  <Label htmlFor="newsletter" className="font-normal cursor-pointer">
+                    Ich möchte Hackathon-Updates und Kategorie-News per E-Mail erhalten
+                  </Label>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Buttons & Links */}
+          <div className="flex gap-2 justify-between mt-8 items-center">
+            <div className="flex gap-2">
+              {step === 1 ? (
+                <Link href="/">
+                  <Button variant="outline">
+                    <Home className="w-4 h-4 mr-2" />
+                    Startseite
+                  </Button>
+                </Link>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(Math.max(1, step - 1))}
+                  disabled={step === 1 || loading}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Zurück
+                </Button>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="studyProgram">Studiengang *</Label>
-              <Input
-                id="studyProgram"
-                value={formData.studyProgram}
-                onChange={(e) => handleInputChange('studyProgram', e.target.value)}
-                placeholder="z.B. Informatik, Wirtschaft, etc."
-              />
+            <div className="flex gap-2 items-center">
+              <p className="text-sm text-muted-foreground">
+                Du hast schon ein Konto?{' '}
+                <Link href="/auth/login" className="text-violet hover:underline font-semibold">
+                  Hier anmelden
+                </Link>
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="semester">Semester *</Label>
-              <Input
-                id="semester"
-                type="number"
-                value={formData.semester}
-                onChange={(e) => handleInputChange('semester', e.target.value)}
-                placeholder="z.B. 3"
-                min="1"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="allergies">Allergien (optional)</Label>
-              <Textarea
-                id="allergies"
-                value={formData.allergies}
-                onChange={(e) => handleInputChange('allergies', e.target.value)}
-                placeholder="z.B. Erdnussallergie, Shellfish..."
-                rows={2}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="intolerances">Unverträglichkeiten (optional)</Label>
-              <Textarea
-                id="intolerances"
-                value={formData.intolerances}
-                onChange={(e) => handleInputChange('intolerances', e.target.value)}
-                placeholder="z.B. Laktose, Gluten..."
-                rows={2}
-              />
-            </div>
-          </motion.div>
-        )}
-
-        {/* Step 4: Kategorie & Einstellungen */}
-        {step === 4 && (
-          <motion.div
-            key="step4"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-4"
-          >
-            <h2 className="text-2xl font-bold">Kategorie & Einstellungen</h2>
-            
-            <div className="space-y-2">
-              <Label htmlFor="category">Wähle eine Kategorie *</Label>
-              <Select value={formData.categoryId} onValueChange={(value) => handleInputChange('categoryId', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Kategorie wählen..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      <div>
-                        <div className="font-semibold">{cat.name}</div>
-                        <div className="text-xs text-muted-foreground">{cat.description}</div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center space-x-2 mt-4 p-3 bg-muted rounded">
-              <Checkbox
-                id="newsletter"
-                checked={formData.newsletter}
-                onCheckedChange={(checked) => handleInputChange('newsletter', checked === true)}
-              />
-              <Label htmlFor="newsletter" className="font-normal cursor-pointer">
-                Ich möchte Hackathon-Updates und Kategorie-News per E-Mail erhalten
-              </Label>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Buttons & Links */}
-      <div className="flex gap-2 justify-between mt-8 items-center">
-        <div className="flex gap-2">
-          {step === 1 ? (
-            <Link href="/">
-              <Button variant="outline">
-                <Home className="w-4 h-4 mr-2" />
-                Startseite
+            {step < 4 ? (
+              <Button onClick={() => validateStep() && setStep(step + 1)} disabled={loading} className="bg-[#530A5D] hover:bg-[#530A5D]/90">
+                Weiter <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
-            </Link>
-          ) : (
+            ) : (
+              <Button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="bg-[#530A5D] hover:bg-[#530A5D]/90"
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Registrieren'}
+              </Button>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <div className="bg-[#530A5D]/10 p-4 rounded-full">
+                <Lock className="w-8 h-8 text-[#530A5D]" />
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: "var(--font-display)" }}>
+              2-FAKTOR AUTH
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              Code wurde an <strong>{formData.email}</strong> gesendet
+            </p>
+          </div>
+
+          <form onSubmit={handleVerify2FA} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="code">Verifizierungscode</Label>
+              <Input
+                id="code"
+                type="text"
+                value={code2FA}
+                onChange={(e) => setCode2FA(e.target.value.toUpperCase())}
+                placeholder="z.B. AB12CD"
+                maxLength={6}
+                required
+                className="bg-background text-center text-xl font-mono"
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground text-center">
+                6 Zeichen aus E-Mail
+              </p>
+            </div>
+
             <Button
-              variant="outline"
-              onClick={() => setStep(Math.max(1, step - 1))}
-              disabled={step === 1 || loading}
+              type="submit"
+              disabled={loading || code2FA.length !== 6}
+              className="w-full bg-[#530A5D] hover:bg-[#530A5D]/90 text-white h-12"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <Lock className="w-5 h-5 mr-2" />
+                  Verifizieren
+                </>
+              )}
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setShow2FA(false)
+                setCode2FA("")
+              }}
+              className="w-full"
+            >
               Zurück
             </Button>
-          )}
-        </div>
-
-        <div className="flex gap-2 items-center">
-          <p className="text-sm text-muted-foreground">
-            Du hast schon ein Konto?{' '}
-            <Link href="/auth/login" className="text-violet hover:underline font-semibold">
-              Hier anmelden
-            </Link>
-          </p>
-        </div>
-
-        {step < 4 ? (
-          <Button onClick={() => validateStep() && setStep(step + 1)} disabled={loading} className="bg-[#530A5D] hover:bg-[#530A5D]/90">
-            Weiter <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        ) : (
-          <Button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="bg-[#530A5D] hover:bg-[#530A5D]/90"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Registrieren'}
-          </Button>
-        )}
-      </div>
-    </motion.div>
+          </form>
+        </>
+      )
+      }
+    </motion.div >
   );
 }
