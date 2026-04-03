@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -83,24 +82,21 @@ export function TeamsAdmin({ initialTeams, categories, registrations }: TeamsAdm
 
     setIsCreating(true)
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      const { data, error } = await supabase
-        .from("teams")
-        .insert({
+      const res = await fetch("/api/admin/teams", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           name: newTeam.name,
           description: newTeam.description || null,
-          category_id: newTeam.categoryId,
-          github_url: newTeam.githubUrl || null,
-          created_by: user?.id,
-        })
-        .select("*, category:categories(name, color)")
-        .single()
+          categoryId: newTeam.categoryId,
+        }),
+      })
 
-      if (error) throw error
+      if (!res.ok) throw new Error("Failed to create team")
+      const json = await res.json()
+      const category = categories.find((c) => c.id === newTeam.categoryId) || null
 
-      setTeams([{ ...data, members: [] }, ...teams])
+      setTeams([{ ...json.data.team, category, members: [] }, ...teams])
       setNewTeam({ name: "", description: "", categoryId: "", githubUrl: "" })
       setDialogOpen(false)
       router.refresh()

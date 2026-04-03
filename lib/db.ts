@@ -1,18 +1,27 @@
 import { Pool, QueryResult } from 'pg';
 
-// Configure connection pooling for production
-const pool = new Pool({
-  user: process.env.DATABASE_USER || 'postgres',
-  password: process.env.DATABASE_PASSWORD || 'postgres',
-  host: process.env.DATABASE_HOST || 'localhost',
-  port: parseInt(process.env.DATABASE_PORT || '5432'),
-  database: process.env.DATABASE_NAME || 'zentral_hack',
-  // Connection pool configuration
-  max: parseInt(process.env.DB_POOL_MAX || '20'), // Maximum connections
-  min: parseInt(process.env.DB_POOL_MIN || '2'), // Minimum connections  
-  idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
-  connectionTimeoutMillis: 2000, // Wait max 2 seconds for a connection
-});
+// Use DATABASE_URL when available (Neon / production), otherwise fall back to individual params
+const pool = new Pool(
+  process.env.DATABASE_URL
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false },
+        max: parseInt(process.env.DB_POOL_MAX || '10'),
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 5000,
+      }
+    : {
+        user: process.env.DATABASE_USER || 'postgres',
+        password: process.env.DATABASE_PASSWORD || 'postgres',
+        host: process.env.DATABASE_HOST || 'localhost',
+        port: parseInt(process.env.DATABASE_PORT || '5432'),
+        database: process.env.DATABASE_NAME || 'zentral_hack',
+        max: parseInt(process.env.DB_POOL_MAX || '20'),
+        min: parseInt(process.env.DB_POOL_MIN || '2'),
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+      }
+);
 
 pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);

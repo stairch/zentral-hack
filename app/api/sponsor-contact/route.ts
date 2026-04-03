@@ -1,10 +1,5 @@
-import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { query } from "@/lib/db"
 
 export async function POST(request: Request) {
   try {
@@ -18,29 +13,15 @@ export async function POST(request: Request) {
       )
     }
 
-    const { error } = await supabaseAdmin
-      .from("sponsor_contacts")
-      .insert({
-        company_name: companyName,
-        contact_name: contactName,
-        email,
-        phone: phone || null,
-        message: message || null,
-        interest_level: interestLevel || "other",
-        status: "new",
-      })
-
-    if (error) {
-      console.error("Sponsor contact error:", error)
-      return NextResponse.json(
-        { error: "Anfrage fehlgeschlagen" },
-        { status: 500 }
-      )
-    }
+    await query(
+      `INSERT INTO sponsor_contacts (company_name, contact_name, email, phone, message, interested_in, status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'new')`,
+      [companyName, contactName, email, phone || null, message || null, interestLevel || null]
+    )
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Server error:", error)
+    console.error("Sponsor contact error:", error)
     return NextResponse.json(
       { error: "Serverfehler" },
       { status: 500 }
