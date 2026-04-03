@@ -76,9 +76,26 @@ export async function send2FAEmail(to: string, link: string): Promise<void> {
 export async function sendCampaignEmail(
   recipients: string[],
   subject: string,
-  html: string
+  html: string,
+  options?: {
+    campaignType?: string;
+  }
 ): Promise<void> {
   if (recipients.length === 0) return;
+
+  if (options?.campaignType === 'newsletter_subscribers' && html.includes('{{recipient_email}}')) {
+    for (const recipient of recipients) {
+      const encodedEmail = encodeURIComponent(recipient);
+      const recipientHtml = html.replace(/\{\{recipient_email\}\}/g, encodedEmail);
+
+      await sendEmail({
+        to: recipient,
+        subject,
+        html: recipientHtml,
+      });
+    }
+    return;
+  }
 
   return sendEmail({
     to: recipients,

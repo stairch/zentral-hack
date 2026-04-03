@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { query } from '@/lib/db';
 import { successResponse, serverError } from '@/lib/api';
 import { verifyJWT } from '@/lib/auth';
+import { getNewsletterColumnSupport, getWeeklyEligibleFilter } from '@/lib/newsletter-db';
 
 /**
  * GET /api/admin/email-subscribers
@@ -19,8 +20,12 @@ export async function GET(request: NextRequest) {
       return new Response(JSON.stringify({ error: 'Unauthorized - Admin only' }), { status: 401 });
     }
 
+    const columnSupport = await getNewsletterColumnSupport();
     const result = await query(
-      'SELECT email, subscribed, created_at FROM newsletter_subscribers WHERE subscribed = true ORDER BY created_at DESC'
+      `SELECT email, subscribed, created_at
+       FROM newsletter_subscribers
+       WHERE ${getWeeklyEligibleFilter(columnSupport)}
+       ORDER BY created_at DESC`
     );
 
     return successResponse({

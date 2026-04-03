@@ -4,12 +4,16 @@ import { withAdminAuth, AuthenticatedRequest } from '@/lib/middleware';
 import { sendCampaignEmail, sendEmail } from '@/lib/email';
 import { successResponse, validationError, serverError } from '@/lib/api';
 import { renderEmailTemplate } from '@/lib/email-templates';
+import { getNewsletterColumnSupport, getWeeklyEligibleFilter } from '@/lib/newsletter-db';
 
 async function handler(req: AuthenticatedRequest) {
   try {
     if (req.method === 'POST') {
       const body = await req.json();
       const { subject, content, templateId, ctaText, ctaUrl, footerNote, campaignType, categoryId, testEmail } = body;
+      const effectiveCampaignType = campaignType || body.recipientType;
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://zentralhack.ch';
+      const unsubscribeUrl = `${appUrl}/newsletter/abmelden?category=weekly_updates`;
 
       if (!subject || !content) {
         return validationError('Betreff und Inhalt erforderlich');
@@ -25,6 +29,10 @@ async function handler(req: AuthenticatedRequest) {
             ctaText: ctaText || undefined,
             ctaUrl: ctaUrl || undefined,
             footerNote: footerNote || undefined,
+            unsubscribeUrl:
+              effectiveCampaignType === 'newsletter_subscribers' || effectiveCampaignType === 'central_updates'
+                ? unsubscribeUrl
+                : undefined,
           });
         } catch {
           return validationError('Ungültige Vorlage');
@@ -64,7 +72,10 @@ async function handler(req: AuthenticatedRequest) {
         );
         recipients = result.rows.map((r: { email: string }) => r.email);
       } else if (campaignType === 'newsletter_subscribers') {
-        const subscribersResult = await query('SELECT email FROM newsletter_subscribers WHERE subscribed = true');
+        const columnSupport = await getNewsletterColumnSupport();
+        const subscribersResult = await query(
+          `SELECT email FROM newsletter_subscribers WHERE ${getWeeklyEligibleFilter(columnSupport)}`
+        );
         recipients = subscribersResult.rows.map((r: { email: string }) => r.email);
       } else if (campaignType === 'central_updates') {
         const registeredResult = await query('SELECT DISTINCT email FROM users WHERE role = $1', ['user']);
@@ -85,7 +96,7 @@ async function handler(req: AuthenticatedRequest) {
         [subject, content, htmlContent, campaignType, categoryId || null, req.user?.userId ?? null]
       );
 
-      await sendCampaignEmail(recipients, subject, htmlContent);
+      await sendCampaignEmail(recipients, subject, htmlContent, { campaignType });
 
       return successResponse({
         campaignId: result.rows[0].id,

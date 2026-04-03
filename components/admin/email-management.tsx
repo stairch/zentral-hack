@@ -24,6 +24,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Mail, Users, Send, Loader2, Check, Eye, FlaskConical, Layout, Save, Trash2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { renderEmailTemplate } from '@/lib/email-templates';
 
 interface NewsletterSubscriber {
   email: string;
@@ -51,11 +52,61 @@ interface SavedTemplate {
 }
 
 const templates: Template[] = [
-  { id: 'standard', name: 'Standard', description: 'Sauberes Layout mit Logo-Header und optionalem Button' },
-  { id: 'announcement', name: 'Ankündigung', description: 'Auffälliges Design für wichtige Ankündigungen' },
-  { id: 'event-reminder', name: 'Event-Erinnerung', description: 'Countdown-Stil für Event-bezogene Nachrichten' },
-  { id: 'update', name: 'Update / Newsletter', description: 'Minimales Design für regelmässige Updates' },
+  { id: 'standard', name: 'Standard', description: 'Klares CD-Layout mit starkem Branding und ruhigem Lesefluss' },
+  { id: 'announcement', name: 'Ankündigung', description: 'Starker Fokus für wichtige News und Entscheidungen' },
+  { id: 'event-reminder', name: 'Event-Erinnerung', description: 'Fokussiert auf nächste Schritte vor dem Event' },
+  { id: 'update', name: 'Update / Newsletter', description: 'Editorial-Layout für regelmässige Updates und Rückblicke' },
 ];
+
+interface CampaignPreset {
+  id: string;
+  name: string;
+  description: string;
+  templateId: string;
+  subject: string;
+  content: string;
+  ctaText?: string;
+  ctaUrl?: string;
+  footerNote?: string;
+}
+
+const campaignPresets: CampaignPreset[] = [
+  {
+    id: 'deadline-reminder',
+    name: 'Deadline Reminder',
+    description: 'Schnelle Erinnerung mit klarer Handlung',
+    templateId: 'event-reminder',
+    subject: 'Wichtige Frist: Deine nächsten Schritte bei Zentral Hack',
+    content:
+      'Hallo zusammen!\n\nIn den nächsten Tagen steht eine wichtige Frist an. Bitte prüft eure Anmeldung und ergänzt fehlende Angaben rechtzeitig.\n\nVielen Dank für euren Einsatz und bis bald am Event!',
+    ctaText: 'Jetzt Anmeldung prüfen',
+    ctaUrl: 'https://zentralhack.ch/anmeldung',
+    footerNote: 'Bei Fragen sind wir jederzeit per Mail erreichbar.',
+  },
+  {
+    id: 'announcement-news',
+    name: 'Wichtige Ankündigung',
+    description: 'Für Partner- oder Event-News mit hoher Sichtbarkeit',
+    templateId: 'announcement',
+    subject: 'Neuigkeiten rund um Zentral Hack 2026',
+    content:
+      'Wir haben eine wichtige Ankündigung für euch!\n\nBitte nehmt euch kurz Zeit und lest alle Details aufmerksam durch.\n\nWir freuen uns auf den nächsten Schritt mit euch.',
+    ctaText: 'Alle Details ansehen',
+    ctaUrl: 'https://zentralhack.ch',
+  },
+  {
+    id: 'weekly-update',
+    name: 'Weekly Update',
+    description: 'Regelmäßiger Newsletter mit ruhigem Lesefluss',
+    templateId: 'update',
+    subject: 'Zentral Hack Weekly: Das Wichtigste diese Woche',
+    content:
+      'Diese Woche im Überblick:\n\n- Neue Partner wurden bestätigt\n- Programm-Updates sind online\n- Die Q&A-Session startet am Mittwoch\n\nDanke, dass ihr Teil unserer Community seid!',
+    footerNote: 'Falls du diese Mails nicht mehr erhalten möchtest, kannst du dich jederzeit abmelden.',
+  },
+];
+
+const draftStorageKey = 'zh-email-draft-v1';
 
 export function EmailManagementPage() {
   const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
@@ -70,6 +121,7 @@ export function EmailManagementPage() {
   const [activeTab, setActiveTab] = useState('compose');
   const [templateName, setTemplateName] = useState('');
   const [templateDescription, setTemplateDescription] = useState('');
+  const [draftRestored, setDraftRestored] = useState(false);
 
   const [emailForm, setEmailForm] = useState({
     subject: '',
@@ -101,6 +153,29 @@ export function EmailManagementPage() {
     fetchSubscribers();
     fetchSavedTemplates();
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(draftStorageKey);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw) as { form?: typeof emailForm };
+      if (!parsed.form) return;
+
+      setEmailForm((prev) => ({ ...prev, ...parsed.form }));
+      setDraftRestored(true);
+    } catch (error) {
+      console.warn('Failed to restore email draft', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(draftStorageKey, JSON.stringify({ form: emailForm, savedAt: new Date().toISOString() }));
+    } catch (error) {
+      console.warn('Failed to save email draft', error);
+    }
+  }, [emailForm]);
 
   async function fetchSavedTemplates() {
     try {
@@ -182,34 +257,54 @@ export function EmailManagementPage() {
     toast.success(`Vorlage "${template.name}" geladen`);
   }
 
+  function applyPreset(preset: CampaignPreset) {
+    setEmailForm((prev) => ({
+      ...prev,
+      subject: preset.subject,
+      content: preset.content,
+      templateId: preset.templateId,
+      ctaText: preset.ctaText || '',
+      ctaUrl: preset.ctaUrl || '',
+      footerNote: preset.footerNote || '',
+    }));
+    toast.success(`Preset "${preset.name}" übernommen`);
+  }
+
+  function resetDraft() {
+    const resetState = {
+      subject: '',
+      content: '',
+      templateId: 'standard',
+      recipientType: 'central_updates' as string,
+      ctaText: '',
+      ctaUrl: '',
+      footerNote: '',
+      testEmail: '',
+    };
+
+    setEmailForm(resetState);
+    window.localStorage.removeItem(draftStorageKey);
+    toast.success('Entwurf zurückgesetzt');
+  }
+
   const selectedTemplate = useMemo(
     () => templates.find((t) => t.id === emailForm.templateId),
     [emailForm.templateId]
   );
 
-  // Simple client-side preview HTML that mirrors the server template structure
+  // Preview exactly matches the HTML generated by backend template rendering.
   const previewHtml = useMemo(() => {
-    const brandColor = '#530A5D';
-    const content = emailForm.content.replace(/\n/g, '<br>');
-    const subject = emailForm.subject || 'Betreff';
-    const cta = emailForm.ctaText && emailForm.ctaUrl
-      ? `<div style="text-align:center;margin:25px 0;"><a href="${emailForm.ctaUrl}" style="display:inline-block;padding:14px 32px;background:${brandColor};color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">${emailForm.ctaText}</a></div>`
-      : '';
-    const footer = emailForm.footerNote
-      ? `<p style="margin:20px 0 0;color:#888;font-size:13px;border-top:1px solid #eee;padding-top:15px;">${emailForm.footerNote.replace(/\n/g, '<br>')}</p>`
-      : '';
-
-    if (emailForm.templateId === 'announcement') {
-      return `<div style="max-width:600px;margin:0 auto;font-family:sans-serif;"><div style="background:linear-gradient(135deg,${brandColor},#7B1FA2);padding:40px 30px;text-align:center;border-radius:12px 12px 0 0;"><p style="margin:0 0 8px;color:rgba(255,255,255,0.8);font-size:14px;text-transform:uppercase;letter-spacing:0.1em;">📢 Ankündigung</p><h1 style="margin:0;color:#fff;font-size:26px;">${subject}</h1></div><div style="background:#fff;padding:35px 30px;border-radius:0 0 12px 12px;"><div style="color:#333;font-size:16px;line-height:1.6;">${content}</div>${cta}${footer}</div></div>`;
+    try {
+      return renderEmailTemplate(emailForm.templateId, {
+        subject: emailForm.subject || 'Betreff',
+        content: emailForm.content || 'Hier erscheint deine Nachrichtenvorschau.',
+        ctaText: emailForm.ctaText || undefined,
+        ctaUrl: emailForm.ctaUrl || undefined,
+        footerNote: emailForm.footerNote || undefined,
+      });
+    } catch {
+      return '<p style="font-family: sans-serif; color: #991b1b;">Vorschau konnte nicht geladen werden.</p>';
     }
-    if (emailForm.templateId === 'event-reminder') {
-      return `<div style="max-width:600px;margin:0 auto;font-family:sans-serif;"><div style="background:${brandColor};padding:25px 30px;text-align:center;border-radius:12px 12px 0 0;"><h1 style="margin:0;color:#fff;font-size:24px;">ZENTRAL HACK</h1></div><div style="background:#fff;padding:30px;text-align:center;"><span style="display:inline-block;background:#FEF3C7;color:#92400E;padding:8px 20px;border-radius:20px;font-size:14px;font-weight:600;">🗓️ Event-Erinnerung</span></div><div style="background:#fff;padding:0 30px 35px;"><h2 style="text-align:center;color:#333;font-size:22px;">${subject}</h2><div style="color:#333;font-size:16px;line-height:1.6;">${content}</div>${cta}${footer}</div></div>`;
-    }
-    if (emailForm.templateId === 'update') {
-      return `<div style="max-width:600px;margin:0 auto;font-family:sans-serif;"><div style="background:#fff;padding:30px 30px 0;border-radius:12px 12px 0 0;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:${brandColor};font-size:18px;font-weight:700;letter-spacing:0.05em;">ZENTRAL HACK</span><span style="color:#999;font-size:13px;">Newsletter</span></div><hr style="border:none;border-top:2px solid ${brandColor};margin:15px 0 0;"></div><div style="background:#fff;padding:25px 30px 35px;border-radius:0 0 12px 12px;"><h2 style="color:#333;font-size:20px;">${subject}</h2><div style="color:#333;font-size:15px;line-height:1.7;">${content}</div>${cta}${footer}</div></div>`;
-    }
-    // Standard template
-    return `<div style="max-width:600px;margin:0 auto;font-family:sans-serif;"><div style="background:${brandColor};padding:30px;text-align:center;border-radius:12px 12px 0 0;"><h1 style="margin:0;color:#fff;font-size:28px;letter-spacing:0.05em;">ZENTRAL HACK</h1></div><div style="background:#fff;padding:35px 30px;border-radius:0 0 12px 12px;"><h2 style="color:#333;font-size:22px;">${subject}</h2><div style="color:#333;font-size:16px;line-height:1.6;">${content}</div>${cta}${footer}</div></div>`;
   }, [emailForm.subject, emailForm.content, emailForm.templateId, emailForm.ctaText, emailForm.ctaUrl, emailForm.footerNote]);
 
   const handleSendTest = async () => {
@@ -235,6 +330,7 @@ export function EmailManagementPage() {
           ctaText: emailForm.ctaText || undefined,
           ctaUrl: emailForm.ctaUrl || undefined,
           footerNote: emailForm.footerNote || undefined,
+          campaignType: emailForm.recipientType,
           testEmail: emailForm.testEmail,
         }),
       });
@@ -370,6 +466,12 @@ export function EmailManagementPage() {
                   </DialogDescription>
                 </DialogHeader>
 
+                {draftRestored ? (
+                  <div className="rounded-lg border border-[#530A5D]/20 bg-[#530A5D]/5 px-3 py-2 text-sm text-[#3f0848]">
+                    Ein gespeicherter Entwurf wurde automatisch geladen.
+                  </div>
+                ) : null}
+
                 {campaignSent ? (
                   <div className="flex flex-col items-center justify-center py-12">
                     <Check className="w-12 h-12 text-green-500 mb-4" />
@@ -397,6 +499,28 @@ export function EmailManagementPage() {
 
                     {/* ── Tab: Compose ── */}
                     <TabsContent value="compose" className="space-y-4 mt-4">
+                      <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <Label>Schnellstart</Label>
+                          <Button type="button" variant="ghost" size="sm" onClick={resetDraft}>
+                            Entwurf leeren
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
+                          {campaignPresets.map((preset) => (
+                            <button
+                              key={preset.id}
+                              type="button"
+                              onClick={() => applyPreset(preset)}
+                              className="text-left rounded-md border border-border bg-card px-3 py-3 transition-colors hover:border-[#530A5D]/50 hover:bg-[#530A5D]/5"
+                            >
+                              <p className="text-sm font-semibold">{preset.name}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{preset.description}</p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       {/* Template Selector */}
                       <div>
                         <Label>Vorlage</Label>
@@ -428,6 +552,7 @@ export function EmailManagementPage() {
                           onChange={(e) => setEmailForm({ ...emailForm, subject: e.target.value })}
                           placeholder="z.B. Zentral Hack 2026 - Wichtige Updates"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">{emailForm.subject.length}/120 Zeichen</p>
                       </div>
 
                       {/* Content */}
@@ -440,6 +565,7 @@ export function EmailManagementPage() {
                           placeholder={'Hallo Teilnehmer!\n\nWir freuen uns, euch mitzuteilen, dass...\n\nLiebe Grüsse,\nDas Zentral Hack Team'}
                           rows={8}
                         />
+                        <p className="text-xs text-muted-foreground mt-1">{emailForm.content.length} Zeichen</p>
                       </div>
 
                       {/* CTA Button (optional) */}
@@ -529,10 +655,13 @@ export function EmailManagementPage() {
                           Vorlage: <strong>{selectedTemplate?.name}</strong>
                         </div>
 
-                        <div
-                          className="border rounded-lg p-4 bg-[#f4f4f7] min-h-[300px]"
-                          dangerouslySetInnerHTML={{ __html: previewHtml }}
-                        />
+                        <div className="border rounded-lg p-3 bg-[#f4f4f7] min-h-[300px]">
+                          <iframe
+                            title="E-Mail Vorschau"
+                            srcDoc={previewHtml}
+                            className="w-full h-[560px] rounded-md border border-border bg-white"
+                          />
+                        </div>
 
                         <div className="flex gap-2">
                           <Button onClick={() => setActiveTab('compose')} variant="outline" className="flex-1">
@@ -548,6 +677,13 @@ export function EmailManagementPage() {
 
                     {/* ── Tab: Send ── */}
                     <TabsContent value="send" className="mt-4 space-y-6">
+                      <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm space-y-1">
+                        <p className="font-medium">Versand-Checkliste</p>
+                        <p className={emailForm.subject ? 'text-green-700' : 'text-muted-foreground'}>{emailForm.subject ? 'Erledigt' : 'Offen'}: Betreff gesetzt</p>
+                        <p className={emailForm.content ? 'text-green-700' : 'text-muted-foreground'}>{emailForm.content ? 'Erledigt' : 'Offen'}: Inhalt gepflegt</p>
+                        <p className={emailForm.testEmail ? 'text-green-700' : 'text-muted-foreground'}>{emailForm.testEmail ? 'Erledigt' : 'Optional'}: Testadresse eingetragen</p>
+                      </div>
+
                       {/* Test Email Section */}
                       <Card className="border-dashed">
                         <CardHeader className="pb-3">
@@ -600,7 +736,7 @@ export function EmailManagementPage() {
                               Alle registrierten Teilnehmer + Newsletter
                             </SelectItem>
                             <SelectItem value="newsletter_subscribers">
-                              Nur Newsletter-Abonnenten
+                              Nur Weekly-Update Empfänger
                             </SelectItem>
                           </SelectContent>
                         </Select>
@@ -630,9 +766,9 @@ export function EmailManagementPage() {
               </DialogContent>
             </Dialog>
 
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="mt-4 p-4 bg-[#f3f1f8] rounded-lg border border-[#d8c9ee]">
               <p className="text-sm text-blue-900">
-                💡 <strong>Neu:</strong> Wähle eine Vorlage, gib nur deinen Text ein – das HTML wird automatisch erstellt. Teste zuerst mit einer Test-E-Mail!
+                <strong>Neu:</strong> Schnellstart-Presets, automatische Entwurfs-Speicherung und echte Live-Vorschau direkt im finalen Template.
               </p>
             </div>
           </CardContent>

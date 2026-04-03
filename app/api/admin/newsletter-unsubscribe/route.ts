@@ -3,6 +3,7 @@ import { query } from '@/lib/db';
 import { successResponse, serverError } from '@/lib/api';
 import { verifyJWT } from '@/lib/auth';
 import { z } from 'zod';
+import { getNewsletterColumnSupport } from '@/lib/newsletter-db';
 
 const bulkUnsubscribeSchema = z.object({
   emails: z.array(z.string().email()),
@@ -43,16 +44,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await query(
-      `UPDATE newsletter_subscribers 
-       SET subscribed = false, updated_at = NOW()
-       WHERE email = ANY($1::text[])`,
-      [emails]
-    );
+    const columnSupport = await getNewsletterColumnSupport();
+    const sql = columnSupport.weeklyUpdatesSubscribed
+      ? `UPDATE newsletter_subscribers
+         SET weekly_updates_subscribed = false${columnSupport.updatedAt ? ', updated_at = NOW()' : ''}
+         WHERE email = ANY($1::text[])`
+      : `UPDATE newsletter_subscribers
+         SET subscribed = false
+         WHERE email = ANY($1::text[])`;
+
+    const result = await query(sql, [emails]);
 
     return successResponse({
       unsubscribed: result.rowCount,
-      message: `${result.rowCount} Abonnenten abgemeldet`,
+      message: `${result.rowCount} Abonnenten von Weekly Updates abgemeldet`,
     });
   } catch (error) {
     console.error('Newsletter unsubscribe error:', error);

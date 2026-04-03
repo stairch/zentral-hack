@@ -99,7 +99,7 @@ export function NewsletterSubscribersPage() {
       return;
     }
 
-    if (!confirm(`Möchten Sie ${selectedEmails.size} Abonnenten abmelden?`)) return;
+    if (!confirm(`Möchten Sie ${selectedEmails.size} Abonnenten nur von Weekly Updates abmelden?`)) return;
 
     try {
       const res = await fetch('/api/admin/newsletter-unsubscribe', {
@@ -115,7 +115,7 @@ export function NewsletterSubscribersPage() {
         setSubscribers(subscribers.filter(s => !selectedEmails.has(s.email)));
         setSelectedEmails(new Set());
         setAllSelected(false);
-        toast.success('Abonnenten abgemeldet');
+        toast.success('Von Weekly Updates abgemeldet');
       } else {
         toast.error('Fehler beim Abmelden');
       }
@@ -140,7 +140,7 @@ export function NewsletterSubscribersPage() {
           NEWSLETTER ABONNENTEN
         </h1>
         <p className="text-muted-foreground mt-2">
-          Verwalte Newsletter Abonnenten - {subscribers.length} aktive Abonnenten
+          Verwalte Weekly-Update Empfänger - {subscribers.length} aktive Empfänger
         </p>
       </div>
 
@@ -149,7 +149,7 @@ export function NewsletterSubscribersPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Abonnenten ({selectedEmails.size > 0 ? `${selectedEmails.size} ausgewählt` : 'Alle'})</CardTitle>
-              <CardDescription>Wähle Abonnenten aus und exportiere sie oder melde sie ab</CardDescription>
+              <CardDescription>Wähle Empfänger aus und exportiere sie oder melde sie nur von Weekly Updates ab</CardDescription>
             </div>
             <div className="flex gap-2">
               <Button
@@ -167,7 +167,7 @@ export function NewsletterSubscribersPage() {
                   onClick={handleBulkUnsubscribe}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Abmelden
+                  Weekly abmelden
                 </Button>
               )}
             </div>
