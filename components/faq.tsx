@@ -1,0 +1,114 @@
+"use client"
+
+import { useRef } from "react"
+import { motion, useInView } from "framer-motion"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+
+const faqs = [
+  {
+    question: "Was ist der Zentral Hack?",
+    answer:
+      "Der Zentral Hack ist der grösste Hackathon der Zentralschweiz. Er vereint verschiedene bestehende Events zu einem gemeinsamen Grossevent und bietet eine Plattform für Innovation, Nachwuchsförderung und Networking.",
+  },
+  {
+    question: "Wer kann teilnehmen?",
+    answer:
+      "Der Hackathon ist offen für alle, die sich für Technologie und Innovation begeistern - von Schüler:innen über Studierende bis hin zu Berufstätigen. Es gibt verschiedene Kategorien, die auf unterschiedliche Zielgruppen zugeschnitten sind.",
+  },
+  {
+    question: "Muss ich bereits ein Team haben?",
+    answer:
+      "Nein! Am Freitagabend gibt es eine Teambildungsphase, bei der du andere Teilnehmer:innen kennenlernen und ein Team bilden kannst. Du kannst aber auch mit einem bestehenden Team antreten.",
+  },
+  {
+    question: "Welche Vorkenntnisse brauche ich?",
+    answer:
+      "Das hängt von der gewählten Kategorie ab. Für die Young Talents Kategorie sind Grundkenntnisse ausreichend, während andere Kategorien mehr Erfahrung voraussetzen können. Wichtig ist vor allem die Motivation!",
+  },
+  {
+    question: "Ist Verpflegung inbegriffen?",
+    answer:
+      "Ja! Während des gesamten Hackathons wird für Verpflegung gesorgt - von Abendessen über Frühstück bis zu Snacks. Auch vegetarische und vegane Optionen sind verfügbar.",
+  },
+  {
+    question: "Wo findet der Hackathon statt?",
+    answer:
+      "Der Zentral Hack findet an der HSLU (Hochschule Luzern) statt. Die verschiedenen Kategorien haben unterschiedliche Räume: Young Talents im Forum, AI Lab im 10. OG, Campus Challenge in der Study Jungle und Regional Impact in der Wandelhalle.",
+  },
+  {
+    question: "Wie kann ich mich anmelden?",
+    answer:
+      "Die Anmeldung wird ab Anfang Mai möglich sein. Du kannst bereits jetzt deine E-Mail-Adresse hinterlassen, um benachrichtigt zu werden, sobald die Anmeldung öffnet.",
+  },
+]
+
+export function FAQ() {
+  const headerRef = useRef(null)
+  const isHeaderInView = useInView(headerRef, { once: true })
+
+  return (
+    <section id="faq" className="py-24 bg-background">
+      <div className="container mx-auto px-4">
+        {/* Section Header */}
+        <motion.div
+          ref={headerRef}
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 30 }}
+          animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+        >
+          <motion.span
+            className="inline-block px-4 py-2 rounded-full bg-light-violet/30 text-violet font-medium text-sm mb-4"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={isHeaderInView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            FAQ
+          </motion.span>
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
+            HÄUFIGE <span className="text-violet">FRAGEN</span>
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+            Alles was du über den Zentral Hack wissen musst.
+          </p>
+        </motion.div>
+
+        {/* Accordion */}
+        <motion.div
+          className="max-w-3xl mx-auto"
+          initial={{ opacity: 0, y: 30 }}
+          animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <Accordion type="single" collapsible className="space-y-4">
+            {faqs.map((faq, index) => (
+              <motion.div
+                key={faq.question}
+                initial={{ opacity: 0, x: -20 }}
+                animate={isHeaderInView ? { opacity: 1, x: 0 } : {}}
+                transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
+              >
+                <AccordionItem
+                  value={`item-${index}`}
+                  className="bg-muted/50 rounded-xl border border-border px-6 data-[state=open]:bg-violet/5 data-[state=open]:border-violet/20 transition-colors"
+                >
+                  <AccordionTrigger className="text-left font-display font-bold text-foreground hover:text-violet transition-colors py-6 [&[data-state=open]]:text-violet">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground pb-6 leading-relaxed">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              </motion.div>
+            ))}
+          </Accordion>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
