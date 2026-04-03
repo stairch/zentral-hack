@@ -1,6 +1,12 @@
 import { query } from '@/lib/db';
 
-const optionalCategoryColumns = ['partner_name', 'color', 'icon'] as const;
+const optionalCategoryColumns = [
+  'partner_name',
+  'color',
+  'icon',
+  'challenge_description',
+  'show_challenge_description',
+] as const;
 const optionalCategoryColumnsParam: string[] = [...optionalCategoryColumns];
 
 export type OptionalCategoryColumn = (typeof optionalCategoryColumns)[number];
@@ -27,6 +33,12 @@ export function buildCategorySelectClause(availableColumns: Set<OptionalCategory
     availableColumns.has('partner_name') ? 'partner_name' : 'NULL::text AS partner_name',
     availableColumns.has('color') ? 'color' : 'NULL::text AS color',
     availableColumns.has('icon') ? 'icon' : 'NULL::text AS icon',
+    availableColumns.has('challenge_description')
+      ? 'challenge_description'
+      : 'NULL::text AS challenge_description',
+    availableColumns.has('show_challenge_description')
+      ? 'show_challenge_description'
+      : 'false::boolean AS show_challenge_description',
     'is_active',
     'created_at',
     'updated_at',

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -39,6 +40,8 @@ interface Category {
   partner_name?: string | null;
   color?: string | null;
   icon?: string | null;
+  challenge_description?: string | null;
+  show_challenge_description?: boolean | null;
 }
 
 interface EditFormState {
@@ -47,6 +50,8 @@ interface EditFormState {
   partnerName: string;
   color: string;
   icon: string;
+  challengeDescription: string;
+  showChallengeDescription: boolean;
 }
 
 export function AdminCategoriesPage() {
@@ -60,6 +65,8 @@ export function AdminCategoriesPage() {
     partnerName: '',
     color: '#530A5D',
     icon: 'sparkles',
+    challengeDescription: '',
+    showChallengeDescription: false,
   });
   const [saved, setSaved] = useState(false);
 
@@ -110,6 +117,8 @@ export function AdminCategoriesPage() {
           partnerName: editForm.partnerName,
           color: normalizeHexColor(editForm.color),
           icon: editForm.icon,
+          challengeDescription: editForm.challengeDescription,
+          showChallengeDescription: editForm.showChallengeDescription,
         }),
       });
 
@@ -131,6 +140,8 @@ export function AdminCategoriesPage() {
               partner_name: editForm.partnerName,
               color: normalizeHexColor(editForm.color),
               icon: editForm.icon,
+              challenge_description: editForm.challengeDescription,
+              show_challenge_description: editForm.showChallengeDescription,
             }
           : category
       ));
@@ -205,6 +216,8 @@ export function AdminCategoriesPage() {
                         partnerName: category.partner_name || '',
                         color: presentation.color,
                         icon: presentation.iconName,
+                        challengeDescription: category.challenge_description || '',
+                        showChallengeDescription: Boolean(category.show_challenge_description),
                       });
                     } else {
                       setEditingId(null);
@@ -219,7 +232,7 @@ export function AdminCategoriesPage() {
                       <DialogHeader>
                         <DialogTitle>Kategorie bearbeiten</DialogTitle>
                         <DialogDescription>
-                          Aktualisiere Titel, Partner, Icon, Farbe und Beschreibung für &quot;{category.name}&quot;
+                          Aktualisiere Titel, Partner, Icon, Farbe sowie Kategorie- und Challenge-Beschrieb für &quot;{category.name}&quot;
                         </DialogDescription>
                       </DialogHeader>
 
@@ -304,6 +317,35 @@ export function AdminCategoriesPage() {
                             />
                           </div>
 
+                          <div className="rounded-lg border p-4 space-y-4">
+                            <div className="flex items-center justify-between gap-4">
+                              <div>
+                                <Label htmlFor="showChallengeDescription">Challenge-Beschrieb anzeigen</Label>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Wenn aktiv, wird auf der öffentlichen Kategorie-Detailansicht zusätzlich ein Challenge-Beschrieb angezeigt.
+                                </p>
+                              </div>
+                              <Switch
+                                id="showChallengeDescription"
+                                checked={editForm.showChallengeDescription}
+                                onCheckedChange={(checked) =>
+                                  setEditForm((current) => ({ ...current, showChallengeDescription: Boolean(checked) }))
+                                }
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="challengeDescription">Challenge-Beschrieb</Label>
+                              <Textarea
+                                id="challengeDescription"
+                                value={editForm.challengeDescription}
+                                onChange={(e) => updateEditForm('challengeDescription', e.target.value)}
+                                placeholder="Konkrete Aufgabenstellung, Ziele und Rahmenbedingungen der Challenge..."
+                                rows={5}
+                              />
+                            </div>
+                          </div>
+
                           <div
                             className="rounded-xl border p-4"
                             style={{
@@ -331,6 +373,9 @@ export function AdminCategoriesPage() {
                                   <div>
                                     <p className="font-display text-xl font-bold">{preview.title}</p>
                                     <p className="mt-2 text-sm opacity-90">{preview.description}</p>
+                                    {editForm.showChallengeDescription && editForm.challengeDescription.trim() ? (
+                                      <p className="mt-2 text-sm opacity-85">Challenge: {editForm.challengeDescription}</p>
+                                    ) : null}
                                     <p className="mt-3 text-xs opacity-75">Partner: {preview.partnerName}</p>
                                   </div>
                                 </div>
@@ -361,6 +406,11 @@ export function AdminCategoriesPage() {
               <CardContent>
                 <p className="text-sm font-medium mb-2">Partner: {getCategoryPresentation(category).partnerName}</p>
                 <p className="text-muted-foreground text-sm line-clamp-3">{category.description}</p>
+                {category.show_challenge_description && category.challenge_description ? (
+                  <p className="text-muted-foreground text-sm mt-2 line-clamp-3">
+                    Challenge: {category.challenge_description}
+                  </p>
+                ) : null}
               </CardContent>
             </Card>
           ))

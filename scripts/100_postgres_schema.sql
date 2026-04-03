@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS categories (
   partner_name TEXT,
   color VARCHAR(7),
   icon VARCHAR(50),
+  challenge_description TEXT,
+  show_challenge_description BOOLEAN DEFAULT false,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

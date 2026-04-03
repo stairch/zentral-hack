@@ -30,6 +30,8 @@ export interface CategoryRecord {
   partner_name?: string | null;
   color?: string | null;
   icon?: string | null;
+  challenge_description?: string | null;
+  show_challenge_description?: boolean | null;
 }
 
 export const categoryIconMap: Record<CategoryIconName, LucideIcon> = {
@@ -187,5 +189,7 @@ export function getCategoryPresentation(category: CategoryRecord) {
     textColor: getReadableTextColor(color),
     icon: categoryIconMap[iconName],
     iconName,
+    challengeDescription: (category.challenge_description || '').trim(),
+    showChallengeDescription: Boolean(category.show_challenge_description),
   };
 }

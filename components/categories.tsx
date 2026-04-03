@@ -3,6 +3,13 @@
 import { useRef, useEffect, useState } from "react"
 import { motion, useInView } from "framer-motion"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   categoryDisplayOrder,
   getCategoryPresentation,
   type CategoryRecord,
@@ -17,14 +24,18 @@ interface DisplayCategory {
   color: string;
   textColor: string;
   partnerName: string;
+  challengeDescription: string;
+  showChallengeDescription: boolean;
 }
 
 function CategoryCard({
   category,
   index,
+  onOpen,
 }: {
   category: DisplayCategory
   index: number
+  onOpen: () => void
 }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
@@ -38,6 +49,15 @@ function CategoryCard({
       whileHover={{ y: -10, scale: 1.02 }}
       className="rounded-2xl p-8 relative overflow-hidden group cursor-pointer"
       style={{ backgroundColor: category.color, color: category.textColor }}
+      onClick={onOpen}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onOpen()
+        }
+      }}
     >
       {/* Animated background pattern */}
       <motion.div
@@ -70,6 +90,7 @@ function CategoryCard({
         <h3 className="font-display text-2xl font-bold mb-3">{category.title}</h3>
         <p className="opacity-90 mb-4 leading-relaxed">{category.description}</p>
         <p className="text-sm opacity-70">Partner: {category.partnerName}</p>
+        <p className="text-xs opacity-70 mt-4">Klicken für Details</p>
       </div>
 
       {/* Hover effect */}
@@ -87,6 +108,7 @@ export function Categories() {
   const [displayCategories, setDisplayCategories] = useState<DisplayCategory[]>(() =>
     categoryDisplayOrder.map((slug) => getCategoryPresentation({ slug }))
   );
+  const [selectedCategory, setSelectedCategory] = useState<DisplayCategory | null>(null)
 
   // Fetch category content from DB (admin-editable)
   useEffect(() => {
@@ -146,9 +168,43 @@ export function Categories() {
         {/* Categories Grid */}
         <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
           {displayCategories.map((category, index) => (
-            <CategoryCard key={category.slug} category={category} index={index} />
+            <CategoryCard
+              key={category.slug}
+              category={category}
+              index={index}
+              onOpen={() => setSelectedCategory(category)}
+            />
           ))}
         </div>
+
+        <Dialog open={Boolean(selectedCategory)} onOpenChange={(open) => !open && setSelectedCategory(null)}>
+          <DialogContent className="sm:max-w-2xl">
+            {selectedCategory ? (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="font-display text-3xl mt-4">{selectedCategory.title}</DialogTitle>
+                  <DialogDescription className="text-base leading-relaxed text-muted-foreground">
+                    {selectedCategory.description}
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4 mt-2">
+                  <div className="rounded-xl border bg-muted/30 p-4">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Partner</p>
+                    <p className="font-medium">{selectedCategory.partnerName}</p>
+                  </div>
+
+                  {selectedCategory.showChallengeDescription && selectedCategory.challengeDescription ? (
+                    <div className="rounded-xl border p-4">
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Challenge-Beschrieb</p>
+                      <p className="leading-relaxed text-sm md:text-base">{selectedCategory.challengeDescription}</p>
+                    </div>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
+          </DialogContent>
+        </Dialog>
       </div>
     </section>
   )

@@ -1,7 +1,9 @@
 ALTER TABLE categories
   ADD COLUMN IF NOT EXISTS partner_name TEXT,
   ADD COLUMN IF NOT EXISTS color VARCHAR(7),
-  ADD COLUMN IF NOT EXISTS icon VARCHAR(50);
+  ADD COLUMN IF NOT EXISTS icon VARCHAR(50),
+  ADD COLUMN IF NOT EXISTS challenge_description TEXT,
+  ADD COLUMN IF NOT EXISTS show_challenge_description BOOLEAN DEFAULT false;
 
 UPDATE categories
 SET

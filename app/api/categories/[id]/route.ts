@@ -21,7 +21,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return new Response(JSON.stringify({ error: 'Unauthorized - Admin only' }), { status: 401 });
     }
 
-    const { name, description, partnerName, color, icon } = await request.json();
+    const {
+      name,
+      description,
+      partnerName,
+      color,
+      icon,
+      challengeDescription,
+      showChallengeDescription,
+    } = await request.json();
     const { id } = await params;
 
     if (!id) {
@@ -63,6 +71,27 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (availableColumns.has('icon') && typeof icon === 'string') {
       values.push(icon);
       fieldAssignments.push(`icon = $${values.length}`);
+    }
+
+    if (
+      availableColumns.has('challenge_description') &&
+      (typeof challengeDescription === 'string' || challengeDescription === null)
+    ) {
+      const normalizedChallengeDescription =
+        typeof challengeDescription === 'string'
+          ? challengeDescription.trim() || null
+          : null;
+
+      values.push(normalizedChallengeDescription);
+      fieldAssignments.push(`challenge_description = $${values.length}`);
+    }
+
+    if (
+      availableColumns.has('show_challenge_description') &&
+      typeof showChallengeDescription === 'boolean'
+    ) {
+      values.push(showChallengeDescription ? 'true' : 'false');
+      fieldAssignments.push(`show_challenge_description = $${values.length}::boolean`);
     }
 
     if (fieldAssignments.length === 0) {

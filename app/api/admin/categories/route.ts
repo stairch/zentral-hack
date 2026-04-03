@@ -23,7 +23,16 @@ export async function GET(request: NextRequest) {
 
 async function putHandler(req: AuthenticatedRequest) {
   try {
-    const { id, name, description, partnerName, color, icon } = await req.json();
+    const {
+      id,
+      name,
+      description,
+      partnerName,
+      color,
+      icon,
+      challengeDescription,
+      showChallengeDescription,
+    } = await req.json();
 
     if (!id) {
       return validationError('Category ID required');
@@ -68,6 +77,27 @@ async function putHandler(req: AuthenticatedRequest) {
     if (availableColumns.has('icon') && typeof icon === 'string') {
       values.push(icon);
       fieldAssignments.push(`icon = $${values.length}`);
+    }
+
+    if (
+      availableColumns.has('challenge_description') &&
+      (typeof challengeDescription === 'string' || challengeDescription === null)
+    ) {
+      const normalizedChallengeDescription =
+        typeof challengeDescription === 'string'
+          ? challengeDescription.trim() || null
+          : null;
+
+      values.push(normalizedChallengeDescription);
+      fieldAssignments.push(`challenge_description = $${values.length}`);
+    }
+
+    if (
+      availableColumns.has('show_challenge_description') &&
+      typeof showChallengeDescription === 'boolean'
+    ) {
+      values.push(showChallengeDescription ? 'true' : 'false');
+      fieldAssignments.push(`show_challenge_description = $${values.length}::boolean`);
     }
 
     if (fieldAssignments.length === 0) {
