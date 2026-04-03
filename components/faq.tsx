@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, useState, useEffect } from "react"
 import { motion, useInView } from "framer-motion"
 import {
   Accordion,
@@ -9,47 +9,52 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 
-const faqs = [
+const fallbackFaqs = [
   {
     question: "Was ist der Zentral Hack?",
     answer:
-      "Der Zentral Hack ist der grösste Hackathon der Zentralschweiz. Er vereint verschiedene bestehende Events zu einem gemeinsamen Grossevent und bietet eine Plattform für Innovation, Nachwuchsförderung und Networking.",
+      "Der Zentral Hack ist der grösste Hackathon der Zentralschweiz. 48 Stunden, in denen Studierende, Fachleute und Kreative zusammenkommen, um innovative Lösungen für reale Herausforderungen zu entwickeln.",
   },
   {
     question: "Wer kann teilnehmen?",
     answer:
-      "Der Hackathon ist offen für alle, die sich für Technologie und Innovation begeistern - von Schüler:innen über Studierende bis hin zu Berufstätigen. Es gibt verschiedene Kategorien, die auf unterschiedliche Zielgruppen zugeschnitten sind.",
+      "Alle sind willkommen! Ob Studierende, Berufstätige oder einfach technikbegeistert – jede:r kann sich anmelden und mitmachen.",
   },
   {
-    question: "Muss ich bereits ein Team haben?",
+    question: "Brauche ich ein Team?",
     answer:
-      "Nein! Am Freitagabend gibt es eine Teambildungsphase, bei der du andere Teilnehmer:innen kennenlernen und ein Team bilden kannst. Du kannst aber auch mit einem bestehenden Team antreten.",
-  },
-  {
-    question: "Welche Vorkenntnisse brauche ich?",
-    answer:
-      "Das hängt von der gewählten Kategorie ab. Für die Young Talents Kategorie sind Grundkenntnisse ausreichend, während andere Kategorien mehr Erfahrung voraussetzen können. Wichtig ist vor allem die Motivation!",
-  },
-  {
-    question: "Ist Verpflegung inbegriffen?",
-    answer:
-      "Ja! Während des gesamten Hackathons wird für Verpflegung gesorgt - von Abendessen über Frühstück bis zu Snacks. Auch vegetarische und vegane Optionen sind verfügbar.",
-  },
-  {
-    question: "Wo findet der Hackathon statt?",
-    answer:
-      "Der Zentral Hack findet an der HSLU (Hochschule Luzern) statt. Die verschiedenen Kategorien haben unterschiedliche Räume: Young Talents im Forum, AI Lab im 10. OG, Campus Challenge in der Study Jungle und Regional Impact in der Wandelhalle.",
-  },
-  {
-    question: "Wie kann ich mich anmelden?",
-    answer:
-      "Die Anmeldung wird ab Anfang Mai möglich sein. Du kannst bereits jetzt deine E-Mail-Adresse hinterlassen, um benachrichtigt zu werden, sobald die Anmeldung öffnet.",
+      "Nein, du kannst dich auch alleine anmelden. Wir helfen dir, ein passendes Team zu finden. Alternativ kannst du auch bereits mit einem Team kommen.",
   },
 ]
+
+interface FAQItem {
+  id?: string;
+  question: string;
+  answer: string;
+}
 
 export function FAQ() {
   const headerRef = useRef(null)
   const isHeaderInView = useInView(headerRef, { once: true })
+  const [faqs, setFaqs] = useState<FAQItem[]>(fallbackFaqs)
+
+  useEffect(() => {
+    const fetchFaqs = async () => {
+      try {
+        const res = await fetch('/api/faqs')
+        if (res.ok) {
+          const data = await res.json()
+          const dbFaqs = data.data?.faqs
+          if (dbFaqs && dbFaqs.length > 0) {
+            setFaqs(dbFaqs)
+          }
+        }
+      } catch {
+        // Keep fallback FAQs
+      }
+    }
+    fetchFaqs()
+  }, [])
 
   return (
     <section id="faq" className="py-24 bg-background">
@@ -88,7 +93,7 @@ export function FAQ() {
           <Accordion type="single" collapsible className="space-y-4">
             {faqs.map((faq, index) => (
               <motion.div
-                key={faq.question}
+                key={faq.id || faq.question}
                 initial={{ opacity: 0, x: -20 }}
                 animate={isHeaderInView ? { opacity: 1, x: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}

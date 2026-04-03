@@ -18,15 +18,19 @@ import {
   FileText,
   Sparkles,
   MessageSquare,
+  UserCog,
+  HelpCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/registrations", label: "Anmeldungen", icon: Users },
+  { href: "/admin/users", label: "Benutzer", icon: UserCog },
   { href: "/admin/teams", label: "Teams", icon: Users },
   { href: "/admin/documents", label: "Dokumente", icon: FolderOpen },
   { href: "/admin/categories", label: "Kategorien", icon: Sparkles },
+  { href: "/admin/faqs", label: "FAQs", icon: HelpCircle },
   { href: "/admin/emails", label: "E-Mails & Kampagnen", icon: Mail },
   { href: "/admin/newsletter", label: "Newsletter Abonnenten", icon: Mail },
   { href: "/admin/sponsors", label: "Sponsoren", icon: MessageSquare },

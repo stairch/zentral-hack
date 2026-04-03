@@ -6,3 +6,6 @@
 node_modules
 .next/
 .DS_Store
+
+# Uploads (user-generated files)
+public/uploads/

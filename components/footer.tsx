@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Github, Linkedin, Instagram, Mail } from "lucide-react"
+import Link from "next/link"
 
 const footerLinks = {
   event: [
@@ -11,9 +12,9 @@ const footerLinks = {
     { label: "FAQ", href: "#faq" },
   ],
   legal: [
-    { label: "Impressum", href: "#" },
-    { label: "Datenschutz", href: "#" },
-    { label: "AGB", href: "#" },
+    { label: "Impressum", href: "/impressum" },
+    { label: "Datenschutz", href: "/datenschutz" },
+    { label: "AGB", href: "/agb" },
   ],
   social: [
     { icon: Instagram, href: "#", label: "Instagram" },
@@ -84,13 +85,14 @@ export function Footer() {
             <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
                 <li key={link.label}>
-                  <motion.a
-                    href={link.href}
-                    className="text-muted-foreground hover:text-yellow transition-colors"
-                    whileHover={{ x: 5 }}
-                  >
-                    {link.label}
-                  </motion.a>
+                  <Link href={link.href}>
+                    <motion.span
+                      className="text-muted-foreground hover:text-yellow transition-colors cursor-pointer"
+                      whileHover={{ x: 5 }}
+                    >
+                      {link.label}
+                    </motion.span>
+                  </Link>
                 </li>
               ))}
             </ul>

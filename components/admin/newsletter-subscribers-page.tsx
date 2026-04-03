@@ -24,7 +24,7 @@ export function NewsletterSubscribersPage() {
     const fetchSubscribers = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/admin-email-subscribers', {
+        const res = await fetch('/api/admin/email-subscribers', {
           credentials: 'include',
         });
 
@@ -102,7 +102,7 @@ export function NewsletterSubscribersPage() {
     if (!confirm(`Möchten Sie ${selectedEmails.size} Abonnenten abmelden?`)) return;
 
     try {
-      const res = await fetch('/api/admin-newsletter-unsubscribe', {
+      const res = await fetch('/api/admin/newsletter-unsubscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

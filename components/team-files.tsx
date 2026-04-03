@@ -269,10 +269,10 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
                   </div>
                   <div className="flex gap-2">
                     <a
-                      href={file.file_path}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={`/api/download-file?fileId=${file.id}`}
+                      download={file.original_name}
                       className="p-1 hover:bg-muted rounded"
+                      title="Datei downloaden"
                     >
                       <ExternalLink className="w-4 h-4" />
                     </a>

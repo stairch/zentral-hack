@@ -1,106 +1,38 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
 import {
   User as UserIcon,
   LogOut,
   Loader2,
-} from "lucide-react"
-import { useRouter } from "next/navigation"
-
-export function DashboardContent() {
-  const { user, logout } = useAuth()
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-
-  const handleLogout = async () => {
-    setLoading(true)
-    try {
-      await logout()
-      router.push("/")
-      router.refresh()
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      <div>
-        <h1 className="text-3xl font-bold text-foreground" style={{ fontFamily: "var(--font-display)" }}>
-          WILLKOMMEN ZURÜCK
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Schön, dich wiederzusehen, {user?.email}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserIcon className="w-5 h-5" />
-              Mein Profil
-            </CardTitle>
-            <CardDescription>Verwalte deine Kontodaten</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Email: <span className="font-medium text-foreground">{user?.email}</span>
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Rolle: <span className="font-medium text-foreground capitalize">{user?.role}</span>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Abmelden</CardTitle>
-            <CardDescription>Beende deine aktuelle Sitzung</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              onClick={handleLogout}
-              disabled={loading}
-              className="w-full bg-red-600 hover:bg-red-700 text-white"
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Abmelden
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </motion.div>
-  )
-}
+  FileText,
+  Users,
+  Upload,
+  Download,
   ExternalLink,
+  Github,
+  FolderOpen,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { TeamFilesComponent } from "@/components/team-files"
 
-interface DashboardContentProps {
-  user: User
+interface DashboardData {
   profile: {
+    id: string
+    email: string
     first_name: string | null
     last_name: string | null
-    email: string
+    role: string
     university: string | null
     study_program: string | null
     semester: number | null
@@ -108,85 +40,102 @@ interface DashboardContentProps {
   } | null
   registration: {
     id: string
+    status: string
+    dietary_restrictions: string | null
+    allergies: string | null
     category: {
       id: string
       name: string
       slug: string
       description: string
-      color: string
     }
-    dietary_restrictions: string | null
-    allergies: string | null
   } | null
   team: {
     id: string
     name: string
-    github_url: string | null
     description: string | null
-    category: {
-      name: string
-    }
+    member_role: string
+    category: { name: string }
   } | null
+  teamFiles: Array<{
+    id: string
+    original_name: string
+    file_size: number
+    mime_type: string
+    created_at: string
+  }>
+  teamRepos: Array<{
+    id: string
+    repository_url: string
+    title: string
+    description: string
+    created_at: string
+  }>
   categoryDocuments: Array<{
     id: string
     name: string
-    description: string | null
-    file_url: string
-    file_type: string | null
+    description: string
+    file_path: string
     created_at: string
-  }> | null
-  teamDocuments: Array<{
+  }>
+  globalDocuments: Array<{
     id: string
     name: string
-    description: string | null
-    file_url: string
-    file_type: string | null
+    description: string
+    file_path: string
     created_at: string
-  }> | null
+  }>
 }
 
-export function DashboardContent({
-  user,
-  profile,
-  registration,
-  team,
-  categoryDocuments,
-  teamDocuments,
-}: DashboardContentProps) {
+export function DashboardContent() {
+  const { user, logout } = useAuth()
   const router = useRouter()
-  const [uploading, setUploading] = useState(false)
+  const [data, setData] = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [loggingOut, setLoggingOut] = useState(false)
 
-  const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/")
-    router.refresh()
-  }
+  useEffect(() => {
+    fetchDashboardData()
+  }, [])
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !e.target.files[0] || !team) return
-
-    setUploading(true)
+  async function fetchDashboardData() {
     try {
-      const file = e.target.files[0]
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("teamId", team.id)
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      })
-
-      if (!response.ok) throw new Error("Upload fehlgeschlagen")
-
-      router.refresh()
+      const res = await fetch("/api/dashboard", { credentials: "include" })
+      if (res.ok) {
+        const json = await res.json()
+        setData(json.data)
+      }
     } catch (error) {
-      console.error("Upload error:", error)
+      console.error("Failed to fetch dashboard data:", error)
     } finally {
-      setUploading(false)
+      setLoading(false)
     }
   }
+
+  const handleLogout = async () => {
+    setLoggingOut(true)
+    try {
+      await logout()
+      router.push("/")
+      router.refresh()
+    } finally {
+      setLoggingOut(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#530A5D]" />
+      </div>
+    )
+  }
+
+  const profile = data?.profile
+  const registration = data?.registration
+  const team = data?.team
+  const categoryDocuments = data?.categoryDocuments || []
+  const globalDocuments = data?.globalDocuments || []
 
   return (
     <main className="min-h-screen bg-background">
@@ -197,22 +146,25 @@ export function DashboardContent({
             <span className="text-[#530A5D]">ZENTRAL</span>{" "}
             <span className="text-[#E6FF17] bg-[#530A5D] px-2">HACK</span>
           </Link>
-          <Button variant="outline" onClick={handleLogout} className="gap-2">
-            <LogOut className="w-4 h-4" />
-            Abmelden
-          </Button>
+          <div className="flex items-center gap-3">
+            {(user?.role === "admin" || user?.role === "category_partner") && (
+              <Link href="/admin">
+                <Button variant="outline" size="sm">Admin Panel</Button>
+              </Link>
+            )}
+            <Button variant="outline" onClick={handleLogout} disabled={loggingOut} className="gap-2">
+              {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
+              Abmelden
+            </Button>
+          </div>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Welcome section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        {/* Welcome */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Hallo, {profile?.first_name || user.email}!
+            Hallo, {profile?.first_name || user?.email}!
           </h1>
           <p className="text-muted-foreground">
             Willkommen in deinem Zentral Hack Dashboard
@@ -221,22 +173,20 @@ export function DashboardContent({
 
         {/* Registration Status */}
         {registration ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <Card className="mb-8 border-2" style={{ borderColor: registration.category.color }}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <Card className="mb-8 border-2 border-[#530A5D]/30">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-full" 
-                    style={{ backgroundColor: registration.category.color }}
-                  />
+                  <div className="w-3 h-3 rounded-full bg-[#530A5D]" />
                   {registration.category.name}
                 </CardTitle>
                 <CardDescription>{registration.category.description}</CardDescription>
               </CardHeader>
+              <CardContent>
+                <Badge variant={registration.status === "confirmed" ? "default" : "outline"} className={registration.status === "confirmed" ? "bg-green-600" : ""}>
+                  {registration.status === "confirmed" ? "✓ Anmeldung bestätigt" : "Ausstehend"}
+                </Badge>
+              </CardContent>
             </Card>
           </motion.div>
         ) : (
@@ -252,7 +202,7 @@ export function DashboardContent({
           </Card>
         )}
 
-        {/* Main content */}
+        {/* Main Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
             <TabsTrigger value="profile" className="gap-2">
@@ -280,7 +230,7 @@ export function DashboardContent({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-muted-foreground text-sm">E-Mail</Label>
-                    <p className="font-medium">{user.email}</p>
+                    <p className="font-medium">{user?.email}</p>
                   </div>
                   <div>
                     <Label className="text-muted-foreground text-sm">Name</Label>
@@ -328,6 +278,37 @@ export function DashboardContent({
           {/* Documents Tab */}
           <TabsContent value="documents">
             <div className="space-y-6">
+              {/* Global Documents */}
+              {globalDocuments.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FolderOpen className="w-5 h-5 text-[#530A5D]" />
+                      Allgemeine Dokumente
+                    </CardTitle>
+                    <CardDescription>Dokumente und Ressourcen für alle Teilnehmer</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {globalDocuments.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <FileText className="w-5 h-5 text-[#530A5D]" />
+                            <div>
+                              <p className="font-medium">{doc.name}</p>
+                              {doc.description && <p className="text-sm text-muted-foreground">{doc.description}</p>}
+                            </div>
+                          </div>
+                          <a href={`/api/download-file?fileId=${doc.id}`} className="p-2 hover:bg-muted rounded-lg transition-colors">
+                            <Download className="w-5 h-5 text-muted-foreground" />
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Category Documents */}
               <Card>
                 <CardHeader>
@@ -337,27 +318,18 @@ export function DashboardContent({
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {categoryDocuments && categoryDocuments.length > 0 ? (
+                  {categoryDocuments.length > 0 ? (
                     <div className="space-y-3">
                       {categoryDocuments.map((doc) => (
-                        <div
-                          key={doc.id}
-                          className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                        >
+                        <div key={doc.id} className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors">
                           <div className="flex items-center gap-3">
                             <FileText className="w-5 h-5 text-[#530A5D]" />
                             <div>
                               <p className="font-medium">{doc.name}</p>
-                              {doc.description && (
-                                <p className="text-sm text-muted-foreground">{doc.description}</p>
-                              )}
+                              {doc.description && <p className="text-sm text-muted-foreground">{doc.description}</p>}
                             </div>
                           </div>
-                          <a
-                            href={doc.file_url}
-                            download
-                            className="p-2 hover:bg-muted rounded-lg transition-colors"
-                          >
+                          <a href={`/api/download-file?fileId=${doc.id}`} className="p-2 hover:bg-muted rounded-lg transition-colors">
                             <Download className="w-5 h-5 text-muted-foreground" />
                           </a>
                         </div>
@@ -365,79 +337,14 @@ export function DashboardContent({
                     </div>
                   ) : (
                     <p className="text-muted-foreground text-center py-8">
-                      Noch keine Dokumente verfügbar
+                      {registration ? "Noch keine Dokumente verfügbar" : "Melde dich für eine Kategorie an, um Dokumente zu sehen"}
                     </p>
                   )}
                 </CardContent>
               </Card>
 
               {/* Team Documents */}
-              {team && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Team-Dokumente</CardTitle>
-                    <CardDescription>
-                      Dokumente und Dateien von deinem Team
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {teamDocuments && teamDocuments.length > 0 ? (
-                      <div className="space-y-3">
-                        {teamDocuments.map((doc) => (
-                          <div
-                            key={doc.id}
-                            className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                          >
-                            <div className="flex items-center gap-3">
-                              <FileText className="w-5 h-5 text-[#530A5D]" />
-                              <div>
-                                <p className="font-medium">{doc.name}</p>
-                                {doc.description && (
-                                  <p className="text-sm text-muted-foreground">{doc.description}</p>
-                                )}
-                              </div>
-                            </div>
-                            <a
-                              href={doc.file_url}
-                              download
-                              className="p-2 hover:bg-muted rounded-lg transition-colors"
-                            >
-                              <Download className="w-5 h-5 text-muted-foreground" />
-                            </a>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground text-center py-4">
-                        Noch keine Team-Dokumente
-                      </p>
-                    )}
-
-                    {/* Upload */}
-                    <div className="mt-6 pt-6 border-t border-border">
-                      <Label htmlFor="file-upload" className="cursor-pointer">
-                        <div className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-border rounded-lg hover:border-[#530A5D] hover:bg-muted/50 transition-colors">
-                          {uploading ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                          ) : (
-                            <>
-                              <Upload className="w-5 h-5 text-muted-foreground" />
-                              <span className="text-muted-foreground">Datei hochladen</span>
-                            </>
-                          )}
-                        </div>
-                      </Label>
-                      <Input
-                        id="file-upload"
-                        type="file"
-                        className="hidden"
-                        onChange={handleFileUpload}
-                        disabled={uploading}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              {team && <TeamFilesComponent teamId={team.id} />}
             </div>
           </TabsContent>
 
@@ -446,9 +353,7 @@ export function DashboardContent({
             <Card>
               <CardHeader>
                 <CardTitle>Dein Team</CardTitle>
-                <CardDescription>
-                  Informationen zu deinem Hackathon-Team
-                </CardDescription>
+                <CardDescription>Informationen zu deinem Hackathon-Team</CardDescription>
               </CardHeader>
               <CardContent>
                 {team ? (
@@ -467,21 +372,17 @@ export function DashboardContent({
                       <Label className="text-muted-foreground text-sm">Kategorie</Label>
                       <p className="font-medium">{team.category.name}</p>
                     </div>
-                    {team.github_url && (
-                      <div>
-                        <Label className="text-muted-foreground text-sm">GitHub Repository</Label>
-                        <a
-                          href={team.github_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-[#530A5D] hover:underline"
-                        >
-                          <Github className="w-4 h-4" />
-                          Repository ansehen
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    )}
+                    <div>
+                      <Label className="text-muted-foreground text-sm">Deine Rolle</Label>
+                      <Badge variant="outline">
+                        {team.member_role === "leader" ? "Team-Leader" : "Mitglied"}
+                      </Badge>
+                    </div>
+
+                    {/* Team files & repos are shown in the documents tab */}
+                    <p className="text-sm text-muted-foreground">
+                      Team-Dokumente und GitHub-Repos findest du im Tab &quot;Dokumente&quot;
+                    </p>
                   </div>
                 ) : (
                   <div className="text-center py-8">

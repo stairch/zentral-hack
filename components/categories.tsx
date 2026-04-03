@@ -1,49 +1,71 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, useEffect, useState } from "react"
 import { motion, useInView } from "framer-motion"
 import { Sparkles, Brain, GraduationCap, Mountain } from "lucide-react"
 
-const categories = [
-  {
-    title: "YOUNG TALENTS",
-    description: "Für den Nachwuchs der ICT-Branche. Zeige dein Können und starte deine Karriere.",
+// Static styling/metadata per category slug
+const categoryMeta: Record<string, {
+  icon: typeof Sparkles;
+  color: string;
+  textColor: string;
+  partner: string;
+  fallbackDescription: string;
+}> = {
+  "young-talents": {
     icon: Sparkles,
     color: "bg-yellow",
     textColor: "text-foreground",
     partner: "ICT Berufsbildung Zentralschweiz & UMB AG",
+    fallbackDescription: "Für den Nachwuchs der ICT-Branche. Zeige dein Können und starte deine Karriere.",
   },
-  {
-    title: "AI AGENTIC",
-    description: "Entwickle innovative KI-Lösungen und intelligente Agenten der Zukunft.",
+  "ai-agentic": {
     icon: Brain,
     color: "bg-violet",
     textColor: "text-white",
     partner: "ICT Berufsbildung Zentralschweiz, Digital & AI Community & getAbstract",
+    fallbackDescription: "Entwickle innovative KI-Lösungen und intelligente Agenten der Zukunft.",
   },
-  {
-    title: "CAMPUS CHALLENGE",
-    description: "Die Herausforderung für Studierende. Kreativität trifft auf akademische Exzellenz.",
+  "campus-challenge": {
     icon: GraduationCap,
     color: "bg-light-violet",
     textColor: "text-violet",
     partner: "STAIR",
+    fallbackDescription: "Die Herausforderung für Studierende. Kreativität trifft auf akademische Exzellenz.",
   },
-  {
-    title: "REGIONAL IMPACT",
-    description: "Löse echte Probleme der Zentralschweiz. Dein Code für die Region.",
+  "regional-impact": {
     icon: Mountain,
     color: "bg-violet",
     textColor: "text-white",
     partner: "SchwyzNext",
+    fallbackDescription: "Löse echte Probleme der Zentralschweiz. Dein Code für die Region.",
   },
-]
+}
+
+// Display order for categories
+const slugOrder = ["young-talents", "ai-agentic", "campus-challenge", "regional-impact"]
+
+interface DBCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+}
+
+interface DisplayCategory {
+  title: string;
+  description: string;
+  icon: typeof Sparkles;
+  color: string;
+  textColor: string;
+  partner: string;
+}
 
 function CategoryCard({
   category,
   index,
 }: {
-  category: (typeof categories)[0]
+  category: DisplayCategory
   index: number
 }) {
   const ref = useRef(null)
@@ -103,6 +125,53 @@ function CategoryCard({
 export function Categories() {
   const headerRef = useRef(null)
   const isHeaderInView = useInView(headerRef, { once: true })
+  const [displayCategories, setDisplayCategories] = useState<DisplayCategory[]>(() =>
+    // Start with fallback data so it renders immediately
+    slugOrder.map((slug) => {
+      const meta = categoryMeta[slug]!;
+      return {
+        title: slug.replace(/-/g, ' ').toUpperCase(),
+        description: meta.fallbackDescription,
+        icon: meta.icon,
+        color: meta.color,
+        textColor: meta.textColor,
+        partner: meta.partner,
+      };
+    })
+  );
+
+  // Fetch descriptions from DB (admin-editable)
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/categories');
+        if (!res.ok) return;
+        const data = await res.json();
+        const dbCategories: DBCategory[] = data.data?.categories || [];
+
+        if (dbCategories.length === 0) return;
+
+        // Merge DB descriptions with static styling
+        const merged = slugOrder.map((slug) => {
+          const meta = categoryMeta[slug]!;
+          const dbCat = dbCategories.find((c) => c.slug === slug);
+          return {
+            title: dbCat?.name || slug.replace(/-/g, ' ').toUpperCase(),
+            description: dbCat?.description || meta.fallbackDescription,
+            icon: meta.icon,
+            color: meta.color,
+            textColor: meta.textColor,
+            partner: meta.partner,
+          };
+        });
+
+        setDisplayCategories(merged);
+      } catch {
+        // Keep fallback data on error
+      }
+    };
+    fetchCategories();
+  }, []);
 
   return (
     <section id="categories" className="py-24 bg-muted/30">
@@ -133,7 +202,7 @@ export function Categories() {
 
         {/* Categories Grid */}
         <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-          {categories.map((category, index) => (
+          {displayCategories.map((category, index) => (
             <CategoryCard key={category.title} category={category} index={index} />
           ))}
         </div>

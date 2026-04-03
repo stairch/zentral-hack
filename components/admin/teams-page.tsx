@@ -22,7 +22,15 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Users, Plus, Loader2 } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Users, Plus, Loader2, ArrowLeft, UserPlus, Trash2, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Team {
@@ -32,6 +40,16 @@ interface Team {
   category_id: string;
   category_name?: string;
   member_count?: number;
+  created_at: string;
+}
+
+interface TeamMember {
+  id: string;
+  user_id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  member_role: string;
   created_at: string;
 }
 
@@ -46,47 +64,47 @@ export function TeamsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [newTeam, setNewTeam] = useState({
-    name: '',
-    description: '',
-    categoryId: '',
-  });
+  const [newTeam, setNewTeam] = useState({ name: '', description: '', categoryId: '' });
 
-  // Fetch categories and teams
+  // Team detail view
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState('member');
+  const [addingMember, setAddingMember] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState<{ id: string; email: string; first_name: string; last_name: string }[]>([]);
+  const [loadingAvailable, setLoadingAvailable] = useState(false);
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-
-        // Fetch categories
-        const catRes = await fetch('/api/categories', {
-          credentials: 'include',
-        });
-        if (catRes.ok) {
-          const catData = await catRes.json();
-          setCategories(catData.data?.categories || []);
-        }
-
-        // Fetch teams
-        const teamsRes = await fetch('/api/admin-teams', {
-          credentials: 'include',
-        });
-        if (teamsRes.ok) {
-          const teamsData = await teamsRes.json();
-          setTeams(teamsData.data?.teams || []);
-        }
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-        toast.error('Fehler beim Laden der Daten');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
 
-  // Create team
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [catRes, teamsRes] = await Promise.all([
+        fetch('/api/categories', { credentials: 'include' }),
+        fetch('/api/admin/teams', { credentials: 'include' }),
+      ]);
+
+      if (catRes.ok) {
+        const catData = await catRes.json();
+        setCategories(catData.data?.categories || []);
+      }
+      if (teamsRes.ok) {
+        const teamsData = await teamsRes.json();
+        setTeams(teamsData.data?.teams || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+      toast.error('Fehler beim Laden der Daten');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCreateTeam = async () => {
     if (!newTeam.name || !newTeam.categoryId) {
       toast.error('Team-Name und Kategorie erforderlich');
@@ -95,7 +113,7 @@ export function TeamsAdminPage() {
 
     try {
       setIsCreating(true);
-      const res = await fetch('/api/admin-teams', {
+      const res = await fetch('/api/admin/teams', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -112,18 +130,289 @@ export function TeamsAdminPage() {
       }
 
       const data = await res.json();
-      setTeams([...teams, data.data.team]);
+      setTeams([data.data.team, ...teams]);
       setNewTeam({ name: '', description: '', categoryId: '' });
       setDialogOpen(false);
       toast.success('Team erstellt');
     } catch (error) {
-      console.error('Failed to create team:', error);
-      toast.error(error instanceof Error ? error.message : 'Fehler beim Erstellen des Teams');
+      toast.error(error instanceof Error ? error.message : 'Fehler beim Erstellen');
     } finally {
       setIsCreating(false);
     }
   };
 
+  const handleDeleteTeam = async (teamId: string) => {
+    if (!confirm('Team wirklich löschen? Alle Mitglieder werden entfernt.')) return;
+
+    try {
+      const res = await fetch(`/api/admin/teams?id=${teamId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setTeams(teams.filter(t => t.id !== teamId));
+        if (selectedTeam?.id === teamId) setSelectedTeam(null);
+        toast.success('Team gelöscht');
+      }
+    } catch {
+      toast.error('Fehler beim Löschen');
+    }
+  };
+
+  const openTeamDetail = async (team: Team) => {
+    setSelectedTeam(team);
+    setLoadingMembers(true);
+    try {
+      const res = await fetch(`/api/admin/teams/members?teamId=${team.id}`, {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMembers(data.data?.members || []);
+      }
+    } catch {
+      toast.error('Fehler beim Laden der Mitglieder');
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
+  const fetchAvailableUsers = async (categoryId: string) => {
+    setLoadingAvailable(true);
+    try {
+      const res = await fetch(`/api/admin/teams/members?availableForCategory=${categoryId}`, {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableUsers(data.data?.users || []);
+      }
+    } catch {
+      toast.error('Fehler beim Laden der verfügbaren Benutzer');
+    } finally {
+      setLoadingAvailable(false);
+    }
+  };
+
+  const openAddMemberDialog = () => {
+    setSelectedUserId('');
+    setNewMemberRole('member');
+    setAddMemberOpen(true);
+    if (selectedTeam) {
+      fetchAvailableUsers(selectedTeam.category_id);
+    }
+  };
+
+  const handleAddMember = async () => {
+    if (!selectedUserId || !selectedTeam) return;
+
+    setAddingMember(true);
+    try {
+      const res = await fetch('/api/admin/teams/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          teamId: selectedTeam.id,
+          userId: selectedUserId,
+          role: newMemberRole,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Fehler beim Hinzufügen');
+      }
+
+      setMembers([...members, data.data.member]);
+      setAvailableUsers(availableUsers.filter(u => u.id !== selectedUserId));
+      setTeams(teams.map(t =>
+        t.id === selectedTeam.id
+          ? { ...t, member_count: (Number(t.member_count) || 0) + 1 }
+          : t
+      ));
+      setSelectedUserId('');
+      setNewMemberRole('member');
+      setAddMemberOpen(false);
+      toast.success('Mitglied hinzugefügt');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Fehler beim Hinzufügen');
+    } finally {
+      setAddingMember(false);
+    }
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    if (!selectedTeam || !confirm('Mitglied wirklich entfernen?')) return;
+
+    try {
+      const res = await fetch(
+        `/api/admin/teams/members?memberId=${memberId}&teamId=${selectedTeam.id}`,
+        { method: 'DELETE', credentials: 'include' }
+      );
+      if (res.ok) {
+        setMembers(members.filter(m => m.id !== memberId));
+        setTeams(teams.map(t =>
+          t.id === selectedTeam.id
+            ? { ...t, member_count: Math.max(0, (Number(t.member_count) || 0) - 1) }
+            : t
+        ));
+        toast.success('Mitglied entfernt');
+      }
+    } catch {
+      toast.error('Fehler beim Entfernen');
+    }
+  };
+
+  // === Team Detail View ===
+  if (selectedTeam) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" onClick={() => setSelectedTeam(null)}>
+            <ArrowLeft className="w-4 h-4 mr-2" /> Zurück
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+              {selectedTeam.name}
+            </h1>
+            <p className="text-muted-foreground">
+              {selectedTeam.category_name} • {members.length} Mitglieder
+            </p>
+          </div>
+          <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 bg-violet hover:bg-violet/90" onClick={openAddMemberDialog}>
+                <UserPlus className="w-4 h-4" /> Mitglied hinzufügen
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Mitglied hinzufügen</DialogTitle>
+                <DialogDescription>
+                  Wähle einen registrierten Teilnehmer dieser Kategorie aus
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Teilnehmer</Label>
+                  {loadingAvailable ? (
+                    <div className="flex items-center gap-2 py-2 text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Lade Teilnehmer...
+                    </div>
+                  ) : availableUsers.length > 0 ? (
+                    <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Teilnehmer wählen..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableUsers.map((u) => (
+                          <SelectItem key={u.id} value={u.id}>
+                            {u.first_name} {u.last_name} ({u.email})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-sm text-muted-foreground py-2">
+                      Keine verfügbaren Teilnehmer für diese Kategorie.
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="member-role">Rolle</Label>
+                  <Select value={newMemberRole} onValueChange={setNewMemberRole}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="member">Mitglied</SelectItem>
+                      <SelectItem value="leader">Team Leader</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  onClick={handleAddMember}
+                  disabled={addingMember || !selectedUserId}
+                  className="w-full bg-violet hover:bg-violet/90"
+                >
+                  {addingMember ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Hinzufügen'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {selectedTeam.description && (
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-muted-foreground">{selectedTeam.description}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Teammitglieder</CardTitle>
+            <CardDescription>{members.length} Mitglieder</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingMembers ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin" />
+              </div>
+            ) : members.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>E-Mail</TableHead>
+                    <TableHead>Rolle</TableHead>
+                    <TableHead className="text-right">Aktionen</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {members.map((member) => (
+                    <TableRow key={member.id}>
+                      <TableCell className="font-medium">
+                        {member.first_name} {member.last_name}
+                      </TableCell>
+                      <TableCell>{member.email}</TableCell>
+                      <TableCell>
+                        {member.member_role === 'leader' ? (
+                          <Badge className="bg-yellow text-violet gap-1">
+                            <Crown className="w-3 h-3" /> Leader
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">Mitglied</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveMember(member.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-muted-foreground text-center py-8">
+                Noch keine Mitglieder. Klicke auf &quot;Mitglied hinzufügen&quot;, um zu starten.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // === Teams List View ===
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -181,7 +470,7 @@ export function TeamsAdminPage() {
                   id="description"
                   value={newTeam.description}
                   onChange={(e) => setNewTeam({ ...newTeam, description: e.target.value })}
-                  placeholder="Teamdescription..."
+                  placeholder="Teambeschreibung..."
                   rows={3}
                 />
               </div>
@@ -211,7 +500,7 @@ export function TeamsAdminPage() {
                     <CardTitle>{team.name}</CardTitle>
                     <CardDescription>{team.category_name}</CardDescription>
                   </div>
-                  <Badge variant="outline">{team.member_count || 0} Members</Badge>
+                  <Badge variant="outline">{team.member_count || 0} Mitglieder</Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -220,11 +509,25 @@ export function TeamsAdminPage() {
                 )}
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Users className="w-4 h-4" />
-                  Team erstellt: {new Date(team.created_at).toLocaleDateString('de-CH')}
+                  Erstellt: {new Date(team.created_at).toLocaleDateString('de-CH')}
                 </div>
-                <Button variant="outline" className="w-full">
-                  Team verwalten
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => openTeamDetail(team)}
+                  >
+                    Team verwalten
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => handleDeleteTeam(team.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -236,7 +539,7 @@ export function TeamsAdminPage() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Users className="w-12 h-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-center">
-              Noch keine Teams erstellt. Klicke auf "Neues Team", um zu starten.
+              Noch keine Teams erstellt. Klicke auf &quot;Neues Team&quot;, um zu starten.
             </p>
           </CardContent>
         </Card>

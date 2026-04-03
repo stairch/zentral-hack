@@ -3,7 +3,18 @@ import { MessageSquare, Building2 } from "lucide-react"
 
 export default async function AdminSponsorsPage() {
   // TODO: Fetch sponsor contacts from database
-  const contacts: any[] = []
+  interface SponsorContact {
+    id: string;
+    companyName: string;
+    contactName: string;
+    email: string;
+    phone?: string;
+    interestedIn?: string;
+    message?: string;
+    status: string;
+    created_at: string;
+  }
+  const contacts: SponsorContact[] = []
 
   return (
     <div className="space-y-8">

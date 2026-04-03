@@ -149,6 +149,31 @@ CREATE TABLE IF NOT EXISTS two_fa_tokens (
   expires_at TIMESTAMPTZ NOT NULL
 );
 
+-- Team files (for file sharing with lazy loading)
+CREATE TABLE IF NOT EXISTS team_files (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+  original_name TEXT NOT NULL,
+  file_path TEXT NOT NULL,
+  file_size INTEGER,
+  mime_type TEXT,
+  uploaded_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Team GitHub repositories (linked repos)
+CREATE TABLE IF NOT EXISTS team_github_repos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+  repository_url TEXT NOT NULL,
+  title TEXT,
+  description TEXT,
+  added_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Create indexes for performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
@@ -160,3 +185,6 @@ CREATE INDEX idx_team_members_user_id ON team_members(user_id);
 CREATE INDEX idx_team_members_team_id ON team_members(team_id);
 CREATE INDEX idx_email_logs_campaign_id ON email_logs(campaign_id);
 CREATE INDEX idx_two_fa_tokens_user_id ON two_fa_tokens(user_id);
+CREATE INDEX idx_team_files_team_id ON team_files(team_id);
+CREATE INDEX idx_team_files_uploaded_by ON team_files(uploaded_by);
+CREATE INDEX idx_team_github_repos_team_id ON team_github_repos(team_id);

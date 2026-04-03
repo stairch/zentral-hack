@@ -11,7 +11,6 @@ const navItems = [
   { label: "Kategorien", href: "#categories" },
   { label: "Zeitplan", href: "#schedule" },
   { label: "Partner", href: "#partners" },
-  { label: "Sponsoring", href: "#partners" },
   { label: "FAQ", href: "#faq" },
 ]
 
@@ -75,11 +74,6 @@ export function Navigation() {
               transition={{ delay: 0.5 }}
               className="flex items-center gap-3"
             >
-              <Link href="/auth/login">
-                <Button variant="outline" className="font-semibold">
-                  Login
-                </Button>
-              </Link>
               <Link href="/anmeldung">
                 <Button className="bg-violet hover:bg-violet/90 text-white font-semibold">
                   Anmelden
@@ -129,15 +123,6 @@ export function Navigation() {
                 transition={{ delay: 0.5 }}
                 className="flex flex-col gap-3 w-full px-8"
               >
-                <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full font-semibold"
-                  >
-                    Login
-                  </Button>
-                </Link>
                 <Link href="/anmeldung" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
                   <Button
                     size="lg"

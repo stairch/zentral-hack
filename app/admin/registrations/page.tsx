@@ -28,6 +28,7 @@ interface Registration {
   semester?: string;
   allergies?: string;
   dietary_restrictions?: string;
+  status: string;
   created_at: string;
 }
 
@@ -36,7 +37,7 @@ export default function RegistrationsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('');
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; slug: string; description: string }[]>([]);
 
   // Fetch categories for filter dropdown
   useEffect(() => {
@@ -66,7 +67,7 @@ export default function RegistrationsPage() {
         if (filterCategory) params.append('categoryId', filterCategory);
         params.append('limit', '100');
 
-        const res = await fetch(`/api/admin-registrations?${params}`, {
+        const res = await fetch(`/api/admin/registrations?${params}`, {
           credentials: 'include',
         });
 
@@ -183,6 +184,7 @@ export default function RegistrationsPage() {
                     <TableHead>Hochschule</TableHead>
                     <TableHead>Studiengang</TableHead>
                     <TableHead>Allergien</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -198,6 +200,11 @@ export default function RegistrationsPage() {
                       <TableCell className="text-sm">{reg.university || '-'}</TableCell>
                       <TableCell className="text-sm">{reg.study_program || '-'}</TableCell>
                       <TableCell className="text-sm">{reg.allergies ? '✓' : '-'}</TableCell>
+                      <TableCell>
+                        <Badge variant={reg.status === 'confirmed' ? 'default' : 'outline'} className={reg.status === 'confirmed' ? 'bg-green-600' : ''}>
+                          {reg.status === 'confirmed' ? 'Bestätigt' : reg.status === 'pending' ? 'Ausstehend' : reg.status}
+                        </Badge>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

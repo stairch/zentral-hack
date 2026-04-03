@@ -3,6 +3,7 @@ import { query } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { successResponse, validationError, serverError } from '@/lib/api';
 import { RegistrationSchema, validateRequest } from '@/lib/validation';
+import { escapeHtml } from '@/lib/email-templates';
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,12 +40,12 @@ export async function POST(request: NextRequest) {
 
     const userId = userResult.rows[0].id;
 
-    // Update profile with full details
+    // Update profile with university details (allergies/dietary go into registrations table)
     await query(
       `UPDATE profiles 
-       SET university = $1, study_program = $2, semester = $3, allergies = $4, dietary_restrictions = $5
-       WHERE user_id = $6`,
-      [university || null, studyProgram || null, semester || null, allergies || null, dietaryRestrictions || null, userId]
+       SET university = $1, study_program = $2, semester = $3
+       WHERE user_id = $4`,
+      [university || null, studyProgram || null, semester || null, userId]
     );
 
     const existing = await query(
@@ -70,19 +71,19 @@ export async function POST(request: NextRequest) {
     // Send confirmation email
     const confirmationHtml = `
       <h2>Willkommen zum Zentral Hack 2026!</h2>
-      <p>Hallo ${firstName} ${lastName},</p>
+      <p>Hallo ${escapeHtml(firstName)} ${escapeHtml(lastName)},</p>
       
       <p>Danke dass du dich angemeldet hast!</p>
       
       <div style="margin: 20px 0; padding: 15px; background-color: #f3f4f6; border-left: 4px solid #530A5D;">
         <h3>Deine Registrierungsdaten:</h3>
-        <p><strong>Name:</strong> ${firstName} ${lastName}</p>
-        <p><strong>Kategorie:</strong> ${categoryName}</p>
-        ${university ? `<p><strong>Universität:</strong> ${university}</p>` : ''}
-        ${studyProgram ? `<p><strong>Studiengang:</strong> ${studyProgram}</p>` : ''}
-        ${semester ? `<p><strong>Semester:</strong> ${semester}</p>` : ''}
-        ${allergies ? `<p><strong>Allergien:</strong> ${allergies}</p>` : ''}
-        ${dietaryRestrictions ? `<p><strong>Diätetische Einschränkungen:</strong> ${dietaryRestrictions}</p>` : ''}
+        <p><strong>Name:</strong> ${escapeHtml(firstName)} ${escapeHtml(lastName)}</p>
+        <p><strong>Kategorie:</strong> ${escapeHtml(categoryName)}</p>
+        ${university ? `<p><strong>Universität:</strong> ${escapeHtml(university)}</p>` : ''}
+        ${studyProgram ? `<p><strong>Studiengang:</strong> ${escapeHtml(studyProgram)}</p>` : ''}
+        ${semester ? `<p><strong>Semester:</strong> ${escapeHtml(String(semester))}</p>` : ''}
+        ${allergies ? `<p><strong>Allergien:</strong> ${escapeHtml(allergies)}</p>` : ''}
+        ${dietaryRestrictions ? `<p><strong>Diätetische Einschränkungen:</strong> ${escapeHtml(dietaryRestrictions)}</p>` : ''}
       </div>
       
       <p>Du kannst jetzt auf dein Dashboard zugreifen: <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard">Dashboard</a></p>
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     await sendEmail({
       to: email,
-      subject: `Bestätigung: Registrierung für ${categoryName}`,
+      subject: `Bestätigung: Registrierung für ${escapeHtml(categoryName)}`,
       html: confirmationHtml,
       text: `Willkommen zum Zentral Hack 2026! Du hast dich für die Kategorie "${categoryName}" angemeldet.`,
     });

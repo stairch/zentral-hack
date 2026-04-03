@@ -83,16 +83,11 @@ export default function LoginPage() {
       const data = await res.json()
       console.log('[Login] 2FA response:', data);
       
-      // Store token in memory and localStorage for auth-context
-      if (data.data?.token) {
-        // Store in sessionStorage so auth-context can read it
-        sessionStorage.setItem('auth_token', data.data.token)
-        sessionStorage.setItem('auth_user', JSON.stringify(data.data.user))
-      }
-
       toast.success('2FA erfolgreich verifiziert')
       
-      // Navigate to dashboard
+      // Wait a moment to ensure cookie is set, then navigate to dashboard
+      // The httpOnly cookie is now set by the server and will be sent automatically
+      await new Promise(resolve => setTimeout(resolve, 100));
       router.push('/dashboard')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Fehler bei der Verifizierung'

@@ -32,7 +32,7 @@ export function AdminDashboard() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/admin-dashboard-stats', {
+        const res = await fetch('/api/admin/dashboard-stats', {
           credentials: 'include',
         });
 

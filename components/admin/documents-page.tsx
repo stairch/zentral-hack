@@ -26,11 +26,11 @@ import { toast } from 'sonner';
 interface Document {
   id: string;
   name: string;
-  file_type: string;
-  category_id: string;
-  category?: { name: string };
-  url: string;
-  uploaded_at: string;
+  description?: string;
+  file_path: string;
+  file_size?: number;
+  category_name?: string;
+  created_at: string;
 }
 
 interface Category {
@@ -47,6 +47,7 @@ export function DocumentsManagementPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [categoryId, setCategoryId] = useState<string>('');
+  const [docName, setDocName] = useState<string>('');
 
   // Fetch documents and categories
   useEffect(() => {
@@ -54,7 +55,7 @@ export function DocumentsManagementPage() {
       try {
         setLoading(true);
         const [docsRes, catsRes] = await Promise.all([
-          fetch('/api/admin-documents', { credentials: 'include' }),
+          fetch('/api/admin/documents', { credentials: 'include' }),
           fetch('/api/categories', { credentials: 'include' }),
         ]);
 
@@ -90,8 +91,11 @@ export function DocumentsManagementPage() {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('categoryId', categoryId);
+      if (docName.trim()) {
+        formData.append('name', docName.trim());
+      }
 
-      const res = await fetch('/api/admin-documents', {
+      const res = await fetch('/api/admin/documents', {
         method: 'POST',
         credentials: 'include',
         body: formData,
@@ -109,6 +113,7 @@ export function DocumentsManagementPage() {
       
       setFile(null);
       setCategoryId('');
+      setDocName('');
       
       setTimeout(() => {
         setUploaded(false);
@@ -127,7 +132,7 @@ export function DocumentsManagementPage() {
       if (!confirm('Möchtest du dieses Dokument wirklich löschen?')) return;
 
       try {
-        const res = await fetch(`/api/admin-documents-delete?id=${docId}`, {
+        const res = await fetch(`/api/admin/documents?id=${docId}`, {
           method: 'DELETE',
           credentials: 'include',
         });
@@ -185,6 +190,16 @@ export function DocumentsManagementPage() {
               </div>
             ) : (
               <div className="space-y-4">
+                <div>
+                  <Label htmlFor="doc-name">Dokumentname</Label>
+                  <Input
+                    id="doc-name"
+                    value={docName}
+                    onChange={(e) => setDocName(e.target.value)}
+                    placeholder="z.B. Challenge Briefing"
+                  />
+                </div>
+
                 <div>
                   <Label htmlFor="category">Kategorie</Label>
                   <Select value={categoryId} onValueChange={setCategoryId}>
@@ -253,7 +268,7 @@ export function DocumentsManagementPage() {
                     <div>
                       <p className="font-medium">{doc.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {doc.category?.name} &bull; {doc.file_type}
+                        {doc.category_name || ''} {doc.file_size ? `• ${Math.round(doc.file_size / 1024)} KB` : ''}
                       </p>
                     </div>
                   </div>
@@ -261,7 +276,7 @@ export function DocumentsManagementPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => window.open(doc.url, '_blank')}
+                      onClick={() => window.open(doc.file_path, '_blank')}
                     >
                       Download
                     </Button>

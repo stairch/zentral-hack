@@ -73,7 +73,7 @@ export function AdminCategoriesPage() {
 
     try {
       setSaving(true);
-      const res = await fetch(`/api/categories-update`, {
+      const res = await fetch(`/api/admin/categories`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

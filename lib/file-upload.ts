@@ -4,9 +4,17 @@ import path from 'path';
 // Define allowed file types and their restrictions
 export const ALLOWED_FILE_TYPES = {
   document: {
-    mimeTypes: ['application/pdf'],
-    extensions: ['.pdf'],
-    maxSize: 10 * 1024 * 1024, // 10MB
+    mimeTypes: [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ],
+    extensions: ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx'],
+    maxSize: 20 * 1024 * 1024, // 20MB
   },
   image: {
     mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],

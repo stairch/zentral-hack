@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Calendar, MapPin } from "lucide-react"
+import Link from "next/link"
 
 function FloatingParticle({ delay, duration, x, y }: { delay: number; duration: number; x: number; y: number }) {
   return (
@@ -207,20 +208,24 @@ export function Hero() {
           transition={{ duration: 0.6, delay: 1 }}
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
-          <Button
-            size="lg"
-            className="bg-violet hover:bg-violet/90 text-white font-semibold px-8 py-6 text-lg group"
-          >
-            Jetzt Anmelden
-            <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="border-violet text-violet hover:bg-violet hover:text-white font-semibold px-8 py-6 text-lg"
-          >
-            Mehr Erfahren
-          </Button>
+          <Link href="/anmeldung">
+            <Button
+              size="lg"
+              className="bg-violet hover:bg-violet/90 text-white font-semibold px-8 py-6 text-lg group"
+            >
+              Jetzt Anmelden
+              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
+          <a href="#about">
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-violet text-violet hover:bg-violet hover:text-white font-semibold px-8 py-6 text-lg"
+            >
+              Mehr Erfahren
+            </Button>
+          </a>
         </motion.div>
       </div>
 

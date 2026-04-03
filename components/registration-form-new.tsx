@@ -138,13 +138,25 @@ export function RegistrationForm() {
     setLoading(true);
 
     try {
-      // Signup User
-      await signup(formData.email, formData.password, formData.firstName, formData.lastName);
-      
-      // Complete registration with all details and send email
+      // Try to sign up first
+      let isNewUser = true;
+      try {
+        await signup(formData.email, formData.password, formData.firstName, formData.lastName);
+      } catch (signupError) {
+        const msg = signupError instanceof Error ? signupError.message : '';
+        if (msg.includes('bereits registriert') || msg.includes('already')) {
+          // User already exists — still proceed with registration
+          isNewUser = false;
+        } else {
+          throw signupError;
+        }
+      }
+
+      // Complete registration with category and details
       const registerRes = await fetch('/api/hackathon/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           email: formData.email,
           firstName: formData.firstName,
@@ -160,13 +172,14 @@ export function RegistrationForm() {
       });
 
       if (!registerRes.ok) {
-        throw new Error('Registrierung fehlgeschlagen');
+        const errorData = await registerRes.json().catch(() => null);
+        throw new Error(errorData?.error || 'Registrierung fehlgeschlagen');
       }
 
       setSuccess(true);
       toast.success('Registrierung erfolgreich! Bestätigungsemail versendet.');
       setTimeout(() => {
-        router.push('/dashboard');
+        router.push(isNewUser ? '/dashboard' : '/auth/login');
       }, 2000);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Registrierung fehlgeschlagen';
