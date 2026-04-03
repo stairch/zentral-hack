@@ -28,7 +28,7 @@ export interface EmailOptions {
 export async function sendEmail(options: EmailOptions): Promise<void> {
   try {
     const transporter = getTransporter();
-    
+
     await transporter.sendMail({
       from: `${process.env.SMTP_FROM_NAME || 'Zentral Hack'} <${process.env.SMTP_FROM}>`,
       ...options,
@@ -37,22 +37,6 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
     console.error('Email sending failed:', error);
     throw new Error('Failed to send email');
   }
-}
-
-export async function sendVerificationEmail(to: string, code: string): Promise<void> {
-  const html = `
-    <h2>Bestätige deine E-Mail-Adresse</h2>
-    <p>Dein Verifikationscode ist:</p>
-    <h1 style="letter-spacing: 0.2em; font-size: 32px; margin: 20px 0;">${code}</h1>
-    <p>Dieser Code verfällt in 15 Minuten.</p>
-  `;
-
-  return sendEmail({
-    to,
-    subject: 'Zentral Hack - Email Verifikation',
-    html,
-    text: `Dein Verifikationscode: ${code}`,
-  });
 }
 
 export async function send2FACodeEmail(to: string, code: string): Promise<void> {

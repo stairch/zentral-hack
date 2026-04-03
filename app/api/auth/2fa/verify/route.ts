@@ -38,6 +38,11 @@ export async function POST(request: NextRequest) {
     // Mark 2FA token as verified
     await query('UPDATE two_fa_tokens SET verified = true WHERE id = $1', [twoFa.id]);
 
+    // Mark user's email verified
+    await query('UPDATE users SET email_verified = true, email_verified_at = $1 WHERE id = $2',
+      [new Date(), user.id]
+    );
+
     // Generate JWT with 2FA verified flag
     const payload: JWTPayload = {
       userId: user.id,
