@@ -9,3 +9,6 @@ node_modules
 
 # Uploads (user-generated files)
 public/uploads/
+
+# TypeScript
+next-env.d.ts
