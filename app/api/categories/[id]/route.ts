@@ -7,7 +7,7 @@ import { verifyJWT } from '@/lib/auth';
  * PUT /api/categories/[id]
  * Updates a category (admin only)
  */
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const token = request.cookies.get('token')?.value;
     if (!token) {
@@ -20,7 +20,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const { description } = await request.json();
-    const id = params.id;
+    const { id } = await params;
 
     if (!id || !description || description.trim().length === 0) {
       return new Response(JSON.stringify({ error: 'ID and description required' }), { status: 400 });
