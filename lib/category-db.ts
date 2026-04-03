@@ -1,6 +1,7 @@
 import { query } from '@/lib/db';
 
 const optionalCategoryColumns = ['partner_name', 'color', 'icon'] as const;
+const optionalCategoryColumnsParam: string[] = [...optionalCategoryColumns];
 
 export type OptionalCategoryColumn = (typeof optionalCategoryColumns)[number];
 
@@ -11,7 +12,7 @@ export async function getAvailableCategoryColumns(): Promise<Set<OptionalCategor
      WHERE table_schema = 'public'
        AND table_name = 'categories'
        AND column_name = ANY($1::text[])`,
-    [optionalCategoryColumns]
+    [optionalCategoryColumnsParam]
   );
 
   return new Set(result.rows.map((row) => row.column_name as OptionalCategoryColumn));
