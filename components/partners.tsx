@@ -3,6 +3,7 @@
 import { useRef, useState } from "react"
 import { motion, useInView } from "framer-motion"
 import { SponsorshipModal } from "./sponsorship-modal"
+import { sponsorPackages } from "@/lib/sponsorship-packages"
 
 const partners = {
   organisers: [
@@ -13,12 +14,6 @@ const partners = {
     "getAbstract",
     "STAIR",
     "SchwyzNext",
-  ],
-  sponsorTiers: [
-    { tier: "PLATIN", color: "bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300" },
-    { tier: "GOLD", color: "bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400" },
-    { tier: "SILBER", color: "bg-gradient-to-r from-gray-400 via-gray-200 to-gray-400" },
-    { tier: "BRONZE", color: "bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600" },
   ],
 }
 
@@ -58,6 +53,7 @@ export function Partners() {
   const headerRef = useRef(null)
   const isHeaderInView = useInView(headerRef, { once: true })
   const [sponsorshipModalOpen, setSponsorshipModalOpen] = useState(false)
+  const [selectedPackageSlug, setSelectedPackageSlug] = useState<string | null>(null)
 
   return (
     <>
@@ -103,24 +99,32 @@ export function Partners() {
 
           {/* Sponsor Tiers */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
-            {partners.sponsorTiers.map((tier, index) => (
+            {sponsorPackages.map((tier, index) => (
               <motion.div
-                key={tier.tier}
+                key={tier.slug}
                 className="relative"
                 initial={{ opacity: 0, y: 30 }}
                 animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
               >
                 <motion.div
-                  className={`${tier.color} rounded-xl p-6 text-center h-40 flex flex-col items-center justify-center cursor-pointer transition-all`}
+                  className="rounded-xl p-6 text-center h-48 flex flex-col items-center justify-center cursor-pointer transition-all border border-black/5"
+                  style={{
+                    background: `linear-gradient(135deg, ${tier.color} 0%, rgba(255,255,255,0.92) 100%)`,
+                  }}
                   whileHover={{ scale: 1.05, y: -5 }}
                   transition={{ type: "spring", stiffness: 300 }}
-                  onClick={() => setSponsorshipModalOpen(true)}
+                  onClick={() => {
+                    setSelectedPackageSlug(tier.slug)
+                    setSponsorshipModalOpen(true)
+                  }}
                 >
-                  <span className="font-display font-bold text-2xl text-foreground/80 mb-2">
-                    {tier.tier}
+                  <span className="font-display font-bold text-2xl text-foreground mb-2">
+                    {tier.name.toUpperCase()}
                   </span>
-                  <span className="text-sm text-foreground/60">Sponsor werden</span>
+                  <p className="text-sm text-foreground/75 max-w-[16rem] leading-relaxed">
+                    {tier.shortDescription}
+                  </p>
                 </motion.div>
               </motion.div>
             ))}
@@ -152,6 +156,7 @@ export function Partners() {
       <SponsorshipModal
         isOpen={sponsorshipModalOpen}
         onClose={() => setSponsorshipModalOpen(false)}
+        selectedPackageSlug={selectedPackageSlug}
       />
     </>
   )

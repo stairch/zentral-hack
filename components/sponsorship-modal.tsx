@@ -1,75 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { X, CheckCircle2, Loader2 } from 'lucide-react';
+import { X, CheckCircle2, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
-
-const sponsorPackages = [
-  {
-    name: 'Platin',
-    order: 1,
-    color: '#530A5D',
-    description: 'Premium Partnership Package',
-    benefits: [
-      'Individuell',
-      'Projektkosten inkl.',
-      'Mitwerbschaft/ Präsentation',
-      'Verpflegung',
-      'Exklusive Networking Events',
-    ],
-  },
-  {
-    name: 'Gold',
-    order: 2,
-    color: '#E6FF17',
-    description: 'Gold Partnership Package',
-    benefits: [
-      'Logo auf Website und Event Plattform',
-      'Logo auf Flyer und Signalétik-Plakaten',
-      'Logo auf Social Media Beiträgen',
-      'Porträt Sponsor auf Social Media',
-      'LED-Banner (0.85m)',
-      'Mitwerbung Aussenbereich',
-    ],
-  },
-  {
-    name: 'Silber',
-    order: 3,
-    color: '#C0C0C0',
-    description: 'Silver Partnership Package',
-    benefits: [
-      'Logo auf Website',
-      'Logo auf Event Plattform',
-      'Logo auf Social Media Beiträgen',
-      'Porträt Sponsor auf Social Media',
-      'Mitwerbung Aussenbereich',
-    ],
-  },
-  {
-    name: 'Bronze',
-    order: 4,
-    color: '#CD7F32',
-    description: 'Bronze Partnership Package',
-    benefits: [
-      'Logo auf Website',
-      'Präsenz auf Event Plattform',
-      'Mitwerbung Aussenbereich',
-    ],
-  },
-];
+import { getSponsorPackageBySlug, sponsorPackages } from '@/lib/sponsorship-packages';
 
 interface FormData {
   companyName: string;
@@ -83,9 +23,10 @@ interface FormData {
 interface SponsorshipModalProps {
   isOpen: boolean;
   onClose: () => void;
+  selectedPackageSlug?: string | null;
 }
 
-export function SponsorshipModal({ isOpen, onClose }: SponsorshipModalProps) {
+export function SponsorshipModal({ isOpen, onClose, selectedPackageSlug }: SponsorshipModalProps) {
   const [formData, setFormData] = useState<FormData>({
     companyName: '',
     contactName: '',
@@ -96,6 +37,22 @@ export function SponsorshipModal({ isOpen, onClose }: SponsorshipModalProps) {
   });
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    setFormData((current) => ({
+      ...current,
+      interestedIn: selectedPackageSlug || current.interestedIn || sponsorPackages[0].slug,
+    }));
+  }, [isOpen, selectedPackageSlug]);
+
+  const selectedPackage = useMemo(
+    () => getSponsorPackageBySlug(formData.interestedIn) || getSponsorPackageBySlug(selectedPackageSlug) || sponsorPackages[0],
+    [formData.interestedIn, selectedPackageSlug]
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -116,7 +73,7 @@ export function SponsorshipModal({ isOpen, onClose }: SponsorshipModalProps) {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/sponsorship-contact', {
+      const response = await fetch('/api/sponsor-contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -180,9 +137,9 @@ export function SponsorshipModal({ isOpen, onClose }: SponsorshipModalProps) {
                 >
                   <X className="w-5 h-5" />
                 </Button>
-                <CardTitle className="text-2xl">Sponsoring Pakete</CardTitle>
+                <CardTitle className="text-2xl">Sponsoring anfragen</CardTitle>
                 <CardDescription>
-                  Wähle dein Sponsoring-Paket und kontaktiere uns für weitere Details
+                  Du siehst die Details des gewählten Pakets und kannst uns direkt eine Anfrage schicken.
                 </CardDescription>
               </CardHeader>
 
@@ -202,56 +159,55 @@ export function SponsorshipModal({ isOpen, onClose }: SponsorshipModalProps) {
                   </motion.div>
                 ) : (
                   <div className="space-y-6">
-                    {/* Packages Grid */}
-                    <div>
-                      <h3 className="font-semibold mb-4 text-sm">Verfügbare Pakete</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                        {sponsorPackages.map((pkg) => (
-                          <motion.div
-                            key={pkg.name}
-                            className="p-4 rounded-lg border-2 cursor-pointer transition-all"
-                            style={{
-                              borderColor:
-                                formData.interestedIn === pkg.name.toLowerCase()
-                                  ? pkg.color
-                                  : '#e5e7eb',
-                              backgroundColor:
-                                formData.interestedIn === pkg.name.toLowerCase()
-                                  ? `${pkg.color}15`
-                                  : 'transparent',
-                            }}
-                            onClick={() => handleSelectChange(pkg.name.toLowerCase())}
-                            whileHover={{ scale: 1.02 }}
-                          >
-                            <div
-                              className="font-bold text-sm mb-2"
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+                      <div
+                        className="rounded-xl border p-5"
+                        style={{ backgroundColor: `${selectedPackage.color}12`, borderColor: `${selectedPackage.color}66` }}
+                      >
+                        <p className="text-xs font-semibold tracking-[0.2em] uppercase mb-3" style={{ color: selectedPackage.color }}>
+                          {selectedPackage.name}
+                        </p>
+                        <h3 className="text-xl font-semibold mb-2">{selectedPackage.shortDescription}</h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+                          {selectedPackage.description}
+                        </p>
+                        <div className="space-y-2">
+                          {selectedPackage.benefits.map((benefit) => (
+                            <div key={benefit} className="flex items-start gap-2 text-sm">
+                              <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: selectedPackage.color }} />
+                              <span>{benefit}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label className="text-sm">Paket wechseln</Label>
+                        <div className="grid gap-2">
+                          {sponsorPackages.map((pkg) => (
+                            <button
+                              key={pkg.slug}
+                              type="button"
+                              onClick={() => handleSelectChange(pkg.slug)}
+                              className="rounded-lg border px-4 py-3 text-left transition-all"
                               style={{
-                                color: formData.interestedIn === pkg.name.toLowerCase() ? pkg.color : '#666',
+                                borderColor: selectedPackage.slug === pkg.slug ? pkg.color : '#e5e7eb',
+                                backgroundColor: selectedPackage.slug === pkg.slug ? `${pkg.color}12` : 'transparent',
                               }}
                             >
-                              {pkg.name}
-                            </div>
-                            <ul className="text-xs space-y-1">
-                              {pkg.benefits.slice(0, 2).map((benefit) => (
-                                <li key={benefit} className="flex items-start gap-1">
-                                  <span className="text-[10px]">✓</span>
-                                  <span className="line-clamp-1">{benefit}</span>
-                                </li>
-                              ))}
-                              {pkg.benefits.length > 2 && (
-                                <li className="text-[10px] text-muted-foreground italic">
-                                  +{pkg.benefits.length - 2} weitere Benefits
-                                </li>
-                              )}
-                            </ul>
-                          </motion.div>
-                        ))}
+                              <p className="font-semibold" style={{ color: pkg.color }}>
+                                {pkg.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">{pkg.shortDescription}</p>
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
                     {/* Contact Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="companyName" className="text-sm">
                             Firmenname *
@@ -280,7 +236,7 @@ export function SponsorshipModal({ isOpen, onClose }: SponsorshipModalProps) {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="email" className="text-sm">
                             E-Mail *
@@ -308,6 +264,11 @@ export function SponsorshipModal({ isOpen, onClose }: SponsorshipModalProps) {
                             placeholder="+41 XX XXX XX XX"
                           />
                         </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm">Interessiert an</Label>
+                        <Input value={selectedPackage.name} readOnly />
                       </div>
 
                       <div className="space-y-2">
