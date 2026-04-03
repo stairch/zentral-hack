@@ -2,10 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { withCategoryPartnerAuth, AuthenticatedRequest } from '@/lib/middleware';
 import { successResponse, validationError, serverError } from '@/lib/api';
+import { buildCategorySelectClause, getAvailableCategoryColumns } from '@/lib/category-db';
+import { categoryIconMap, normalizeHexColor } from '@/lib/category-config';
 
 export async function GET(request: NextRequest) {
   try {
-    const result = await query('SELECT id, name, slug, description, is_active FROM categories WHERE is_active = true ORDER BY name');
+    const availableColumns = await getAvailableCategoryColumns();
+    const result = await query(
+      `SELECT ${buildCategorySelectClause(availableColumns)}
+       FROM categories
+       WHERE is_active = true
+       ORDER BY name`
+    );
     return successResponse({ categories: result.rows });
   } catch (error) {
     console.error('Categories fetch error:', error);
@@ -15,19 +23,66 @@ export async function GET(request: NextRequest) {
 
 async function putHandler(req: AuthenticatedRequest) {
   try {
-    const { id, description } = await req.json();
+    const { id, name, description, partnerName, color, icon } = await req.json();
 
     if (!id) {
       return validationError('Category ID required');
+    }
+
+    if (typeof name === 'string' && name.trim().length === 0) {
+      return validationError('Category name required');
+    }
+
+    if (typeof icon === 'string' && !(icon in categoryIconMap)) {
+      return validationError('Invalid category icon');
     }
 
     if (req.user?.role === 'category_partner' && req.user.categoryId !== id) {
       return validationError('Cannot edit other categories');
     }
 
+    const availableColumns = await getAvailableCategoryColumns();
+    const fieldAssignments: string[] = [];
+    const values: Array<string | null> = [];
+
+    if (typeof name === 'string') {
+      values.push(name.trim());
+      fieldAssignments.push(`name = $${values.length}`);
+    }
+
+    if (typeof description === 'string') {
+      values.push(description.trim());
+      fieldAssignments.push(`description = $${values.length}`);
+    }
+
+    if (availableColumns.has('partner_name') && typeof partnerName === 'string') {
+      values.push(partnerName.trim() || null);
+      fieldAssignments.push(`partner_name = $${values.length}`);
+    }
+
+    if (availableColumns.has('color') && typeof color === 'string') {
+      values.push(normalizeHexColor(color));
+      fieldAssignments.push(`color = $${values.length}`);
+    }
+
+    if (availableColumns.has('icon') && typeof icon === 'string') {
+      values.push(icon);
+      fieldAssignments.push(`icon = $${values.length}`);
+    }
+
+    if (fieldAssignments.length === 0) {
+      return validationError('No valid category fields provided');
+    }
+
+    fieldAssignments.push('updated_at = NOW()');
+    values.push(id);
+
     const result = await query(
-      'UPDATE categories SET description = $1, updated_at = NOW() WHERE id = $2 RETURNING id, name, description',
-      [description, id]
+      `UPDATE categories
+       SET ${fieldAssignments.join(', ')}
+       WHERE id = $${values.length}
+       RETURNING ${buildCategorySelectClause(availableColumns)}`,
+      values
     );
 
     if (result.rows.length === 0) {

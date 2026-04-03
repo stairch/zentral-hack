@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { query } from '@/lib/db';
 import { successResponse, serverError } from '@/lib/api';
+import { buildCategorySelectClause, getAvailableCategoryColumns } from '@/lib/category-db';
 
 /**
  * GET /api/categories
@@ -8,8 +9,11 @@ import { successResponse, serverError } from '@/lib/api';
  */
 export async function GET(request: NextRequest) {
   try {
+    const availableColumns = await getAvailableCategoryColumns();
     const result = await query(
-      'SELECT id, name, slug, description FROM categories ORDER BY name ASC'
+      `SELECT ${buildCategorySelectClause(availableColumns)}
+       FROM categories
+       ORDER BY name ASC`
     );
 
     return successResponse({
