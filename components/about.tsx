@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import { motion, useInView } from "framer-motion"
 import { Lightbulb, Users, Network, MapPin } from "lucide-react"
 import { useLanguage } from "@/lib/language-context"
@@ -80,6 +80,66 @@ function CounterAnimation({ end, suffix = "" }: { end: number; suffix?: string }
   )
 }
 
+type ValueCardProps = {
+  value: (typeof values)[number]
+  index: number
+  isInView: boolean
+  language: "de" | "en"
+}
+
+function ValueCard({ value, index, isInView, language }: ValueCardProps) {
+  const [rotation, setRotation] = useState(0)
+  const [isSpinning, setIsSpinning] = useState(false)
+  const [hasAppeared, setHasAppeared] = useState(false)
+
+  const cardVariants = {
+    rest: { opacity: 0, y: 30 },
+    visible: (index: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: hasAppeared ? 0.3 : 0.5,
+        delay: hasAppeared ? 0 : 0.5 + index * 0.1
+      }
+    }),
+    hover: {
+      y: -5,
+      transition: { duration: 0.3, delay: 0 }
+    }
+  }
+
+  const handleHoverStart = () => {
+    if (!isSpinning) {
+      setRotation((prev) => prev + 360)
+      setIsSpinning(true)
+    }
+  }
+
+  return (
+    <motion.div
+      className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm"
+      variants={cardVariants}
+      custom={index}
+      initial="rest"
+      animate={isInView ? "visible" : "rest"}
+      whileHover="hover"
+      onHoverStart={handleHoverStart}
+      onAnimationComplete={(definition) => {
+        if (definition === "visible") setHasAppeared(true)
+      }}>
+      <motion.div
+        className="bg-yellow/20 mb-4 flex h-12 w-12 items-center justify-center rounded-full"
+        animate={{ rotate: rotation }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+        onAnimationComplete={() => setIsSpinning(false)}>
+        <value.icon className="text-yellow h-6 w-6" />
+      </motion.div>
+      <h3 className="font-display mb-2 text-xl font-bold text-white">{value.title[language]}</h3>
+      <p className="text-light-violet text-sm">{value.description[language]}</p>
+    </motion.div>
+  )
+}
+
 export function About() {
   const sectionRef = useRef(null)
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" })
@@ -148,24 +208,13 @@ export function About() {
         {/* Values Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {values.map((value, index) => (
-            <motion.div
+            <ValueCard
               key={value.title.de}
-              className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm"
-              initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
-              whileHover={{
-                y: -5
-              }}>
-              <motion.div
-                className="bg-yellow/20 mb-4 flex h-12 w-12 items-center justify-center rounded-full"
-                whileHover={{ rotate: 360 }}
-                transition={{ duration: 0.6 }}>
-                <value.icon className="text-yellow h-6 w-6" />
-              </motion.div>
-              <h3 className="font-display mb-2 text-xl font-bold text-white">{value.title[language]}</h3>
-              <p className="text-light-violet text-sm">{value.description[language]}</p>
-            </motion.div>
+              value={value}
+              index={index}
+              isInView={isInView}
+              language={language}
+            />
           ))}
         </div>
       </div>
