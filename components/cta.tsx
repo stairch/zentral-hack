@@ -24,7 +24,7 @@ const copy = {
     success: "Super! Du bist angemeldet.",
     noSpam: "Kein Spam, versprochen. Nur wichtige Updates zum Zentral Hack.",
     signupFailed: "Anmeldung fehlgeschlagen",
-    genericError: "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
+    genericError: "Ein Fehler ist aufgetreten. Bitte versuche es erneut."
   },
   en: {
     date: "23-24 OCTOBER 2026",
@@ -39,8 +39,8 @@ const copy = {
     success: "Great! You are subscribed.",
     noSpam: "No spam, promised. Only important updates about Zentral Hack.",
     signupFailed: "Subscription failed",
-    genericError: "An error occurred. Please try again.",
-  },
+    genericError: "An error occurred. Please try again."
+  }
 } as const
 
 export function CTA() {
@@ -67,8 +67,8 @@ export function CTA() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          source: "cta",
-        }),
+          source: "cta"
+        })
       })
 
       if (!response.ok) {
@@ -86,64 +86,59 @@ export function CTA() {
   }
 
   return (
-    <section ref={sectionRef} className="py-24 bg-[#530A5D] relative overflow-hidden">
+    <section ref={sectionRef} className="relative overflow-hidden bg-[#530A5D] py-24">
       {/* Animated background elements */}
       <motion.div
-        className="absolute top-20 left-10 w-64 h-64 rounded-full blur-3xl"
+        className="absolute top-20 left-10 h-64 w-64 rounded-full blur-3xl"
         style={{ backgroundColor: "rgba(230, 255, 23, 0.2)" }}
         animate={{
           scale: [1, 1.2, 1],
-          opacity: [0.3, 0.5, 0.3],
+          opacity: [0.3, 0.5, 0.3]
         }}
         transition={{ duration: 5, repeat: Infinity }}
       />
       <motion.div
-        className="absolute bottom-20 right-10 w-96 h-96 rounded-full blur-3xl"
+        className="absolute right-10 bottom-20 h-96 w-96 rounded-full blur-3xl"
         style={{ backgroundColor: "rgba(213, 194, 247, 0.2)" }}
         animate={{
           scale: [1.2, 1, 1.2],
-          opacity: [0.3, 0.5, 0.3],
+          opacity: [0.3, 0.5, 0.3]
         }}
         transition={{ duration: 7, repeat: Infinity }}
       />
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="relative z-10 container mx-auto px-4">
         <motion.div
-          className="max-w-3xl mx-auto text-center"
+          className="mx-auto max-w-3xl text-center"
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-        >
+          transition={{ duration: 0.6 }}>
           {/* Badge */}
           <motion.div
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border mb-8"
+            className="mb-8 inline-flex items-center gap-2 rounded-full border px-4 py-2"
             style={{ backgroundColor: "rgba(255, 255, 255, 0.1)", borderColor: "rgba(255, 255, 255, 0.2)" }}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <Sparkles className="w-4 h-4 text-[#E6FF17]" />
-            <span className="text-white text-sm font-medium">{text.date}</span>
+            transition={{ duration: 0.6, delay: 0.2 }}>
+            <Sparkles className="h-4 w-4 text-[#E6FF17]" />
+            <span className="text-sm font-medium text-white">{text.date}</span>
           </motion.div>
 
           {/* Heading */}
           <motion.h2
-            className="text-4xl md:text-6xl font-bold text-white mb-6"
+            className="mb-6 text-4xl font-bold text-white md:text-6xl"
             style={{ fontFamily: "var(--font-display)" }}
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            {text.heading1}{" "}
-            <span className="text-[#E6FF17]">{text.heading2}</span>?
+            transition={{ duration: 0.6, delay: 0.3 }}>
+            {text.heading1} <span className="text-[#E6FF17]">{text.heading2}</span>?
           </motion.h2>
 
           <motion.p
-            className="text-[#D5C2F7] text-lg mb-10 leading-relaxed"
+            className="mb-10 text-lg leading-relaxed text-[#D5C2F7]"
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
+            transition={{ duration: 0.6, delay: 0.4 }}>
             {text.description}
           </motion.p>
 
@@ -152,81 +147,70 @@ export function CTA() {
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="space-y-6"
-          >
+            className="space-y-6">
             {/* Primary CTA - Registration */}
             <Link href="/anmeldung">
               <Button
                 size="lg"
-                className="bg-[#E6FF17] hover:bg-[#E6FF17]/90 text-[#530A5D] font-bold px-10 h-16 rounded-full text-lg group"
-              >
+                className="group h-16 rounded-full bg-[#E6FF17] px-10 text-lg font-bold text-[#530A5D] hover:bg-[#E6FF17]/90">
                 {text.register}
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
 
-            <p className="text-white/60 text-sm">{text.or}</p>
+            <p className="text-sm text-white/60">{text.or}</p>
 
             {/* Newsletter signup */}
             {!isSubmitted ? (
-              <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto">
-                <div className="flex flex-col sm:flex-row gap-3">
+              <form onSubmit={handleSubmit} className="mx-auto max-w-md space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row">
                   <Input
                     type="email"
                     placeholder={text.newsletterPlaceholder}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12 px-6 rounded-full focus:border-[#E6FF17] focus:ring-[#E6FF17]"
+                    className="h-12 flex-1 rounded-full border-white/20 bg-white/10 px-6 text-white placeholder:text-white/50 focus:border-[#E6FF17] focus:ring-[#E6FF17]"
                   />
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="bg-white/20 hover:bg-white/30 text-white font-semibold px-6 h-12 rounded-full"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      text.newsletterButton
-                    )}
+                    className="h-12 rounded-full bg-white/20 px-6 font-semibold text-white hover:bg-white/30">
+                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : text.newsletterButton}
                   </Button>
                 </div>
-                
+
                 <div className="flex items-center justify-center gap-2">
                   <Checkbox
                     id="wants-emails"
                     checked={wantsEmails}
                     onCheckedChange={(checked) => setWantsEmails(checked as boolean)}
-                    className="border-white/50 data-[state=checked]:bg-[#E6FF17] data-[state=checked]:border-[#E6FF17]"
+                    className="border-white/50 data-[state=checked]:border-[#E6FF17] data-[state=checked]:bg-[#E6FF17]"
                   />
-                  <Label htmlFor="wants-emails" className="text-white/70 text-sm cursor-pointer">
+                  <Label htmlFor="wants-emails" className="cursor-pointer text-sm text-white/70">
                     {text.wantsEmail}
                   </Label>
                 </div>
 
-                {error && (
-                  <p className="text-red-300 text-sm">{error}</p>
-                )}
+                {error && <p className="text-sm text-red-300">{error}</p>}
               </form>
             ) : (
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center justify-center gap-3 text-[#E6FF17]"
-              >
-                <CheckCircle className="w-6 h-6" />
-                <span className="font-semibold text-lg">{text.success}</span>
+                className="flex items-center justify-center gap-3 text-[#E6FF17]">
+                <CheckCircle className="h-6 w-6" />
+                <span className="text-lg font-semibold">{text.success}</span>
               </motion.div>
             )}
           </motion.div>
 
           {/* Trust text */}
           <motion.p
-            className="text-white/50 text-sm mt-8"
+            className="mt-8 text-sm text-white/50"
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : {}}
-            transition={{ duration: 0.6, delay: 0.7 }}
-          >
+            transition={{ duration: 0.6, delay: 0.7 }}>
             {text.noSpam}
           </motion.p>
         </motion.div>

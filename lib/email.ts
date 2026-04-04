@@ -1,41 +1,41 @@
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer"
 
-let transporter: nodemailer.Transporter | null = null;
+let transporter: nodemailer.Transporter | null = null
 
 function getTransporter() {
-  if (transporter) return transporter;
+  if (transporter) return transporter
 
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_PORT === '465',
+    port: parseInt(process.env.SMTP_PORT || "587"),
+    secure: process.env.SMTP_PORT === "465",
     auth: {
       user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
-    },
-  });
+      pass: process.env.SMTP_PASSWORD
+    }
+  })
 
-  return transporter;
+  return transporter
 }
 
 export interface EmailOptions {
-  to: string | string[];
-  subject: string;
-  html: string;
-  text?: string;
+  to: string | string[]
+  subject: string
+  html: string
+  text?: string
 }
 
 export async function sendEmail(options: EmailOptions): Promise<void> {
   try {
-    const transporter = getTransporter();
+    const transporter = getTransporter()
 
     await transporter.sendMail({
-      from: `${process.env.SMTP_FROM_NAME || 'Zentral Hack'} <${process.env.SMTP_FROM}>`,
-      ...options,
-    });
+      from: `${process.env.SMTP_FROM_NAME || "Zentral Hack"} <${process.env.SMTP_FROM}>`,
+      ...options
+    })
   } catch (error) {
-    console.error('Email sending failed:', error);
-    throw new Error('Failed to send email');
+    console.error("Email sending failed:", error)
+    throw new Error("Failed to send email")
   }
 }
 
@@ -46,14 +46,14 @@ export async function send2FACodeEmail(to: string, code: string): Promise<void> 
     <h1 style="letter-spacing: 0.1em; font-size: 36px; margin: 20px 0; font-family: monospace; color: #530A5D;">${code}</h1>
     <p>Dieser Code verfällt in 15 Minuten.</p>
     <p style="color: #666; font-size: 12px;">Falls du dich nicht angemeldet hast, ignoriere diese E-Mail und ändern dein Passwort.</p>
-  `;
+  `
 
   return sendEmail({
     to,
-    subject: 'Zentral Hack - Dein 2FA Code',
+    subject: "Zentral Hack - Dein 2FA Code",
     html,
-    text: `Dein 2FA Code: ${code}`,
-  });
+    text: `Dein 2FA Code: ${code}`
+  })
 }
 
 export async function send2FAEmail(to: string, link: string): Promise<void> {
@@ -63,14 +63,14 @@ export async function send2FAEmail(to: string, link: string): Promise<void> {
     <p><a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: #530A5D; color: white; text-decoration: none; border-radius: 5px;">Bestätigen</a></p>
     <p>Dieser Link verfällt in 15 Minuten.</p>
     <p style="color: #666; font-size: 12px;">Falls du diesen Link nicht angefordert hast, ignoriere diese E-Mail.</p>
-  `;
+  `
 
   return sendEmail({
     to,
-    subject: 'Zentral Hack - Admin Zugang Bestätigung',
+    subject: "Zentral Hack - Admin Zugang Bestätigung",
     html,
-    text: `Bestätigung erforderlich: ${link}`,
-  });
+    text: `Bestätigung erforderlich: ${link}`
+  })
 }
 
 export async function sendCampaignEmail(
@@ -78,28 +78,28 @@ export async function sendCampaignEmail(
   subject: string,
   html: string,
   options?: {
-    campaignType?: string;
+    campaignType?: string
   }
 ): Promise<void> {
-  if (recipients.length === 0) return;
+  if (recipients.length === 0) return
 
-  if (options?.campaignType === 'newsletter_subscribers' && html.includes('{{recipient_email}}')) {
+  if (options?.campaignType === "newsletter_subscribers" && html.includes("{{recipient_email}}")) {
     for (const recipient of recipients) {
-      const encodedEmail = encodeURIComponent(recipient);
-      const recipientHtml = html.replace(/\{\{recipient_email\}\}/g, encodedEmail);
+      const encodedEmail = encodeURIComponent(recipient)
+      const recipientHtml = html.replace(/\{\{recipient_email\}\}/g, encodedEmail)
 
       await sendEmail({
         to: recipient,
         subject,
-        html: recipientHtml,
-      });
+        html: recipientHtml
+      })
     }
-    return;
+    return
   }
 
   return sendEmail({
     to: recipients,
     subject,
-    html,
-  });
+    html
+  })
 }

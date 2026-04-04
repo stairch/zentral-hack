@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
-import { getNewsletterColumnSupport } from '@/lib/newsletter-db';
+import { NextRequest, NextResponse } from "next/server"
+import { query } from "@/lib/db"
+import { getNewsletterColumnSupport } from "@/lib/newsletter-db"
 
 function renderResultPage(title: string, message: string): string {
   return `<!DOCTYPE html>
@@ -28,22 +28,22 @@ function renderResultPage(title: string, message: string): string {
       <div class="body">
         <h1 class="title">${title}</h1>
         <p class="msg">${message}</p>
-        <a class="link" href="${process.env.NEXT_PUBLIC_APP_URL || 'https://zentralhack.ch'}">Zur Website</a>
+        <a class="link" href="${process.env.NEXT_PUBLIC_APP_URL || "https://zentralhack.ch"}">Zur Website</a>
       </div>
     </div>
   </div>
 </body>
-</html>`;
+</html>`
 }
 
 async function unsubscribeWeekly(email: string) {
-  const columnSupport = await getNewsletterColumnSupport();
+  const columnSupport = await getNewsletterColumnSupport()
 
   if (columnSupport.weeklyUpdatesSubscribed) {
     const sql = `UPDATE newsletter_subscribers
-                 SET weekly_updates_subscribed = false${columnSupport.updatedAt ? ', updated_at = NOW()' : ''}
-                 WHERE email = $1`;
-    return query(sql, [email]);
+                 SET weekly_updates_subscribed = false${columnSupport.updatedAt ? ", updated_at = NOW()" : ""}
+                 WHERE email = $1`
+    return query(sql, [email])
   }
 
   // Backward-compatible fallback for old schema.
@@ -52,72 +52,77 @@ async function unsubscribeWeekly(email: string) {
      SET subscribed = false
      WHERE email = $1`,
     [email]
-  );
+  )
 }
 
 function isValidEmail(email: string): boolean {
-  return /^\S+@\S+\.\S+$/.test(email);
+  return /^\S+@\S+\.\S+$/.test(email)
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const email = url.searchParams.get('email')?.trim().toLowerCase();
-    const category = url.searchParams.get('category');
+    const url = new URL(request.url)
+    const email = url.searchParams.get("email")?.trim().toLowerCase()
+    const category = url.searchParams.get("category")
 
-    if (!email || !email.includes('@')) {
+    if (!email || !email.includes("@")) {
       return new NextResponse(
-        renderResultPage('Ungültiger Link', 'Die E-Mail-Adresse im Abmeldelink ist ungültig.'),
-        { status: 400, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-      );
+        renderResultPage("Ungültiger Link", "Die E-Mail-Adresse im Abmeldelink ist ungültig."),
+        { status: 400, headers: { "Content-Type": "text/html; charset=utf-8" } }
+      )
     }
 
-    if (category !== 'weekly_updates') {
+    if (category !== "weekly_updates") {
       return new NextResponse(
-        renderResultPage('Kategorie nicht unterstützt', 'Dieser Link ist nur für Weekly Updates vorgesehen.'),
-        { status: 400, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-      );
+        renderResultPage("Kategorie nicht unterstützt", "Dieser Link ist nur für Weekly Updates vorgesehen."),
+        { status: 400, headers: { "Content-Type": "text/html; charset=utf-8" } }
+      )
     }
 
-    await unsubscribeWeekly(email);
+    await unsubscribeWeekly(email)
 
     return new NextResponse(
       renderResultPage(
-        'Abmeldung erfolgreich',
-        'Du wurdest von Weekly Updates abgemeldet. Andere E-Mail-Kategorien bleiben weiterhin aktiv.'
+        "Abmeldung erfolgreich",
+        "Du wurdest von Weekly Updates abgemeldet. Andere E-Mail-Kategorien bleiben weiterhin aktiv."
       ),
-      { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-    );
+      { headers: { "Content-Type": "text/html; charset=utf-8" } }
+    )
   } catch (error) {
-    console.error('Newsletter public unsubscribe error:', error);
+    console.error("Newsletter public unsubscribe error:", error)
     return new NextResponse(
-      renderResultPage('Fehler', 'Die Abmeldung konnte nicht verarbeitet werden. Bitte versuche es später erneut.'),
-      { status: 500, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-    );
+      renderResultPage(
+        "Fehler",
+        "Die Abmeldung konnte nicht verarbeitet werden. Bitte versuche es später erneut."
+      ),
+      { status: 500, headers: { "Content-Type": "text/html; charset=utf-8" } }
+    )
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const email = String(body?.email || '').trim().toLowerCase();
-    const category = body?.category;
+    const body = await request.json()
+    const email = String(body?.email || "")
+      .trim()
+      .toLowerCase()
+    const category = body?.category
 
     if (!isValidEmail(email)) {
-      return NextResponse.json({ error: 'Ungültige E-Mail-Adresse' }, { status: 400 });
+      return NextResponse.json({ error: "Ungültige E-Mail-Adresse" }, { status: 400 })
     }
 
-    if (category !== 'weekly_updates') {
-      return NextResponse.json({ error: 'Nur weekly_updates wird unterstützt' }, { status: 400 });
+    if (category !== "weekly_updates") {
+      return NextResponse.json({ error: "Nur weekly_updates wird unterstützt" }, { status: 400 })
     }
 
-    await unsubscribeWeekly(email);
+    await unsubscribeWeekly(email)
     return NextResponse.json({
       success: true,
-      message: 'Von Weekly Updates abgemeldet. Andere Kategorien bleiben aktiv.',
-    });
+      message: "Von Weekly Updates abgemeldet. Andere Kategorien bleiben aktiv."
+    })
   } catch (error) {
-    console.error('Newsletter unsubscribe POST error:', error);
-    return NextResponse.json({ error: 'Abmeldung fehlgeschlagen' }, { status: 500 });
+    console.error("Newsletter unsubscribe POST error:", error)
+    return NextResponse.json({ error: "Abmeldung fehlgeschlagen" }, { status: 500 })
   }
 }

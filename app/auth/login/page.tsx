@@ -22,12 +22,12 @@ export default function LoginPage() {
   const [code2FA, setCode2FA] = useState("")
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading) return
     if (user) {
-      console.log('[Login] User found, redirecting to dashboard');
-      router.push('/dashboard');
+      console.log("[Login] User found, redirecting to dashboard")
+      router.push("/dashboard")
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,15 +37,15 @@ export default function LoginPage() {
     try {
       // Try to sign up first
       try {
-        await login(email, password);
+        await login(email, password)
       } catch (signupError) {
-        throw new Error(signupError instanceof Error ? signupError.message : 'Registrierung fehlgeschlagen');
+        throw new Error(signupError instanceof Error ? signupError.message : "Registrierung fehlgeschlagen")
       }
 
       setShow2FA(true)
-      toast.success('2FA Code wurde an deine E-Mail gesendet')
+      toast.success("2FA Code wurde an deine E-Mail gesendet")
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Login fehlgeschlagen'
+      const message = err instanceof Error ? err.message : "Login fehlgeschlagen"
       setError(message)
       toast.error(message)
     } finally {
@@ -60,32 +60,32 @@ export default function LoginPage() {
 
     try {
       if (!code2FA.trim()) {
-        throw new Error('Bitte geben Sie den 2FA-Code ein')
+        throw new Error("Bitte geben Sie den 2FA-Code ein")
       }
 
-      const res = await fetch('/api/auth/2fa/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, code: code2FA.toUpperCase() }),
+      const res = await fetch("/api/auth/2fa/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, code: code2FA.toUpperCase() })
       })
 
       if (!res.ok) {
         const errorData = await res.json()
-        throw new Error(errorData.data?.error || errorData.error || '2FA Verifizierung fehlgeschlagen')
+        throw new Error(errorData.data?.error || errorData.error || "2FA Verifizierung fehlgeschlagen")
       }
 
       const data = await res.json()
-      console.log('[Login] 2FA response:', data);
+      console.log("[Login] 2FA response:", data)
 
-      toast.success('2FA erfolgreich verifiziert')
+      toast.success("2FA erfolgreich verifiziert")
 
       // Wait a moment to ensure cookie is set, then navigate to dashboard
       // The httpOnly cookie is now set by the server and will be sent automatically
-      await new Promise(resolve => setTimeout(resolve, 300));
-      router.push('/dashboard')
+      await new Promise((resolve) => setTimeout(resolve, 300))
+      router.push("/dashboard")
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Fehler bei der Verifizierung'
+      const message = err instanceof Error ? err.message : "Fehler bei der Verifizierung"
       setError(message)
       toast.error(message)
     } finally {
@@ -94,30 +94,25 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
+    <main className="bg-background flex min-h-screen items-center justify-center px-4">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8"
-        >
-          <ArrowLeft className="w-4 h-4" />
+          className="text-muted-foreground hover:text-foreground mb-8 inline-flex items-center gap-2">
+          <ArrowLeft className="h-4 w-4" />
           Zurück zur Startseite
         </Link>
 
-        <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
+        <div className="bg-card border-border rounded-2xl border p-8 shadow-lg">
           {!show2FA ? (
             <>
-              <div className="text-center mb-8">
-                <h1 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: "var(--font-display)" }}>
+              <div className="mb-8 text-center">
+                <h1
+                  className="text-foreground mb-2 text-2xl font-bold"
+                  style={{ fontFamily: "var(--font-display)" }}>
                   WILLKOMMEN ZURÜCK
                 </h1>
-                <p className="text-muted-foreground">
-                  Melde dich an, um dein Dashboard zu sehen
-                </p>
+                <p className="text-muted-foreground">Melde dich an, um dein Dashboard zu sehen</p>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-6">
@@ -147,42 +142,41 @@ export default function LoginPage() {
                   />
                 </div>
 
-                {error && (
-                  <p className="text-red-500 text-sm">{error}</p>
-                )}
+                {error && <p className="text-sm text-red-500">{error}</p>}
 
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#530A5D] hover:bg-[#530A5D]/90 text-white h-12"
-                >
+                  className="h-12 w-full bg-[#530A5D] text-white hover:bg-[#530A5D]/90">
                   {loading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
                     <>
-                      <LogIn className="w-5 h-5 mr-2" />
+                      <LogIn className="mr-2 h-5 w-5" />
                       Anmelden
                     </>
                   )}
                 </Button>
               </form>
 
-              <p className="text-center text-muted-foreground text-sm mt-6">
+              <p className="text-muted-foreground mt-6 text-center text-sm">
                 Noch kein Konto?{" "}
-                <Link href="/anmeldung" className="text-[#530A5D] hover:underline font-medium">
+                <Link href="/anmeldung" className="font-medium text-[#530A5D] hover:underline">
                   Jetzt registrieren
                 </Link>
               </p>
             </>
           ) : (
             <>
-              <div className="text-center mb-8">
-                <div className="flex justify-center mb-4">
-                  <div className="bg-[#530A5D]/10 p-4 rounded-full">
-                    <Lock className="w-8 h-8 text-[#530A5D]" />
+              <div className="mb-8 text-center">
+                <div className="mb-4 flex justify-center">
+                  <div className="rounded-full bg-[#530A5D]/10 p-4">
+                    <Lock className="h-8 w-8 text-[#530A5D]" />
                   </div>
                 </div>
-                <h1 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: "var(--font-display)" }}>
+                <h1
+                  className="text-foreground mb-2 text-2xl font-bold"
+                  style={{ fontFamily: "var(--font-display)" }}>
                   2-FAKTOR AUTH
                 </h1>
                 <p className="text-muted-foreground text-sm">
@@ -201,28 +195,23 @@ export default function LoginPage() {
                     placeholder="z.B. AB12CD"
                     maxLength={6}
                     required
-                    className="bg-background text-center text-xl font-mono"
+                    className="bg-background text-center font-mono text-xl"
                     autoFocus
                   />
-                  <p className="text-xs text-muted-foreground text-center">
-                    6 Zeichen aus E-Mail
-                  </p>
+                  <p className="text-muted-foreground text-center text-xs">6 Zeichen aus E-Mail</p>
                 </div>
 
-                {error && (
-                  <p className="text-red-500 text-sm text-center">{error}</p>
-                )}
+                {error && <p className="text-center text-sm text-red-500">{error}</p>}
 
                 <Button
                   type="submit"
                   disabled={loading || code2FA.length !== 6}
-                  className="w-full bg-[#530A5D] hover:bg-[#530A5D]/90 text-white h-12"
-                >
+                  className="h-12 w-full bg-[#530A5D] text-white hover:bg-[#530A5D]/90">
                   {loading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
                     <>
-                      <Lock className="w-5 h-5 mr-2" />
+                      <Lock className="mr-2 h-5 w-5" />
                       Verifizieren
                     </>
                   )}
@@ -236,8 +225,7 @@ export default function LoginPage() {
                     setCode2FA("")
                     setError(null)
                   }}
-                  className="w-full"
-                >
+                  className="w-full">
                   Zurück
                 </Button>
               </form>

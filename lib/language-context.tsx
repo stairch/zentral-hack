@@ -1,48 +1,48 @@
-'use client';
+"use client"
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from "react"
 
-type Language = 'de' | 'en';
+type Language = "de" | "en"
 
 interface LanguageContextValue {
-  language: Language;
-  setLanguage: (language: Language) => void;
+  language: Language
+  setLanguage: (language: Language) => void
 }
 
-const LanguageContext = createContext<LanguageContextValue | undefined>(undefined);
+const LanguageContext = createContext<LanguageContextValue | undefined>(undefined)
 
-const storageKey = 'zh-language';
+const storageKey = "zh-language"
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>('de');
+  const [language, setLanguage] = useState<Language>("de")
 
   useEffect(() => {
-    const saved = window.localStorage.getItem(storageKey);
-    if (saved === 'de' || saved === 'en') {
-      setLanguage(saved);
-      return;
+    const saved = window.localStorage.getItem(storageKey)
+    if (saved === "de" || saved === "en") {
+      setLanguage(saved)
+      return
     }
 
-    const browserLanguage = navigator.language.toLowerCase();
-    if (browserLanguage.startsWith('en')) {
-      setLanguage('en');
+    const browserLanguage = navigator.language.toLowerCase()
+    if (browserLanguage.startsWith("en")) {
+      setLanguage("en")
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    window.localStorage.setItem(storageKey, language);
-    document.documentElement.lang = language;
-  }, [language]);
+    window.localStorage.setItem(storageKey, language)
+    document.documentElement.lang = language
+  }, [language])
 
-  const value = useMemo(() => ({ language, setLanguage }), [language]);
+  const value = useMemo(() => ({ language, setLanguage }), [language])
 
-  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
 }
 
 export function useLanguage() {
-  const context = useContext(LanguageContext);
+  const context = useContext(LanguageContext)
   if (!context) {
-    throw new Error('useLanguage must be used inside LanguageProvider');
+    throw new Error("useLanguage must be used inside LanguageProvider")
   }
-  return context;
+  return context
 }

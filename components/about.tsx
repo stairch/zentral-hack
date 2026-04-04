@@ -11,33 +11,33 @@ const values = [
     title: { de: "Innovation", en: "Innovation" },
     description: {
       de: "Plattform für neue Ideen und kreative Lösungen.",
-      en: "A platform for new ideas and creative solutions.",
-    },
+      en: "A platform for new ideas and creative solutions."
+    }
   },
   {
     icon: Users,
     title: { de: "Nachwuchs", en: "Young Talent" },
     description: {
       de: "Förderung junger Talente der ICT-Branche.",
-      en: "Supporting young talents in the ICT industry.",
-    },
+      en: "Supporting young talents in the ICT industry."
+    }
   },
   {
     icon: Network,
     title: { de: "Networking", en: "Networking" },
     description: {
       de: "Verbindung von Bildung, Wirtschaft und Community.",
-      en: "Connecting education, business, and community.",
-    },
+      en: "Connecting education, business, and community."
+    }
   },
   {
     icon: MapPin,
     title: { de: "Lokal", en: "Local" },
     description: {
       de: "Verankert in der Zentralschweiz.",
-      en: "Rooted in Central Switzerland.",
-    },
-  },
+      en: "Rooted in Central Switzerland."
+    }
+  }
 ]
 
 const copy = {
@@ -47,7 +47,7 @@ const copy = {
     headingAccent: "ZENTRALSCHWEIZ",
     description:
       "Zentral Hack vereint bestehende Events und Hackathons zu einem gemeinsamen Grossevent. Wir bringen Bildung, Wirtschaft und Community zusammen, um Innovation und Nachwuchsförderung in der Region voranzutreiben.",
-    stats: ["Hacken", "Kategorien", "Teilnehmer", "Ziel"],
+    stats: ["Hacken", "Kategorien", "Teilnehmer", "Ziel"]
   },
   en: {
     badge: "ABOUT",
@@ -55,8 +55,8 @@ const copy = {
     headingAccent: "CENTRAL SWITZERLAND",
     description:
       "Zentral Hack unites existing events and hackathons into one large joint event. We bring education, business, and community together to advance innovation and young talent in the region.",
-    stats: ["Hours", "Categories", "Participants", "Goal"],
-  },
+    stats: ["Hours", "Categories", "Participants", "Goal"]
+  }
 } as const
 
 function CounterAnimation({ end, suffix = "" }: { end: number; suffix?: string }) {
@@ -64,22 +64,15 @@ function CounterAnimation({ end, suffix = "" }: { end: number; suffix?: string }
   const isInView = useInView(ref, { once: true })
 
   return (
-    <motion.span
-      ref={ref}
-      initial={{ opacity: 0 }}
-      animate={isInView ? { opacity: 1 } : {}}
-    >
+    <motion.span ref={ref} initial={{ opacity: 0 }} animate={isInView ? { opacity: 1 } : {}}>
       <motion.span
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : {}}
-        transition={{ duration: 0.5 }}
-      >
+        transition={{ duration: 0.5 }}>
         {isInView && (
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            {end}{suffix}
+          <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            {end}
+            {suffix}
           </motion.span>
         )}
       </motion.span>
@@ -94,64 +87,57 @@ export function About() {
   const text = copy[language]
 
   return (
-    <section id="about" ref={sectionRef} className="py-24 bg-violet relative overflow-hidden">
+    <section id="about" ref={sectionRef} className="bg-violet relative overflow-hidden py-24">
       {/* Static background */}
       <div className="absolute inset-0 opacity-10">
         <div
           className="absolute inset-0"
           style={{
             backgroundImage: `radial-gradient(circle at 30% 30%, #E6FF17 0%, transparent 50%),
-                              radial-gradient(circle at 70% 70%, #D5C2F7 0%, transparent 50%)`,
+                              radial-gradient(circle at 70% 70%, #D5C2F7 0%, transparent 50%)`
           }}
         />
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="relative z-10 container mx-auto px-4">
         {/* Section Header */}
         <motion.div
-          className="text-center mb-16"
+          className="mb-16 text-center"
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-        >
+          transition={{ duration: 0.6 }}>
           <motion.span
-            className="inline-block px-4 py-2 rounded-full bg-white/10 text-white font-medium text-sm mb-4"
+            className="mb-4 inline-block rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
+            transition={{ duration: 0.6, delay: 0.2 }}>
             {text.badge}
           </motion.span>
-          <h2 className="font-display text-4xl md:text-5xl font-bold text-white mb-6">
-            {text.headingPrefix}{" "}
-            <span className="text-yellow">{text.headingAccent}</span>
+          <h2 className="font-display mb-6 text-4xl font-bold text-white md:text-5xl">
+            {text.headingPrefix} <span className="text-yellow">{text.headingAccent}</span>
           </h2>
-          <p className="text-light-violet max-w-3xl mx-auto text-lg leading-relaxed">
-            {text.description}
-          </p>
+          <p className="text-light-violet mx-auto max-w-3xl text-lg leading-relaxed">{text.description}</p>
         </motion.div>
 
         {/* Stats */}
         <motion.div
-          className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16"
+          className="mb-16 grid grid-cols-2 gap-8 md:grid-cols-4"
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
+          transition={{ duration: 0.6, delay: 0.3 }}>
           {[
             { value: 24, suffix: "h", label: text.stats[0] },
             { value: 4, suffix: "", label: text.stats[1] },
             { value: 200, suffix: "+", label: text.stats[2] },
-            { value: 1, suffix: "", label: text.stats[3] },
+            { value: 1, suffix: "", label: text.stats[3] }
           ].map((stat, index) => (
             <motion.div
               key={stat.label}
               className="text-center"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-            >
-              <div className="font-display text-5xl md:text-6xl font-bold text-yellow mb-2">
+              transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}>
+              <div className="font-display text-yellow mb-2 text-5xl font-bold md:text-6xl">
                 <CounterAnimation end={stat.value} suffix={stat.suffix} />
               </div>
               <div className="text-light-violet font-medium">{stat.label}</div>
@@ -160,28 +146,24 @@ export function About() {
         </motion.div>
 
         {/* Values Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {values.map((value, index) => (
             <motion.div
               key={value.title.de}
-              className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10"
+              className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm"
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
               whileHover={{
-                y: -5,
-              }}
-            >
+                y: -5
+              }}>
               <motion.div
-                className="w-12 h-12 rounded-full bg-yellow/20 flex items-center justify-center mb-4"
+                className="bg-yellow/20 mb-4 flex h-12 w-12 items-center justify-center rounded-full"
                 whileHover={{ rotate: 360 }}
-                transition={{ duration: 0.6 }}
-              >
-                <value.icon className="w-6 h-6 text-yellow" />
+                transition={{ duration: 0.6 }}>
+                <value.icon className="text-yellow h-6 w-6" />
               </motion.div>
-              <h3 className="font-display font-bold text-white text-xl mb-2">
-                {value.title[language]}
-              </h3>
+              <h3 className="font-display mb-2 text-xl font-bold text-white">{value.title[language]}</h3>
               <p className="text-light-violet text-sm">{value.description[language]}</p>
             </motion.div>
           ))}

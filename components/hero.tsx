@@ -17,7 +17,7 @@ const copy = {
     location: "HSLU - Hochschule Luzern",
     primaryCta: "Jetzt Anmelden",
     primaryCtaLoggedIn: "Zum Dashboard",
-    secondaryCta: "Mehr Erfahren",
+    secondaryCta: "Mehr Erfahren"
   },
   en: {
     date: "23 - 24 OCTOBER 2026",
@@ -27,27 +27,37 @@ const copy = {
     location: "HSLU - Lucerne University of Applied Sciences",
     primaryCta: "Register Now",
     primaryCtaLoggedIn: "To Dashboard",
-    secondaryCta: "Learn More",
-  },
+    secondaryCta: "Learn More"
+  }
 } as const
 
-function FloatingParticle({ delay, duration, x, y }: { delay: number; duration: number; x: number; y: number }) {
+function FloatingParticle({
+  delay,
+  duration,
+  x,
+  y
+}: {
+  delay: number
+  duration: number
+  x: number
+  y: number
+}) {
   return (
     <motion.div
-      className="absolute w-2 h-2 rounded-full"
+      className="absolute h-2 w-2 rounded-full"
       style={{ backgroundColor: "#E6FF17", opacity: 0.6 }}
       initial={{ opacity: 0, scale: 0 }}
       animate={{
         opacity: [0, 1, 1, 0],
         scale: [0, 1, 1.2, 0],
         x: [x, x + 50, x - 30, x + 20],
-        y: [y, y - 100, y - 200, y - 300],
+        y: [y, y - 100, y - 200, y - 300]
       }}
       transition={{
         duration,
         delay,
         repeat: Infinity,
-        ease: "easeOut",
+        ease: "easeOut"
       }}
     />
   )
@@ -57,10 +67,9 @@ function AnimatedMountain() {
   return (
     <motion.svg
       viewBox="0 0 800 400"
-      className="w-full h-auto max-w-4xl mx-auto"
+      className="mx-auto h-auto w-full max-w-4xl"
       initial="hidden"
-      animate="visible"
-    >
+      animate="visible">
       {/* Background mountain - light violet */}
       <motion.path
         d="M0 400 L200 150 L400 300 L600 100 L800 400 Z"
@@ -70,8 +79,8 @@ function AnimatedMountain() {
           visible: {
             pathLength: 1,
             opacity: 1,
-            transition: { duration: 1.5, ease: "easeOut" },
-          },
+            transition: { duration: 1.5, ease: "easeOut" }
+          }
         }}
       />
       {/* Foreground mountain - violet */}
@@ -83,8 +92,8 @@ function AnimatedMountain() {
           visible: {
             pathLength: 1,
             opacity: 1,
-            transition: { duration: 1.5, delay: 0.3, ease: "easeOut" },
-          },
+            transition: { duration: 1.5, delay: 0.3, ease: "easeOut" }
+          }
         }}
       />
       {/* Accent peaks - yellow */}
@@ -96,8 +105,8 @@ function AnimatedMountain() {
           visible: {
             scale: 1,
             opacity: 1,
-            transition: { duration: 0.5, delay: 1.2, ease: "backOut" },
-          },
+            transition: { duration: 0.5, delay: 1.2, ease: "backOut" }
+          }
         }}
       />
       <motion.path
@@ -108,8 +117,8 @@ function AnimatedMountain() {
           visible: {
             scale: 1,
             opacity: 1,
-            transition: { duration: 0.5, delay: 1.4, ease: "backOut" },
-          },
+            transition: { duration: 0.5, delay: 1.4, ease: "backOut" }
+          }
         }}
       />
     </motion.svg>
@@ -117,7 +126,9 @@ function AnimatedMountain() {
 }
 
 export function Hero() {
-  const [particles, setParticles] = useState<Array<{ id: number; delay: number; duration: number; x: number; y: number }>>([])
+  const [particles, setParticles] = useState<
+    Array<{ id: number; delay: number; duration: number; x: number; y: number }>
+  >([])
   const { language } = useLanguage()
   const { user } = useAuth()
   const text = copy[language]
@@ -127,32 +138,32 @@ export function Hero() {
       id: i,
       delay: Math.random() * 5,
       duration: 3 + Math.random() * 2,
-      x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
-      y: (typeof window !== 'undefined' ? window.innerHeight : 800) - 100,
+      x: Math.random() * (typeof window !== "undefined" ? window.innerWidth : 1000),
+      y: (typeof window !== "undefined" ? window.innerHeight : 800) - 100
     }))
     setParticles(newParticles)
   }, [])
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
+    <section className="bg-background relative flex min-h-screen items-center justify-center overflow-hidden">
       {/* Animated background gradient */}
       <motion.div
         className="absolute inset-0 opacity-30"
         style={{
-          background: "radial-gradient(ellipse at 50% 50%, #D5C2F7 0%, transparent 70%)",
+          background: "radial-gradient(ellipse at 50% 50%, #D5C2F7 0%, transparent 70%)"
         }}
         animate={{
-          scale: [1, 1.2, 1],
+          scale: [1, 1.2, 1]
         }}
         transition={{
           duration: 8,
           repeat: Infinity,
-          ease: "easeInOut",
+          ease: "easeInOut"
         }}
       />
 
       {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {particles.map((particle) => (
           <FloatingParticle key={particle.id} {...particle} />
         ))}
@@ -165,10 +176,9 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-light-violet/30 border border-light-violet mb-8"
-        >
-          <Calendar className="w-4 h-4 text-violet" />
-          <span className="text-sm font-medium text-violet">{text.date}</span>
+          className="bg-light-violet/30 border-light-violet mb-8 inline-flex items-center gap-2 rounded-full border px-4 py-2">
+          <Calendar className="text-violet h-4 w-4" />
+          <span className="text-violet text-sm font-medium">{text.date}</span>
         </motion.div>
 
         {/* Main title */}
@@ -176,22 +186,16 @@ export function Hero() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="font-display text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-4"
-        >
+          className="font-display mb-4 text-5xl font-bold tracking-tight md:text-7xl lg:text-8xl">
           <span className="text-violet">ZENTRAL</span>
           <br />
           <motion.span
             className="text-yellow inline-block"
             style={{ textShadow: "2px 2px 0px #530A5D" }}
             animate={{
-              textShadow: [
-                "2px 2px 0px #530A5D",
-                "4px 4px 0px #530A5D",
-                "2px 2px 0px #530A5D",
-              ],
+              textShadow: ["2px 2px 0px #530A5D", "4px 4px 0px #530A5D", "2px 2px 0px #530A5D"]
             }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
+            transition={{ duration: 2, repeat: Infinity }}>
             HACK
           </motion.span>
         </motion.h1>
@@ -201,8 +205,7 @@ export function Hero() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.6 }}
-          className="font-display text-6xl md:text-8xl font-bold text-violet/20 mb-8"
-        >
+          className="font-display text-violet/20 mb-8 text-6xl font-bold md:text-8xl">
           2026
         </motion.p>
 
@@ -211,8 +214,7 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
-          className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed"
-        >
+          className="text-muted-foreground mx-auto mb-8 max-w-2xl text-xl leading-relaxed md:text-2xl">
           {text.subtitleLine1} <span className="text-violet font-semibold">{text.subtitleAccent}</span>.
           <br />
           {text.subtitleLine2}
@@ -223,9 +225,8 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.9 }}
-          className="inline-flex items-center gap-2 text-muted-foreground mb-12"
-        >
-          <MapPin className="w-5 h-5" />
+          className="text-muted-foreground mb-12 inline-flex items-center gap-2">
+          <MapPin className="h-5 w-5" />
           <span>{text.location}</span>
         </motion.div>
 
@@ -234,23 +235,20 @@ export function Hero() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 1 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center"
-        >
+          className="flex flex-col justify-center gap-4 sm:flex-row">
           <Link href={user ? "/dashboard" : "/anmeldung"}>
             <Button
               size="lg"
-              className="bg-violet hover:bg-violet/90 text-white font-semibold px-8 py-6 text-lg group"
-            >
+              className="bg-violet hover:bg-violet/90 group px-8 py-6 text-lg font-semibold text-white">
               {user ? text.primaryCtaLoggedIn : text.primaryCta}
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Button>
           </Link>
           <a href="#about">
             <Button
               size="lg"
               variant="outline"
-              className="border-violet text-violet hover:bg-violet hover:text-white font-semibold px-8 py-6 text-lg"
-            >
+              className="border-violet text-violet hover:bg-violet px-8 py-6 text-lg font-semibold hover:text-white">
               {text.secondaryCta}
             </Button>
           </a>
@@ -259,11 +257,10 @@ export function Hero() {
 
       {/* Animated Mountain Graphic */}
       <motion.div
-        className="absolute bottom-0 left-0 right-0 pointer-events-none"
+        className="pointer-events-none absolute right-0 bottom-0 left-0"
         initial={{ opacity: 0, y: 100 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, delay: 0.5 }}
-      >
+        transition={{ duration: 1, delay: 0.5 }}>
         <AnimatedMountain />
       </motion.div>
     </section>

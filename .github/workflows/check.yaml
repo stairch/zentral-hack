@@ -1,0 +1,31 @@
+name: Check
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  Check:
+    runs-on: ubuntu-latest
+    # only when it's not a version tag (deploy workflow has it's own check job)
+    if: "!startsWith(github.ref, 'refs/tags/v')"
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - name: Install dependencies
+        run: npm i
+      - name: Run Formatter
+        run: npx prettier --check .
+      - name: Run Typechecker
+        run: npx tsc --noEmit --noUnusedLocals --noUnusedParameters --composite false

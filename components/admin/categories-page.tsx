@@ -1,186 +1,188 @@
-'use client';
+"use client"
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Edit2, Loader2, Check } from 'lucide-react';
-import { toast } from 'sonner';
+  DialogTrigger
+} from "@/components/ui/dialog"
+import { Edit2, Loader2, Check } from "lucide-react"
+import { toast } from "sonner"
 import {
   categoryIconMap,
   categoryIconOptions,
   getCategoryPresentation,
   getCategoryPresentationByLanguage,
   hexToRgba,
-  normalizeHexColor,
-} from '@/lib/category-config';
-import { useLanguage } from '@/lib/language-context';
+  normalizeHexColor
+} from "@/lib/category-config"
+import { useLanguage } from "@/lib/language-context"
 
 interface Category {
-  id: string;
-  name: string;
-  name_en?: string | null;
-  slug: string;
-  description: string;
-  description_en?: string | null;
-  partner_name?: string | null;
-  partner_name_en?: string | null;
-  color?: string | null;
-  icon?: string | null;
-  challenge_description?: string | null;
-  challenge_description_en?: string | null;
-  show_challenge_description?: boolean | null;
+  id: string
+  name: string
+  name_en?: string | null
+  slug: string
+  description: string
+  description_en?: string | null
+  partner_name?: string | null
+  partner_name_en?: string | null
+  color?: string | null
+  icon?: string | null
+  challenge_description?: string | null
+  challenge_description_en?: string | null
+  show_challenge_description?: boolean | null
 }
 
 interface EditFormState {
-  name: string;
-  nameEn: string;
-  description: string;
-  descriptionEn: string;
-  partnerName: string;
-  partnerNameEn: string;
-  color: string;
-  icon: string;
-  challengeDescription: string;
-  challengeDescriptionEn: string;
-  showChallengeDescription: boolean;
+  name: string
+  nameEn: string
+  description: string
+  descriptionEn: string
+  partnerName: string
+  partnerNameEn: string
+  color: string
+  icon: string
+  challengeDescription: string
+  challengeDescriptionEn: string
+  showChallengeDescription: boolean
 }
 
 export function AdminCategoriesPage() {
-  const { language } = useLanguage();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const { language } = useLanguage()
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
   const [editForm, setEditForm] = useState<EditFormState>({
-    name: '',
-    nameEn: '',
-    description: '',
-    descriptionEn: '',
-    partnerName: '',
-    partnerNameEn: '',
-    color: '#530A5D',
-    icon: 'sparkles',
-    challengeDescription: '',
-    challengeDescriptionEn: '',
-    showChallengeDescription: false,
-  });
-  const [saved, setSaved] = useState(false);
+    name: "",
+    nameEn: "",
+    description: "",
+    descriptionEn: "",
+    partnerName: "",
+    partnerNameEn: "",
+    color: "#530A5D",
+    icon: "sparkles",
+    challengeDescription: "",
+    challengeDescriptionEn: "",
+    showChallengeDescription: false
+  })
+  const [saved, setSaved] = useState(false)
 
-  const text = language === 'en'
-    ? {
-        heading: 'CATEGORIES',
-        subtitle: 'Manage hackathon categories and challenges',
-        editTitle: 'Edit category',
-        editDescription: 'Update title, partner, icon, color, and the category and challenge description for',
-        germanSection: 'German',
-        englishSection: 'English',
-        titleLabel: 'Title',
-        titlePlaceholder: 'Category title',
-        partnerLabel: 'Partner',
-        partnerPlaceholder: 'Partner name',
-        iconLabel: 'Icon',
-        iconPlaceholder: 'Choose icon',
-        colorLabel: 'Color',
-        descriptionLabel: 'Description',
-        descriptionPlaceholder: 'Describe this category and its challenge context...',
-        challengeToggleLabel: 'Show challenge description',
-        challengeToggleHint: 'If enabled, a challenge description is shown in the public category detail view.',
-        challengeDescriptionLabel: 'Challenge description',
-        challengeDescriptionPlaceholder: 'Concrete challenge statement, goals, and constraints...',
-        previewLabel: 'Preview',
-        previewHint: 'Preview follows the currently selected admin language.',
-        partnerPreviewLabel: 'Partner',
-        challengePreviewLabel: 'Challenge',
-        save: 'Save',
-        saving: 'Saving...',
-        saved: 'Saved successfully',
-        required: 'All German and English category fields are required',
-        challengeRequired: 'If challenge description is enabled, both German and English texts are required',
-        loadError: 'Failed to load categories',
-        saveSuccess: 'Category updated',
-        saveError: 'Failed to save',
-        noCategories: 'No categories found',
-      }
-    : {
-        heading: 'KATEGORIEN',
-        subtitle: 'Hackathon-Kategorien und Challenges verwalten',
-        editTitle: 'Kategorie bearbeiten',
-        editDescription: 'Aktualisiere Titel, Partner, Icon, Farbe sowie Kategorie- und Challenge-Beschrieb für',
-        germanSection: 'Deutsch',
-        englishSection: 'Englisch',
-        titleLabel: 'Titel',
-        titlePlaceholder: 'Name der Kategorie',
-        partnerLabel: 'Partner',
-        partnerPlaceholder: 'Partnername',
-        iconLabel: 'Icon',
-        iconPlaceholder: 'Icon wählen',
-        colorLabel: 'Farbe',
-        descriptionLabel: 'Beschreibung',
-        descriptionPlaceholder: 'Beschreibe diese Kategorie und ihre Herausforderungen...',
-        challengeToggleLabel: 'Challenge-Beschrieb anzeigen',
-        challengeToggleHint: 'Wenn aktiv, wird auf der öffentlichen Kategorie-Detailansicht zusätzlich ein Challenge-Beschrieb angezeigt.',
-        challengeDescriptionLabel: 'Challenge-Beschrieb',
-        challengeDescriptionPlaceholder: 'Konkrete Aufgabenstellung, Ziele und Rahmenbedingungen der Challenge...',
-        previewLabel: 'Vorschau',
-        previewHint: 'Die Vorschau folgt der aktuell gewählten Admin-Sprache.',
-        partnerPreviewLabel: 'Partner',
-        challengePreviewLabel: 'Challenge',
-        save: 'Speichern',
-        saving: 'Wird gespeichert...',
-        saved: 'Erfolgreich gespeichert!',
-        required: 'Alle deutschen und englischen Kategorie-Felder sind erforderlich',
-        challengeRequired: 'Wenn der Challenge-Beschrieb aktiviert ist, sind deutsche und englische Texte erforderlich',
-        loadError: 'Fehler beim Laden der Kategorien',
-        saveSuccess: 'Kategorie aktualisiert',
-        saveError: 'Fehler beim Speichern',
-        noCategories: 'Keine Kategorien gefunden',
-      };
+  const text =
+    language === "en"
+      ? {
+          heading: "CATEGORIES",
+          subtitle: "Manage hackathon categories and challenges",
+          editTitle: "Edit category",
+          editDescription:
+            "Update title, partner, icon, color, and the category and challenge description for",
+          germanSection: "German",
+          englishSection: "English",
+          titleLabel: "Title",
+          titlePlaceholder: "Category title",
+          partnerLabel: "Partner",
+          partnerPlaceholder: "Partner name",
+          iconLabel: "Icon",
+          iconPlaceholder: "Choose icon",
+          colorLabel: "Color",
+          descriptionLabel: "Description",
+          descriptionPlaceholder: "Describe this category and its challenge context...",
+          challengeToggleLabel: "Show challenge description",
+          challengeToggleHint:
+            "If enabled, a challenge description is shown in the public category detail view.",
+          challengeDescriptionLabel: "Challenge description",
+          challengeDescriptionPlaceholder: "Concrete challenge statement, goals, and constraints...",
+          previewLabel: "Preview",
+          previewHint: "Preview follows the currently selected admin language.",
+          partnerPreviewLabel: "Partner",
+          challengePreviewLabel: "Challenge",
+          save: "Save",
+          saving: "Saving...",
+          saved: "Saved successfully",
+          required: "All German and English category fields are required",
+          challengeRequired:
+            "If challenge description is enabled, both German and English texts are required",
+          loadError: "Failed to load categories",
+          saveSuccess: "Category updated",
+          saveError: "Failed to save",
+          noCategories: "No categories found"
+        }
+      : {
+          heading: "KATEGORIEN",
+          subtitle: "Hackathon-Kategorien und Challenges verwalten",
+          editTitle: "Kategorie bearbeiten",
+          editDescription:
+            "Aktualisiere Titel, Partner, Icon, Farbe sowie Kategorie- und Challenge-Beschrieb für",
+          germanSection: "Deutsch",
+          englishSection: "Englisch",
+          titleLabel: "Titel",
+          titlePlaceholder: "Name der Kategorie",
+          partnerLabel: "Partner",
+          partnerPlaceholder: "Partnername",
+          iconLabel: "Icon",
+          iconPlaceholder: "Icon wählen",
+          colorLabel: "Farbe",
+          descriptionLabel: "Beschreibung",
+          descriptionPlaceholder: "Beschreibe diese Kategorie und ihre Herausforderungen...",
+          challengeToggleLabel: "Challenge-Beschrieb anzeigen",
+          challengeToggleHint:
+            "Wenn aktiv, wird auf der öffentlichen Kategorie-Detailansicht zusätzlich ein Challenge-Beschrieb angezeigt.",
+          challengeDescriptionLabel: "Challenge-Beschrieb",
+          challengeDescriptionPlaceholder:
+            "Konkrete Aufgabenstellung, Ziele und Rahmenbedingungen der Challenge...",
+          previewLabel: "Vorschau",
+          previewHint: "Die Vorschau folgt der aktuell gewählten Admin-Sprache.",
+          partnerPreviewLabel: "Partner",
+          challengePreviewLabel: "Challenge",
+          save: "Speichern",
+          saving: "Wird gespeichert...",
+          saved: "Erfolgreich gespeichert!",
+          required: "Alle deutschen und englischen Kategorie-Felder sind erforderlich",
+          challengeRequired:
+            "Wenn der Challenge-Beschrieb aktiviert ist, sind deutsche und englische Texte erforderlich",
+          loadError: "Fehler beim Laden der Kategorien",
+          saveSuccess: "Kategorie aktualisiert",
+          saveError: "Fehler beim Speichern",
+          noCategories: "Keine Kategorien gefunden"
+        }
 
   // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        setLoading(true);
-        const res = await fetch('/api/admin/categories', {
-          credentials: 'include',
-        });
+        setLoading(true)
+        const res = await fetch("/api/admin/categories", {
+          credentials: "include"
+        })
         if (res.ok) {
-          const data = await res.json();
-          setCategories(data.data?.categories || []);
+          const data = await res.json()
+          setCategories(data.data?.categories || [])
         }
       } catch (error) {
-        console.error('Failed to fetch categories:', error);
-        toast.error(text.loadError);
+        console.error("Failed to fetch categories:", error)
+        toast.error(text.loadError)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchCategories();
-  }, []);
+    fetchCategories()
+  }, [])
 
   const updateEditForm = (field: keyof EditFormState, value: string) => {
-    setEditForm((current) => ({ ...current, [field]: value }));
-  };
+    setEditForm((current) => ({ ...current, [field]: value }))
+  }
 
   // Save category content
   const handleSaveCategory = async (categoryId: string) => {
@@ -192,24 +194,24 @@ export function AdminCategoriesPage() {
       !editForm.partnerName.trim() ||
       !editForm.partnerNameEn.trim()
     ) {
-      toast.error(text.required);
-      return;
+      toast.error(text.required)
+      return
     }
 
     if (
       editForm.showChallengeDescription &&
       (!editForm.challengeDescription.trim() || !editForm.challengeDescriptionEn.trim())
     ) {
-      toast.error(text.challengeRequired);
-      return;
+      toast.error(text.challengeRequired)
+      return
     }
 
     try {
-      setSaving(true);
+      setSaving(true)
       const res = await fetch(`/api/admin/categories`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           id: categoryId,
           name: editForm.name,
@@ -222,70 +224,70 @@ export function AdminCategoriesPage() {
           icon: editForm.icon,
           challengeDescription: editForm.challengeDescription,
           challengeDescriptionEn: editForm.challengeDescriptionEn,
-          showChallengeDescription: editForm.showChallengeDescription,
-        }),
-      });
+          showChallengeDescription: editForm.showChallengeDescription
+        })
+      })
 
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Fehler beim Speichern');
+        const error = await res.json()
+        throw new Error(error.error || "Fehler beim Speichern")
       }
 
-      setSaved(true);
-      toast.success(text.saveSuccess);
-      
+      setSaved(true)
+      toast.success(text.saveSuccess)
+
       // Update local state
-      setCategories(categories.map((category) =>
-        category.id === categoryId
-          ? {
-              ...category,
-              name: editForm.name,
-              name_en: editForm.nameEn,
-              description: editForm.description,
-              description_en: editForm.descriptionEn,
-              partner_name: editForm.partnerName,
-              partner_name_en: editForm.partnerNameEn,
-              color: normalizeHexColor(editForm.color),
-              icon: editForm.icon,
-              challenge_description: editForm.challengeDescription,
-              challenge_description_en: editForm.challengeDescriptionEn,
-              show_challenge_description: editForm.showChallengeDescription,
-            }
-          : category
-      ));
+      setCategories(
+        categories.map((category) =>
+          category.id === categoryId
+            ? {
+                ...category,
+                name: editForm.name,
+                name_en: editForm.nameEn,
+                description: editForm.description,
+                description_en: editForm.descriptionEn,
+                partner_name: editForm.partnerName,
+                partner_name_en: editForm.partnerNameEn,
+                color: normalizeHexColor(editForm.color),
+                icon: editForm.icon,
+                challenge_description: editForm.challengeDescription,
+                challenge_description_en: editForm.challengeDescriptionEn,
+                show_challenge_description: editForm.showChallengeDescription
+              }
+            : category
+        )
+      )
 
       setTimeout(() => {
-        setSaved(false);
-        setEditingId(null);
-      }, 2000);
+        setSaved(false)
+        setEditingId(null)
+      }, 2000)
     } catch (error) {
-      console.error('Failed to save category:', error);
-      toast.error(error instanceof Error ? error.message : text.saveError);
+      console.error("Failed to save category:", error)
+      toast.error(error instanceof Error ? error.message : text.saveError)
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin" />
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
-    );
+    )
   }
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+        <h1 className="text-foreground text-3xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
           {text.heading}
         </h1>
-        <p className="text-muted-foreground mt-2">
-          {text.subtitle}
-        </p>
+        <p className="text-muted-foreground mt-2">{text.subtitle}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {categories?.length > 0 ? (
           categories.map((category) => (
             <Card key={category.id} className="overflow-hidden">
@@ -294,63 +296,65 @@ export function AdminCategoriesPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     {(() => {
-                      const presentation = getCategoryPresentationByLanguage(category, language);
-                      const Icon = presentation.icon;
+                      const presentation = getCategoryPresentationByLanguage(category, language)
+                      const Icon = presentation.icon
 
                       return (
-                    <div
-                      className="w-12 h-12 rounded-lg flex items-center justify-center"
-                      style={{
-                        backgroundColor: hexToRgba(presentation.color, 0.14),
-                        color: presentation.color,
-                      }}
-                    >
-                          <Icon className="w-6 h-6" />
-                    </div>
-                      );
+                        <div
+                          className="flex h-12 w-12 items-center justify-center rounded-lg"
+                          style={{
+                            backgroundColor: hexToRgba(presentation.color, 0.14),
+                            color: presentation.color
+                          }}>
+                          <Icon className="h-6 w-6" />
+                        </div>
+                      )
                     })()}
                     <div>
                       <CardTitle>{getCategoryPresentationByLanguage(category, language).title}</CardTitle>
                       <CardDescription>{category.slug}</CardDescription>
                     </div>
                   </div>
-                  <Dialog open={editingId === category.id} onOpenChange={(open) => {
-                    if (open) {
-                      const presentation = getCategoryPresentation(category);
-                      setEditingId(category.id);
-                      setEditForm({
-                        name: category.name,
-                        nameEn: category.name_en || '',
-                        description: category.description || '',
-                        descriptionEn: category.description_en || '',
-                        partnerName: category.partner_name || '',
-                        partnerNameEn: category.partner_name_en || '',
-                        color: presentation.color,
-                        icon: presentation.iconName,
-                        challengeDescription: category.challenge_description || '',
-                        challengeDescriptionEn: category.challenge_description_en || '',
-                        showChallengeDescription: Boolean(category.show_challenge_description),
-                      });
-                    } else {
-                      setEditingId(null);
-                    }
-                  }}>
+                  <Dialog
+                    open={editingId === category.id}
+                    onOpenChange={(open) => {
+                      if (open) {
+                        const presentation = getCategoryPresentation(category)
+                        setEditingId(category.id)
+                        setEditForm({
+                          name: category.name,
+                          nameEn: category.name_en || "",
+                          description: category.description || "",
+                          descriptionEn: category.description_en || "",
+                          partnerName: category.partner_name || "",
+                          partnerNameEn: category.partner_name_en || "",
+                          color: presentation.color,
+                          icon: presentation.iconName,
+                          challengeDescription: category.challenge_description || "",
+                          challengeDescriptionEn: category.challenge_description_en || "",
+                          showChallengeDescription: Boolean(category.show_challenge_description)
+                        })
+                      } else {
+                        setEditingId(null)
+                      }
+                    }}>
                     <DialogTrigger asChild>
                       <Button variant="ghost" size="sm">
-                        <Edit2 className="w-4 h-4" />
+                        <Edit2 className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-3xl">
                       <DialogHeader>
                         <DialogTitle>{text.editTitle}</DialogTitle>
                         <DialogDescription>
-                          {text.editDescription} &quot;{getCategoryPresentationByLanguage(category, language).title}&quot;
+                          {text.editDescription} &quot;
+                          {getCategoryPresentationByLanguage(category, language).title}&quot;
                         </DialogDescription>
                       </DialogHeader>
 
                       {saved ? (
                         <div className="flex flex-col items-center justify-center py-8">
-                          <Check className="w-12 h-12 text-green-500 mb-4" />
+                          <Check className="mb-4 h-12 w-12 text-green-500" />
                           <p>{text.saved}</p>
                         </div>
                       ) : (
@@ -363,7 +367,7 @@ export function AdminCategoriesPage() {
                                 <Input
                                   id="name"
                                   value={editForm.name}
-                                  onChange={(e) => updateEditForm('name', e.target.value)}
+                                  onChange={(e) => updateEditForm("name", e.target.value)}
                                   placeholder="Name der Kategorie"
                                 />
                               </div>
@@ -373,7 +377,7 @@ export function AdminCategoriesPage() {
                                 <Input
                                   id="partnerName"
                                   value={editForm.partnerName}
-                                  onChange={(e) => updateEditForm('partnerName', e.target.value)}
+                                  onChange={(e) => updateEditForm("partnerName", e.target.value)}
                                   placeholder="Partnername"
                                 />
                               </div>
@@ -383,7 +387,7 @@ export function AdminCategoriesPage() {
                                 <Textarea
                                   id="description"
                                   value={editForm.description}
-                                  onChange={(e) => updateEditForm('description', e.target.value)}
+                                  onChange={(e) => updateEditForm("description", e.target.value)}
                                   placeholder="Beschreibe diese Kategorie und ihre Herausforderungen..."
                                   rows={6}
                                 />
@@ -397,7 +401,7 @@ export function AdminCategoriesPage() {
                                 <Input
                                   id="nameEn"
                                   value={editForm.nameEn}
-                                  onChange={(e) => updateEditForm('nameEn', e.target.value)}
+                                  onChange={(e) => updateEditForm("nameEn", e.target.value)}
                                   placeholder="Category title"
                                 />
                               </div>
@@ -407,7 +411,7 @@ export function AdminCategoriesPage() {
                                 <Input
                                   id="partnerNameEn"
                                   value={editForm.partnerNameEn}
-                                  onChange={(e) => updateEditForm('partnerNameEn', e.target.value)}
+                                  onChange={(e) => updateEditForm("partnerNameEn", e.target.value)}
                                   placeholder="Partner name"
                                 />
                               </div>
@@ -417,7 +421,7 @@ export function AdminCategoriesPage() {
                                 <Textarea
                                   id="descriptionEn"
                                   value={editForm.descriptionEn}
-                                  onChange={(e) => updateEditForm('descriptionEn', e.target.value)}
+                                  onChange={(e) => updateEditForm("descriptionEn", e.target.value)}
                                   placeholder="Describe this category and its challenge context..."
                                   rows={6}
                                 />
@@ -428,22 +432,24 @@ export function AdminCategoriesPage() {
                           <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_160px]">
                             <div>
                               <Label htmlFor="icon">{text.iconLabel}</Label>
-                              <Select value={editForm.icon} onValueChange={(value) => updateEditForm('icon', value)}>
+                              <Select
+                                value={editForm.icon}
+                                onValueChange={(value) => updateEditForm("icon", value)}>
                                 <SelectTrigger id="icon">
                                   <SelectValue placeholder={text.iconPlaceholder} />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {categoryIconOptions.map((option) => {
-                                    const Icon = categoryIconMap[option.value];
+                                    const Icon = categoryIconMap[option.value]
 
                                     return (
                                       <SelectItem key={option.value} value={option.value}>
                                         <span className="flex items-center gap-2">
-                                          <Icon className="w-4 h-4" />
+                                          <Icon className="h-4 w-4" />
                                           <span>{option.label}</span>
                                         </span>
                                       </SelectItem>
-                                    );
+                                    )
                                   })}
                                 </SelectContent>
                               </Select>
@@ -455,23 +461,23 @@ export function AdminCategoriesPage() {
                                   id="color"
                                   type="color"
                                   value={normalizeHexColor(editForm.color)}
-                                  onChange={(e) => updateEditForm('color', e.target.value)}
+                                  onChange={(e) => updateEditForm("color", e.target.value)}
                                   className="h-10 w-14 p-1"
                                 />
                                 <Input
                                   value={editForm.color}
-                                  onChange={(e) => updateEditForm('color', e.target.value)}
+                                  onChange={(e) => updateEditForm("color", e.target.value)}
                                   placeholder="#530A5D"
                                 />
                               </div>
                             </div>
                           </div>
 
-                          <div className="rounded-lg border p-4 space-y-4">
+                          <div className="space-y-4 rounded-lg border p-4">
                             <div className="flex items-center justify-between gap-4">
                               <div>
                                 <Label htmlFor="showChallengeDescription">{text.challengeToggleLabel}</Label>
-                                <p className="text-xs text-muted-foreground mt-1">
+                                <p className="text-muted-foreground mt-1 text-xs">
                                   {text.challengeToggleHint}
                                 </p>
                               </div>
@@ -479,29 +485,36 @@ export function AdminCategoriesPage() {
                                 id="showChallengeDescription"
                                 checked={editForm.showChallengeDescription}
                                 onCheckedChange={(checked) =>
-                                  setEditForm((current) => ({ ...current, showChallengeDescription: Boolean(checked) }))
+                                  setEditForm((current) => ({
+                                    ...current,
+                                    showChallengeDescription: Boolean(checked)
+                                  }))
                                 }
                               />
                             </div>
 
                             <div className="grid gap-4 lg:grid-cols-2">
                               <div>
-                                <Label htmlFor="challengeDescription">{text.challengeDescriptionLabel} ({text.germanSection})</Label>
+                                <Label htmlFor="challengeDescription">
+                                  {text.challengeDescriptionLabel} ({text.germanSection})
+                                </Label>
                                 <Textarea
                                   id="challengeDescription"
                                   value={editForm.challengeDescription}
-                                  onChange={(e) => updateEditForm('challengeDescription', e.target.value)}
+                                  onChange={(e) => updateEditForm("challengeDescription", e.target.value)}
                                   placeholder="Konkrete Aufgabenstellung, Ziele und Rahmenbedingungen der Challenge..."
                                   rows={5}
                                 />
                               </div>
 
                               <div>
-                                <Label htmlFor="challengeDescriptionEn">{text.challengeDescriptionLabel} ({text.englishSection})</Label>
+                                <Label htmlFor="challengeDescriptionEn">
+                                  {text.challengeDescriptionLabel} ({text.englishSection})
+                                </Label>
                                 <Textarea
                                   id="challengeDescriptionEn"
                                   value={editForm.challengeDescriptionEn}
-                                  onChange={(e) => updateEditForm('challengeDescriptionEn', e.target.value)}
+                                  onChange={(e) => updateEditForm("challengeDescriptionEn", e.target.value)}
                                   placeholder="Concrete challenge statement, goals, and constraints..."
                                   rows={5}
                                 />
@@ -526,33 +539,35 @@ export function AdminCategoriesPage() {
                                   challenge_description_en: editForm.challengeDescriptionEn,
                                   color: editForm.color,
                                   icon: editForm.icon,
-                                  show_challenge_description: editForm.showChallengeDescription,
+                                  show_challenge_description: editForm.showChallengeDescription
                                 },
-                                language,
-                              ).textColor,
-                            }}
-                          >
+                                language
+                              ).textColor
+                            }}>
                             {(() => {
-                              const preview = getCategoryPresentationByLanguage({
-                                slug: category.slug,
-                                name: editForm.name,
-                                name_en: editForm.nameEn,
-                                description: editForm.description,
-                                description_en: editForm.descriptionEn,
-                                partner_name: editForm.partnerName,
-                                partner_name_en: editForm.partnerNameEn,
-                                challenge_description: editForm.challengeDescription,
-                                challenge_description_en: editForm.challengeDescriptionEn,
-                                show_challenge_description: editForm.showChallengeDescription,
-                                color: editForm.color,
-                                icon: editForm.icon,
-                              }, language);
-                              const Icon = preview.icon;
+                              const preview = getCategoryPresentationByLanguage(
+                                {
+                                  slug: category.slug,
+                                  name: editForm.name,
+                                  name_en: editForm.nameEn,
+                                  description: editForm.description,
+                                  description_en: editForm.descriptionEn,
+                                  partner_name: editForm.partnerName,
+                                  partner_name_en: editForm.partnerNameEn,
+                                  challenge_description: editForm.challengeDescription,
+                                  challenge_description_en: editForm.challengeDescriptionEn,
+                                  show_challenge_description: editForm.showChallengeDescription,
+                                  color: editForm.color,
+                                  icon: editForm.icon
+                                },
+                                language
+                              )
+                              const Icon = preview.icon
 
                               return (
                                 <div className="space-y-3">
                                   <div className="flex items-center gap-3">
-                                    <Icon className="w-5 h-5" />
+                                    <Icon className="h-5 w-5" />
                                     <p className="font-semibold">{text.previewLabel}</p>
                                   </div>
                                   <p className="text-xs opacity-75">{text.previewHint}</p>
@@ -560,23 +575,26 @@ export function AdminCategoriesPage() {
                                     <p className="font-display text-xl font-bold">{preview.title}</p>
                                     <p className="mt-2 text-sm opacity-90">{preview.description}</p>
                                     {preview.showChallengeDescription && preview.challengeDescription ? (
-                                      <p className="mt-2 text-sm opacity-85">{text.challengePreviewLabel}: {preview.challengeDescription}</p>
+                                      <p className="mt-2 text-sm opacity-85">
+                                        {text.challengePreviewLabel}: {preview.challengeDescription}
+                                      </p>
                                     ) : null}
-                                    <p className="mt-3 text-xs opacity-75">{text.partnerPreviewLabel}: {preview.partnerName}</p>
+                                    <p className="mt-3 text-xs opacity-75">
+                                      {text.partnerPreviewLabel}: {preview.partnerName}
+                                    </p>
                                   </div>
                                 </div>
-                              );
+                              )
                             })()}
                           </div>
 
                           <Button
                             onClick={() => handleSaveCategory(category.id)}
                             disabled={saving}
-                            className="w-full bg-violet hover:bg-violet/90"
-                          >
+                            className="bg-violet hover:bg-violet/90 w-full">
                             {saving ? (
                               <>
-                                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 {text.saving}
                               </>
                             ) : (
@@ -590,11 +608,18 @@ export function AdminCategoriesPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-sm font-medium mb-2">{text.partnerPreviewLabel}: {getCategoryPresentationByLanguage(category, language).partnerName}</p>
-                <p className="text-muted-foreground text-sm line-clamp-3">{getCategoryPresentationByLanguage(category, language).description}</p>
-                {getCategoryPresentationByLanguage(category, language).showChallengeDescription && getCategoryPresentationByLanguage(category, language).challengeDescription ? (
-                  <p className="text-muted-foreground text-sm mt-2 line-clamp-3">
-                    {text.challengePreviewLabel}: {getCategoryPresentationByLanguage(category, language).challengeDescription}
+                <p className="mb-2 text-sm font-medium">
+                  {text.partnerPreviewLabel}:{" "}
+                  {getCategoryPresentationByLanguage(category, language).partnerName}
+                </p>
+                <p className="text-muted-foreground line-clamp-3 text-sm">
+                  {getCategoryPresentationByLanguage(category, language).description}
+                </p>
+                {getCategoryPresentationByLanguage(category, language).showChallengeDescription &&
+                getCategoryPresentationByLanguage(category, language).challengeDescription ? (
+                  <p className="text-muted-foreground mt-2 line-clamp-3 text-sm">
+                    {text.challengePreviewLabel}:{" "}
+                    {getCategoryPresentationByLanguage(category, language).challengeDescription}
                   </p>
                 ) : null}
               </CardContent>
@@ -609,5 +634,5 @@ export function AdminCategoriesPage() {
         )}
       </div>
     </div>
-  );
+  )
 }

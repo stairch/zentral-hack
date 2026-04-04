@@ -5,11 +5,7 @@ import { motion } from "framer-motion"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  User as UserIcon,
-  LogOut,
-  Loader2,
-} from "lucide-react"
+import { User as UserIcon, LogOut, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export function DashboardContent() {
@@ -29,36 +25,30 @@ export function DashboardContent() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground" style={{ fontFamily: "var(--font-display)" }}>
+        <h1 className="text-foreground text-3xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
           WILLKOMMEN ZURÜCK
         </h1>
-        <p className="text-muted-foreground mt-2">
-          Schön, dich wiederzusehen, {user?.email}
-        </p>
+        <p className="text-muted-foreground mt-2">Schön, dich wiederzusehen, {user?.email}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <UserIcon className="w-5 h-5" />
+              <UserIcon className="h-5 w-5" />
               Mein Profil
             </CardTitle>
             <CardDescription>Verwalte deine Kontodaten</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Email: <span className="font-medium text-foreground">{user?.email}</span>
+              <p className="text-muted-foreground text-sm">
+                Email: <span className="text-foreground font-medium">{user?.email}</span>
               </p>
-              <p className="text-sm text-muted-foreground">
-                Rolle: <span className="font-medium text-foreground capitalize">{user?.role}</span>
+              <p className="text-muted-foreground text-sm">
+                Rolle: <span className="text-foreground font-medium capitalize">{user?.role}</span>
               </p>
             </div>
           </CardContent>
@@ -73,13 +63,12 @@ export function DashboardContent() {
             <Button
               onClick={handleLogout}
               disabled={loading}
-              className="w-full bg-red-600 hover:bg-red-700 text-white"
-            >
+              className="w-full bg-red-600 text-white hover:bg-red-700">
               {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <>
-                  <LogOut className="w-4 h-4 mr-2" />
+                  <LogOut className="mr-2 h-4 w-4" />
                   Abmelden
                 </>
               )}

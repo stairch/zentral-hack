@@ -5,7 +5,6 @@ import { motion } from "framer-motion"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -15,15 +14,12 @@ import {
   Loader2,
   FileText,
   Users,
-  Upload,
   Download,
   ExternalLink,
-  Github,
-  FolderOpen,
+  FolderOpen
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { toast } from "sonner"
 import { TeamFilesComponent } from "@/components/team-files"
 
 interface DashboardData {
@@ -125,8 +121,8 @@ export function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#530A5D]" />
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#530A5D]" />
       </div>
     )
   }
@@ -138,22 +134,24 @@ export function DashboardContent() {
   const globalDocuments = data?.globalDocuments || []
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="bg-background min-h-screen">
       {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="font-bold text-xl" style={{ fontFamily: "var(--font-display)" }}>
+      <header className="border-border bg-card border-b">
+        <div className="container mx-auto flex items-center justify-between px-4 py-4">
+          <Link href="/" className="text-xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
             <span className="text-[#530A5D]">ZENTRAL</span>{" "}
-            <span className="text-[#E6FF17] bg-[#530A5D] px-2">HACK</span>
+            <span className="bg-[#530A5D] px-2 text-[#E6FF17]">HACK</span>
           </Link>
           <div className="flex items-center gap-3">
             {(user?.role === "admin" || user?.role === "category_partner") && (
               <Link href="/admin">
-                <Button variant="outline" size="sm">Admin Panel</Button>
+                <Button variant="outline" size="sm">
+                  Admin Panel
+                </Button>
               </Link>
             )}
             <Button variant="outline" onClick={handleLogout} disabled={loggingOut} className="gap-2">
-              {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
+              {loggingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
               Abmelden
             </Button>
           </div>
@@ -163,38 +161,41 @@ export function DashboardContent() {
       <div className="container mx-auto px-4 py-8">
         {/* Welcome */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+          <h1 className="text-foreground mb-2 text-3xl font-bold">
             Hallo, {profile?.first_name || user?.email}!
           </h1>
-          <p className="text-muted-foreground">
-            Willkommen in deinem Zentral Hack Dashboard
-          </p>
+          <p className="text-muted-foreground">Willkommen in deinem Zentral Hack Dashboard</p>
         </motion.div>
 
         {/* Registration Status */}
         {registration ? (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}>
             <Card className="mb-8 border-2 border-[#530A5D]/30">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-[#530A5D]" />
+                  <div className="h-3 w-3 rounded-full bg-[#530A5D]" />
                   {registration.category.name}
                 </CardTitle>
                 <CardDescription>{registration.category.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <Badge variant={registration.status === "confirmed" ? "default" : "outline"} className={registration.status === "confirmed" ? "bg-green-600" : ""}>
+                <Badge
+                  variant={registration.status === "confirmed" ? "default" : "outline"}
+                  className={registration.status === "confirmed" ? "bg-green-600" : ""}>
                   {registration.status === "confirmed" ? "✓ Anmeldung bestätigt" : "Ausstehend"}
                 </Badge>
               </CardContent>
             </Card>
           </motion.div>
         ) : (
-          <Card className="mb-8 bg-amber-50 border-amber-200">
+          <Card className="mb-8 border-amber-200 bg-amber-50">
             <CardContent className="pt-6">
               <p className="text-amber-800">
                 Du hast dich noch nicht für eine Kategorie angemeldet.{" "}
-                <Link href="/anmeldung" className="underline font-medium">
+                <Link href="/anmeldung" className="font-medium underline">
                   Jetzt anmelden
                 </Link>
               </p>
@@ -204,17 +205,17 @@ export function DashboardContent() {
 
         {/* Main Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-3 lg:inline-grid lg:w-auto">
             <TabsTrigger value="profile" className="gap-2">
-              <UserIcon className="w-4 h-4" />
+              <UserIcon className="h-4 w-4" />
               Profil
             </TabsTrigger>
             <TabsTrigger value="documents" className="gap-2">
-              <FileText className="w-4 h-4" />
+              <FileText className="h-4 w-4" />
               Dokumente
             </TabsTrigger>
             <TabsTrigger value="team" className="gap-2">
-              <Users className="w-4 h-4" />
+              <Users className="h-4 w-4" />
               Team
             </TabsTrigger>
           </TabsList>
@@ -263,10 +264,9 @@ export function DashboardContent() {
                         href={profile.linkedin_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-medium text-[#530A5D] hover:underline flex items-center gap-1"
-                      >
+                        className="flex items-center gap-1 font-medium text-[#530A5D] hover:underline">
                         Profil ansehen
-                        <ExternalLink className="w-3 h-3" />
+                        <ExternalLink className="h-3 w-3" />
                       </a>
                     </div>
                   )}
@@ -283,7 +283,7 @@ export function DashboardContent() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <FolderOpen className="w-5 h-5 text-[#530A5D]" />
+                      <FolderOpen className="h-5 w-5 text-[#530A5D]" />
                       Allgemeine Dokumente
                     </CardTitle>
                     <CardDescription>Dokumente und Ressourcen für alle Teilnehmer</CardDescription>
@@ -291,16 +291,22 @@ export function DashboardContent() {
                   <CardContent>
                     <div className="space-y-3">
                       {globalDocuments.map((doc) => (
-                        <div key={doc.id} className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                        <div
+                          key={doc.id}
+                          className="border-border hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors">
                           <div className="flex items-center gap-3">
-                            <FileText className="w-5 h-5 text-[#530A5D]" />
+                            <FileText className="h-5 w-5 text-[#530A5D]" />
                             <div>
                               <p className="font-medium">{doc.name}</p>
-                              {doc.description && <p className="text-sm text-muted-foreground">{doc.description}</p>}
+                              {doc.description && (
+                                <p className="text-muted-foreground text-sm">{doc.description}</p>
+                              )}
                             </div>
                           </div>
-                          <a href={`/api/download-file?fileId=${doc.id}`} className="p-2 hover:bg-muted rounded-lg transition-colors">
-                            <Download className="w-5 h-5 text-muted-foreground" />
+                          <a
+                            href={`/api/download-file?fileId=${doc.id}`}
+                            className="hover:bg-muted rounded-lg p-2 transition-colors">
+                            <Download className="text-muted-foreground h-5 w-5" />
                           </a>
                         </div>
                       ))}
@@ -321,23 +327,31 @@ export function DashboardContent() {
                   {categoryDocuments.length > 0 ? (
                     <div className="space-y-3">
                       {categoryDocuments.map((doc) => (
-                        <div key={doc.id} className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                        <div
+                          key={doc.id}
+                          className="border-border hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors">
                           <div className="flex items-center gap-3">
-                            <FileText className="w-5 h-5 text-[#530A5D]" />
+                            <FileText className="h-5 w-5 text-[#530A5D]" />
                             <div>
                               <p className="font-medium">{doc.name}</p>
-                              {doc.description && <p className="text-sm text-muted-foreground">{doc.description}</p>}
+                              {doc.description && (
+                                <p className="text-muted-foreground text-sm">{doc.description}</p>
+                              )}
                             </div>
                           </div>
-                          <a href={`/api/download-file?fileId=${doc.id}`} className="p-2 hover:bg-muted rounded-lg transition-colors">
-                            <Download className="w-5 h-5 text-muted-foreground" />
+                          <a
+                            href={`/api/download-file?fileId=${doc.id}`}
+                            className="hover:bg-muted rounded-lg p-2 transition-colors">
+                            <Download className="text-muted-foreground h-5 w-5" />
                           </a>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground text-center py-8">
-                      {registration ? "Noch keine Dokumente verfügbar" : "Melde dich für eine Kategorie an, um Dokumente zu sehen"}
+                    <p className="text-muted-foreground py-8 text-center">
+                      {registration
+                        ? "Noch keine Dokumente verfügbar"
+                        : "Melde dich für eine Kategorie an, um Dokumente zu sehen"}
                     </p>
                   )}
                 </CardContent>
@@ -360,7 +374,7 @@ export function DashboardContent() {
                   <div className="space-y-6">
                     <div>
                       <Label className="text-muted-foreground text-sm">Team-Name</Label>
-                      <p className="font-medium text-lg">{team.name}</p>
+                      <p className="text-lg font-medium">{team.name}</p>
                     </div>
                     {team.description && (
                       <div>
@@ -380,17 +394,15 @@ export function DashboardContent() {
                     </div>
 
                     {/* Team files & repos are shown in the documents tab */}
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       Team-Dokumente und GitHub-Repos findest du im Tab &quot;Dokumente&quot;
                     </p>
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-2">
-                      Du bist noch keinem Team zugewiesen
-                    </p>
-                    <p className="text-sm text-muted-foreground">
+                  <div className="py-8 text-center">
+                    <Users className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+                    <p className="text-muted-foreground mb-2">Du bist noch keinem Team zugewiesen</p>
+                    <p className="text-muted-foreground text-sm">
                       Teams werden während des Hackathons von den Admins erstellt
                     </p>
                   </div>

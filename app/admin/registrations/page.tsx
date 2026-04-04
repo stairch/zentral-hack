@@ -1,141 +1,143 @@
-'use client';
+"use client"
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Loader2, Download } from 'lucide-react';
-import { toast } from 'sonner';
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Loader2, Download } from "lucide-react"
+import { toast } from "sonner"
 
 interface Registration {
-  id: string;
-  user_id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  category_name: string;
-  university?: string;
-  study_program?: string;
-  semester?: string;
-  allergies?: string;
-  dietary_restrictions?: string;
-  status: string;
-  created_at: string;
+  id: string
+  user_id: string
+  email: string
+  first_name: string
+  last_name: string
+  category_name: string
+  university?: string
+  study_program?: string
+  semester?: string
+  allergies?: string
+  dietary_restrictions?: string
+  status: string
+  created_at: string
 }
 
 export default function RegistrationsPage() {
-  const [registrations, setRegistrations] = useState<Registration[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState<string>('');
-  const [categories, setCategories] = useState<{ id: string; name: string; slug: string; description: string }[]>([]);
+  const [registrations, setRegistrations] = useState<Registration[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterCategory, setFilterCategory] = useState<string>("")
+  const [categories, setCategories] = useState<
+    { id: string; name: string; slug: string; description: string }[]
+  >([])
 
   // Fetch categories for filter dropdown
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch('/api/categories', {
-          credentials: 'include',
-        });
+        const res = await fetch("/api/categories", {
+          credentials: "include"
+        })
         if (res.ok) {
-          const data = await res.json();
-          setCategories(data.data?.categories || []);
+          const data = await res.json()
+          setCategories(data.data?.categories || [])
         }
       } catch (error) {
-        console.error('Failed to fetch categories:', error);
+        console.error("Failed to fetch categories:", error)
       }
-    };
-    fetchCategories();
-  }, []);
+    }
+    fetchCategories()
+  }, [])
 
   // Fetch registrations
   useEffect(() => {
     const fetchRegistrations = async () => {
       try {
-        setLoading(true);
-        const params = new URLSearchParams();
-        if (searchTerm) params.append('search', searchTerm);
-        if (filterCategory) params.append('categoryId', filterCategory);
-        params.append('limit', '100');
+        setLoading(true)
+        const params = new URLSearchParams()
+        if (searchTerm) params.append("search", searchTerm)
+        if (filterCategory) params.append("categoryId", filterCategory)
+        params.append("limit", "100")
 
         const res = await fetch(`/api/admin/registrations?${params}`, {
-          credentials: 'include',
-        });
+          credentials: "include"
+        })
 
         if (!res.ok) {
-          throw new Error('Failed to fetch registrations');
+          throw new Error("Failed to fetch registrations")
         }
 
-        const data = await res.json();
-        setRegistrations(data.data?.registrations || []);
+        const data = await res.json()
+        setRegistrations(data.data?.registrations || [])
       } catch (error) {
-        console.error('Failed to fetch registrations:', error);
-        toast.error('Fehler beim Laden der Anmeldungen');
+        console.error("Failed to fetch registrations:", error)
+        toast.error("Fehler beim Laden der Anmeldungen")
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
     // Debounce search
     const timer = setTimeout(() => {
-      fetchRegistrations();
-    }, 300);
+      fetchRegistrations()
+    }, 300)
 
-    return () => clearTimeout(timer);
-  }, [searchTerm, filterCategory]);
+    return () => clearTimeout(timer)
+  }, [searchTerm, filterCategory])
 
   // Export to CSV
   const handleExport = () => {
     if (registrations.length === 0) {
-      toast.error('Keine Daten zum Exportieren');
-      return;
+      toast.error("Keine Daten zum Exportieren")
+      return
     }
 
-    const headers = ['Name', 'E-Mail', 'Kategorie', 'Hochschule', 'Studiengang', 'Semester', 'Allergien', 'Diätetische Einschränkungen'];
+    const headers = [
+      "Name",
+      "E-Mail",
+      "Kategorie",
+      "Hochschule",
+      "Studiengang",
+      "Semester",
+      "Allergien",
+      "Diätetische Einschränkungen"
+    ]
     const rows = registrations.map((reg) => [
       `${reg.first_name} ${reg.last_name}`,
       reg.email,
       reg.category_name,
-      reg.university || '-',
-      reg.study_program || '-',
-      reg.semester || '-',
-      reg.allergies || '-',
-      reg.dietary_restrictions || '-',
-    ]);
+      reg.university || "-",
+      reg.study_program || "-",
+      reg.semester || "-",
+      reg.allergies || "-",
+      reg.dietary_restrictions || "-"
+    ])
 
-    const csv = [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `registrations-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    toast.success('Anmeldungen exportiert');
-  };
+    const csv = [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n")
+    const blob = new Blob([csv], { type: "text/csv" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `registrations-${new Date().toISOString().split("T")[0]}.csv`
+    a.click()
+    window.URL.revokeObjectURL(url)
+    toast.success("Anmeldungen exportiert")
+  }
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+        <h1 className="text-foreground text-3xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
           ANMELDUNGEN
         </h1>
-        <p className="text-muted-foreground mt-2">
-          Alle Registrierungen für den Zentral Hack 2026
-        </p>
+        <p className="text-muted-foreground mt-2">Alle Registrierungen für den Zentral Hack 2026</p>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 flex-col md:flex-row">
+      <div className="flex flex-col gap-4 md:flex-row">
         <Input
           placeholder="Nach Name oder E-Mail suchen..."
           value={searchTerm}
@@ -145,8 +147,7 @@ export default function RegistrationsPage() {
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="px-4 py-2 border rounded-md"
-        >
+          className="rounded-md border px-4 py-2">
           <option value="">Alle Kategorien</option>
           {categories.map((cat) => (
             <option key={cat.id} value={cat.id}>
@@ -155,7 +156,7 @@ export default function RegistrationsPage() {
           ))}
         </select>
         <Button onClick={handleExport} variant="outline" className="gap-2">
-          <Download className="w-4 h-4" />
+          <Download className="h-4 w-4" />
           Export CSV
         </Button>
       </div>
@@ -164,14 +165,14 @@ export default function RegistrationsPage() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>{registrations?.length || 0} Anmeldungen</span>
-            {loading && <Loader2 className="w-5 h-5 animate-spin" />}
+            {loading && <Loader2 className="h-5 w-5 animate-spin" />}
           </CardTitle>
           <CardDescription>Übersicht aller Teilnehmer</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin" />
+              <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           ) : registrations && registrations.length > 0 ? (
             <div className="overflow-x-auto">
@@ -197,12 +198,18 @@ export default function RegistrationsPage() {
                       <TableCell>
                         <Badge variant="outline">{reg.category_name}</Badge>
                       </TableCell>
-                      <TableCell className="text-sm">{reg.university || '-'}</TableCell>
-                      <TableCell className="text-sm">{reg.study_program || '-'}</TableCell>
-                      <TableCell className="text-sm">{reg.allergies ? '✓' : '-'}</TableCell>
+                      <TableCell className="text-sm">{reg.university || "-"}</TableCell>
+                      <TableCell className="text-sm">{reg.study_program || "-"}</TableCell>
+                      <TableCell className="text-sm">{reg.allergies ? "✓" : "-"}</TableCell>
                       <TableCell>
-                        <Badge variant={reg.status === 'confirmed' ? 'default' : 'outline'} className={reg.status === 'confirmed' ? 'bg-green-600' : ''}>
-                          {reg.status === 'confirmed' ? 'Bestätigt' : reg.status === 'pending' ? 'Ausstehend' : reg.status}
+                        <Badge
+                          variant={reg.status === "confirmed" ? "default" : "outline"}
+                          className={reg.status === "confirmed" ? "bg-green-600" : ""}>
+                          {reg.status === "confirmed"
+                            ? "Bestätigt"
+                            : reg.status === "pending"
+                              ? "Ausstehend"
+                              : reg.status}
                         </Badge>
                       </TableCell>
                     </TableRow>
@@ -211,12 +218,10 @@ export default function RegistrationsPage() {
               </Table>
             </div>
           ) : (
-            <p className="text-muted-foreground text-center py-12">
-              Keine Anmeldungen gefunden
-            </p>
+            <p className="text-muted-foreground py-12 text-center">Keine Anmeldungen gefunden</p>
           )}
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

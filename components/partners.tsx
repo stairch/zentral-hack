@@ -14,11 +14,19 @@ const partners = {
     "Digital & AI Community",
     "getAbstract",
     "STAIR",
-    "SchwyzNext",
-  ],
+    "SchwyzNext"
+  ]
 }
 
-function MarqueeRow({ items, direction = "left", speed = 30 }: { items: string[]; direction?: "left" | "right"; speed?: number }) {
+function MarqueeRow({
+  items,
+  direction = "left",
+  speed = 30
+}: {
+  items: string[]
+  direction?: "left" | "right"
+  speed?: number
+}) {
   const duplicatedItems = [...items, ...items, ...items]
 
   return (
@@ -26,23 +34,21 @@ function MarqueeRow({ items, direction = "left", speed = 30 }: { items: string[]
       <motion.div
         className="flex gap-8 whitespace-nowrap"
         animate={{
-          x: direction === "left" ? [0, -100 * items.length] : [-100 * items.length, 0],
+          x: direction === "left" ? [0, -100 * items.length] : [-100 * items.length, 0]
         }}
         transition={{
           x: {
             duration: speed,
             repeat: Infinity,
-            ease: "linear",
-          },
-        }}
-      >
+            ease: "linear"
+          }
+        }}>
         {duplicatedItems.map((item, index) => (
           <motion.div
             key={`${item}-${index}`}
-            className="flex-shrink-0 px-8 py-4 bg-muted rounded-lg border border-border"
-            whileHover={{ scale: 1.05, borderColor: "var(--violet)" }}
-          >
-            <span className="font-display font-bold text-foreground">{item}</span>
+            className="bg-muted border-border flex-shrink-0 rounded-lg border px-8 py-4"
+            whileHover={{ scale: 1.05, borderColor: "var(--violet)" }}>
+            <span className="font-display text-foreground font-bold">{item}</span>
           </motion.div>
         ))}
       </motion.div>
@@ -65,7 +71,7 @@ export function Partners() {
       description: "Unterstützt von führenden Unternehmen und Institutionen der Zentralschweiz.",
       organisers: "CO-ORGANISATOREN",
       ctaQuestion: "Interessiert an einer Partnerschaft?",
-      ctaAction: "Kontaktiere uns",
+      ctaAction: "Kontaktiere uns"
     },
     en: {
       badge: "PARTNERS & SPONSORS",
@@ -74,48 +80,43 @@ export function Partners() {
       description: "Supported by leading companies and institutions in Central Switzerland.",
       organisers: "CO-ORGANIZERS",
       ctaQuestion: "Interested in a partnership?",
-      ctaAction: "Contact us",
-    },
+      ctaAction: "Contact us"
+    }
   } as const
 
   const text = copy[language]
 
   return (
     <>
-      <section id="partners" className="py-24 bg-muted/30 overflow-hidden">
+      <section id="partners" className="bg-muted/30 overflow-hidden py-24">
         <div className="container mx-auto px-4">
           {/* Section Header */}
           <motion.div
             ref={headerRef}
-            className="text-center mb-16"
+            className="mb-16 text-center"
             initial={{ opacity: 0, y: 30 }}
             animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6 }}
-          >
+            transition={{ duration: 0.6 }}>
             <motion.span
-              className="inline-block px-4 py-2 rounded-full bg-violet/10 text-violet font-medium text-sm mb-4"
+              className="bg-violet/10 text-violet mb-4 inline-block rounded-full px-4 py-2 text-sm font-medium"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={isHeaderInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
+              transition={{ duration: 0.6, delay: 0.2 }}>
               {text.badge}
             </motion.span>
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
+            <h2 className="font-display text-foreground mb-4 text-4xl font-bold md:text-5xl">
               {text.heading} <span className="text-violet">{text.headingAccent}</span>
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-              {text.description}
-            </p>
+            <p className="text-muted-foreground mx-auto max-w-2xl text-lg">{text.description}</p>
           </motion.div>
 
           {/* Co-Organisers Marquee */}
           <div className="mb-16">
             <motion.h3
-              className="text-center font-display font-bold text-xl text-foreground mb-6"
+              className="font-display text-foreground mb-6 text-center text-xl font-bold"
               initial={{ opacity: 0 }}
               animate={isHeaderInView ? { opacity: 1 } : {}}
-              transition={{ delay: 0.3 }}
-            >
+              transition={{ delay: 0.3 }}>
               {text.organisers}
             </motion.h3>
             <MarqueeRow items={partners.organisers} direction="left" speed={40} />
@@ -123,31 +124,29 @@ export function Partners() {
           </div>
 
           {/* Sponsor Tiers */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-2 lg:grid-cols-4">
             {sponsorPackages.map((tier, index) => (
               <motion.div
                 key={tier.slug}
                 className="relative"
                 initial={{ opacity: 0, y: 30 }}
                 animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-              >
+                transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}>
                 <motion.div
-                  className="rounded-xl p-6 text-center h-48 flex flex-col items-center justify-center cursor-pointer transition-all border border-black/5"
+                  className="flex h-48 cursor-pointer flex-col items-center justify-center rounded-xl border border-black/5 p-6 text-center transition-all"
                   style={{
-                    background: `linear-gradient(135deg, ${tier.color} 0%, rgba(255,255,255,0.92) 100%)`,
+                    background: `linear-gradient(135deg, ${tier.color} 0%, rgba(255,255,255,0.92) 100%)`
                   }}
                   whileHover={{ scale: 1.05, y: -5 }}
                   transition={{ type: "spring", stiffness: 300 }}
                   onClick={() => {
                     setSelectedPackageSlug(tier.slug)
                     setSponsorshipModalOpen(true)
-                  }}
-                >
-                  <span className="font-display font-bold text-2xl text-foreground mb-2">
+                  }}>
+                  <span className="font-display text-foreground mb-2 text-2xl font-bold">
                     {tier.name.toUpperCase()}
                   </span>
-                  <p className="text-sm text-foreground/75 max-w-[16rem] leading-relaxed">
+                  <p className="text-foreground/75 max-w-[16rem] text-sm leading-relaxed">
                     {tier.shortDescription}
                   </p>
                 </motion.div>
@@ -157,19 +156,15 @@ export function Partners() {
 
           {/* CTA */}
           <motion.div
-            className="text-center mt-12"
+            className="mt-12 text-center"
             initial={{ opacity: 0, y: 20 }}
             animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.8 }}
-          >
-            <p className="text-muted-foreground mb-4">
-              {text.ctaQuestion}
-            </p>
+            transition={{ delay: 0.8 }}>
+            <p className="text-muted-foreground mb-4">{text.ctaQuestion}</p>
             <motion.button
               onClick={() => setSponsorshipModalOpen(true)}
-              className="inline-flex items-center gap-2 text-violet font-semibold hover:underline"
-              whileHover={{ x: 5 }}
-            >
+              className="text-violet inline-flex items-center gap-2 font-semibold hover:underline"
+              whileHover={{ x: 5 }}>
               {text.ctaAction}
               <span aria-hidden="true">→</span>
             </motion.button>
