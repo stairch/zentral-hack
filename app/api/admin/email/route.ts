@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
 import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { sendCampaignEmail, sendEmail } from "@/lib/email"

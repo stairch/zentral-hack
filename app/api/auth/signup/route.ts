@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
-import { hashPassword, generateJWT, JWTPayload } from "@/lib/auth"
+import { hashPassword } from "@/lib/auth"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { SignupSchema, validateRequest } from "@/lib/validation"
 import { createRateLimiter } from "@/lib/rate-limit"

@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
 import { successResponse, serverError } from "@/lib/api"
 import { buildCategorySelectClause, getAvailableCategoryColumns } from "@/lib/category-db"
@@ -7,7 +6,7 @@ import { buildCategorySelectClause, getAvailableCategoryColumns } from "@/lib/ca
  * GET /api/categories
  * Fetches all categories (public endpoint)
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const availableColumns = await getAvailableCategoryColumns()
     const result = await query(

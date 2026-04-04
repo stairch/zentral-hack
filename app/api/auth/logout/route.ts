@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   const response = successResponse({ message: "Logged out successfully" })
   response.cookies.delete("token")
   return response

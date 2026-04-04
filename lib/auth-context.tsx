@@ -21,26 +21,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-/**
- * Parse JWT payload from token
- * Note: Token is now stored in httpOnly cookie by the API
- * This function helps us validate the token structure
- */
-function parseJWTPayload(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split(".")
-    if (parts.length !== 3) {
-      return null
-    }
-    // Decode payload (base64url)
-    const payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8"))
-    return payload
-  } catch (error) {
-    console.error("Failed to parse JWT:", error)
-    return null
-  }
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)

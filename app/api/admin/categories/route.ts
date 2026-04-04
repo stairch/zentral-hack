@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
 import { withCategoryPartnerAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { buildCategorySelectClause, getAvailableCategoryColumns } from "@/lib/category-db"
 import { categoryIconMap, normalizeHexColor } from "@/lib/category-config"
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const availableColumns = await getAvailableCategoryColumns()
     const result = await query(

@@ -1,6 +1,5 @@
-import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
-import { withCategoryPartnerAuth, withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
+import { withCategoryPartnerAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { writeFile, mkdir, unlink } from "fs/promises"
 import { join } from "path"

@@ -5,7 +5,6 @@ import { motion } from "framer-motion"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -15,15 +14,12 @@ import {
   Loader2,
   FileText,
   Users,
-  Upload,
   Download,
   ExternalLink,
-  Github,
   FolderOpen
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { toast } from "sonner"
 import { TeamFilesComponent } from "@/components/team-files"
 
 interface DashboardData {

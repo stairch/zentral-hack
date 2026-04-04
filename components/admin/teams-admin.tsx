@@ -59,7 +59,7 @@ interface TeamsAdminProps {
   registrations: Registration[]
 }
 
-export function TeamsAdmin({ initialTeams, categories, registrations }: TeamsAdminProps) {
+export function TeamsAdmin({ initialTeams, categories }: TeamsAdminProps) {
   const router = useRouter()
   const [teams, setTeams] = useState(initialTeams)
   const [isCreating, setIsCreating] = useState(false)
