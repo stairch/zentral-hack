@@ -45,7 +45,7 @@ export async function send2FACodeEmail(to: string, code: string): Promise<void> 
     <p>Um dich anzumelden, verwende bitte folgenden Verifizierungscode:</p>
     <h1 style="letter-spacing: 0.1em; font-size: 36px; margin: 20px 0; font-family: monospace; color: #530A5D;">${code}</h1>
     <p>Dieser Code verfällt in 15 Minuten.</p>
-    <p style="color: #666; font-size: 12px;">Falls du dich nicht angemeldet hast, ignoriere diese E-Mail und ändern dein Passwort.</p>
+    <p style="color: #666; font-size: 12px;">Falls du dich nicht angemeldet hast, ignoriere diese E-Mail und ändere dein Passwort.</p>
   `
 
   return sendEmail({
