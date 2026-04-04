@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       <h2>Willkommen zum Zentral Hack 2026!</h2>
       <p>Hallo ${escapeHtml(firstName)} ${escapeHtml(lastName)},</p>
       
-      <p>Danke dass du dich angemeldet hast!</p>
+      <p>Danke dass du dich registriert hast!</p>
       
       <div style="margin: 20px 0; padding: 15px; background-color: #f3f4f6; border-left: 4px solid #530A5D;">
         <h3>Deine Registrierungsdaten:</h3>
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       to: email,
       subject: `Bestätigung: Registrierung für ${escapeHtml(categoryName)}`,
       html: confirmationHtml,
-      text: `Willkommen zum Zentral Hack 2026! Du hast dich für die Kategorie "${categoryName}" angemeldet.`
+      text: `Willkommen zum Zentral Hack 2026! Du hast dich für die Kategorie "${categoryName}" registriert.`
     })
 
     // Subscribe to newsletter if requested

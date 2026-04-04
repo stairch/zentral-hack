@@ -194,9 +194,9 @@ export function DashboardContent() {
           <Card className="mb-8 border-amber-200 bg-amber-50">
             <CardContent className="pt-6">
               <p className="text-amber-800">
-                Du hast dich noch nicht für eine Kategorie angemeldet.{" "}
+                Du hast dich noch nicht für eine Kategorie registriert.{" "}
                 <Link href="/anmeldung" className="font-medium underline">
-                  Jetzt anmelden
+                  Jetzt registrieren
                 </Link>
               </p>
             </CardContent>

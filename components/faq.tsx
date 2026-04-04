@@ -22,7 +22,7 @@ const fallbackFaqs = [
       en: "Who can participate?"
     },
     answer: {
-      de: "Alle sind willkommen! Ob Studierende, Berufstätige oder einfach technikbegeistert – jede:r kann sich anmelden und mitmachen.",
+      de: "Alle sind willkommen! Ob Studierende, Berufstätige oder einfach technikbegeistert – jede:r kann sich registrieren und mitmachen.",
       en: "Everyone is welcome. Whether student, professional, or simply tech-interested, you can join."
     }
   },
@@ -32,7 +32,7 @@ const fallbackFaqs = [
       en: "Do I need a team?"
     },
     answer: {
-      de: "Nein, du kannst dich auch alleine anmelden. Wir helfen dir, ein passendes Team zu finden. Alternativ kannst du auch bereits mit einem Team kommen.",
+      de: "Nein, du kannst dich auch alleine registrieren. Wir helfen dir, ein passendes Team zu finden. Alternativ kannst du auch bereits mit einem Team kommen.",
       en: "No, you can register alone. We help you find a fitting team. You can also join with your own team."
     }
   }

@@ -15,7 +15,7 @@ const copy = {
     subtitleAccent: "Zentralschweiz",
     subtitleLine2: "Innovation, Nachwuchs und Networking.",
     location: "HSLU - Hochschule Luzern",
-    primaryCta: "Jetzt Anmelden",
+    primaryCta: "Jetzt Registrieren",
     primaryCtaLoggedIn: "Zum Dashboard",
     secondaryCta: "Mehr Erfahren"
   },
