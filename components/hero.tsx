@@ -13,7 +13,7 @@ const copy = {
     date: "23. - 24. OKTOBER 2026",
     subtitleLinePre: "Ein Hackathon für",
     subtitleLineRotate: ["Innovation", "Junge Talente", "Networking"],
-    subtitleLinePost: "in der Zentralschweiz",
+    subtitleLinePost: "in der Zentralschweiz.",
     location: "HSLU - Hochschule Luzern",
     primaryCta: "Jetzt Anmelden",
     primaryCtaLoggedIn: "Zum Dashboard",
@@ -23,7 +23,7 @@ const copy = {
     date: "23 - 24 OCTOBER 2026",
     subtitleLinePre: "A hackathon for",
     subtitleLineRotate: ["Innovation", "Young Talent", "Networking"],
-    subtitleLinePost: "in Central Switzerland",
+    subtitleLinePost: "in Central Switzerland.",
     location: "HSLU - Lucerne University of Applied Sciences",
     primaryCta: "Register Now",
     primaryCtaLoggedIn: "To Dashboard",
@@ -280,7 +280,7 @@ export function Hero() {
           className="text-muted-foreground mx-auto mb-8 flex w-fit max-w-2xl items-center gap-2 text-xl leading-relaxed md:text-2xl">
           <div>{text.subtitleLinePre}</div>
           <RotatingText words={text.subtitleLineRotate} />
-          <div>{text.subtitleLinePost}</div>.
+          <div>{text.subtitleLinePost}</div>
         </motion.div>
 
         {/* Location */}
