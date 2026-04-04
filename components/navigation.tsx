@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
+import { useAuth } from "@/lib/auth-context"
 
 const navItems = {
   de: [
@@ -25,14 +26,15 @@ const navItems = {
 }
 
 const copy = {
-  de: { register: "Anmelden", toggleMenu: "Menü umschalten", language: "Sprache" },
-  en: { register: "Register", toggleMenu: "Toggle menu", language: "Language" },
+  de: { register: "Anmelden", login: "Login", dashboard: "Dashboard", toggleMenu: "Menü umschalten", language: "Sprache" },
+  en: { register: "Register", login: "Login", dashboard: "Dashboard", toggleMenu: "Toggle menu", language: "Language" },
 } as const
 
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { language, setLanguage } = useLanguage()
+  const { user } = useAuth()
   const text = copy[language]
   const items = navItems[language]
 
@@ -50,11 +52,10 @@ export function Navigation() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? "bg-background/80 backdrop-blur-lg border-b border-border shadow-sm"
-            : "bg-transparent"
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
+          ? "bg-background/80 backdrop-blur-lg border-b border-border shadow-sm"
+          : "bg-transparent"
+          }`}
       >
         <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
@@ -101,11 +102,26 @@ export function Navigation() {
                 <option value="de">DE</option>
                 <option value="en">EN</option>
               </select>
-              <Link href="/anmeldung">
-                <Button className="bg-violet hover:bg-violet/90 text-white font-semibold">
-                  {text.register}
-                </Button>
-              </Link>
+              {user ? (
+                <Link href="/dashboard">
+                  <Button className="bg-secondary hover:bg-secondary/90 text-foreground/80 font-semibold">
+                    {text.dashboard}
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/anmeldung">
+                    <Button className="bg-violet hover:bg-violet/90 text-white font-semibold">
+                      {text.register}
+                    </Button>
+                  </Link>
+                  <Link href="/auth/login">
+                    <Button className="bg-secondary hover:bg-secondary/90 text-foreground/80 font-semibold">
+                      {text.login}
+                    </Button>
+                  </Link>
+                </>
+              )}
             </motion.div>
           </div>
 
@@ -118,60 +134,83 @@ export function Navigation() {
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </nav>
-      </motion.header>
+      </motion.header >
 
       {/* Mobile Menu */}
       <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, x: "100%" }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-40 bg-background md:hidden"
-          >
-            <div className="flex flex-col items-center justify-center h-full gap-8">
-              {items.map((item, index) => (
-                <motion.a
-                  key={item.label}
-                  href={item.href}
-                  className="text-2xl font-display font-bold text-foreground hover:text-violet transition-colors"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 * index }}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {item.label}
-                </motion.a>
-              ))}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="flex flex-col gap-3 w-full px-8"
-              >
-                <select
-                  value={language}
-                  onChange={(event) => setLanguage(event.target.value as "de" | "en")}
-                  aria-label={text.language}
-                  className="h-12 rounded-md border border-border bg-background px-3 text-sm"
-                >
-                  <option value="de">Deutsch</option>
-                  <option value="en">English</option>
-                </select>
-                <Link href="/anmeldung" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
-                  <Button
-                    size="lg"
-                    className="w-full bg-violet hover:bg-violet/90 text-white font-semibold"
+        {
+          isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, x: "100%" }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-0 z-40 bg-background md:hidden"
+            >
+              <div className="flex flex-col items-center justify-center h-full gap-8">
+                {items.map((item, index) => (
+                  <motion.a
+                    key={item.label}
+                    href={item.href}
+                    className="text-2xl font-display font-bold text-foreground hover:text-violet transition-colors"
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 * index }}
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    {text.register}
-                  </Button>
-                </Link>
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                    {item.label}
+                  </motion.a>
+                ))}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex flex-col gap-3 w-full px-8"
+                >
+                  <select
+                    value={language}
+                    onChange={(event) => setLanguage(event.target.value as "de" | "en")}
+                    aria-label={text.language}
+                    className="h-12 rounded-md border border-border bg-background px-3 text-sm"
+                  >
+                    <option value="de">Deutsch</option>
+                    <option value="en">English</option>
+                  </select>
+                  {user ? (
+                    <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
+                      <Button
+                        size="lg"
+                        className="w-full bg-secondary hover:bg-secondary/90 text-foreground/80 font-semibold"
+                      >
+                        {text.dashboard}
+                      </Button>
+                    </Link>
+                  ) : (
+                    <>
+                      <Link href="/anmeldung" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
+                        <Button
+                          size="lg"
+                          className="w-full bg-violet hover:bg-violet/90 text-white font-semibold"
+                        >
+                          {text.register}
+                        </Button>
+                      </Link>
+                      <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
+                        <Button
+                          size="lg"
+                          className="w-full bg-secondary hover:bg-secondary/90 text-foreground/80 font-semibold"
+                        >
+                          {text.login}
+                        </Button>
+                      </Link>
+                    </>
+                  )}
+                </motion.div>
+              </div>
+            </motion.div>
+          )
+        }
+      </AnimatePresence >
     </>
   )
 }

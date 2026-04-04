@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight, Calendar, MapPin } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
+import { useAuth } from "@/lib/auth-context"
 
 const copy = {
   de: {
@@ -15,6 +16,7 @@ const copy = {
     subtitleLine2: "Innovation, Nachwuchs und Networking.",
     location: "HSLU - Hochschule Luzern",
     primaryCta: "Jetzt Anmelden",
+    primaryCtaLoggedIn: "Zum Dashboard",
     secondaryCta: "Mehr Erfahren",
   },
   en: {
@@ -24,6 +26,7 @@ const copy = {
     subtitleLine2: "Innovation, young talent, and networking.",
     location: "HSLU - Lucerne University of Applied Sciences",
     primaryCta: "Register Now",
+    primaryCtaLoggedIn: "To Dashboard",
     secondaryCta: "Learn More",
   },
 } as const
@@ -116,6 +119,7 @@ function AnimatedMountain() {
 export function Hero() {
   const [particles, setParticles] = useState<Array<{ id: number; delay: number; duration: number; x: number; y: number }>>([])
   const { language } = useLanguage()
+  const { user } = useAuth()
   const text = copy[language]
 
   useEffect(() => {
@@ -232,12 +236,12 @@ export function Hero() {
           transition={{ duration: 0.6, delay: 1 }}
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
-          <Link href="/anmeldung">
+          <Link href={user ? "/dashboard" : "/anmeldung"}>
             <Button
               size="lg"
               className="bg-violet hover:bg-violet/90 text-white font-semibold px-8 py-6 text-lg group"
             >
-              {text.primaryCta}
+              {user ? text.primaryCtaLoggedIn : text.primaryCta}
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
