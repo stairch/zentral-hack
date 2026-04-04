@@ -75,7 +75,10 @@ function CategoryCard({
       />
 
       {/* Icon */}
-      <motion.div className="relative z-10 mb-6" whileHover={{ rotate: 360 }} transition={{ duration: 0.6 }}>
+      <motion.div
+        className="relative z-10 mb-6 w-fit"
+        whileHover={{ rotate: 360 }}
+        transition={{ duration: 0.6 }}>
         <category.icon className="h-12 w-12" />
       </motion.div>
 
