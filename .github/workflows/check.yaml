@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  Lint:
+  Check:
     runs-on: ubuntu-latest
     # only when it's not a version tag (deploy workflow has it's own check job)
     if: "!startsWith(github.ref, 'refs/tags/v')"
