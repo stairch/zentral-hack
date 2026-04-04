@@ -5,6 +5,28 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Calendar, MapPin } from "lucide-react"
 import Link from "next/link"
+import { useLanguage } from "@/lib/language-context"
+
+const copy = {
+  de: {
+    date: "23. - 24. OKTOBER 2026",
+    subtitleLine1: "Ein Hackathon für die",
+    subtitleAccent: "Zentralschweiz",
+    subtitleLine2: "Innovation, Nachwuchs und Networking.",
+    location: "HSLU - Hochschule Luzern",
+    primaryCta: "Jetzt Anmelden",
+    secondaryCta: "Mehr Erfahren",
+  },
+  en: {
+    date: "23 - 24 OCTOBER 2026",
+    subtitleLine1: "A hackathon for",
+    subtitleAccent: "Central Switzerland",
+    subtitleLine2: "Innovation, young talent, and networking.",
+    location: "HSLU - Lucerne University of Applied Sciences",
+    primaryCta: "Register Now",
+    secondaryCta: "Learn More",
+  },
+} as const
 
 function FloatingParticle({ delay, duration, x, y }: { delay: number; duration: number; x: number; y: number }) {
   return (
@@ -93,6 +115,8 @@ function AnimatedMountain() {
 
 export function Hero() {
   const [particles, setParticles] = useState<Array<{ id: number; delay: number; duration: number; x: number; y: number }>>([])
+  const { language } = useLanguage()
+  const text = copy[language]
 
   useEffect(() => {
     const newParticles = Array.from({ length: 15 }, (_, i) => ({
@@ -140,7 +164,7 @@ export function Hero() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-light-violet/30 border border-light-violet mb-8"
         >
           <Calendar className="w-4 h-4 text-violet" />
-          <span className="text-sm font-medium text-violet">23. - 24. OKTOBER 2026</span>
+          <span className="text-sm font-medium text-violet">{text.date}</span>
         </motion.div>
 
         {/* Main title */}
@@ -185,9 +209,9 @@ export function Hero() {
           transition={{ duration: 0.6, delay: 0.8 }}
           className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed"
         >
-          Ein Hackathon für die <span className="text-violet font-semibold">Zentralschweiz</span>.
+          {text.subtitleLine1} <span className="text-violet font-semibold">{text.subtitleAccent}</span>.
           <br />
-          Innovation, Nachwuchs und Networking.
+          {text.subtitleLine2}
         </motion.p>
 
         {/* Location */}
@@ -198,7 +222,7 @@ export function Hero() {
           className="inline-flex items-center gap-2 text-muted-foreground mb-12"
         >
           <MapPin className="w-5 h-5" />
-          <span>HSLU - Hochschule Luzern</span>
+          <span>{text.location}</span>
         </motion.div>
 
         {/* CTA Buttons */}
@@ -213,7 +237,7 @@ export function Hero() {
               size="lg"
               className="bg-violet hover:bg-violet/90 text-white font-semibold px-8 py-6 text-lg group"
             >
-              Jetzt Anmelden
+              {text.primaryCta}
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
@@ -223,7 +247,7 @@ export function Hero() {
               variant="outline"
               className="border-violet text-violet hover:bg-violet hover:text-white font-semibold px-8 py-6 text-lg"
             >
-              Mehr Erfahren
+              {text.secondaryCta}
             </Button>
           </a>
         </motion.div>

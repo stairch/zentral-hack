@@ -8,6 +8,40 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { ArrowRight, CheckCircle, Sparkles, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { useLanguage } from "@/lib/language-context"
+
+const copy = {
+  de: {
+    date: "23.-24. OKTOBER 2026",
+    heading1: "BEREIT ZU",
+    heading2: "HACKEN",
+    description: "Melde dich jetzt für den Newsletter an und erhalte alle Updates zum Zentral Hack 2026.",
+    register: "Jetzt anmelden",
+    or: "oder",
+    newsletterButton: "Newsletter",
+    newsletterPlaceholder: "deine@email.ch",
+    wantsEmail: "Ich möchte Updates per E-Mail erhalten",
+    success: "Super! Du bist angemeldet.",
+    noSpam: "Kein Spam, versprochen. Nur wichtige Updates zum Zentral Hack.",
+    signupFailed: "Anmeldung fehlgeschlagen",
+    genericError: "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
+  },
+  en: {
+    date: "23-24 OCTOBER 2026",
+    heading1: "READY TO",
+    heading2: "HACK",
+    description: "Sign up for the newsletter now and receive all updates about Zentral Hack 2026.",
+    register: "Register now",
+    or: "or",
+    newsletterButton: "Newsletter",
+    newsletterPlaceholder: "your@email.com",
+    wantsEmail: "I want to receive updates by email",
+    success: "Great! You are subscribed.",
+    noSpam: "No spam, promised. Only important updates about Zentral Hack.",
+    signupFailed: "Subscription failed",
+    genericError: "An error occurred. Please try again.",
+  },
+} as const
 
 export function CTA() {
   const sectionRef = useRef(null)
@@ -17,6 +51,8 @@ export function CTA() {
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { language } = useLanguage()
+  const text = copy[language]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,13 +73,13 @@ export function CTA() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || "Anmeldung fehlgeschlagen")
+        throw new Error(data.error || text.signupFailed)
       }
 
       setIsSubmitted(true)
     } catch (err) {
       console.error("Newsletter signup error:", err)
-      setError(err instanceof Error ? err.message : "Ein Fehler ist aufgetreten. Bitte versuche es erneut.")
+      setError(err instanceof Error ? err.message : text.genericError)
     } finally {
       setIsLoading(false)
     }
@@ -87,7 +123,7 @@ export function CTA() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <Sparkles className="w-4 h-4 text-[#E6FF17]" />
-            <span className="text-white text-sm font-medium">23.-24. OKTOBER 2026</span>
+            <span className="text-white text-sm font-medium">{text.date}</span>
           </motion.div>
 
           {/* Heading */}
@@ -98,8 +134,8 @@ export function CTA() {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
-            BEREIT ZU{" "}
-            <span className="text-[#E6FF17]">HACKEN</span>?
+            {text.heading1}{" "}
+            <span className="text-[#E6FF17]">{text.heading2}</span>?
           </motion.h2>
 
           <motion.p
@@ -108,7 +144,7 @@ export function CTA() {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            Melde dich jetzt für den Newsletter an und erhalte alle Updates zum Zentral Hack 2026.
+            {text.description}
           </motion.p>
 
           {/* Form / Registration CTA */}
@@ -124,12 +160,12 @@ export function CTA() {
                 size="lg"
                 className="bg-[#E6FF17] hover:bg-[#E6FF17]/90 text-[#530A5D] font-bold px-10 h-16 rounded-full text-lg group"
               >
-                Jetzt anmelden
+                {text.register}
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
 
-            <p className="text-white/60 text-sm">oder</p>
+            <p className="text-white/60 text-sm">{text.or}</p>
 
             {/* Newsletter signup */}
             {!isSubmitted ? (
@@ -137,7 +173,7 @@ export function CTA() {
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Input
                     type="email"
-                    placeholder="deine@email.ch"
+                    placeholder={text.newsletterPlaceholder}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -151,7 +187,7 @@ export function CTA() {
                     {isLoading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
-                      "Newsletter"
+                      text.newsletterButton
                     )}
                   </Button>
                 </div>
@@ -164,7 +200,7 @@ export function CTA() {
                     className="border-white/50 data-[state=checked]:bg-[#E6FF17] data-[state=checked]:border-[#E6FF17]"
                   />
                   <Label htmlFor="wants-emails" className="text-white/70 text-sm cursor-pointer">
-                    Ich möchte Updates per E-Mail erhalten
+                    {text.wantsEmail}
                   </Label>
                 </div>
 
@@ -179,7 +215,7 @@ export function CTA() {
                 className="flex items-center justify-center gap-3 text-[#E6FF17]"
               >
                 <CheckCircle className="w-6 h-6" />
-                <span className="font-semibold text-lg">Super! Du bist angemeldet.</span>
+                <span className="font-semibold text-lg">{text.success}</span>
               </motion.div>
             )}
           </motion.div>
@@ -191,7 +227,7 @@ export function CTA() {
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ duration: 0.6, delay: 0.7 }}
           >
-            Kein Spam, versprochen. Nur wichtige Updates zum Zentral Hack.
+            {text.noSpam}
           </motion.p>
         </motion.div>
       </div>

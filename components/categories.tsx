@@ -11,9 +11,10 @@ import {
 } from "@/components/ui/dialog"
 import {
   categoryDisplayOrder,
-  getCategoryPresentation,
+  getCategoryPresentationByLanguage,
   type CategoryRecord,
 } from "@/lib/category-config"
+import { useLanguage } from "@/lib/language-context"
 
 interface DisplayCategory {
   id?: string;
@@ -32,10 +33,14 @@ function CategoryCard({
   category,
   index,
   onOpen,
+  partnerLabel,
+  detailsLabel,
 }: {
   category: DisplayCategory
   index: number
   onOpen: () => void
+  partnerLabel: string
+  detailsLabel: string
 }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
@@ -89,8 +94,8 @@ function CategoryCard({
       <div className="relative z-10">
         <h3 className="font-display text-2xl font-bold mb-3">{category.title}</h3>
         <p className="opacity-90 mb-4 leading-relaxed">{category.description}</p>
-        <p className="text-sm opacity-70">Partner: {category.partnerName}</p>
-        <p className="text-xs opacity-70 mt-4">Klicken für Details</p>
+        <p className="text-sm opacity-70">{partnerLabel}: {category.partnerName}</p>
+        <p className="text-xs opacity-70 mt-4">{detailsLabel}</p>
       </div>
 
       {/* Hover effect */}
@@ -106,9 +111,33 @@ export function Categories() {
   const headerRef = useRef(null)
   const isHeaderInView = useInView(headerRef, { once: true })
   const [displayCategories, setDisplayCategories] = useState<DisplayCategory[]>(() =>
-    categoryDisplayOrder.map((slug) => getCategoryPresentation({ slug }))
+    categoryDisplayOrder.map((slug) => getCategoryPresentationByLanguage({ slug }, 'de'))
   );
   const [selectedCategory, setSelectedCategory] = useState<DisplayCategory | null>(null)
+  const { language } = useLanguage()
+
+  const copy = {
+    de: {
+      badge: "CHALLENGES",
+      heading: "WÄHLE DEINE",
+      headingAccent: "KATEGORIE",
+      description: "Vier spannende Kategorien warten auf dich. Finde deine Passion und löse Challenges, die einen echten Unterschied machen.",
+      partner: "Partner",
+      clickDetails: "Klicken für Details",
+      challengeDescription: "Challenge-Beschrieb",
+    },
+    en: {
+      badge: "CHALLENGES",
+      heading: "CHOOSE YOUR",
+      headingAccent: "CATEGORY",
+      description: "Four exciting categories are waiting for you. Find your passion and solve challenges that make a real impact.",
+      partner: "Partner",
+      clickDetails: "Click for details",
+      challengeDescription: "Challenge Description",
+    },
+  } as const
+
+  const text = copy[language]
 
   // Fetch category content from DB (admin-editable)
   useEffect(() => {
@@ -127,7 +156,7 @@ export function Categories() {
 
         const merged = orderedSlugs.map((slug) => {
           const dbCategory = dbCategories.find((category) => category.slug === slug);
-          return getCategoryPresentation(dbCategory || { slug });
+          return getCategoryPresentationByLanguage(dbCategory || { slug }, language);
         });
 
         setDisplayCategories(merged);
@@ -136,7 +165,7 @@ export function Categories() {
       }
     };
     fetchCategories();
-  }, []);
+  }, [language]);
 
   return (
     <section id="categories" className="py-24 bg-muted/30">
@@ -155,13 +184,13 @@ export function Categories() {
             animate={isHeaderInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            CHALLENGES
+            {text.badge}
           </motion.span>
           <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
-            WÄHLE DEINE <span className="text-violet">KATEGORIE</span>
+            {text.heading} <span className="text-violet">{text.headingAccent}</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-            Vier spannende Kategorien warten auf dich. Finde deine Passion und löse Challenges, die einen echten Unterschied machen.
+            {text.description}
           </p>
         </motion.div>
 
@@ -173,6 +202,8 @@ export function Categories() {
               category={category}
               index={index}
               onOpen={() => setSelectedCategory(category)}
+              partnerLabel={text.partner}
+              detailsLabel={text.clickDetails}
             />
           ))}
         </div>
@@ -190,13 +221,13 @@ export function Categories() {
 
                 <div className="space-y-4 mt-2">
                   <div className="rounded-xl border bg-muted/30 p-4">
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Partner</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">{text.partner}</p>
                     <p className="font-medium">{selectedCategory.partnerName}</p>
                   </div>
 
                   {selectedCategory.showChallengeDescription && selectedCategory.challengeDescription ? (
                     <div className="rounded-xl border p-4">
-                      <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Challenge-Beschrieb</p>
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">{text.challengeDescription}</p>
                       <p className="leading-relaxed text-sm md:text-base">{selectedCategory.challengeDescription}</p>
                     </div>
                   ) : null}

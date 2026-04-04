@@ -3,19 +3,35 @@
 import { motion } from "framer-motion"
 import { Github, Linkedin, Instagram, Mail } from "lucide-react"
 import Link from "next/link"
+import { useLanguage } from "@/lib/language-context"
 
 const footerLinks = {
-  event: [
+  event: {
+    de: [
     { label: "Über uns", href: "#about" },
     { label: "Kategorien", href: "#categories" },
     { label: "Zeitplan", href: "#schedule" },
     { label: "FAQ", href: "#faq" },
-  ],
-  legal: [
+    ],
+    en: [
+      { label: "About", href: "#about" },
+      { label: "Categories", href: "#categories" },
+      { label: "Schedule", href: "#schedule" },
+      { label: "FAQ", href: "#faq" },
+    ],
+  },
+  legal: {
+    de: [
     { label: "Impressum", href: "/impressum" },
     { label: "Datenschutz", href: "/datenschutz" },
     { label: "AGB", href: "/agb" },
-  ],
+    ],
+    en: [
+      { label: "Legal Notice", href: "/impressum" },
+      { label: "Privacy", href: "/datenschutz" },
+      { label: "Terms", href: "/agb" },
+    ],
+  },
   social: [
     { icon: Instagram, href: "#", label: "Instagram" },
     { icon: Linkedin, href: "#", label: "LinkedIn" },
@@ -24,7 +40,31 @@ const footerLinks = {
   ],
 }
 
+const copy = {
+  de: {
+    description:
+      "Ein Hackathon für die Zentralschweiz. Verbindung von Bildung, Wirtschaft und Community für Innovation und Nachwuchsförderung.",
+    event: "EVENT",
+    legal: "RECHTLICHES",
+    rights: "© 2026 Zentral Hack. Alle Rechte vorbehalten.",
+    madeWith: "Made with",
+  },
+  en: {
+    description:
+      "A hackathon for Central Switzerland. Connecting education, business, and community for innovation and young talent.",
+    event: "EVENT",
+    legal: "LEGAL",
+    rights: "© 2026 Zentral Hack. All rights reserved.",
+    madeWith: "Made with",
+  },
+} as const
+
 export function Footer() {
+  const { language } = useLanguage()
+  const text = copy[language]
+  const eventLinks = footerLinks.event[language]
+  const legalLinks = footerLinks.legal[language]
+
   return (
     <footer className="bg-foreground py-16">
       <div className="container mx-auto px-4">
@@ -40,8 +80,7 @@ export function Footer() {
               <span className="text-yellow">HACK</span>
             </motion.a>
             <p className="text-muted-foreground max-w-sm leading-relaxed">
-              Ein Hackathon für die Zentralschweiz. Verbindung von Bildung, Wirtschaft und Community
-              für Innovation und Nachwuchsförderung.
+              {text.description}
             </p>
             
             {/* Social Links */}
@@ -65,7 +104,7 @@ export function Footer() {
           <div>
             <h4 className="font-display font-bold text-light-violet mb-4">EVENT</h4>
             <ul className="space-y-3">
-              {footerLinks.event.map((link) => (
+              {eventLinks.map((link) => (
                 <li key={link.label}>
                   <motion.a
                     href={link.href}
@@ -81,9 +120,9 @@ export function Footer() {
 
           {/* Legal Links */}
           <div>
-            <h4 className="font-display font-bold text-light-violet mb-4">RECHTLICHES</h4>
+            <h4 className="font-display font-bold text-light-violet mb-4">{text.legal}</h4>
             <ul className="space-y-3">
-              {footerLinks.legal.map((link) => (
+              {legalLinks.map((link) => (
                 <li key={link.label}>
                   <Link href={link.href}>
                     <motion.span
@@ -102,10 +141,10 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-muted-foreground text-sm">
-            © 2026 Zentral Hack. Alle Rechte vorbehalten.
+            {text.rights}
           </p>
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <span>Made with <span className="text-red-500">♥ by</span></span>
+            <span>{text.madeWith} <span className="text-red-500">♥ by</span></span>
             <span className="text-light-violet font-semibold">STAIR</span>
           
           </div>

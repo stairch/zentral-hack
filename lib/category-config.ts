@@ -25,12 +25,16 @@ export type CategoryIconName =
 export interface CategoryRecord {
   id?: string;
   name?: string | null;
+  name_en?: string | null;
   slug: string;
   description?: string | null;
+  description_en?: string | null;
   partner_name?: string | null;
+  partner_name_en?: string | null;
   color?: string | null;
   icon?: string | null;
   challenge_description?: string | null;
+  challenge_description_en?: string | null;
   show_challenge_description?: boolean | null;
 }
 
@@ -175,21 +179,45 @@ export function resolveCategoryIconName(icon?: string | null, slug?: string): Ca
 }
 
 export function getCategoryPresentation(category: CategoryRecord) {
+  return getCategoryPresentationByLanguage(category, 'de');
+}
+
+export function getCategoryPresentationByLanguage(category: CategoryRecord, language: 'de' | 'en') {
   const fallback = getCategoryFallback(category.slug);
   const color = normalizeHexColor(category.color, fallback.color);
   const iconName = resolveCategoryIconName(category.icon, category.slug);
 
+  const localizedTitle =
+    language === 'en'
+      ? (category.name_en || category.name || fallback.name).trim()
+      : (category.name || fallback.name).trim();
+
+  const localizedDescription =
+    language === 'en'
+      ? (category.description_en || category.description || fallback.description).trim()
+      : (category.description || fallback.description).trim();
+
+  const localizedPartnerName =
+    language === 'en'
+      ? (category.partner_name_en || category.partner_name || fallback.partnerName).trim()
+      : (category.partner_name || fallback.partnerName).trim();
+
+  const localizedChallengeDescription =
+    language === 'en'
+      ? (category.challenge_description_en || category.challenge_description || '').trim()
+      : (category.challenge_description || '').trim();
+
   return {
     id: category.id,
     slug: category.slug,
-    title: (category.name || fallback.name).trim(),
-    description: (category.description || fallback.description).trim(),
-    partnerName: (category.partner_name || fallback.partnerName).trim(),
+    title: localizedTitle,
+    description: localizedDescription,
+    partnerName: localizedPartnerName,
     color,
     textColor: getReadableTextColor(color),
     icon: categoryIconMap[iconName],
     iconName,
-    challengeDescription: (category.challenge_description || '').trim(),
+    challengeDescription: localizedChallengeDescription,
     showChallengeDescription: Boolean(category.show_challenge_description),
   };
 }

@@ -17,23 +17,91 @@ import {
 } from '@/components/ui/dialog';
 import { Plus, Loader2, Pencil, Trash2, GripVertical, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLanguage } from '@/lib/language-context';
 
 interface FAQ {
   id: string;
   question: string;
+  question_en?: string | null;
   answer: string;
+  answer_en?: string | null;
   order_position: number;
   is_active: boolean;
   created_at: string;
 }
 
 export function FAQAdminPage() {
+  const { language } = useLanguage();
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingFaq, setEditingFaq] = useState<FAQ | null>(null);
-  const [form, setForm] = useState({ question: '', answer: '' });
+  const [form, setForm] = useState({ question: '', questionEn: '', answer: '', answerEn: '' });
+
+  const text = language === 'en'
+    ? {
+        heading: 'FAQ MANAGEMENT',
+        subtitle: 'Manage frequently asked questions',
+        newFaq: 'New FAQ',
+        editFaq: 'Edit FAQ',
+        createFaq: 'Create FAQ',
+        editDescription: 'Edit the question and answer',
+        createDescription: 'Create a new frequently asked question',
+        germanSection: 'German',
+        englishSection: 'English',
+        questionLabel: 'Question',
+        questionPlaceholder: 'e.g. What is Zentral Hack?',
+        answerLabel: 'Answer',
+        answerPlaceholder: 'Answer to the question...',
+        questionRequired: 'Question and answer are required in German and English',
+        loadError: 'Failed to load FAQs',
+        updateError: 'Failed to update',
+        createError: 'Failed to create',
+        saveError: 'Failed to save',
+        updateSuccess: 'FAQ updated',
+        createSuccess: 'FAQ created',
+        deleteConfirm: 'Delete this FAQ?',
+        deleteSuccess: 'FAQ deleted',
+        deleteError: 'Failed to delete',
+        sortError: 'Failed to reorder',
+        allFaqs: 'All FAQs',
+        active: 'active',
+        save: 'Save',
+        create: 'Create',
+        noFaqs: 'No FAQs yet. Click "New FAQ" to get started.',
+      }
+    : {
+        heading: 'FAQ VERWALTUNG',
+        subtitle: 'Häufig gestellte Fragen verwalten',
+        newFaq: 'Neue FAQ',
+        editFaq: 'FAQ bearbeiten',
+        createFaq: 'Neue FAQ erstellen',
+        editDescription: 'Bearbeite die Frage und Antwort',
+        createDescription: 'Erstelle eine neue häufig gestellte Frage',
+        germanSection: 'Deutsch',
+        englishSection: 'Englisch',
+        questionLabel: 'Frage',
+        questionPlaceholder: 'z.B. Was ist der Zentral Hack?',
+        answerLabel: 'Antwort',
+        answerPlaceholder: 'Die Antwort auf die Frage...',
+        questionRequired: 'Frage und Antwort sind in Deutsch und Englisch erforderlich',
+        loadError: 'Fehler beim Laden der FAQs',
+        updateError: 'Fehler beim Aktualisieren',
+        createError: 'Fehler beim Erstellen',
+        saveError: 'Fehler beim Speichern',
+        updateSuccess: 'FAQ aktualisiert',
+        createSuccess: 'FAQ erstellt',
+        deleteConfirm: 'FAQ wirklich löschen?',
+        deleteSuccess: 'FAQ gelöscht',
+        deleteError: 'Fehler beim Löschen',
+        sortError: 'Fehler beim Sortieren',
+        allFaqs: 'Alle FAQs',
+        active: 'aktiv',
+        save: 'Speichern',
+        create: 'Erstellen',
+        noFaqs: 'Noch keine FAQs. Klicke auf "Neue FAQ", um zu starten.',
+      };
 
   useEffect(() => {
     fetchFaqs();
@@ -48,7 +116,7 @@ export function FAQAdminPage() {
         setFaqs(data.data?.faqs || []);
       }
     } catch {
-      toast.error('Fehler beim Laden der FAQs');
+      toast.error(text.loadError);
     } finally {
       setLoading(false);
     }
@@ -56,24 +124,36 @@ export function FAQAdminPage() {
 
   const openCreate = () => {
     setEditingFaq(null);
-    setForm({ question: '', answer: '' });
+    setForm({ question: '', questionEn: '', answer: '', answerEn: '' });
     setDialogOpen(true);
   };
 
   const openEdit = (faq: FAQ) => {
     setEditingFaq(faq);
-    setForm({ question: faq.question, answer: faq.answer });
+    setForm({
+      question: faq.question,
+      questionEn: faq.question_en || '',
+      answer: faq.answer,
+      answerEn: faq.answer_en || '',
+    });
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
-    if (!form.question.trim() || !form.answer.trim()) {
-      toast.error('Frage und Antwort sind erforderlich');
+    if (!form.question.trim() || !form.questionEn.trim() || !form.answer.trim() || !form.answerEn.trim()) {
+      toast.error(text.questionRequired);
       return;
     }
 
     setSaving(true);
     try {
+      const payload = {
+        question: form.question,
+        questionEn: form.questionEn,
+        answer: form.answer,
+        answerEn: form.answerEn,
+      };
+
       if (editingFaq) {
         const res = await fetch('/api/admin/faqs', {
           method: 'PUT',
@@ -81,37 +161,44 @@ export function FAQAdminPage() {
           credentials: 'include',
           body: JSON.stringify({
             id: editingFaq.id,
-            question: form.question,
-            answer: form.answer,
+            ...payload,
           }),
         });
-        if (!res.ok) throw new Error('Fehler beim Aktualisieren');
+        if (!res.ok) throw new Error(text.updateError);
         setFaqs(faqs.map(f =>
-          f.id === editingFaq.id ? { ...f, question: form.question, answer: form.answer } : f
+          f.id === editingFaq.id
+            ? {
+                ...f,
+                question: payload.question,
+                question_en: payload.questionEn,
+                answer: payload.answer,
+                answer_en: payload.answerEn,
+              }
+            : f
         ));
-        toast.success('FAQ aktualisiert');
+        toast.success(text.updateSuccess);
       } else {
         const res = await fetch('/api/admin/faqs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error('Fehler beim Erstellen');
+        if (!res.ok) throw new Error(text.createError);
         const data = await res.json();
         setFaqs([...faqs, data.data.faq]);
-        toast.success('FAQ erstellt');
+        toast.success(text.createSuccess);
       }
       setDialogOpen(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Fehler beim Speichern');
+      toast.error(error instanceof Error ? error.message : text.saveError);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('FAQ wirklich löschen?')) return;
+    if (!confirm(text.deleteConfirm)) return;
     try {
       const res = await fetch(`/api/admin/faqs?id=${id}`, {
         method: 'DELETE',
@@ -119,10 +206,10 @@ export function FAQAdminPage() {
       });
       if (res.ok) {
         setFaqs(faqs.filter(f => f.id !== id));
-        toast.success('FAQ gelöscht');
+        toast.success(text.deleteSuccess);
       }
     } catch {
-      toast.error('Fehler beim Löschen');
+      toast.error(text.deleteError);
     }
   };
 
@@ -140,7 +227,7 @@ export function FAQAdminPage() {
         ));
       }
     } catch {
-      toast.error('Fehler beim Aktualisieren');
+      toast.error(text.updateError);
     }
   };
 
@@ -173,7 +260,7 @@ export function FAQAdminPage() {
       newFaqs.sort((a, b) => a.order_position - b.order_position);
       setFaqs(newFaqs);
     } catch {
-      toast.error('Fehler beim Sortieren');
+      toast.error(text.sortError);
     }
   };
 
@@ -190,51 +277,79 @@ export function FAQAdminPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-            FAQ VERWALTUNG
+            {text.heading}
           </h1>
           <p className="text-muted-foreground mt-2">
-            Häufig gestellte Fragen verwalten
+            {text.subtitle}
           </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2 bg-violet hover:bg-violet/90" onClick={openCreate}>
-              <Plus className="w-4 h-4" /> Neue FAQ
+              <Plus className="w-4 h-4" /> {text.newFaq}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>{editingFaq ? 'FAQ bearbeiten' : 'Neue FAQ erstellen'}</DialogTitle>
+              <DialogTitle>{editingFaq ? text.editFaq : text.createFaq}</DialogTitle>
               <DialogDescription>
-                {editingFaq ? 'Bearbeite die Frage und Antwort' : 'Erstelle eine neue häufig gestellte Frage'}
+                {editingFaq ? text.editDescription : text.createDescription}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="question">Frage</Label>
-                <Input
-                  id="question"
-                  value={form.question}
-                  onChange={(e) => setForm({ ...form, question: e.target.value })}
-                  placeholder="z.B. Was ist der Zentral Hack?"
-                />
-              </div>
-              <div>
-                <Label htmlFor="answer">Antwort</Label>
-                <Textarea
-                  id="answer"
-                  value={form.answer}
-                  onChange={(e) => setForm({ ...form, answer: e.target.value })}
-                  placeholder="Die Antwort auf die Frage..."
-                  rows={5}
-                />
+            <div className="space-y-4 pr-1">
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="space-y-4 rounded-lg border p-4">
+                  <p className="text-sm font-semibold">{text.germanSection}</p>
+                  <div>
+                    <Label htmlFor="question">Frage</Label>
+                    <Input
+                      id="question"
+                      value={form.question}
+                      onChange={(e) => setForm({ ...form, question: e.target.value })}
+                      placeholder="z.B. Was ist der Zentral Hack?"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="answer">Antwort</Label>
+                    <Textarea
+                      id="answer"
+                      value={form.answer}
+                      onChange={(e) => setForm({ ...form, answer: e.target.value })}
+                      placeholder="Die Antwort auf die Frage..."
+                      rows={5}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4 rounded-lg border p-4">
+                  <p className="text-sm font-semibold">{text.englishSection}</p>
+                  <div>
+                    <Label htmlFor="questionEn">Question</Label>
+                    <Input
+                      id="questionEn"
+                      value={form.questionEn}
+                      onChange={(e) => setForm({ ...form, questionEn: e.target.value })}
+                      placeholder="e.g. What is Zentral Hack?"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="answerEn">Answer</Label>
+                    <Textarea
+                      id="answerEn"
+                      value={form.answerEn}
+                      onChange={(e) => setForm({ ...form, answerEn: e.target.value })}
+                      placeholder="Answer to the question..."
+                      rows={5}
+                    />
+                  </div>
+                </div>
               </div>
               <Button
                 onClick={handleSave}
                 disabled={saving}
                 className="w-full bg-violet hover:bg-violet/90"
               >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editingFaq ? 'Speichern' : 'Erstellen'}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editingFaq ? text.save : text.create}
               </Button>
             </div>
           </DialogContent>
@@ -243,9 +358,9 @@ export function FAQAdminPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Alle FAQs</CardTitle>
+          <CardTitle>{text.allFaqs}</CardTitle>
           <CardDescription>
-            {faqs.length} FAQ{faqs.length !== 1 ? 's' : ''} • {faqs.filter(f => f.is_active).length} aktiv
+            {faqs.length} FAQ{faqs.length !== 1 ? 's' : ''} • {faqs.filter(f => f.is_active).length} {text.active}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -280,8 +395,10 @@ export function FAQAdminPage() {
                   </div>
                   <HelpCircle className="w-5 h-5 text-violet mt-1 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold">{faq.question}</p>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{faq.answer}</p>
+                    <p className="font-semibold">{language === 'en' ? faq.question_en || faq.question : faq.question}</p>
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                      {language === 'en' ? faq.answer_en || faq.answer : faq.answer}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Switch
@@ -307,7 +424,7 @@ export function FAQAdminPage() {
             <div className="text-center py-8">
               <HelpCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">
-                Noch keine FAQs. Klicke auf &quot;Neue FAQ&quot;, um zu starten.
+                {text.noFaqs}
               </p>
             </div>
           )}

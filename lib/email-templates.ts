@@ -10,11 +10,19 @@ export interface EmailTemplateParams {
   subject: string;
   /** Main body text (supports line breaks → <br>) */
   content: string;
+  /** Optional English subject */
+  subjectEn?: string;
+  /** Optional English body text (supports line breaks → <br>) */
+  contentEn?: string;
   /** Optional call-to-action button */
   ctaText?: string;
+  /** Optional English CTA button text */
+  ctaTextEn?: string;
   ctaUrl?: string;
   /** Optional footer note */
   footerNote?: string;
+  /** Optional English footer note */
+  footerNoteEn?: string;
   /** Optional unsubscribe link (e.g. weekly updates opt-out) */
   unsubscribeUrl?: string;
 }
@@ -85,11 +93,31 @@ interface LayoutOptions {
   ctaText?: string;
   ctaUrl?: string;
   footerNote?: string;
+  englishHeadline?: string;
+  englishIntro?: string;
+  englishContentHtml?: string;
+  englishCtaText?: string;
+  englishFooterNote?: string;
   unsubscribeUrl?: string;
 }
 
-function wrapLayout({ label, headline, intro, contentHtml, ctaText, ctaUrl, footerNote, unsubscribeUrl }: LayoutOptions): string {
+function wrapLayout({
+  label,
+  headline,
+  intro,
+  contentHtml,
+  ctaText,
+  ctaUrl,
+  footerNote,
+  englishHeadline,
+  englishIntro,
+  englishContentHtml,
+  englishCtaText,
+  englishFooterNote,
+  unsubscribeUrl,
+}: LayoutOptions): string {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://zentralhack.ch';
+  const hasEnglishSection = Boolean(englishContentHtml || englishHeadline || englishIntro);
 
   return `<!DOCTYPE html>
 <html lang="de">
@@ -120,7 +148,21 @@ function wrapLayout({ label, headline, intro, contentHtml, ctaText, ctaUrl, foot
                 </tr>
                 ${ctaText && ctaUrl ? `<tr><td style="padding:0 26px 2px;">${ctaButton(ctaText, ctaUrl)}</td></tr>` : ''}
                 ${footerNote ? `<tr><td style="padding:8px 26px 26px;"><p style="margin:14px 0 0;padding-top:14px;border-top:1px solid ${borderColor};color:${mutedTextColor};font-size:13px;line-height:1.6;">${textToHtml(footerNote)}</p></td></tr>` : '<tr><td style="height:20px;"></td></tr>'}
-                ${unsubscribeUrl ? `<tr><td style="padding:0 26px 22px;"><p style="margin:0;color:${mutedTextColor};font-size:12px;line-height:1.6;">Du moechtest keine Weekly Updates mehr erhalten? <a href="${escapeHtml(unsubscribeUrl)}" style="color:${brandColor};text-decoration:underline;">Weekly Updates abmelden</a>.</p></td></tr>` : ''}
+                ${hasEnglishSection ? `
+                  <tr>
+                    <td style="padding:0 26px 8px;">
+                      <div style="margin-top:6px;border-top:2px dashed ${borderColor};padding-top:16px;">
+                        <p style="margin:0 0 10px;color:${mutedTextColor};font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">English Version</p>
+                        ${englishHeadline ? `<h2 style="margin:0 0 12px;color:${brandColor};font-size:24px;line-height:1.2;font-weight:800;font-family:'Space Grotesk','Inter','Segoe UI',Arial,sans-serif;">${escapeHtml(englishHeadline)}</h2>` : ''}
+                        ${englishIntro ? `<p style="margin:0 0 10px;color:${mutedTextColor};font-size:15px;line-height:1.6;">${textToHtml(englishIntro)}</p>` : ''}
+                        ${englishContentHtml ? `<div style="color:${textColor};font-size:16px;line-height:1.75;">${englishContentHtml}</div>` : ''}
+                        ${englishCtaText && ctaUrl ? ctaButton(englishCtaText, ctaUrl) : ''}
+                        ${englishFooterNote ? `<p style="margin:12px 0 0;padding-top:12px;border-top:1px solid ${borderColor};color:${mutedTextColor};font-size:13px;line-height:1.6;">${textToHtml(englishFooterNote)}</p>` : ''}
+                      </div>
+                    </td>
+                  </tr>
+                ` : ''}
+                ${unsubscribeUrl ? `<tr><td style="padding:0 26px 22px;"><p style="margin:0;color:${mutedTextColor};font-size:12px;line-height:1.6;">Du moechtest keine Weekly Updates mehr erhalten? <a href="${escapeHtml(unsubscribeUrl)}" style="color:${brandColor};text-decoration:underline;">Weekly Updates abmelden</a>.<br>Do you want to stop receiving weekly updates? <a href="${escapeHtml(unsubscribeUrl)}" style="color:${brandColor};text-decoration:underline;">Unsubscribe from weekly updates</a>.</p></td></tr>` : ''}
               </table>
             </td>
           </tr>
@@ -146,7 +188,7 @@ const standardTemplate: EmailTemplate = {
   id: 'standard',
   name: 'Standard',
   description: 'Klares CD-Layout mit starkem Branding und ruhigem Lesefluss',
-  render: ({ subject, content, ctaText, ctaUrl, footerNote, unsubscribeUrl }) => {
+  render: ({ subject, content, subjectEn, contentEn, ctaText, ctaTextEn, ctaUrl, footerNote, footerNoteEn, unsubscribeUrl }) => {
     return wrapLayout({
       label: 'Community Update',
       headline: subject,
@@ -155,6 +197,11 @@ const standardTemplate: EmailTemplate = {
       ctaText,
       ctaUrl,
       footerNote,
+      englishHeadline: subjectEn,
+      englishIntro: contentEn ? 'Thanks for being part of the Zentral Hack community. Here is your latest update.' : undefined,
+      englishContentHtml: contentEn ? textToHtml(contentEn) : undefined,
+      englishCtaText: ctaTextEn,
+      englishFooterNote: footerNoteEn,
       unsubscribeUrl,
     });
   },
@@ -165,7 +212,7 @@ const announcementTemplate: EmailTemplate = {
   id: 'announcement',
   name: 'Ankündigung',
   description: 'Starker Fokus für wichtige News und Entscheidungen',
-  render: ({ subject, content, ctaText, ctaUrl, footerNote, unsubscribeUrl }) => {
+  render: ({ subject, content, subjectEn, contentEn, ctaText, ctaTextEn, ctaUrl, footerNote, footerNoteEn, unsubscribeUrl }) => {
     return wrapLayout({
       label: 'Wichtige Ankuendigung',
       headline: subject,
@@ -174,6 +221,11 @@ const announcementTemplate: EmailTemplate = {
       ctaText,
       ctaUrl,
       footerNote,
+      englishHeadline: subjectEn,
+      englishIntro: contentEn ? 'Please take a short moment to read this important announcement from the organizing team.' : undefined,
+      englishContentHtml: contentEn ? textToHtml(contentEn) : undefined,
+      englishCtaText: ctaTextEn,
+      englishFooterNote: footerNoteEn,
       unsubscribeUrl,
     });
   },
@@ -184,7 +236,7 @@ const eventReminderTemplate: EmailTemplate = {
   id: 'event-reminder',
   name: 'Event-Erinnerung',
   description: 'Fokussiert auf naechste Schritte vor dem Event',
-  render: ({ subject, content, ctaText, ctaUrl, footerNote, unsubscribeUrl }) => {
+  render: ({ subject, content, subjectEn, contentEn, ctaText, ctaTextEn, ctaUrl, footerNote, footerNoteEn, unsubscribeUrl }) => {
     const checklistHtml = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0 0;">
       <tr>
         <td style="background:${lightViolet}40;border:1px solid ${borderColor};border-radius:12px;padding:14px 14px 10px;">
@@ -194,6 +246,17 @@ const eventReminderTemplate: EmailTemplate = {
       </tr>
     </table>`;
 
+    const checklistHtmlEn = contentEn
+      ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0 0;">
+          <tr>
+            <td style="background:${lightViolet}40;border:1px solid ${borderColor};border-radius:12px;padding:14px 14px 10px;">
+              <p style="margin:0 0 8px;color:${brandColor};font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">Next Steps</p>
+              <div style="color:${textColor};font-size:15px;line-height:1.7;">${textToHtml(contentEn)}</div>
+            </td>
+          </tr>
+        </table>`
+      : undefined;
+
     return wrapLayout({
       label: 'Event Reminder',
       headline: subject,
@@ -202,6 +265,11 @@ const eventReminderTemplate: EmailTemplate = {
       ctaText,
       ctaUrl,
       footerNote,
+      englishHeadline: subjectEn,
+      englishIntro: contentEn ? 'To make sure everything runs smoothly on event day, here are the key points at a glance.' : undefined,
+      englishContentHtml: checklistHtmlEn,
+      englishCtaText: ctaTextEn,
+      englishFooterNote: footerNoteEn,
       unsubscribeUrl,
     });
   },
@@ -212,8 +280,15 @@ const updateTemplate: EmailTemplate = {
   id: 'update',
   name: 'Update / Newsletter',
   description: 'Editorial-Layout fuer regelmaessige Updates und Rueckblicke',
-  render: ({ subject, content, ctaText, ctaUrl, footerNote, unsubscribeUrl }) => {
+  render: ({ subject, content, subjectEn, contentEn, ctaText, ctaTextEn, ctaUrl, footerNote, footerNoteEn, unsubscribeUrl }) => {
     const paragraphBlocks = content
+      .split(/\n\s*\n/g)
+      .map((block) => block.trim())
+      .filter(Boolean)
+      .map((block) => `<p style="margin:0 0 16px;">${textToHtml(block)}</p>`)
+      .join('');
+
+    const paragraphBlocksEn = (contentEn || '')
       .split(/\n\s*\n/g)
       .map((block) => block.trim())
       .filter(Boolean)
@@ -228,6 +303,11 @@ const updateTemplate: EmailTemplate = {
       ctaText,
       ctaUrl,
       footerNote,
+      englishHeadline: subjectEn,
+      englishIntro: contentEn ? 'Curated for you: the most important news, deadlines, and community highlights.' : undefined,
+      englishContentHtml: paragraphBlocksEn || (contentEn ? textToHtml(contentEn) : undefined),
+      englishCtaText: ctaTextEn,
+      englishFooterNote: footerNoteEn,
       unsubscribeUrl,
     });
   },

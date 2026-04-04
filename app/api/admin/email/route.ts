@@ -10,7 +10,21 @@ async function handler(req: AuthenticatedRequest) {
   try {
     if (req.method === 'POST') {
       const body = await req.json();
-      const { subject, content, templateId, ctaText, ctaUrl, footerNote, campaignType, categoryId, testEmail } = body;
+      const {
+        subject,
+        content,
+        subjectEn,
+        contentEn,
+        templateId,
+        ctaText,
+        ctaTextEn,
+        ctaUrl,
+        footerNote,
+        footerNoteEn,
+        campaignType,
+        categoryId,
+        testEmail,
+      } = body;
       const effectiveCampaignType = campaignType || body.recipientType;
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://zentralhack.ch';
       const unsubscribeUrl = `${appUrl}/newsletter/abmelden?category=weekly_updates`;
@@ -26,9 +40,13 @@ async function handler(req: AuthenticatedRequest) {
           htmlContent = renderEmailTemplate(templateId, {
             subject,
             content,
+            subjectEn: subjectEn || undefined,
+            contentEn: contentEn || undefined,
             ctaText: ctaText || undefined,
+            ctaTextEn: ctaTextEn || undefined,
             ctaUrl: ctaUrl || undefined,
             footerNote: footerNote || undefined,
+            footerNoteEn: footerNoteEn || undefined,
             unsubscribeUrl:
               effectiveCampaignType === 'newsletter_subscribers' || effectiveCampaignType === 'central_updates'
                 ? unsubscribeUrl

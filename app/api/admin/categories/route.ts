@@ -26,11 +26,15 @@ async function putHandler(req: AuthenticatedRequest) {
     const {
       id,
       name,
+      nameEn,
       description,
+      descriptionEn,
       partnerName,
+      partnerNameEn,
       color,
       icon,
       challengeDescription,
+      challengeDescriptionEn,
       showChallengeDescription,
     } = await req.json();
 
@@ -39,7 +43,37 @@ async function putHandler(req: AuthenticatedRequest) {
     }
 
     if (typeof name === 'string' && name.trim().length === 0) {
-      return validationError('Category name required');
+      return validationError('German category name required');
+    }
+
+    if (typeof nameEn === 'string' && nameEn.trim().length === 0) {
+      return validationError('English category name required');
+    }
+
+    if (typeof description === 'string' && description.trim().length === 0) {
+      return validationError('German category description required');
+    }
+
+    if (typeof descriptionEn === 'string' && descriptionEn.trim().length === 0) {
+      return validationError('English category description required');
+    }
+
+    if (typeof partnerName === 'string' && partnerName.trim().length === 0) {
+      return validationError('German partner name required');
+    }
+
+    if (typeof partnerNameEn === 'string' && partnerNameEn.trim().length === 0) {
+      return validationError('English partner name required');
+    }
+
+    if (showChallengeDescription === true) {
+      if (typeof challengeDescription !== 'string' || challengeDescription.trim().length === 0) {
+        return validationError('German challenge description required');
+      }
+
+      if (typeof challengeDescriptionEn !== 'string' || challengeDescriptionEn.trim().length === 0) {
+        return validationError('English challenge description required');
+      }
     }
 
     if (typeof icon === 'string' && !(icon in categoryIconMap)) {
@@ -59,14 +93,29 @@ async function putHandler(req: AuthenticatedRequest) {
       fieldAssignments.push(`name = $${values.length}`);
     }
 
+    if (availableColumns.has('name_en') && typeof nameEn === 'string') {
+      values.push(nameEn.trim() || null);
+      fieldAssignments.push(`name_en = $${values.length}`);
+    }
+
     if (typeof description === 'string') {
       values.push(description.trim());
       fieldAssignments.push(`description = $${values.length}`);
     }
 
+    if (availableColumns.has('description_en') && typeof descriptionEn === 'string') {
+      values.push(descriptionEn.trim() || null);
+      fieldAssignments.push(`description_en = $${values.length}`);
+    }
+
     if (availableColumns.has('partner_name') && typeof partnerName === 'string') {
       values.push(partnerName.trim() || null);
       fieldAssignments.push(`partner_name = $${values.length}`);
+    }
+
+    if (availableColumns.has('partner_name_en') && typeof partnerNameEn === 'string') {
+      values.push(partnerNameEn.trim() || null);
+      fieldAssignments.push(`partner_name_en = $${values.length}`);
     }
 
     if (availableColumns.has('color') && typeof color === 'string') {
@@ -90,6 +139,19 @@ async function putHandler(req: AuthenticatedRequest) {
 
       values.push(normalizedChallengeDescription);
       fieldAssignments.push(`challenge_description = $${values.length}`);
+    }
+
+    if (
+      availableColumns.has('challenge_description_en') &&
+      (typeof challengeDescriptionEn === 'string' || challengeDescriptionEn === null)
+    ) {
+      const normalizedChallengeDescriptionEn =
+        typeof challengeDescriptionEn === 'string'
+          ? challengeDescriptionEn.trim() || null
+          : null;
+
+      values.push(normalizedChallengeDescriptionEn);
+      fieldAssignments.push(`challenge_description_en = $${values.length}`);
     }
 
     if (

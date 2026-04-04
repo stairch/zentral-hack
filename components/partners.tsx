@@ -4,6 +4,7 @@ import { useRef, useState } from "react"
 import { motion, useInView } from "framer-motion"
 import { SponsorshipModal } from "./sponsorship-modal"
 import { sponsorPackages } from "@/lib/sponsorship-packages"
+import { useLanguage } from "@/lib/language-context"
 
 const partners = {
   organisers: [
@@ -54,6 +55,30 @@ export function Partners() {
   const isHeaderInView = useInView(headerRef, { once: true })
   const [sponsorshipModalOpen, setSponsorshipModalOpen] = useState(false)
   const [selectedPackageSlug, setSelectedPackageSlug] = useState<string | null>(null)
+  const { language } = useLanguage()
+
+  const copy = {
+    de: {
+      badge: "PARTNER & SPONSOREN",
+      heading: "GEMEINSAM",
+      headingAccent: "STÄRKER",
+      description: "Unterstützt von führenden Unternehmen und Institutionen der Zentralschweiz.",
+      organisers: "CO-ORGANISATOREN",
+      ctaQuestion: "Interessiert an einer Partnerschaft?",
+      ctaAction: "Kontaktiere uns",
+    },
+    en: {
+      badge: "PARTNERS & SPONSORS",
+      heading: "STRONGER",
+      headingAccent: "TOGETHER",
+      description: "Supported by leading companies and institutions in Central Switzerland.",
+      organisers: "CO-ORGANIZERS",
+      ctaQuestion: "Interested in a partnership?",
+      ctaAction: "Contact us",
+    },
+  } as const
+
+  const text = copy[language]
 
   return (
     <>
@@ -73,13 +98,13 @@ export function Partners() {
               animate={isHeaderInView ? { opacity: 1, scale: 1 } : {}}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              PARTNER & SPONSOREN
+              {text.badge}
             </motion.span>
             <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
-              GEMEINSAM <span className="text-violet">STÄRKER</span>
+              {text.heading} <span className="text-violet">{text.headingAccent}</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-              Unterstützt von führenden Unternehmen und Institutionen der Zentralschweiz.
+              {text.description}
             </p>
           </motion.div>
 
@@ -91,7 +116,7 @@ export function Partners() {
               animate={isHeaderInView ? { opacity: 1 } : {}}
               transition={{ delay: 0.3 }}
             >
-              CO-ORGANISATOREN
+              {text.organisers}
             </motion.h3>
             <MarqueeRow items={partners.organisers} direction="left" speed={40} />
             <MarqueeRow items={partners.organisers} direction="right" speed={35} />
@@ -138,14 +163,14 @@ export function Partners() {
             transition={{ delay: 0.8 }}
           >
             <p className="text-muted-foreground mb-4">
-              Interessiert an einer Partnerschaft?
+              {text.ctaQuestion}
             </p>
             <motion.button
               onClick={() => setSponsorshipModalOpen(true)}
               className="inline-flex items-center gap-2 text-violet font-semibold hover:underline"
               whileHover={{ x: 5 }}
             >
-              Kontaktiere uns
+              {text.ctaAction}
               <span aria-hidden="true">→</span>
             </motion.button>
           </motion.div>

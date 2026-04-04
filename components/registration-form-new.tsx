@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowRight, ArrowLeft, Check, Loader2, Home, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLanguage } from '@/lib/language-context';
 
 interface Category {
   id: string;
@@ -30,6 +31,118 @@ export function RegistrationForm() {
   const router = useRouter();
   const [show2FA, setShow2FA] = useState(false)
   const [code2FA, setCode2FA] = useState("")
+  const { language } = useLanguage();
+
+  const t = {
+    de: {
+      categoriesLoadError: 'Kategorien konnten nicht geladen werden',
+      firstNameLastNameRequired: 'Vorname und Nachname erforderlich',
+      emailRequired: 'Email erforderlich',
+      passwordRequired: 'Passwort erforderlich',
+      passwordsNoMatch: 'Passwörter stimmen nicht überein',
+      passwordMin: 'Passwort muss mindestens 12 Zeichen lang sein',
+      passwordUpper: 'Passwort muss mindestens einen Großbuchstaben enthalten',
+      passwordNumber: 'Passwort muss mindestens eine Zahl enthalten',
+      passwordSpecial: 'Passwort muss mindestens ein Sonderzeichen enthalten (!@#$%^&*...)',
+      universityRequired: 'Universität erforderlich',
+      studyRequired: 'Studiengang erforderlich',
+      semesterRequired: 'Semester erforderlich',
+      categoryRequired: 'Kategorie erforderlich',
+      signupFailed: 'Registrierung fehlgeschlagen',
+      twoFaSent: '2FA Code wurde an deine E-Mail gesendet',
+      enter2faCode: 'Bitte geben Sie den 2FA Code ein',
+      verifyFailed: '2FA Verifizierung fehlgeschlagen',
+      registrationSuccess: 'Registrierung erfolgreich! Bestätigungsemail versendet.',
+      verifyError: 'Fehler bei der Verifizierung',
+      successTitle: 'Registrierung erfolgreich!',
+      successText: 'Bestätigungsemail wurde versendet. Du wirst zum Dashboard weitergeleitet...',
+      personalInfo: 'Persönliche Informationen',
+      firstName: 'Vorname *',
+      lastName: 'Nachname *',
+      credentials: 'Anmeldedaten',
+      email: 'E-Mail *',
+      password: 'Passwort *',
+      confirmPassword: 'Passwort bestätigen *',
+      uniInfo: 'Universitäts-Informationen',
+      university: 'Universität/Schule *',
+      studyProgram: 'Studiengang *',
+      semester: 'Semester *',
+      allergies: 'Allergien (optional)',
+      intolerances: 'Unverträglichkeiten (optional)',
+      categorySettings: 'Kategorie & Einstellungen',
+      chooseCategory: 'Wähle eine Kategorie *',
+      categoryPlaceholder: 'Kategorie wählen...',
+      newsletterOptIn: 'Ich möchte Hackathon-Updates und Kategorie-News per E-Mail erhalten',
+      home: 'Startseite',
+      back: 'Zurück',
+      hasAccount: 'Du hast schon ein Konto?',
+      loginHere: 'Hier anmelden',
+      next: 'Weiter',
+      register: 'Registrieren',
+      auth2fa: '2-FAKTOR AUTH',
+      codeSentTo: 'Code wurde an',
+      verificationCode: 'Verifizierungscode',
+      codeHint: '6 Zeichen aus E-Mail',
+      verify: 'Verifizieren',
+      codeSentSuffix: 'gesendet',
+      schoolPlaceholder: 'z.B. HSLU, ETH Zürich, etc.',
+      studyPlaceholder: 'z.B. Informatik, Wirtschaft, etc.',
+    },
+    en: {
+      categoriesLoadError: 'Could not load categories',
+      firstNameLastNameRequired: 'First name and last name are required',
+      emailRequired: 'Email is required',
+      passwordRequired: 'Password is required',
+      passwordsNoMatch: 'Passwords do not match',
+      passwordMin: 'Password must be at least 12 characters',
+      passwordUpper: 'Password must include at least one uppercase letter',
+      passwordNumber: 'Password must include at least one number',
+      passwordSpecial: 'Password must include at least one special character (!@#$%^&*...)',
+      universityRequired: 'University is required',
+      studyRequired: 'Study program is required',
+      semesterRequired: 'Semester is required',
+      categoryRequired: 'Category is required',
+      signupFailed: 'Registration failed',
+      twoFaSent: '2FA code was sent to your email',
+      enter2faCode: 'Please enter the 2FA code',
+      verifyFailed: '2FA verification failed',
+      registrationSuccess: 'Registration successful. Confirmation email sent.',
+      verifyError: 'Verification failed',
+      successTitle: 'Registration successful!',
+      successText: 'Confirmation email sent. Redirecting to dashboard...',
+      personalInfo: 'Personal Information',
+      firstName: 'First name *',
+      lastName: 'Last name *',
+      credentials: 'Account Details',
+      email: 'Email *',
+      password: 'Password *',
+      confirmPassword: 'Confirm password *',
+      uniInfo: 'University Information',
+      university: 'University/School *',
+      studyProgram: 'Study program *',
+      semester: 'Semester *',
+      allergies: 'Allergies (optional)',
+      intolerances: 'Intolerances (optional)',
+      categorySettings: 'Category & Preferences',
+      chooseCategory: 'Choose a category *',
+      categoryPlaceholder: 'Select category...',
+      newsletterOptIn: 'I want to receive hackathon updates and category news by email',
+      home: 'Home',
+      back: 'Back',
+      hasAccount: 'Already have an account?',
+      loginHere: 'Login here',
+      next: 'Next',
+      register: 'Register',
+      auth2fa: '2-FACTOR AUTH',
+      codeSentTo: 'Code was sent to',
+      verificationCode: 'Verification code',
+      codeHint: '6 characters from email',
+      verify: 'Verify',
+      codeSentSuffix: 'received the code',
+      schoolPlaceholder: 'e.g. HSLU, ETH Zurich, etc.',
+      studyPlaceholder: 'e.g. Computer Science, Business, etc.',
+    },
+  }[language];
 
   const [formData, setFormData] = useState({
     // Persönliche Infos
@@ -66,7 +179,7 @@ export function RegistrationForm() {
       }
     } catch (error) {
       console.error('Failed to fetch categories:', error);
-      toast.error('Kategorien konnten nicht geladen werden');
+      toast.error(t.categoriesLoadError);
     }
   };
 
@@ -77,57 +190,57 @@ export function RegistrationForm() {
   const validateStep = () => {
     if (step === 1) {
       if (!formData.firstName || !formData.lastName) {
-        toast.error('Vorname und Nachname erforderlich');
+        toast.error(t.firstNameLastNameRequired);
         return false;
       }
     }
     if (step === 2) {
       if (!formData.email) {
-        toast.error('Email erforderlich');
+        toast.error(t.emailRequired);
         return false;
       }
       if (!formData.password || !formData.confirmPassword) {
-        toast.error('Passwort erforderlich');
+        toast.error(t.passwordRequired);
         return false;
       }
       if (formData.password !== formData.confirmPassword) {
-        toast.error('Passwörter stimmen nicht überein');
+        toast.error(t.passwordsNoMatch);
         return false;
       }
       if (formData.password.length < 12) {
-        toast.error('Passwort muss mindestens 12 Zeichen lang sein');
+        toast.error(t.passwordMin);
         return false;
       }
       if (!/[A-Z]/.test(formData.password)) {
-        toast.error('Passwort muss mindestens einen Großbuchstaben enthalten');
+        toast.error(t.passwordUpper);
         return false;
       }
       if (!/[0-9]/.test(formData.password)) {
-        toast.error('Passwort muss mindestens eine Zahl enthalten');
+        toast.error(t.passwordNumber);
         return false;
       }
       if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password)) {
-        toast.error('Passwort muss mindestens ein Sonderzeichen enthalten (!@#$%^&*...)');
+        toast.error(t.passwordSpecial);
         return false;
       }
     }
     if (step === 3) {
       if (!formData.university) {
-        toast.error('Universität erforderlich');
+        toast.error(t.universityRequired);
         return false;
       }
       if (!formData.studyProgram) {
-        toast.error('Studiengang erforderlich');
+        toast.error(t.studyRequired);
         return false;
       }
       if (!formData.semester) {
-        toast.error('Semester erforderlich');
+        toast.error(t.semesterRequired);
         return false;
       }
     }
     if (step === 4) {
       if (!formData.categoryId) {
-        toast.error('Kategorie erforderlich');
+        toast.error(t.categoryRequired);
         return false;
       }
     }
@@ -144,12 +257,12 @@ export function RegistrationForm() {
       try {
         await signup(formData.email, formData.password, formData.firstName, formData.lastName);
       } catch (signupError) {
-        throw new Error(signupError instanceof Error ? signupError.message : 'Registrierung fehlgeschlagen');
+        throw new Error(signupError instanceof Error ? signupError.message : t.signupFailed);
       }
 
       // Verification is required for all users
       setShow2FA(true)
-      toast.success('2FA Code wurde an deine E-Mail gesendet')
+      toast.success(t.twoFaSent)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Registrierung fehlgeschlagen';
       toast.error(message);
@@ -164,7 +277,7 @@ export function RegistrationForm() {
 
     try {
       if (!code2FA.trim()) {
-        throw new Error('Bitte geben Sie den 2FA Code ein')
+        throw new Error(t.enter2faCode)
       }
 
       const res = await fetch('/api/auth/2fa/verify', {
@@ -176,7 +289,7 @@ export function RegistrationForm() {
 
       if (!res.ok) {
         const errorData = await res.json()
-        throw new Error(errorData.data?.error || errorData.error || '2FA Verifizierung fehlgeschlagen')
+        throw new Error(errorData.data?.error || errorData.error || t.verifyFailed)
       }
 
       const data = await res.json()
@@ -207,14 +320,14 @@ export function RegistrationForm() {
       }
 
       setSuccess(true);
-      toast.success('Registrierung erfolgreich! Bestätigungsemail versendet.');
+      toast.success(t.registrationSuccess);
 
       // Wait a moment to ensure cookie is set, then navigate to dashboard
       // The httpOnly cookie is now set by the server and will be sent automatically
       await new Promise(resolve => setTimeout(resolve, 300));
       router.push('/dashboard')
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Fehler bei der Verifizierung'
+      const message = err instanceof Error ? err.message : t.verifyError
       toast.error(message)
     } finally {
       setLoading(false)
@@ -227,8 +340,8 @@ export function RegistrationForm() {
         <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
           <Check className="w-8 h-8 text-green-600" />
         </div>
-        <h2 className="text-2xl font-bold">Registrierung erfolgreich!</h2>
-        <p className="text-muted-foreground">Bestätigungsemail wurde versendet. Du wirst zum Dashboard weitergeleitet...</p>
+        <h2 className="text-2xl font-bold">{t.successTitle}</h2>
+        <p className="text-muted-foreground">{t.successText}</p>
       </motion.div>
     );
   }
@@ -258,10 +371,10 @@ export function RegistrationForm() {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-4"
               >
-                <h2 className="text-2xl font-bold">Persönliche Informationen</h2>
+                <h2 className="text-2xl font-bold">{t.personalInfo}</h2>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">Vorname *</Label>
+                    <Label htmlFor="firstName">{t.firstName}</Label>
                     <Input
                       id="firstName"
                       value={formData.firstName}
@@ -270,7 +383,7 @@ export function RegistrationForm() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Nachname *</Label>
+                    <Label htmlFor="lastName">{t.lastName}</Label>
                     <Input
                       id="lastName"
                       value={formData.lastName}
@@ -291,19 +404,19 @@ export function RegistrationForm() {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-4"
               >
-                <h2 className="text-2xl font-bold">Anmeldedaten</h2>
+                <h2 className="text-2xl font-bold">{t.credentials}</h2>
                 <div className="space-y-2">
-                  <Label htmlFor="email">E-Mail *</Label>
+                  <Label htmlFor="email">{t.email}</Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="deine@email.ch"
+                    placeholder={language === 'de' ? 'deine@email.ch' : 'your@email.com'}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Passwort *</Label>
+                  <Label htmlFor="password">{t.password}</Label>
                   <Input
                     id="password"
                     type="password"
@@ -313,7 +426,7 @@ export function RegistrationForm() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Passwort bestätigen *</Label>
+                  <Label htmlFor="confirmPassword">{t.confirmPassword}</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -334,30 +447,30 @@ export function RegistrationForm() {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-4"
               >
-                <h2 className="text-2xl font-bold">Universitäts-Informationen</h2>
+                <h2 className="text-2xl font-bold">{t.uniInfo}</h2>
 
                 <div className="space-y-2">
-                  <Label htmlFor="university">Universität/Schule *</Label>
+                  <Label htmlFor="university">{t.university}</Label>
                   <Input
                     id="university"
                     value={formData.university}
                     onChange={(e) => handleInputChange('university', e.target.value)}
-                    placeholder="z.B. HSLU, ETH Zürich, etc."
+                    placeholder={t.schoolPlaceholder}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="studyProgram">Studiengang *</Label>
+                  <Label htmlFor="studyProgram">{t.studyProgram}</Label>
                   <Input
                     id="studyProgram"
                     value={formData.studyProgram}
                     onChange={(e) => handleInputChange('studyProgram', e.target.value)}
-                    placeholder="z.B. Informatik, Wirtschaft, etc."
+                    placeholder={t.studyPlaceholder}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="semester">Semester *</Label>
+                  <Label htmlFor="semester">{t.semester}</Label>
                   <Input
                     id="semester"
                     type="number"
@@ -369,7 +482,7 @@ export function RegistrationForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="allergies">Allergien (optional)</Label>
+                  <Label htmlFor="allergies">{t.allergies}</Label>
                   <Textarea
                     id="allergies"
                     value={formData.allergies}
@@ -380,7 +493,7 @@ export function RegistrationForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="intolerances">Unverträglichkeiten (optional)</Label>
+                  <Label htmlFor="intolerances">{t.intolerances}</Label>
                   <Textarea
                     id="intolerances"
                     value={formData.intolerances}
@@ -401,13 +514,13 @@ export function RegistrationForm() {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-4"
               >
-                <h2 className="text-2xl font-bold">Kategorie & Einstellungen</h2>
+                <h2 className="text-2xl font-bold">{t.categorySettings}</h2>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category">Wähle eine Kategorie *</Label>
+                  <Label htmlFor="category">{t.chooseCategory}</Label>
                   <Select value={formData.categoryId} onValueChange={(value) => handleInputChange('categoryId', value)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Kategorie wählen..." />
+                      <SelectValue placeholder={t.categoryPlaceholder} />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((cat) => (
@@ -429,7 +542,7 @@ export function RegistrationForm() {
                     onCheckedChange={(checked) => handleInputChange('newsletter', checked === true)}
                   />
                   <Label htmlFor="newsletter" className="font-normal cursor-pointer">
-                    Ich möchte Hackathon-Updates und Kategorie-News per E-Mail erhalten
+                    {t.newsletterOptIn}
                   </Label>
                 </div>
               </motion.div>
@@ -443,7 +556,7 @@ export function RegistrationForm() {
                 <Link href="/">
                   <Button variant="outline">
                     <Home className="w-4 h-4 mr-2" />
-                    Startseite
+                    {t.home}
                   </Button>
                 </Link>
               ) : (
@@ -453,23 +566,23 @@ export function RegistrationForm() {
                   disabled={step === 1 || loading}
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Zurück
+                  {t.back}
                 </Button>
               )}
             </div>
 
             <div className="flex gap-2 items-center">
               <p className="text-sm text-muted-foreground">
-                Du hast schon ein Konto?{' '}
+                {t.hasAccount}{' '}
                 <Link href="/auth/login" className="text-violet hover:underline font-semibold">
-                  Hier anmelden
+                  {t.loginHere}
                 </Link>
               </p>
             </div>
 
             {step < 4 ? (
               <Button onClick={() => validateStep() && setStep(step + 1)} disabled={loading} className="bg-[#530A5D] hover:bg-[#530A5D]/90">
-                Weiter <ArrowRight className="w-4 h-4 ml-2" />
+                {t.next} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             ) : (
               <Button
@@ -477,7 +590,7 @@ export function RegistrationForm() {
                 disabled={loading}
                 className="bg-[#530A5D] hover:bg-[#530A5D]/90"
               >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Registrieren'}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : t.register}
               </Button>
             )}
           </div>
@@ -491,16 +604,24 @@ export function RegistrationForm() {
               </div>
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: "var(--font-display)" }}>
-              2-FAKTOR AUTH
+              {t.auth2fa}
             </h1>
             <p className="text-muted-foreground text-sm">
-              Code wurde an <strong>{formData.email}</strong> gesendet
+              {language === 'de' ? (
+                <>
+                  {t.codeSentTo} <strong>{formData.email}</strong> {t.codeSentSuffix}
+                </>
+              ) : (
+                <>
+                  <strong>{formData.email}</strong> {t.codeSentSuffix}
+                </>
+              )}
             </p>
           </div>
 
           <form onSubmit={handleVerify2FA} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="code">Verifizierungscode</Label>
+              <Label htmlFor="code">{t.verificationCode}</Label>
               <Input
                 id="code"
                 type="text"
@@ -513,7 +634,7 @@ export function RegistrationForm() {
                 autoFocus
               />
               <p className="text-xs text-muted-foreground text-center">
-                6 Zeichen aus E-Mail
+                {t.codeHint}
               </p>
             </div>
 
@@ -527,7 +648,7 @@ export function RegistrationForm() {
               ) : (
                 <>
                   <Lock className="w-5 h-5 mr-2" />
-                  Verifizieren
+                  {t.verify}
                 </>
               )}
             </Button>
@@ -541,7 +662,7 @@ export function RegistrationForm() {
               }}
               className="w-full"
             >
-              Zurück
+              {t.back}
             </Button>
           </form>
         </>

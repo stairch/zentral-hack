@@ -1,123 +1,63 @@
+"use client";
+
 import { Navigation } from '@/components/navigation';
 import { Footer } from '@/components/footer';
-
-export const metadata = {
-  title: 'Datenschutzerklärung | Zentral Hack 2026',
-  description: 'Datenschutzerklärung des Zentral Hack 2026',
-};
+import { useLanguage } from '@/lib/language-context';
 
 export default function DatenschutzPage() {
+  const { language } = useLanguage();
+  const text = {
+    de: {
+      title: 'DATENSCHUTZ',
+      sections: [
+        ['1. Verantwortliche Stelle', 'Verantwortlich für die Datenbearbeitung auf dieser Website: Hochschule Luzern, Werftestrasse 4, 6002 Luzern, Schweiz, info@hslu.ch'],
+        ['2. Erhebung und Verwendung von Daten', 'Wir erheben personenbezogene Daten nur, soweit dies zur Bereitstellung der Plattform und zur Durchführung des Events erforderlich ist.'],
+        ['3. Zweck der Datenbearbeitung', 'Daten werden für Registrierung, Teilnahme, Kommunikation, Verpflegung und (optional) Newsletter genutzt.'],
+        ['4. Datensicherheit', 'Wir schützen Ihre Daten mit technischen und organisatorischen Massnahmen wie HTTPS/TLS, sicherer Passwortspeicherung und 2FA.'],
+        ['5. Cookies', 'Diese Website verwendet nur technisch notwendige Cookies für die Authentifizierung.'],
+        ['6. Weitergabe an Dritte', 'Daten werden grundsätzlich nicht an Dritte weitergegeben, ausser wenn dies für das Event nötig ist oder gesetzlich verlangt wird.'],
+        ['7. Ihre Rechte', 'Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Widerspruch. Kontakt: info@hslu.ch'],
+        ['8. Aufbewahrungsdauer', 'Daten werden gelöscht, sobald der Zweck entfällt, spätestens 12 Monate nach Eventende sofern keine Aufbewahrungspflicht besteht.'],
+        ['9. Änderungen', 'Diese Datenschutzerklärung kann angepasst werden. Massgeblich ist die auf der Website publizierte Version.'],
+      ],
+      updated: 'Stand: April 2026',
+    },
+    en: {
+      title: 'PRIVACY',
+      sections: [
+        ['1. Data Controller', 'Responsible for data processing on this website: Lucerne University of Applied Sciences and Arts, Werftestrasse 4, 6002 Lucerne, Switzerland, info@hslu.ch'],
+        ['2. Data Collection and Use', 'We collect personal data only as needed to provide the platform and run the event.'],
+        ['3. Purpose of Processing', 'Data is used for registration, participation, communication, catering needs, and optional newsletter updates.'],
+        ['4. Data Security', 'We protect your data through technical and organizational safeguards such as HTTPS/TLS, secure password storage, and 2FA.'],
+        ['5. Cookies', 'This website only uses technically required cookies for authentication.'],
+        ['6. Sharing with Third Parties', 'Data is generally not shared with third parties unless required for event operations or legal obligations.'],
+        ['7. Your Rights', 'You have rights to access, rectification, deletion, and objection. Contact: info@hslu.ch'],
+        ['8. Retention', 'Data is deleted once no longer needed, at the latest 12 months after the event unless legal retention applies.'],
+        ['9. Changes', 'This privacy notice may be updated at any time. The current published version applies.'],
+      ],
+      updated: 'Version: April 2026',
+    },
+  } as const;
+
+  const copy = text[language];
+
   return (
     <main className="relative">
       <Navigation />
       <div className="min-h-screen pt-24 pb-16 bg-background">
         <div className="container mx-auto px-4 max-w-3xl">
           <h1 className="font-display text-4xl md:text-5xl font-bold text-violet mb-8">
-            DATENSCHUTZ
+            {copy.title}
           </h1>
 
           <div className="space-y-8 text-foreground">
-            <section>
-              <h2 className="text-2xl font-bold border-b-2 border-yellow pb-2">1. Verantwortliche Stelle</h2>
-              <div className="mt-4 space-y-2">
-                <p>Verantwortlich für die Datenbearbeitung auf dieser Website:</p>
-                <div className="bg-light-violet/10 rounded-xl p-6">
-                  <p className="font-semibold">Hochschule Luzern</p>
-                  <p>Werftestrasse 4, 6002 Luzern, Schweiz</p>
-                  <p>E-Mail: <a href="mailto:info@hslu.ch" className="text-violet hover:underline">info@hslu.ch</a></p>
-                </div>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold border-b-2 border-yellow pb-2">2. Erhebung und Verwendung von Daten</h2>
-              <p className="mt-4">
-                Wir erheben und verwenden personenbezogene Daten nur, soweit dies zur Bereitstellung der Hackathon-Plattform
-                und zur Durchführung des Events erforderlich ist.
-              </p>
-              <h3 className="text-lg font-semibold mt-4">Bei der Registrierung erheben wir:</h3>
-              <ul className="list-disc pl-6 mt-2 space-y-1">
-                <li>Vor- und Nachname</li>
-                <li>E-Mail-Adresse</li>
-                <li>Hochschule und Studiengang</li>
-                <li>Semester</li>
-                <li>Allergien und Unverträglichkeiten (freiwillig)</li>
-                <li>Gewählte Hackathon-Kategorie</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold border-b-2 border-yellow pb-2">3. Zweck der Datenbearbeitung</h2>
-              <ul className="list-disc pl-6 mt-4 space-y-2">
-                <li><span className="font-semibold">Registrierung und Teilnahme:</span> Verwaltung der Anmeldung und Teilnahme am Hackathon</li>
-                <li><span className="font-semibold">Kommunikation:</span> Versand von Event-bezogenen Informationen und Bestätigungen per E-Mail</li>
-                <li><span className="font-semibold">Verpflegung:</span> Berücksichtigung von Allergien und Ernährungspräferenzen</li>
-                <li><span className="font-semibold">Newsletter:</span> Nur bei ausdrücklicher Einwilligung</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold border-b-2 border-yellow pb-2">4. Datensicherheit</h2>
-              <p className="mt-4">
-                Wir treffen angemessene technische und organisatorische Sicherheitsmassnahmen, um Ihre Daten
-                gegen Manipulation, Verlust, Zerstörung oder unbefugten Zugriff zu schützen. Dazu gehören:
-              </p>
-              <ul className="list-disc pl-6 mt-2 space-y-1">
-                <li>Verschlüsselung der Datenübertragung (HTTPS/TLS)</li>
-                <li>Sichere Passwortspeicherung (bcrypt-Hashing)</li>
-                <li>Zwei-Faktor-Authentifizierung (2FA) für alle Benutzer</li>
-                <li>Regelmässige Sicherheitsüberprüfungen</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold border-b-2 border-yellow pb-2">5. Cookies</h2>
-              <p className="mt-4">
-                Diese Website verwendet ausschliesslich technisch notwendige Cookies (httpOnly-Session-Cookies)
-                für die Authentifizierung. Es werden keine Tracking- oder Werbe-Cookies eingesetzt.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold border-b-2 border-yellow pb-2">6. Weitergabe an Dritte</h2>
-              <p className="mt-4">
-                Personenbezogene Daten werden grundsätzlich nicht an Dritte weitergegeben, es sei denn,
-                dies ist zur Durchführung des Events erforderlich (z.B. Catering-Dienstleister für Allergien)
-                oder es besteht eine gesetzliche Verpflichtung.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold border-b-2 border-yellow pb-2">7. Ihre Rechte</h2>
-              <p className="mt-4">Sie haben folgende Rechte bezüglich Ihrer personenbezogenen Daten:</p>
-              <ul className="list-disc pl-6 mt-2 space-y-1">
-                <li><span className="font-semibold">Auskunftsrecht:</span> Sie können Auskunft über Ihre gespeicherten Daten verlangen</li>
-                <li><span className="font-semibold">Berichtigungsrecht:</span> Sie können die Berichtigung unrichtiger Daten verlangen</li>
-                <li><span className="font-semibold">Löschungsrecht:</span> Sie können die Löschung Ihrer Daten verlangen</li>
-                <li><span className="font-semibold">Widerspruchsrecht:</span> Sie können der Datenbearbeitung widersprechen</li>
-              </ul>
-              <p className="mt-4">
-                Wenden Sie sich hierfür an: <a href="mailto:info@hslu.ch" className="text-violet hover:underline">info@hslu.ch</a>
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold border-b-2 border-yellow pb-2">8. Aufbewahrungsdauer</h2>
-              <p className="mt-4">
-                Personenbezogene Daten werden gelöscht, sobald der Zweck der Speicherung entfällt.
-                Registrierungsdaten werden spätestens 12 Monate nach Durchführung des Events gelöscht,
-                sofern keine gesetzlichen Aufbewahrungspflichten bestehen.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold border-b-2 border-yellow pb-2">9. Änderungen</h2>
-              <p className="mt-4">
-                Wir behalten uns vor, diese Datenschutzerklärung jederzeit anzupassen. Die aktuelle Fassung
-                ist auf dieser Website veröffentlicht.
-              </p>
-              <p className="mt-4 text-sm text-muted-foreground">Stand: April 2026</p>
-            </section>
+            {copy.sections.map(([title, textBody]) => (
+              <section key={title}>
+                <h2 className="text-2xl font-bold border-b-2 border-yellow pb-2">{title}</h2>
+                <p className="mt-4">{textBody}</p>
+              </section>
+            ))}
+            <p className="mt-4 text-sm text-muted-foreground">{copy.updated}</p>
           </div>
         </div>
       </div>

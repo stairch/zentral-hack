@@ -2,11 +2,40 @@
 
 import { FormEvent, useMemo, useState } from 'react';
 
+type Language = 'de' | 'en';
+
+const copy = {
+  de: {
+    title: 'Weekly Updates abmelden',
+    helper: 'Gib die E-Mail-Adresse ein, mit der du Weekly Updates erhalten hast.',
+    emailLabel: 'E-Mail-Adresse',
+    emailPlaceholder: 'name@beispiel.ch',
+    invalidEmail: 'Bitte gib eine gueltige E-Mail-Adresse ein.',
+    submit: 'Von Weekly Updates abmelden',
+    submitting: 'Wird abgemeldet...',
+    success: 'Danke! Du wurdest von Weekly Updates abgemeldet. Andere E-Mail-Kategorien bleiben aktiv.',
+    languageLabel: 'Sprache',
+  },
+  en: {
+    title: 'Unsubscribe from Weekly Updates',
+    helper: 'Enter the email address that receives Weekly Updates.',
+    emailLabel: 'Email address',
+    emailPlaceholder: 'name@example.com',
+    invalidEmail: 'Please enter a valid email address.',
+    submit: 'Unsubscribe from Weekly Updates',
+    submitting: 'Unsubscribing...',
+    success: 'Done! You have been unsubscribed from Weekly Updates. Other email categories remain active.',
+    languageLabel: 'Language',
+  },
+} as const;
+
 export default function NewsletterUnsubscribePage() {
+  const [language, setLanguage] = useState<Language>('de');
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const text = copy[language];
 
   const isValidEmail = useMemo(() => {
     return /^\S+@\S+\.\S+$/.test(email.trim());
@@ -17,7 +46,7 @@ export default function NewsletterUnsubscribePage() {
     setError(null);
 
     if (!isValidEmail) {
-      setError('Bitte gib eine gueltige E-Mail-Adresse ein.');
+      setError(text.invalidEmail);
       return;
     }
 
@@ -57,30 +86,46 @@ export default function NewsletterUnsubscribePage() {
         </div>
 
         <div className="space-y-4 px-6 py-6">
-          <h1 className="text-2xl font-bold text-[#530A5D]" style={{ fontFamily: 'var(--font-display)' }}>
-            Weekly Updates abmelden
-          </h1>
+          <div className="flex items-end justify-between gap-3">
+            <h1 className="text-2xl font-bold text-[#530A5D]" style={{ fontFamily: 'var(--font-display)' }}>
+              {text.title}
+            </h1>
+            <div className="w-40">
+              <label htmlFor="language" className="mb-1 block text-xs font-medium text-muted-foreground">
+                {text.languageLabel}
+              </label>
+              <select
+                id="language"
+                value={language}
+                onChange={(event) => setLanguage(event.target.value as Language)}
+                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+              >
+                <option value="de">Deutsch</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+          </div>
 
           {submitted ? (
             <p className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-              Danke! Du wurdest von Weekly Updates abgemeldet. Andere E-Mail-Kategorien bleiben aktiv.
+              {text.success}
             </p>
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                Gib die E-Mail-Adresse ein, mit der du Weekly Updates erhalten hast.
+                {text.helper}
               </p>
 
               <form className="space-y-3" onSubmit={handleSubmit}>
                 <label htmlFor="unsubscribe-email" className="block text-sm font-medium text-foreground">
-                  E-Mail-Adresse
+                  {text.emailLabel}
                 </label>
                 <input
                   id="unsubscribe-email"
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  placeholder="name@beispiel.ch"
+                  placeholder={text.emailPlaceholder}
                   className="h-11 w-full rounded-md border border-input px-3 text-sm outline-none focus:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
                 />
 
@@ -91,7 +136,7 @@ export default function NewsletterUnsubscribePage() {
                   disabled={submitting}
                   className="inline-flex h-11 items-center justify-center rounded-md bg-[#530A5D] px-5 text-sm font-semibold text-white transition hover:bg-[#43084b] disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {submitting ? 'Wird abgemeldet...' : 'Von Weekly Updates abmelden'}
+                  {submitting ? text.submitting : text.submit}
                 </button>
               </form>
             </>

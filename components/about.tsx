@@ -3,29 +3,61 @@
 import { useRef } from "react"
 import { motion, useInView } from "framer-motion"
 import { Lightbulb, Users, Network, MapPin } from "lucide-react"
+import { useLanguage } from "@/lib/language-context"
 
 const values = [
   {
     icon: Lightbulb,
-    title: "Innovation",
-    description: "Plattform für neue Ideen und kreative Lösungen.",
+    title: { de: "Innovation", en: "Innovation" },
+    description: {
+      de: "Plattform für neue Ideen und kreative Lösungen.",
+      en: "A platform for new ideas and creative solutions.",
+    },
   },
   {
     icon: Users,
-    title: "Nachwuchs",
-    description: "Förderung junger Talente der ICT-Branche.",
+    title: { de: "Nachwuchs", en: "Young Talent" },
+    description: {
+      de: "Förderung junger Talente der ICT-Branche.",
+      en: "Supporting young talents in the ICT industry.",
+    },
   },
   {
     icon: Network,
-    title: "Networking",
-    description: "Verbindung von Bildung, Wirtschaft und Community.",
+    title: { de: "Networking", en: "Networking" },
+    description: {
+      de: "Verbindung von Bildung, Wirtschaft und Community.",
+      en: "Connecting education, business, and community.",
+    },
   },
   {
     icon: MapPin,
-    title: "Lokal",
-    description: "Verankert in der Zentralschweiz.",
+    title: { de: "Lokal", en: "Local" },
+    description: {
+      de: "Verankert in der Zentralschweiz.",
+      en: "Rooted in Central Switzerland.",
+    },
   },
 ]
+
+const copy = {
+  de: {
+    badge: "ÜBER UNS",
+    headingPrefix: "EIN HACKATHON FÜR DIE",
+    headingAccent: "ZENTRALSCHWEIZ",
+    description:
+      "Zentral Hack vereint bestehende Events und Hackathons zu einem gemeinsamen Grossevent. Wir bringen Bildung, Wirtschaft und Community zusammen, um Innovation und Nachwuchsförderung in der Region voranzutreiben.",
+    stats: ["Hacken", "Kategorien", "Teilnehmer", "Ziel"],
+  },
+  en: {
+    badge: "ABOUT",
+    headingPrefix: "A HACKATHON FOR",
+    headingAccent: "CENTRAL SWITZERLAND",
+    description:
+      "Zentral Hack unites existing events and hackathons into one large joint event. We bring education, business, and community together to advance innovation and young talent in the region.",
+    stats: ["Hours", "Categories", "Participants", "Goal"],
+  },
+} as const
 
 function CounterAnimation({ end, suffix = "" }: { end: number; suffix?: string }) {
   const ref = useRef(null)
@@ -58,6 +90,8 @@ function CounterAnimation({ end, suffix = "" }: { end: number; suffix?: string }
 export function About() {
   const sectionRef = useRef(null)
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" })
+  const { language } = useLanguage()
+  const text = copy[language]
 
   return (
     <section id="about" ref={sectionRef} className="py-24 bg-violet relative overflow-hidden">
@@ -86,16 +120,14 @@ export function About() {
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            ÜBER UNS
+            {text.badge}
           </motion.span>
           <h2 className="font-display text-4xl md:text-5xl font-bold text-white mb-6">
-            EIN HACKATHON FÜR DIE{" "}
-            <span className="text-yellow">ZENTRALSCHWEIZ</span>
+            {text.headingPrefix}{" "}
+            <span className="text-yellow">{text.headingAccent}</span>
           </h2>
           <p className="text-light-violet max-w-3xl mx-auto text-lg leading-relaxed">
-            Zentral Hack vereint bestehende Events und Hackathons zu einem gemeinsamen Grossevent.
-            Wir bringen Bildung, Wirtschaft und Community zusammen, um Innovation und Nachwuchsförderung
-            in der Region voranzutreiben.
+            {text.description}
           </p>
         </motion.div>
 
@@ -107,10 +139,10 @@ export function About() {
           transition={{ duration: 0.6, delay: 0.3 }}
         >
           {[
-            { value: 24, suffix: "h", label: "Hacken" },
-            { value: 4, suffix: "", label: "Kategorien" },
-            { value: 200, suffix: "+", label: "Teilnehmer" },
-            { value: 1, suffix: "", label: "Ziel" },
+            { value: 24, suffix: "h", label: text.stats[0] },
+            { value: 4, suffix: "", label: text.stats[1] },
+            { value: 200, suffix: "+", label: text.stats[2] },
+            { value: 1, suffix: "", label: text.stats[3] },
           ].map((stat, index) => (
             <motion.div
               key={stat.label}
@@ -131,7 +163,7 @@ export function About() {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {values.map((value, index) => (
             <motion.div
-              key={value.title}
+              key={value.title.de}
               className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10"
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -148,9 +180,9 @@ export function About() {
                 <value.icon className="w-6 h-6 text-yellow" />
               </motion.div>
               <h3 className="font-display font-bold text-white text-xl mb-2">
-                {value.title}
+                {value.title[language]}
               </h3>
-              <p className="text-light-violet text-sm">{value.description}</p>
+              <p className="text-light-violet text-sm">{value.description[language]}</p>
             </motion.div>
           ))}
         </div>

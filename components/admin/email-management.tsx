@@ -125,12 +125,16 @@ export function EmailManagementPage() {
 
   const [emailForm, setEmailForm] = useState({
     subject: '',
+    subjectEn: '',
     content: '',
+    contentEn: '',
     templateId: 'standard',
     recipientType: 'central_updates' as string,
     ctaText: '',
+    ctaTextEn: '',
     ctaUrl: '',
     footerNote: '',
+    footerNoteEn: '',
     testEmail: '',
   });
 
@@ -245,12 +249,16 @@ export function EmailManagementPage() {
   function loadSavedTemplate(template: SavedTemplate) {
     setEmailForm({
       subject: template.subject,
+      subjectEn: '',
       content: template.content,
+      contentEn: '',
       templateId: template.base_template_id,
       recipientType: 'central_updates',
       ctaText: template.cta_text || '',
+      ctaTextEn: '',
       ctaUrl: template.cta_url || '',
       footerNote: template.footer_note || '',
+      footerNoteEn: '',
       testEmail: emailForm.testEmail,
     });
     setDialogOpen(true);
@@ -261,11 +269,15 @@ export function EmailManagementPage() {
     setEmailForm((prev) => ({
       ...prev,
       subject: preset.subject,
+      subjectEn: '',
       content: preset.content,
+      contentEn: '',
       templateId: preset.templateId,
       ctaText: preset.ctaText || '',
+      ctaTextEn: '',
       ctaUrl: preset.ctaUrl || '',
       footerNote: preset.footerNote || '',
+      footerNoteEn: '',
     }));
     toast.success(`Preset "${preset.name}" übernommen`);
   }
@@ -273,12 +285,16 @@ export function EmailManagementPage() {
   function resetDraft() {
     const resetState = {
       subject: '',
+      subjectEn: '',
       content: '',
+      contentEn: '',
       templateId: 'standard',
       recipientType: 'central_updates' as string,
       ctaText: '',
+      ctaTextEn: '',
       ctaUrl: '',
       footerNote: '',
+      footerNoteEn: '',
       testEmail: '',
     };
 
@@ -298,14 +314,29 @@ export function EmailManagementPage() {
       return renderEmailTemplate(emailForm.templateId, {
         subject: emailForm.subject || 'Betreff',
         content: emailForm.content || 'Hier erscheint deine Nachrichtenvorschau.',
+        subjectEn: emailForm.subjectEn || undefined,
+        contentEn: emailForm.contentEn || undefined,
         ctaText: emailForm.ctaText || undefined,
+        ctaTextEn: emailForm.ctaTextEn || undefined,
         ctaUrl: emailForm.ctaUrl || undefined,
         footerNote: emailForm.footerNote || undefined,
+        footerNoteEn: emailForm.footerNoteEn || undefined,
       });
     } catch {
       return '<p style="font-family: sans-serif; color: #991b1b;">Vorschau konnte nicht geladen werden.</p>';
     }
-  }, [emailForm.subject, emailForm.content, emailForm.templateId, emailForm.ctaText, emailForm.ctaUrl, emailForm.footerNote]);
+  }, [
+    emailForm.subject,
+    emailForm.subjectEn,
+    emailForm.content,
+    emailForm.contentEn,
+    emailForm.templateId,
+    emailForm.ctaText,
+    emailForm.ctaTextEn,
+    emailForm.ctaUrl,
+    emailForm.footerNote,
+    emailForm.footerNoteEn,
+  ]);
 
   const handleSendTest = async () => {
     if (!emailForm.testEmail.trim()) {
@@ -326,10 +357,14 @@ export function EmailManagementPage() {
         body: JSON.stringify({
           subject: emailForm.subject,
           content: emailForm.content,
+          subjectEn: emailForm.subjectEn || undefined,
+          contentEn: emailForm.contentEn || undefined,
           templateId: emailForm.templateId,
           ctaText: emailForm.ctaText || undefined,
+          ctaTextEn: emailForm.ctaTextEn || undefined,
           ctaUrl: emailForm.ctaUrl || undefined,
           footerNote: emailForm.footerNote || undefined,
+          footerNoteEn: emailForm.footerNoteEn || undefined,
           campaignType: emailForm.recipientType,
           testEmail: emailForm.testEmail,
         }),
@@ -363,10 +398,14 @@ export function EmailManagementPage() {
         body: JSON.stringify({
           subject: emailForm.subject,
           content: emailForm.content,
+          subjectEn: emailForm.subjectEn || undefined,
+          contentEn: emailForm.contentEn || undefined,
           templateId: emailForm.templateId,
           ctaText: emailForm.ctaText || undefined,
+          ctaTextEn: emailForm.ctaTextEn || undefined,
           ctaUrl: emailForm.ctaUrl || undefined,
           footerNote: emailForm.footerNote || undefined,
+          footerNoteEn: emailForm.footerNoteEn || undefined,
           campaignType: emailForm.recipientType,
         }),
       });
@@ -381,12 +420,16 @@ export function EmailManagementPage() {
       toast.success(`E-Mail an ${data.data?.recipientCount || '?'} Empfänger versendet`);
       setEmailForm({
         subject: '',
+        subjectEn: '',
         content: '',
+        contentEn: '',
         templateId: 'standard',
         recipientType: 'central_updates',
         ctaText: '',
+        ctaTextEn: '',
         ctaUrl: '',
         footerNote: '',
+        footerNoteEn: '',
         testEmail: '',
       });
       setTimeout(() => {
@@ -555,6 +598,16 @@ export function EmailManagementPage() {
                         <p className="text-xs text-muted-foreground mt-1">{emailForm.subject.length}/120 Zeichen</p>
                       </div>
 
+                      <div>
+                        <Label htmlFor="subjectEn">Subject (English, optional)</Label>
+                        <Input
+                          id="subjectEn"
+                          value={emailForm.subjectEn}
+                          onChange={(e) => setEmailForm({ ...emailForm, subjectEn: e.target.value })}
+                          placeholder="e.g. Zentral Hack 2026 - Important Updates"
+                        />
+                      </div>
+
                       {/* Content */}
                       <div>
                         <Label htmlFor="content">Inhalt * (Nur Text – wird automatisch formatiert)</Label>
@@ -566,6 +619,20 @@ export function EmailManagementPage() {
                           rows={8}
                         />
                         <p className="text-xs text-muted-foreground mt-1">{emailForm.content.length} Zeichen</p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="contentEn">Content (English, optional)</Label>
+                        <Textarea
+                          id="contentEn"
+                          value={emailForm.contentEn}
+                          onChange={(e) => setEmailForm({ ...emailForm, contentEn: e.target.value })}
+                          placeholder={'Hello participants!\n\nWe are excited to share that...\n\nBest regards,\nZentral Hack Team'}
+                          rows={6}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Wenn ausgefüllt, wird die E-Mail zweisprachig (Deutsch + Englisch) versendet.
+                        </p>
                       </div>
 
                       {/* CTA Button (optional) */}
@@ -580,12 +647,33 @@ export function EmailManagementPage() {
                           />
                         </div>
                         <div>
+                          <Label htmlFor="ctaTextEn">Button-Text (English, optional)</Label>
+                          <Input
+                            id="ctaTextEn"
+                            value={emailForm.ctaTextEn}
+                            onChange={(e) => setEmailForm({ ...emailForm, ctaTextEn: e.target.value })}
+                            placeholder="e.g. Register now"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
                           <Label htmlFor="ctaUrl">Button-Link</Label>
                           <Input
                             id="ctaUrl"
                             value={emailForm.ctaUrl}
                             onChange={(e) => setEmailForm({ ...emailForm, ctaUrl: e.target.value })}
                             placeholder="https://zentralhack.ch/anmeldung"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="footerNoteEn">Fussnote (English, optional)</Label>
+                          <Input
+                            id="footerNoteEn"
+                            value={emailForm.footerNoteEn}
+                            onChange={(e) => setEmailForm({ ...emailForm, footerNoteEn: e.target.value })}
+                            placeholder="e.g. If you have any questions, just reply to this email."
                           />
                         </div>
                       </div>

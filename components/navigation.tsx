@@ -5,18 +5,36 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 import Link from "next/link"
+import { useLanguage } from "@/lib/language-context"
 
-const navItems = [
-  { label: "Über uns", href: "#about" },
-  { label: "Kategorien", href: "#categories" },
-  { label: "Zeitplan", href: "#schedule" },
-  { label: "Partner", href: "#partners" },
-  { label: "FAQ", href: "#faq" },
-]
+const navItems = {
+  de: [
+    { label: "Über uns", href: "#about" },
+    { label: "Kategorien", href: "#categories" },
+    { label: "Zeitplan", href: "#schedule" },
+    { label: "Partner", href: "#partners" },
+    { label: "FAQ", href: "#faq" },
+  ],
+  en: [
+    { label: "About", href: "#about" },
+    { label: "Categories", href: "#categories" },
+    { label: "Schedule", href: "#schedule" },
+    { label: "Partners", href: "#partners" },
+    { label: "FAQ", href: "#faq" },
+  ],
+}
+
+const copy = {
+  de: { register: "Anmelden", toggleMenu: "Menü umschalten", language: "Sprache" },
+  en: { register: "Register", toggleMenu: "Toggle menu", language: "Language" },
+} as const
 
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { language, setLanguage } = useLanguage()
+  const text = copy[language]
+  const items = navItems[language]
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,7 +73,7 @@ export function Navigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            {navItems.map((item, index) => (
+            {items.map((item, index) => (
               <motion.a
                 key={item.label}
                 href={item.href}
@@ -74,9 +92,18 @@ export function Navigation() {
               transition={{ delay: 0.5 }}
               className="flex items-center gap-3"
             >
+              <select
+                value={language}
+                onChange={(event) => setLanguage(event.target.value as "de" | "en")}
+                aria-label={text.language}
+                className="h-9 rounded-md border border-border bg-background px-2 text-sm"
+              >
+                <option value="de">DE</option>
+                <option value="en">EN</option>
+              </select>
               <Link href="/anmeldung">
                 <Button className="bg-violet hover:bg-violet/90 text-white font-semibold">
-                  Anmelden
+                  {text.register}
                 </Button>
               </Link>
             </motion.div>
@@ -86,7 +113,7 @@ export function Navigation() {
           <button
             className="md:hidden p-2 text-foreground"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Toggle menu"
+            aria-label={text.toggleMenu}
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -104,7 +131,7 @@ export function Navigation() {
             className="fixed inset-0 z-40 bg-background md:hidden"
           >
             <div className="flex flex-col items-center justify-center h-full gap-8">
-              {navItems.map((item, index) => (
+              {items.map((item, index) => (
                 <motion.a
                   key={item.label}
                   href={item.href}
@@ -123,12 +150,21 @@ export function Navigation() {
                 transition={{ delay: 0.5 }}
                 className="flex flex-col gap-3 w-full px-8"
               >
+                <select
+                  value={language}
+                  onChange={(event) => setLanguage(event.target.value as "de" | "en")}
+                  aria-label={text.language}
+                  className="h-12 rounded-md border border-border bg-background px-3 text-sm"
+                >
+                  <option value="de">Deutsch</option>
+                  <option value="en">English</option>
+                </select>
                 <Link href="/anmeldung" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
                   <Button
                     size="lg"
                     className="w-full bg-violet hover:bg-violet/90 text-white font-semibold"
                   >
-                    Anmelden
+                    {text.register}
                   </Button>
                 </Link>
               </motion.div>

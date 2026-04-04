@@ -3,34 +3,121 @@
 import { useRef, useState } from "react"
 import { motion, useInView, AnimatePresence } from "framer-motion"
 import { Clock, Coffee, Utensils, Presentation, Code, PartyPopper, Sun, Moon } from "lucide-react"
+import { useLanguage } from "@/lib/language-context"
 
 const scheduleDay1 = [
-  { time: "17:00", event: "Check-in", icon: Clock, description: "Empfang und Registrierung" },
-  { time: "18:00", event: "Begrüssung", icon: Presentation, description: "Willkommen zum Zentral Hack" },
-  { time: "18:30", event: "Challenge Pitches", icon: Presentation, description: "Vorstellung der Challenges" },
-  { time: "19:00", event: "Teambildung & Apéro", icon: Coffee, description: "Finde dein Team bei Sponsoren-Apéro" },
-  { time: "19:30", event: "Start des Hacks", icon: Code, description: "Los geht's!" },
-  { time: "20:00", event: "Dinner Buffet", icon: Utensils, description: "Stärkung für die Nacht" },
-  { time: "23:00", event: "Night Special", icon: PartyPopper, description: "Überraschung!" },
+  {
+    time: "17:00",
+    event: { de: "Check-in", en: "Check-in" },
+    icon: Clock,
+    description: { de: "Empfang und Registrierung", en: "Welcome and registration" },
+  },
+  {
+    time: "18:00",
+    event: { de: "Begrüssung", en: "Welcome" },
+    icon: Presentation,
+    description: { de: "Willkommen zum Zentral Hack", en: "Welcome to Zentral Hack" },
+  },
+  {
+    time: "18:30",
+    event: { de: "Challenge Pitches", en: "Challenge Pitches" },
+    icon: Presentation,
+    description: { de: "Vorstellung der Challenges", en: "Introduction to all challenges" },
+  },
+  {
+    time: "19:00",
+    event: { de: "Teambildung & Apéro", en: "Team Matching & Apéro" },
+    icon: Coffee,
+    description: { de: "Finde dein Team bei Sponsoren-Apéro", en: "Find your team during the sponsor apéro" },
+  },
+  {
+    time: "19:30",
+    event: { de: "Start des Hacks", en: "Hack Starts" },
+    icon: Code,
+    description: { de: "Los geht's!", en: "Let's go!" },
+  },
+  {
+    time: "20:00",
+    event: { de: "Dinner Buffet", en: "Dinner Buffet" },
+    icon: Utensils,
+    description: { de: "Stärkung für die Nacht", en: "Fuel up for the night" },
+  },
+  {
+    time: "23:00",
+    event: { de: "Night Special", en: "Night Special" },
+    icon: PartyPopper,
+    description: { de: "Überraschung!", en: "Surprise!" },
+  },
 ]
 
 const scheduleDay2 = [
-  { time: "08:00", event: "Frühstücksbuffet", icon: Coffee, description: "Energie für den Tag" },
-  { time: "10:00", event: "Referate & Speeches", icon: Presentation, description: "Inspirierende Vorträge" },
-  { time: "12:00", event: "Lunchbuffet", icon: Utensils, description: "Mittagspause" },
-  { time: "16:00", event: "Nachmittagssnack", icon: Coffee, description: "Letzte Energie" },
-  { time: "19:00", event: "Abschlusspräsentationen", icon: Presentation, description: "Zeigt was ihr geschafft habt" },
-  { time: "22:00", event: "Ende & Preisverleihung", icon: PartyPopper, description: "Feier mit uns!" },
+  {
+    time: "08:00",
+    event: { de: "Frühstücksbuffet", en: "Breakfast Buffet" },
+    icon: Coffee,
+    description: { de: "Energie für den Tag", en: "Energy for the day" },
+  },
+  {
+    time: "10:00",
+    event: { de: "Referate & Speeches", en: "Talks & Speeches" },
+    icon: Presentation,
+    description: { de: "Inspirierende Vorträge", en: "Inspiring talks" },
+  },
+  {
+    time: "12:00",
+    event: { de: "Lunchbuffet", en: "Lunch Buffet" },
+    icon: Utensils,
+    description: { de: "Mittagspause", en: "Lunch break" },
+  },
+  {
+    time: "16:00",
+    event: { de: "Nachmittagssnack", en: "Afternoon Snack" },
+    icon: Coffee,
+    description: { de: "Letzte Energie", en: "Final energy boost" },
+  },
+  {
+    time: "19:00",
+    event: { de: "Abschlusspräsentationen", en: "Final Presentations" },
+    icon: Presentation,
+    description: { de: "Zeigt was ihr geschafft habt", en: "Show what you have built" },
+  },
+  {
+    time: "22:00",
+    event: { de: "Ende & Preisverleihung", en: "Closing & Awards" },
+    icon: PartyPopper,
+    description: { de: "Feier mit uns!", en: "Celebrate with us!" },
+  },
 ]
+
+const copy = {
+  de: {
+    badge: "ZEITPLAN",
+    heading: "24 STUNDEN",
+    headingAccent: "INNOVATION",
+    description: "Ein intensives Wochenende voller Code, Kreativität und Zusammenarbeit.",
+    day1: "FREITAG, 23.10.",
+    day2: "SAMSTAG, 24.10.",
+  },
+  en: {
+    badge: "SCHEDULE",
+    heading: "24 HOURS",
+    headingAccent: "OF INNOVATION",
+    description: "An intense weekend full of code, creativity, and collaboration.",
+    day1: "FRIDAY, 23 OCT",
+    day2: "SATURDAY, 24 OCT",
+  },
+} as const
 
 function TimelineItem({
   item,
   index,
   isLeft,
+  language,
 }: {
   item: (typeof scheduleDay1)[0]
   index: number
   isLeft: boolean
+  language: "de" | "en"
 }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-50px" })
@@ -61,10 +148,10 @@ function TimelineItem({
             >
               {item.time}
             </span>
-            <h4 className="font-display font-bold text-foreground">{item.event}</h4>
+            <h4 className="font-display font-bold text-foreground">{item.event[language]}</h4>
           </div>
         </div>
-        <p className="text-muted-foreground text-sm">{item.description}</p>
+        <p className="text-muted-foreground text-sm">{item.description[language]}</p>
       </motion.div>
 
       {/* Timeline dot */}
@@ -85,6 +172,8 @@ export function Schedule() {
   const [activeDay, setActiveDay] = useState<1 | 2>(1)
   const headerRef = useRef(null)
   const isHeaderInView = useInView(headerRef, { once: true })
+  const { language } = useLanguage()
+  const text = copy[language]
 
   const schedule = activeDay === 1 ? scheduleDay1 : scheduleDay2
 
@@ -105,13 +194,13 @@ export function Schedule() {
             animate={isHeaderInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            ZEITPLAN
+            {text.badge}
           </motion.span>
           <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
-            24 STUNDEN <span className="text-violet">INNOVATION</span>
+            {text.heading} <span className="text-violet">{text.headingAccent}</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-            Ein intensives Wochenende voller Code, Kreativität und Zusammenarbeit.
+            {text.description}
           </p>
         </motion.div>
         <div className="flex justify-center gap-4 mb-12">
@@ -126,7 +215,7 @@ export function Schedule() {
             whileTap={{ scale: 0.95 }}
           >
             <Moon className="w-5 h-5" />
-            FREITAG, 23.10.
+            {text.day1}
           </motion.button>
           <motion.button
             onClick={() => setActiveDay(2)}
@@ -139,7 +228,7 @@ export function Schedule() {
             whileTap={{ scale: 0.95 }}
           >
             <Sun className="w-5 h-5" />
-            SAMSTAG, 24.10.
+            {text.day2}
           </motion.button>
         </div>
 
@@ -163,6 +252,7 @@ export function Schedule() {
                   item={item}
                   index={index}
                   isLeft={index % 2 === 0}
+                  language={language}
                 />
               ))}
             </motion.div>
