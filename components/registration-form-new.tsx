@@ -76,7 +76,7 @@ export function RegistrationForm() {
       home: "Startseite",
       back: "Zurück",
       hasAccount: "Du hast schon ein Konto?",
-      loginHere: "Hier einloggen",
+      loginHere: "Hier anmelden",
       next: "Weiter",
       register: "Registrieren",
       auth2fa: "2-FAKTOR AUTH",
