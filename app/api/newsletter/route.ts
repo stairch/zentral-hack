@@ -8,10 +8,7 @@ export async function POST(request: Request) {
     const { email } = body
 
     if (!email) {
-      return NextResponse.json(
-        { error: "E-Mail ist erforderlich" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "E-Mail ist erforderlich" }, { status: 400 })
     }
 
     const columnSupport = await getNewsletterColumnSupport()
@@ -38,9 +35,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Newsletter subscription error:", error)
-    return NextResponse.json(
-      { error: "Serverfehler" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Serverfehler" }, { status: 500 })
   }
 }

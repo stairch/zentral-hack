@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -9,38 +9,38 @@
   --card-foreground: #0a0a0a;
   --popover: #ffffff;
   --popover-foreground: #0a0a0a;
-  --primary: #530A5D;
+  --primary: #530a5d;
   --primary-foreground: #ffffff;
-  --secondary: #D5C2F7;
-  --secondary-foreground: #530A5D;
+  --secondary: #d5c2f7;
+  --secondary-foreground: #530a5d;
   --muted: #f5f5f5;
   --muted-foreground: #666666;
-  --accent: #E6FF17;
+  --accent: #e6ff17;
   --accent-foreground: #0a0a0a;
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
   --border: #e5e5e5;
   --input: #e5e5e5;
-  --ring: #530A5D;
-  --chart-1: #530A5D;
-  --chart-2: #D5C2F7;
-  --chart-3: #E6FF17;
+  --ring: #530a5d;
+  --chart-1: #530a5d;
+  --chart-2: #d5c2f7;
+  --chart-3: #e6ff17;
   --chart-4: #0a0a0a;
   --chart-5: #ffffff;
   --radius: 0.625rem;
   --sidebar: #fafafa;
   --sidebar-foreground: #0a0a0a;
-  --sidebar-primary: #530A5D;
+  --sidebar-primary: #530a5d;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #D5C2F7;
-  --sidebar-accent-foreground: #530A5D;
+  --sidebar-accent: #d5c2f7;
+  --sidebar-accent-foreground: #530a5d;
   --sidebar-border: #e5e5e5;
-  --sidebar-ring: #530A5D;
-  
+  --sidebar-ring: #530a5d;
+
   /* Custom Zentral Hack colors */
-  --violet: #530A5D;
-  --light-violet: #D5C2F7;
-  --yellow: #E6FF17;
+  --violet: #530a5d;
+  --light-violet: #d5c2f7;
+  --yellow: #e6ff17;
 }
 
 .dark {
@@ -50,43 +50,43 @@
   --card-foreground: #fafafa;
   --popover: #0a0a0a;
   --popover-foreground: #fafafa;
-  --primary: #D5C2F7;
-  --primary-foreground: #530A5D;
-  --secondary: #530A5D;
-  --secondary-foreground: #D5C2F7;
+  --primary: #d5c2f7;
+  --primary-foreground: #530a5d;
+  --secondary: #530a5d;
+  --secondary-foreground: #d5c2f7;
   --muted: #1a1a1a;
   --muted-foreground: #a3a3a3;
-  --accent: #E6FF17;
+  --accent: #e6ff17;
   --accent-foreground: #0a0a0a;
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
   --border: #262626;
   --input: #262626;
-  --ring: #D5C2F7;
-  --chart-1: #D5C2F7;
-  --chart-2: #530A5D;
-  --chart-3: #E6FF17;
+  --ring: #d5c2f7;
+  --chart-1: #d5c2f7;
+  --chart-2: #530a5d;
+  --chart-3: #e6ff17;
   --chart-4: #fafafa;
   --chart-5: #0a0a0a;
   --sidebar: #141414;
   --sidebar-foreground: #fafafa;
-  --sidebar-primary: #D5C2F7;
-  --sidebar-primary-foreground: #530A5D;
-  --sidebar-accent: #530A5D;
-  --sidebar-accent-foreground: #D5C2F7;
+  --sidebar-primary: #d5c2f7;
+  --sidebar-primary-foreground: #530a5d;
+  --sidebar-accent: #530a5d;
+  --sidebar-accent-foreground: #d5c2f7;
   --sidebar-border: #262626;
-  --sidebar-ring: #D5C2F7;
+  --sidebar-ring: #d5c2f7;
 }
 
 @theme inline {
-  --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
-  --font-display: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
-  
+  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback";
+
   /* Zentral Hack brand colors */
-  --color-violet: #530A5D;
-  --color-light-violet: #D5C2F7;
-  --color-yellow: #E6FF17;
+  --color-violet: #530a5d;
+  --color-light-violet: #d5c2f7;
+  --color-yellow: #e6ff17;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

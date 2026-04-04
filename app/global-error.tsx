@@ -1,11 +1,7 @@
-'use client'
+"use client"
 
-export default function GlobalError({
-  error,
-}: {
-  error: Error & { digest?: string }
-}) {
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
+export default function GlobalError({ error }: { error: Error & { digest?: string } }) {
+  const pathname = typeof window !== "undefined" ? window.location.pathname : ""
 
   // Log the error to the console so it will be forwarded to server logs and captured by auto-fix
   console.error(error)
@@ -119,14 +115,11 @@ export default function GlobalError({
             <div className="error-icon">!</div>
             <div>
               <p className="error-message">
-                An application error has occurred while loading{' '}
-                <code>{pathname || '/'}</code>
+                An application error has occurred while loading <code>{pathname || "/"}</code>
               </p>
             </div>
           </div>
-          <div className="error-summary">
-            {error.message || 'Unknown error'}
-          </div>
+          <div className="error-summary">{error.message || "Unknown error"}</div>
           {error.stack && (
             <div className="error-details-wrapper">
               <details className="error-details">

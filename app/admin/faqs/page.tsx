@@ -1,9 +1,9 @@
-import { FAQAdminPage } from '@/components/admin/faq-page';
+import { FAQAdminPage } from "@/components/admin/faq-page"
 
 export const metadata = {
-  title: 'FAQ Verwaltung | Admin',
-};
+  title: "FAQ Verwaltung | Admin"
+}
 
 export default function AdminFAQPage() {
-  return <FAQAdminPage />;
+  return <FAQAdminPage />
 }

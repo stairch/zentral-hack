@@ -1,5 +1,5 @@
-import { AdminCategoriesPage } from '@/components/admin/categories-page';
+import { AdminCategoriesPage } from "@/components/admin/categories-page"
 
 export default function AdminCategoriesPageRoute() {
-  return <AdminCategoriesPage />;
+  return <AdminCategoriesPage />
 }

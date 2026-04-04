@@ -5,14 +5,10 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar"
 
 export const metadata = {
   title: "Admin | Zentral Hack 2026",
-  description: "Admin Dashboard für den Zentral Hack 2026",
+  description: "Admin Dashboard für den Zentral Hack 2026"
 }
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
   const token = cookieStore.get("token")?.value
 
@@ -22,7 +18,7 @@ export default async function AdminLayout({
   }
 
   const payload = verifyJWT(token)
-  
+
   if (!payload) {
     console.log("[AdminLayout] Invalid token payload, redirecting to login")
     redirect("/auth/login")
@@ -34,12 +30,10 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="bg-muted/30 min-h-screen">
       <AdminSidebar />
       <main className="lg:pl-64">
-        <div className="container mx-auto px-4 py-8">
-          {children}
-        </div>
+        <div className="container mx-auto px-4 py-8">{children}</div>
       </main>
     </div>
   )

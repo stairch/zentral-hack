@@ -3,6 +3,7 @@
 ## ✅ Implementierte Sicherheitsmassnahmen
 
 ### Authentifizierung & Autorisierung
+
 - **JWT-basierte Authentifizierung** mit 24h Expiration
 - **httpOnly Cookies** für sichere Token-Speicherung (XSS-resistent)
 - **Rolle-basierte Zugriffskontrolle** (RBAC): user, category_partner, admin
@@ -10,6 +11,7 @@
 - **Bcrypt Passwort-Hashing** mit 12 Runden (hochsicher)
 
 ### Input-Validierung & Daten-Integrität
+
 - **Zod Schemas** für alle API-Inputs
 - **Starke Passwort-Anforderungen**:
   - Mindestens 12 Zeichen
@@ -20,12 +22,14 @@
 - **Type Safety** mit TypeScript überall
 
 ### Datenbankschutz
+
 - **Parameterized Queries** (verhindert SQL-Injection)
 - **Connection Pooling** (max 20, min 2)
 - **Timeout Protection** (2 Sekunden für Verbindungen)
 - **Slow Query Monitoring** (200ms Threshold)
 
 ### Datei-Upload-Sicherheit
+
 - **Datei-Typ-Validierung** (MIME-Type + Extension Check)
 - **Größen-Limits** pro Dateityp:
   - PDF: Max 10MB
@@ -36,6 +40,7 @@
 - **Kategorie-spezifische Uploads** (Isolation)
 
 ### Netzwerk-Sicherheit
+
 - **HTTP Security Headers** in next.config.mjs:
   - `X-Content-Type-Options: nosniff`
   - `X-Frame-Options: DENY`
@@ -44,6 +49,7 @@
   - `Permissions-Policy` (Kamera, Mikrofon, Geolocation deaktiviert)
 
 ### Rate-Limiting & DDoS-Schutz
+
 - **Login**: Max 5 Requests pro 15 Minuten
 - **Signup**: Max 10 Requests pro Stunde
 - **Newsletter**: Max 5 Requests pro Stunde
@@ -51,6 +57,7 @@
 - **IP-basierte Limitierung** mit automatischem Cleanup
 
 ### Kryptographie
+
 - **JWT_SECRET**: 256-Bit Hex-String (MUSS in .env.local gespeichert sein)
 - **Bcrypt**: 12 Runden (deutlich über Minimum von 10)
 - **2FA-Codes**: Kryptografisch sichere 6-Zeichen Hex-Codes (randomBytes)
@@ -62,6 +69,7 @@
 Bevor du live gehst:
 
 - [ ] **JWT_SECRET ändern**
+
   ```bash
   # Neuen Secret generieren:
   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
@@ -69,6 +77,7 @@ Bevor du live gehst:
   ```
 
 - [ ] **Datenbankpasswort ändern**
+
   ```bash
   # PostgreSQL password wechseln
   ALTER USER postgres WITH PASSWORD 'new_secure_password_here';
@@ -99,18 +108,21 @@ Bevor du live gehst:
 ## 🛡️ Best Practices für Betrieb
 
 ### Regelmäßige Wartung
+
 - **Abhängigkeiten updaten**: `npm audit` monatlich
 - **Security-Patches**: Sofort nach Verfügbarkeit einspielen
 - **Database Backups**: Täglich durchführen
 - **Logs überprüfen**: Auf verdächtige Aktivitäten überwachen
 
 ### Monitoring
+
 - Rate-Limit-Violations tracken
 - Failed Login-Attempts überwachen
 - File-Upload-Fehler monitoren
 - Database-Performance tracken
 
 ### Incident Response
+
 1. Bei Sicherheitsproblem sofort untersuchen
 2. Betroffene Benutzer benachrichtigen
 3. Logs analysieren
@@ -122,17 +134,20 @@ Bevor du live gehst:
 ## 📋 Zukünftige Verbesserungen
 
 ### Phase 1 (Nächste Woche)
+
 - [ ] Redis Caching für häufig abgerufene Daten
 - [ ] Structured Logging mit Pinto/Winston
 - [ ] Error Tracking mit Sentry
 
 ### Phase 2 (Monat 2)
+
 - [ ] WAF (Web Application Firewall) integrieren
 - [ ] 2FA für alle Benutzer (nicht nur Admin)
 - [ ] API Rate Limiting erhöhen (DDoS-Schutz)
 - [ ] Content Security Policy (CSP) Header
 
 ### Phase 3 (Monat 3+)
+
 - [ ] OAuth 2.0 / OpenID Connect
 - [ ] Audit Logging für alle Admin-Aktionen
 - [ ] Penetration Testing durchführen
@@ -143,6 +158,7 @@ Bevor du live gehst:
 ## 📞 Sicherheits-Kontakt
 
 Bei Sicherheitsproblemen:
+
 - Nicht öffentlich posten
 - Email an: security@zentral-hack.ch
 - Oder direkt Ahmad kontaktieren
