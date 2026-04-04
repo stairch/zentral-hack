@@ -8,7 +8,7 @@
     "start": "next start",
     "format": "prettier --write --list-different .",
     "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --composite false",
-    "check": "npm run format && npm run typecheck",
+    "check": "rm tsconfig.tsbuildinfo || npm run format && npm run typecheck",
     "lint": "eslint ."
   },
   "dependencies": {

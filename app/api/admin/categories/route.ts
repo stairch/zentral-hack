@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
 import { withCategoryPartnerAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
