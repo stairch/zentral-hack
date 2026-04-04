@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { motion, useInView } from "framer-motion"
 import { Lightbulb, Users, Network, MapPin } from "lucide-react"
 import { useLanguage } from "@/lib/language-context"
@@ -59,24 +59,47 @@ const copy = {
   }
 } as const
 
-function CounterAnimation({ end, suffix = "" }: { end: number; suffix?: string }) {
+function CounterAnimation({ end, suffix = "", delay = 0 }: { end: number; suffix?: string; delay?: number }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true })
+  const [count, setCount] = useState(0)
+  const duration = useRef(2000 + Math.random() * 1000)
+  const startTime = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!isInView) return
+
+    const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t)
+
+    const timeout = setTimeout(() => {
+      const animate = (timestamp: number) => {
+        if (!startTime.current) startTime.current = timestamp
+        const elapsed = timestamp - startTime.current
+        const progress = Math.min(elapsed / duration.current, 1)
+
+        setCount(Math.floor(easeInOut(progress) * end))
+
+        if (progress < 1) {
+          requestAnimationFrame(animate)
+        } else {
+          setCount(end)
+        }
+      }
+
+      requestAnimationFrame(animate)
+    }, delay)
+
+    return () => {
+      clearTimeout(timeout)
+      startTime.current = null
+    }
+  }, [isInView, end, delay])
 
   return (
-    <motion.span ref={ref} initial={{ opacity: 0 }} animate={isInView ? { opacity: 1 } : {}}>
-      <motion.span
-        initial={{ opacity: 0 }}
-        animate={isInView ? { opacity: 1 } : {}}
-        transition={{ duration: 0.5 }}>
-        {isInView && (
-          <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            {end}
-            {suffix}
-          </motion.span>
-        )}
-      </motion.span>
-    </motion.span>
+    <span ref={ref}>
+      {count}
+      {suffix}
+    </span>
   )
 }
 
@@ -186,10 +209,10 @@ export function About() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.3 }}>
           {[
-            { value: 24, suffix: "h", label: text.stats[0] },
-            { value: 4, suffix: "", label: text.stats[1] },
-            { value: 200, suffix: "+", label: text.stats[2] },
-            { value: 1, suffix: "", label: text.stats[3] }
+            { value: 24, suffix: "h", label: text.stats[0], ticking: true },
+            { value: 4, suffix: "", label: text.stats[1], ticking: true },
+            { value: 200, suffix: "+", label: text.stats[2], ticking: true },
+            { value: 1, suffix: "", label: text.stats[3], ticking: false }
           ].map((stat, index) => (
             <motion.div
               key={stat.label}
@@ -198,7 +221,14 @@ export function About() {
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
               transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}>
               <div className="font-display text-yellow mb-2 text-5xl font-bold md:text-6xl">
-                <CounterAnimation end={stat.value} suffix={stat.suffix} />
+                {stat.ticking ? (
+                  <CounterAnimation end={stat.value} suffix={stat.suffix} delay={100} />
+                ) : (
+                  <>
+                    {stat.value}
+                    {stat.suffix}
+                  </>
+                )}
               </div>
               <div className="text-light-violet font-medium">{stat.label}</div>
             </motion.div>
