@@ -140,18 +140,16 @@ function TimelineItem({
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className={`flex items-center gap-4 ${isLeft ? "md:flex-row-reverse md:text-right" : ""}`}>
       {/* Content */}
-      <div className="bg-background border-border flex-1 rounded-xl border p-4 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
+      <div className="bg-muted border-border flex-1 rounded-xl border p-4 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
         <div className={`mb-2 flex items-center gap-3 ${isLeft ? "md:flex-row-reverse" : ""}`}>
-          <div className="bg-violet/10 flex h-10 w-10 items-center justify-center rounded-full">
-            <item.icon className="text-violet h-5 w-5" />
+          <div className="bg-primary/15 flex h-10 w-10 items-center justify-center rounded-full">
+            <item.icon className="text-primary h-5 w-5" />
           </div>
           <div>
-            <span
-              className="text-yellow text-lg font-bold"
-              style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 1)" }}>
+            <span className="text-foreground bg-accent rounded-sm px-1.5 py-0.5 text-sm font-medium">
               {item.time}
             </span>
-            <h4 className="font-display text-foreground font-bold">{item.event[language]}</h4>
+            <h4 className="font-display text-foreground text-lg font-bold">{item.event[language]}</h4>
           </div>
         </div>
         <p className="text-muted-foreground text-sm">{item.description[language]}</p>
@@ -277,7 +275,7 @@ export function Schedule() {
         {/* Timeline */}
         <div className="relative mx-auto max-w-3xl">
           {/* Timeline line */}
-          <div className="from-violet via-light-violet to-yellow absolute top-0 bottom-0 left-1/2 hidden w-0.5 bg-gradient-to-b md:block" />
+          <div className="from-violet via-light-violet to-yellow absolute top-0 bottom-0 left-1/2 hidden w-0.5 bg-linear-to-b md:block" />
 
           <AnimatePresence mode="wait">
             <motion.div
