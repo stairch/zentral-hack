@@ -49,7 +49,7 @@ interface FAQItem {
 const copy = {
   de: {
     badge: "FAQ",
-    heading: "HÄUFIGE",
+    heading: "HÄUFIG GESTELLTE",
     headingAccent: "FRAGEN",
     description: "Alles was du über den Zentral Hack wissen musst."
   },
