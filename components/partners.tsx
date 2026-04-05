@@ -1,21 +1,58 @@
 "use client"
 
-import { useRef, useState } from "react"
+import Image from "next/image"
+import { useRef, useState, useEffect } from "react"
 import { motion, useInView, useMotionValue, useSpring } from "framer-motion"
 import { SponsorshipModal } from "./sponsorship-modal"
 import { sponsorPackages } from "@/lib/sponsorship-packages"
 import { useLanguage } from "@/lib/language-context"
 import { type SponsorPackage } from "@/lib/sponsorship-packages"
 
-const partners = {
+type Organiser = { name: string; logo: string; link: string; bgColor: string }
+const partners: { organisers: Organiser[] } = {
   organisers: [
-    "HSLU",
-    "ICT Berufsbildung Zentralschweiz",
-    "UMB AG",
-    "Digital & AI Community",
-    "getAbstract",
-    "STAIR",
-    "SchwyzNext"
+    {
+      name: "HSLU",
+      logo: "/partners/hslu-logo.png",
+      link: "https://hslu.ch",
+      bgColor: "bg-white"
+    },
+    {
+      name: "ICT Berufsbildung Zentralschweiz",
+      logo: "/partners/ict-bz-logo.png",
+      link: "https://ict-bz.ch",
+      bgColor: "bg-white"
+    },
+    {
+      name: "UMB AG",
+      logo: "/partners/umb-logo.png",
+      link: "https://umb.ch",
+      bgColor: "bg-black"
+    },
+    {
+      name: "Digital & AI Community",
+      logo: "/partners/ai-community-logo.png",
+      link: "https://ai-community.ch",
+      bgColor: "bg-[#0a0a14]"
+    },
+    {
+      name: "getAbstract",
+      logo: "/partners/getabstract-logo.png",
+      link: "https://getabstract.com",
+      bgColor: "bg-white"
+    },
+    {
+      name: "STAIR",
+      logo: "/partners/stair-logo.png",
+      link: "https://stair.ch",
+      bgColor: "bg-white"
+    },
+    {
+      name: "SchwyzNext",
+      logo: "/partners/schwyznext-logo.png",
+      link: "https://schwyz-next.ch",
+      bgColor: "bg-white"
+    }
   ]
 }
 
@@ -24,33 +61,53 @@ function MarqueeRow({
   direction = "left",
   speed = 30
 }: {
-  items: string[]
+  items: Organiser[]
   direction?: "left" | "right"
   speed?: number
 }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [containerWidth, setContainerWidth] = useState(0)
+
   const duplicatedItems = [...items, ...items, ...items]
+
+  useEffect(() => {
+    if (!ref.current) return
+    setContainerWidth(ref.current.scrollWidth / 3 + 10)
+  }, [items])
 
   return (
     <div className="relative overflow-hidden py-4">
+      {/* fade left */}
+      <div className="from-background pointer-events-none absolute top-0 left-0 z-10 h-full w-12 bg-linear-to-r to-transparent sm:w-28" />
+      {/* fade right */}
+      <div className="from-background pointer-events-none absolute top-0 right-0 z-10 h-full w-12 bg-linear-to-l to-transparent sm:w-28" />
+
       <motion.div
+        ref={ref}
         className="flex gap-8 whitespace-nowrap"
-        animate={{
-          x: direction === "left" ? [0, -100 * items.length] : [-100 * items.length, 0]
-        }}
+        animate={
+          containerWidth
+            ? {
+                x: direction === "left" ? [0, -containerWidth] : [-containerWidth, 0]
+              }
+            : {}
+        }
         transition={{
           x: {
             duration: speed,
             repeat: Infinity,
-            ease: "linear"
+            ease: "linear",
+            repeatType: "loop"
           }
         }}>
         {duplicatedItems.map((item, index) => (
-          <motion.div
-            key={`${item}-${index}`}
-            className="bg-muted border-border flex-shrink-0 rounded-lg border px-8 py-4"
-            whileHover={{ scale: 1.05, borderColor: "var(--violet)" }}>
-            <span className="font-display text-foreground font-bold">{item}</span>
-          </motion.div>
+          <div
+            key={`partners-item-${item.name}-${index}`}
+            className="flex shrink-0 items-center rounded-lg px-8 py-4">
+            <a className={`p-1 ${item.bgColor} rounded-xs`} href={item.link} target="_blank">
+              <Image src={item.logo} alt={item.name} width={1000} height={1000} className="h-auto w-28" />
+            </a>
+          </div>
         ))}
       </motion.div>
     </div>
@@ -154,6 +211,7 @@ export function Partners() {
       headingAccent: "STÄRKER",
       description: "Unterstützt von führenden Unternehmen und Institutionen der Zentralschweiz.",
       organisers: "CO-ORGANISATOREN",
+      sponsors: "SPONSOREN",
       ctaQuestion: "Interessiert an einer Partnerschaft?",
       ctaAction: "Kontaktiere uns"
     },
@@ -163,6 +221,7 @@ export function Partners() {
       headingAccent: "TOGETHER",
       description: "Supported by leading companies and institutions in Central Switzerland.",
       organisers: "CO-ORGANIZERS",
+      sponsors: "SPONSORS",
       ctaQuestion: "Interested in a partnership?",
       ctaAction: "Contact us"
     }
@@ -203,8 +262,16 @@ export function Partners() {
               transition={{ delay: 0.3 }}>
               {text.organisers}
             </motion.h3>
-            <MarqueeRow items={partners.organisers} direction="left" speed={40} />
-            <MarqueeRow items={partners.organisers} direction="right" speed={35} />
+            <MarqueeRow items={partners.organisers} direction="left" speed={30} />
+            {/* TODO uncomment if there are sponsors */}
+            {/* <motion.h3
+              className="font-display text-foreground mb-6 mt-12 text-center text-xl font-bold"
+              initial={{ opacity: 0 }}
+              animate={isHeaderInView ? { opacity: 1 } : {}}
+              transition={{ delay: 0.3 }}>
+              {text.sponsors}
+            </motion.h3>
+            <MarqueeRow items={partners.organisers} direction="right" speed={20} /> */}
           </div>
 
           {/* Sponsor Tiers */}
