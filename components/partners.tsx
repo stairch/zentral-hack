@@ -15,13 +15,13 @@ const partners: { organisers: Organiser[] } = {
       name: "HSLU",
       logo: "/partners/hslu-logo.png",
       link: "https://hslu.ch",
-      bgColor: "bg-white"
+      bgColor: "bg-transparent"
     },
     {
       name: "ICT Berufsbildung Zentralschweiz",
       logo: "/partners/ict-bz-logo.png",
       link: "https://ict-bz.ch",
-      bgColor: "bg-white"
+      bgColor: "bg-transparent"
     },
     {
       name: "UMB AG",
@@ -39,19 +39,19 @@ const partners: { organisers: Organiser[] } = {
       name: "getAbstract",
       logo: "/partners/getabstract-logo.png",
       link: "https://getabstract.com",
-      bgColor: "bg-white"
+      bgColor: "bg-transparent"
     },
     {
       name: "STAIR",
       logo: "/partners/stair-logo.png",
       link: "https://stair.ch",
-      bgColor: "bg-white"
+      bgColor: "bg-transparent"
     },
     {
       name: "SchwyzNext",
       logo: "/partners/schwyznext-logo.png",
       link: "https://schwyz-next.ch",
-      bgColor: "bg-white"
+      bgColor: "bg-transparent"
     }
   ]
 }
