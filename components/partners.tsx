@@ -1,10 +1,11 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { motion, useInView } from "framer-motion"
+import { motion, useInView, useMotionValue, useSpring } from "framer-motion"
 import { SponsorshipModal } from "./sponsorship-modal"
 import { sponsorPackages } from "@/lib/sponsorship-packages"
 import { useLanguage } from "@/lib/language-context"
+import { type SponsorPackage } from "@/lib/sponsorship-packages"
 
 const partners = {
   organisers: [
@@ -53,6 +54,89 @@ function MarqueeRow({
         ))}
       </motion.div>
     </div>
+  )
+}
+
+function TierCard({
+  tier,
+  index,
+  zIndex,
+  onOpen
+}: {
+  tier: SponsorPackage
+  index: number
+  zIndex: number
+  onOpen: () => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const isInView = useInView(ref, { once: true, margin: "-100px" })
+
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
+  const springConfig = { stiffness: 150, damping: 20, mass: 0.2 }
+  const xSpring = useSpring(x, springConfig)
+  const ySpring = useSpring(y, springConfig)
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!ref.current) return
+    const cardRect = ref.current.getBoundingClientRect()
+    const centerX = cardRect.left + cardRect.width / 2
+    const centerY = cardRect.top + cardRect.height / 2
+    x.set((e.clientX - centerX) * 0.07)
+    y.set((e.clientY - centerY) * 0.07)
+  }
+
+  const handleMouseLeave = () => {
+    x.set(0)
+    y.set(0)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault()
+      onOpen()
+    }
+  }
+
+  const cardVariants = {
+    rest: { opacity: 0, y: 50, rotateX: -15 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      rotateX: 0,
+      transition: { duration: 0.6, delay: i * 0.15 }
+    }),
+    hover: {
+      scale: 1.03,
+      transition: { duration: 0.3, delay: 0 }
+    }
+  }
+
+  return (
+    <motion.div
+      ref={ref}
+      variants={cardVariants}
+      custom={index}
+      initial="rest"
+      animate={isInView ? "visible" : "rest"}
+      whileHover="hover"
+      onClick={onOpen}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      className="flex h-48 cursor-pointer flex-col items-center justify-center rounded-xl border border-black/5 p-6 text-center"
+      style={{
+        x: xSpring,
+        y: ySpring,
+        zIndex,
+        position: "relative",
+        background: `linear-gradient(135deg, ${tier.color} 0%, rgba(255,255,255,0.92) 100%)`
+      }}>
+      <span className="font-display text-foreground mb-2 text-2xl font-bold">{tier.name.toUpperCase()}</span>
+      <p className="text-foreground/75 max-w-[16rem] text-sm leading-relaxed">{tier.shortDescription}</p>
+    </motion.div>
   )
 }
 
@@ -126,31 +210,16 @@ export function Partners() {
           {/* Sponsor Tiers */}
           <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-2 lg:grid-cols-4">
             {sponsorPackages.map((tier, index) => (
-              <motion.div
+              <TierCard
                 key={tier.slug}
-                className="relative"
-                initial={{ opacity: 0, y: 30 }}
-                animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}>
-                <motion.div
-                  className="flex h-48 cursor-pointer flex-col items-center justify-center rounded-xl border border-black/5 p-6 text-center transition-all"
-                  style={{
-                    background: `linear-gradient(135deg, ${tier.color} 0%, rgba(255,255,255,0.92) 100%)`
-                  }}
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                  onClick={() => {
-                    setSelectedPackageSlug(tier.slug)
-                    setSponsorshipModalOpen(true)
-                  }}>
-                  <span className="font-display text-foreground mb-2 text-2xl font-bold">
-                    {tier.name.toUpperCase()}
-                  </span>
-                  <p className="text-foreground/75 max-w-[16rem] text-sm leading-relaxed">
-                    {tier.shortDescription}
-                  </p>
-                </motion.div>
-              </motion.div>
+                tier={tier}
+                index={index}
+                zIndex={sponsorPackages.length - index}
+                onOpen={() => {
+                  setSelectedPackageSlug(tier.slug)
+                  setSponsorshipModalOpen(true)
+                }}
+              />
             ))}
           </div>
 
@@ -161,13 +230,16 @@ export function Partners() {
             animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.8 }}>
             <p className="text-muted-foreground mb-4">{text.ctaQuestion}</p>
-            <motion.button
+            <button
               onClick={() => setSponsorshipModalOpen(true)}
-              className="text-violet inline-flex items-center gap-2 font-semibold hover:underline"
-              whileHover={{ x: 5 }}>
-              {text.ctaAction}
-              <span aria-hidden="true">→</span>
-            </motion.button>
+              className="text-violet group inline-flex items-center gap-2 font-semibold">
+              <span className="group-hover:underline">{text.ctaAction}</span>
+              <span
+                aria-hidden="true"
+                className="inline-block transition-transform duration-200 ease-out group-hover:translate-x-1">
+                →
+              </span>
+            </button>
           </motion.div>
         </div>
       </section>

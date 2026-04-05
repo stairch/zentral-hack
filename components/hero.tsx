@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
+import { useEffect, useState, useRef } from "react"
+import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Calendar, MapPin } from "lucide-react"
 import Link from "next/link"
@@ -11,9 +11,9 @@ import { useAuth } from "@/lib/auth-context"
 const copy = {
   de: {
     date: "23. - 24. OKTOBER 2026",
-    subtitleLine1: "Ein Hackathon für die",
-    subtitleAccent: "Zentralschweiz",
-    subtitleLine2: "Innovation, Nachwuchs und Networking.",
+    subtitleLinePre: "Ein Hackathon für",
+    subtitleLineRotate: ["Innovation", "Junge Talente", "Networking"],
+    subtitleLinePost: "in der Zentralschweiz.",
     location: "HSLU - Hochschule Luzern",
     primaryCta: "Jetzt Anmelden",
     primaryCtaLoggedIn: "Zum Dashboard",
@@ -21,9 +21,9 @@ const copy = {
   },
   en: {
     date: "23 - 24 OCTOBER 2026",
-    subtitleLine1: "A hackathon for",
-    subtitleAccent: "Central Switzerland",
-    subtitleLine2: "Innovation, young talent, and networking.",
+    subtitleLinePre: "A hackathon for",
+    subtitleLineRotate: ["Innovation", "Young Talent", "Networking"],
+    subtitleLinePost: "in Central Switzerland.",
     location: "HSLU - Lucerne University of Applied Sciences",
     primaryCta: "Register Now",
     primaryCtaLoggedIn: "To Dashboard",
@@ -125,6 +125,80 @@ function AnimatedMountain() {
   )
 }
 
+function RotatingText({ words }: { words: readonly string[] }) {
+  const [index, setIndex] = useState(0)
+  const [displayIndex, setDisplayIndex] = useState(0)
+  const measureRef = useRef<HTMLSpanElement>(null)
+  const width = useMotionValue(0)
+  const widthSpring = useSpring(width, { stiffness: 120, damping: 18 })
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % words.length)
+    }, 3500)
+    return () => clearInterval(interval)
+  }, [words])
+
+  useEffect(() => {
+    if (measureRef.current) {
+      width.set(measureRef.current.offsetWidth + 5)
+    }
+  }, [displayIndex, words])
+
+  const letters = words[displayIndex].split("")
+
+  return (
+    <motion.span
+      className="relative inline-block overflow-hidden align-middle"
+      style={{ width: widthSpring, height: "1.3em" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: (letters.length - 1) * 0.02 }}>
+      <span
+        ref={measureRef}
+        className="pointer-events-none invisible absolute font-semibold whitespace-nowrap"
+        aria-hidden>
+        {words[displayIndex]}
+      </span>
+
+      <AnimatePresence mode="wait" onExitComplete={() => setDisplayIndex(index)}>
+        <motion.span
+          key={index}
+          className="absolute inset-0 flex items-center justify-center whitespace-nowrap">
+          {letters.map((letter, i) => (
+            <motion.span
+              key={i}
+              initial={{ y: "100%", opacity: 0 }}
+              animate={{
+                y: "0%",
+                opacity: 1,
+                transition: {
+                  type: "spring",
+                  stiffness: 250,
+                  damping: 25,
+                  delay: (letters.length - 1 - i) * 0.015 + 0.2
+                }
+              }}
+              exit={{
+                y: "-80%",
+                opacity: 0,
+                transition: {
+                  duration: 0.15,
+                  delay: i * 0.01
+                }
+              }}
+              className="text-primary inline-block font-semibold">
+              {letter === " " ? "\u00A0" : letter}
+            </motion.span>
+          ))}
+        </motion.span>
+      </AnimatePresence>
+
+      <motion.span className="bg-secondary absolute bottom-0 left-0 h-0.5" style={{ width: widthSpring }} />
+    </motion.span>
+  )
+}
+
 export function Hero() {
   const [particles, setParticles] = useState<
     Array<{ id: number; delay: number; duration: number; x: number; y: number }>
@@ -210,15 +284,15 @@ export function Hero() {
         </motion.p>
 
         {/* Subtitle */}
-        <motion.p
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
-          className="text-muted-foreground mx-auto mb-8 max-w-2xl text-xl leading-relaxed md:text-2xl">
-          {text.subtitleLine1} <span className="text-violet font-semibold">{text.subtitleAccent}</span>.
-          <br />
-          {text.subtitleLine2}
-        </motion.p>
+          className="text-muted-foreground mx-auto mb-8 flex w-fit max-w-2xl items-center gap-2 text-xl leading-relaxed md:text-2xl">
+          <div>{text.subtitleLinePre}</div>
+          <RotatingText words={text.subtitleLineRotate} />
+          <div>{text.subtitleLinePost}</div>
+        </motion.div>
 
         {/* Location */}
         <motion.div

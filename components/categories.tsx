@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useEffect, useState } from "react"
-import { motion, useInView } from "framer-motion"
+import { motion, useInView, useMotionValue, useSpring } from "framer-motion"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   categoryDisplayOrder,
@@ -36,27 +36,77 @@ function CategoryCard({
   partnerLabel: string
   detailsLabel: string
 }) {
-  const ref = useRef(null)
+  const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
+
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
+
+  const springConfig = { stiffness: 150, damping: 20, mass: 0.2 }
+  const xSpring = useSpring(x, springConfig)
+  const ySpring = useSpring(y, springConfig)
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    const centerX = rect.left + rect.width / 2
+    const centerY = rect.top + rect.height / 2
+    x.set((e.clientX - centerX) * 0.05)
+    y.set((e.clientY - centerY) * 0.05)
+  }
+
+  const handleMouseLeave = () => {
+    x.set(0)
+    y.set(0)
+  }
+
+  const cardVariants = {
+    rest: { opacity: 0, y: 50, rotateX: -15 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      rotateX: 0,
+      transition: {
+        duration: 0.6,
+        delay: i * 0.15
+      }
+    }),
+    hover: {
+      scale: 1.02,
+      transition: { duration: 0.3, delay: 0 }
+    }
+  }
+
+  const cardStyle = {
+    x: xSpring,
+    y: ySpring,
+    backgroundColor: category.color,
+    color: category.textColor
+  }
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault()
+      onOpen()
+    }
+  }
 
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 50, rotateX: -15 }}
-      animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
-      transition={{ duration: 0.6, delay: index * 0.15 }}
-      whileHover={{ y: -10, scale: 1.02 }}
+      variants={cardVariants}
+      custom={index}
+      initial="rest"
+      animate={isInView ? "visible" : "rest"}
+      whileHover="hover"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       className="group relative cursor-pointer overflow-hidden rounded-2xl p-8"
-      style={{ backgroundColor: category.color, color: category.textColor }}
+      style={cardStyle}
       onClick={onOpen}
       role="button"
       tabIndex={0}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault()
-          onOpen()
-        }
-      }}>
+      onKeyDown={handleKeyDown}>
       {/* Animated background pattern */}
       <motion.div
         className="absolute inset-0 opacity-10"
@@ -75,12 +125,9 @@ function CategoryCard({
       />
 
       {/* Icon */}
-      <motion.div
-        className="relative z-10 mb-6 w-fit"
-        whileHover={{ rotate: 360 }}
-        transition={{ duration: 0.6 }}>
+      <div className="relative z-10 mb-6 w-fit">
         <category.icon className="h-12 w-12" />
-      </motion.div>
+      </div>
 
       {/* Content */}
       <div className="relative z-10">
@@ -93,10 +140,7 @@ function CategoryCard({
       </div>
 
       {/* Hover effect */}
-      <motion.div
-        className="absolute inset-0 bg-white/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        initial={false}
-      />
+      <div className="absolute inset-0 bg-white/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
     </motion.div>
   )
 }

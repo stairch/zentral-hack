@@ -1,8 +1,18 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { motion, useInView, AnimatePresence } from "framer-motion"
-import { Clock, Coffee, Utensils, Presentation, Code, PartyPopper, Sun, Moon } from "lucide-react"
+import { motion, useInView, AnimatePresence, useAnimate } from "framer-motion"
+import {
+  Clock,
+  Coffee,
+  Utensils,
+  Presentation,
+  Code,
+  PartyPopper,
+  Sun,
+  Moon,
+  type LucideIcon
+} from "lucide-react"
 import { useLanguage } from "@/lib/language-context"
 
 const scheduleDay1 = [
@@ -130,9 +140,7 @@ function TimelineItem({
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className={`flex items-center gap-4 ${isLeft ? "md:flex-row-reverse md:text-right" : ""}`}>
       {/* Content */}
-      <motion.div
-        className="bg-background border-border flex-1 rounded-xl border p-4 shadow-sm"
-        whileHover={{ scale: 1.02, boxShadow: "0 10px 40px -10px rgba(83, 10, 93, 0.2)" }}>
+      <div className="bg-background border-border flex-1 rounded-xl border p-4 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
         <div className={`mb-2 flex items-center gap-3 ${isLeft ? "md:flex-row-reverse" : ""}`}>
           <div className="bg-violet/10 flex h-10 w-10 items-center justify-center rounded-full">
             <item.icon className="text-violet h-5 w-5" />
@@ -140,16 +148,14 @@ function TimelineItem({
           <div>
             <span
               className="text-yellow text-lg font-bold"
-              style={{
-                textShadow: "0 1px 2px rgba(0, 0, 0, 1)"
-              }}>
+              style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 1)" }}>
               {item.time}
             </span>
             <h4 className="font-display text-foreground font-bold">{item.event[language]}</h4>
           </div>
         </div>
         <p className="text-muted-foreground text-sm">{item.description[language]}</p>
-      </motion.div>
+      </div>
 
       {/* Timeline dot */}
       <div className="relative hidden md:block">
@@ -162,6 +168,67 @@ function TimelineItem({
       </div>
       <div className="hidden flex-1 md:block" />
     </motion.div>
+  )
+}
+
+interface DayButtonProps {
+  day: 1 | 2
+  activeDay: 1 | 2
+  setActiveDay: (day: 1 | 2) => void
+  icon: LucideIcon
+  label: string
+}
+
+function DayButton({ day, activeDay, setActiveDay, icon: Icon, label }: DayButtonProps) {
+  const isActive = activeDay === day
+  const [scope, animate] = useAnimate()
+
+  const springConfig = {
+    type: "spring" as const,
+    stiffness: 500,
+    damping: 22,
+    mass: 0.8
+  }
+
+  const handleClick = () => {
+    if (isActive) {
+      animate(scope.current, { x: [0, -4, 4, -2, 2, -1, 1, 0] }, { duration: 0.4, ease: "easeInOut" })
+    } else {
+      animate(scope.current, { scale: [1, 0.96, 1] }, { duration: 0.3, ease: "easeOut" })
+      setActiveDay(day)
+    }
+  }
+
+  const handleHoverStart = () => {
+    animate(
+      "span",
+      { rotate: isActive ? -15 : 8, scale: 1.2 },
+      { type: "spring", stiffness: 500, damping: 18 }
+    )
+  }
+
+  const handleHoverEnd = () => {
+    animate("span", { rotate: 0, scale: 1 }, { type: "spring", stiffness: 500, damping: 18 })
+  }
+
+  return (
+    <motion.button
+      ref={scope}
+      onPointerDown={handleClick}
+      onHoverStart={handleHoverStart}
+      onHoverEnd={handleHoverEnd}
+      initial={{ opacity: 0, y: 16, scale: 0.92 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      whileHover={{ scale: 1.04, y: -0 }}
+      transition={springConfig}
+      className={`font-display flex items-center gap-2 rounded-full px-6 py-3 font-semibold transition-colors duration-300 ${
+        isActive ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+      }`}>
+      <motion.span>
+        <Icon className="h-3.5 w-3.5" />
+      </motion.span>
+      {label}
+    </motion.button>
   )
 }
 
@@ -197,26 +264,14 @@ export function Schedule() {
           <p className="text-muted-foreground mx-auto max-w-2xl text-lg">{text.description}</p>
         </motion.div>
         <div className="mb-12 flex justify-center gap-4">
-          <motion.button
-            onClick={() => setActiveDay(1)}
-            className={`font-display flex items-center gap-2 rounded-full px-6 py-3 font-bold transition-all ${
-              activeDay === 1 ? "bg-violet text-white" : "bg-muted text-muted-foreground hover:bg-violet/10"
-            }`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}>
-            <Moon className="h-5 w-5" />
-            {text.day1}
-          </motion.button>
-          <motion.button
-            onClick={() => setActiveDay(2)}
-            className={`font-display flex items-center gap-2 rounded-full px-6 py-3 font-bold transition-all ${
-              activeDay === 2 ? "bg-violet text-white" : "bg-muted text-muted-foreground hover:bg-violet/10"
-            }`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}>
-            <Sun className="h-5 w-5" />
-            {text.day2}
-          </motion.button>
+          <DayButton
+            day={1}
+            activeDay={activeDay}
+            setActiveDay={setActiveDay}
+            icon={Moon}
+            label={text.day1}
+          />
+          <DayButton day={2} activeDay={activeDay} setActiveDay={setActiveDay} icon={Sun} label={text.day2} />
         </div>
 
         {/* Timeline */}
