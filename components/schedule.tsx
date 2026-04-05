@@ -1,8 +1,18 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { motion, useInView, AnimatePresence } from "framer-motion"
-import { Clock, Coffee, Utensils, Presentation, Code, PartyPopper, Sun, Moon } from "lucide-react"
+import { motion, useInView, AnimatePresence, useAnimate } from "framer-motion"
+import {
+  Clock,
+  Coffee,
+  Utensils,
+  Presentation,
+  Code,
+  PartyPopper,
+  Sun,
+  Moon,
+  type LucideIcon
+} from "lucide-react"
 import { useLanguage } from "@/lib/language-context"
 
 const scheduleDay1 = [
@@ -165,6 +175,67 @@ function TimelineItem({
   )
 }
 
+interface DayButtonProps {
+  day: 1 | 2
+  activeDay: 1 | 2
+  setActiveDay: (day: 1 | 2) => void
+  icon: LucideIcon
+  label: string
+}
+
+function DayButton({ day, activeDay, setActiveDay, icon: Icon, label }: DayButtonProps) {
+  const isActive = activeDay === day
+  const [scope, animate] = useAnimate()
+
+  const springConfig = {
+    type: "spring" as const,
+    stiffness: 500,
+    damping: 22,
+    mass: 0.8
+  }
+
+  const handleClick = () => {
+    if (isActive) {
+      animate(scope.current, { x: [0, -4, 4, -2, 2, -1, 1, 0] }, { duration: 0.4, ease: "easeInOut" })
+    } else {
+      animate(scope.current, { scale: [1, 0.96, 1] }, { duration: 0.3, ease: "easeOut" })
+      setActiveDay(day)
+    }
+  }
+
+  const handleHoverStart = () => {
+    animate(
+      "span",
+      { rotate: isActive ? -15 : 8, scale: 1.2 },
+      { type: "spring", stiffness: 500, damping: 18 }
+    )
+  }
+
+  const handleHoverEnd = () => {
+    animate("span", { rotate: 0, scale: 1 }, { type: "spring", stiffness: 500, damping: 18 })
+  }
+
+  return (
+    <motion.button
+      ref={scope}
+      onPointerDown={handleClick}
+      onHoverStart={handleHoverStart}
+      onHoverEnd={handleHoverEnd}
+      initial={{ opacity: 0, y: 16, scale: 0.92 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      whileHover={{ scale: 1.04, y: -0 }}
+      transition={springConfig}
+      className={`font-display flex items-center gap-2 rounded-full px-6 py-3 font-semibold transition-colors ${
+        isActive ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+      }`}>
+      <motion.span>
+        <Icon className="h-3.5 w-3.5" />
+      </motion.span>
+      {label}
+    </motion.button>
+  )
+}
+
 export function Schedule() {
   const [activeDay, setActiveDay] = useState<1 | 2>(1)
   const headerRef = useRef(null)
@@ -197,26 +268,14 @@ export function Schedule() {
           <p className="text-muted-foreground mx-auto max-w-2xl text-lg">{text.description}</p>
         </motion.div>
         <div className="mb-12 flex justify-center gap-4">
-          <motion.button
-            onClick={() => setActiveDay(1)}
-            className={`font-display flex items-center gap-2 rounded-full px-6 py-3 font-bold transition-all ${
-              activeDay === 1 ? "bg-violet text-white" : "bg-muted text-muted-foreground hover:bg-violet/10"
-            }`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}>
-            <Moon className="h-5 w-5" />
-            {text.day1}
-          </motion.button>
-          <motion.button
-            onClick={() => setActiveDay(2)}
-            className={`font-display flex items-center gap-2 rounded-full px-6 py-3 font-bold transition-all ${
-              activeDay === 2 ? "bg-violet text-white" : "bg-muted text-muted-foreground hover:bg-violet/10"
-            }`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}>
-            <Sun className="h-5 w-5" />
-            {text.day2}
-          </motion.button>
+          <DayButton
+            day={1}
+            activeDay={activeDay}
+            setActiveDay={setActiveDay}
+            icon={Moon}
+            label={text.day1}
+          />
+          <DayButton day={2} activeDay={activeDay} setActiveDay={setActiveDay} icon={Sun} label={text.day2} />
         </div>
 
         {/* Timeline */}
