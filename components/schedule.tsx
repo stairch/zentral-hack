@@ -140,9 +140,7 @@ function TimelineItem({
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className={`flex items-center gap-4 ${isLeft ? "md:flex-row-reverse md:text-right" : ""}`}>
       {/* Content */}
-      <motion.div
-        className="bg-background border-border flex-1 rounded-xl border p-4 shadow-sm"
-        whileHover={{ scale: 1.02, boxShadow: "0 10px 40px -10px rgba(83, 10, 93, 0.2)" }}>
+      <div className="bg-background border-border flex-1 rounded-xl border p-4 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
         <div className={`mb-2 flex items-center gap-3 ${isLeft ? "md:flex-row-reverse" : ""}`}>
           <div className="bg-violet/10 flex h-10 w-10 items-center justify-center rounded-full">
             <item.icon className="text-violet h-5 w-5" />
@@ -150,16 +148,14 @@ function TimelineItem({
           <div>
             <span
               className="text-yellow text-lg font-bold"
-              style={{
-                textShadow: "0 1px 2px rgba(0, 0, 0, 1)"
-              }}>
+              style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 1)" }}>
               {item.time}
             </span>
             <h4 className="font-display text-foreground font-bold">{item.event[language]}</h4>
           </div>
         </div>
         <p className="text-muted-foreground text-sm">{item.description[language]}</p>
-      </motion.div>
+      </div>
 
       {/* Timeline dot */}
       <div className="relative hidden md:block">
