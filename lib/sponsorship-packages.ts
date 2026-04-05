@@ -17,7 +17,7 @@ export const sponsorPackages: SponsorPackage[] = [
     shortDescription: "Co-Organisationspartnerschaft mit maximaler Präsenz.",
     description:
       "Das Platin-Paket ist die engste Partnerschaft mit dem Zentral Hack. Es kombiniert strategische Sichtbarkeit, aktive Mitgestaltung und direkten Zugang zu Talenten, Jury und Hochschulumfeld.",
-    color: "#530A5D",
+    color: "#8eb7d3",
     display_order: 1,
     benefits: [
       "Beteiligung an Organisation und Mitgestaltung der Eventplanung",
@@ -35,7 +35,7 @@ export const sponsorPackages: SponsorPackage[] = [
     shortDescription: "Hohe Event-Präsenz mit starkem Branding und Aktivierung vor Ort.",
     description:
       "Das Gold-Paket eignet sich für Partner, die am Event deutlich sichtbar sein und gleichzeitig mit eigenen Aktivierungen, Werbemitteln und Networking überzeugen wollen.",
-    color: "#E6FF17",
+    color: "#D4A422",
     display_order: 2,
     benefits: [
       "Branding auf Website, Event-Plattform, Flyer und Social Media",
@@ -53,7 +53,7 @@ export const sponsorPackages: SponsorPackage[] = [
     shortDescription: "Solide Markenpräsenz auf den wichtigsten Eventkanälen.",
     description:
       "Das Silber-Paket bietet eine ausgewogene Mischung aus Sichtbarkeit, Event-Präsenz und Kontaktpunkten mit Teilnehmenden, ohne den Umfang eines Hauptpartners zu benötigen.",
-    color: "#C0C0C0",
+    color: "#94979F",
     display_order: 3,
     benefits: [
       "Sichtbarkeit auf Website, Event-Plattform und ausgewählten Eventmedien",
@@ -71,7 +71,7 @@ export const sponsorPackages: SponsorPackage[] = [
     shortDescription: "Kompakter Einstieg in das Sponsoring des Zentral Hack.",
     description:
       "Das Bronze-Paket ist ideal für Unternehmen, die mit einem klaren, fokussierten Auftritt am Event präsent sein möchten und erste Sichtbarkeit im Sponsoring-Umfeld suchen.",
-    color: "#CD7F32",
+    color: "#C07A3A",
     display_order: 4,
     benefits: [
       "Branding auf Website und Event-Plattform",

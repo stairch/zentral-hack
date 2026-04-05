@@ -132,7 +132,7 @@ function TierCard({
         y: ySpring,
         zIndex,
         position: "relative",
-        background: `linear-gradient(135deg, ${tier.color} 0%, rgba(255,255,255,0.92) 100%)`
+        background: `linear-gradient(-45deg, ${tier.color}E6 50%, rgba(255,255,255,0.92) 110%)` // E6 = 90% opacity
       }}>
       <span className="font-display text-foreground mb-2 text-2xl font-bold">{tier.name.toUpperCase()}</span>
       <p className="text-foreground/75 max-w-[16rem] text-sm leading-relaxed">{tier.shortDescription}</p>
