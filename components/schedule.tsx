@@ -225,7 +225,7 @@ function DayButton({ day, activeDay, setActiveDay, icon: Icon, label }: DayButto
       animate={{ opacity: 1, y: 0, scale: 1 }}
       whileHover={{ scale: 1.04, y: -0 }}
       transition={springConfig}
-      className={`font-display flex items-center gap-2 rounded-full px-6 py-3 font-semibold transition-colors ${
+      className={`font-display flex items-center gap-2 rounded-full px-6 py-3 font-semibold transition-colors duration-300 ${
         isActive ? "bg-primary text-white" : "bg-muted text-muted-foreground"
       }`}>
       <motion.span>
