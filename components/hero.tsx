@@ -169,13 +169,23 @@ function RotatingText({ words }: { words: readonly string[] }) {
             <motion.span
               key={i}
               initial={{ y: "100%", opacity: 0 }}
-              animate={{ y: "0%", opacity: 1 }}
-              exit={{ y: "-80%", opacity: 0 }}
-              transition={{
-                type: "spring",
-                stiffness: 250,
-                damping: 25,
-                delay: (letters.length - 1 - i) * 0.015
+              animate={{
+                y: "0%",
+                opacity: 1,
+                transition: {
+                  type: "spring",
+                  stiffness: 250,
+                  damping: 25,
+                  delay: (letters.length - 1 - i) * 0.015 + 0.2
+                }
+              }}
+              exit={{
+                y: "-80%",
+                opacity: 0,
+                transition: {
+                  duration: 0.15,
+                  delay: i * 0.01
+                }
               }}
               className="text-primary inline-block font-semibold">
               {letter === " " ? "\u00A0" : letter}
@@ -183,6 +193,7 @@ function RotatingText({ words }: { words: readonly string[] }) {
           ))}
         </motion.span>
       </AnimatePresence>
+
       <motion.span className="bg-secondary absolute bottom-0 left-0 h-0.5" style={{ width: widthSpring }} />
     </motion.span>
   )
