@@ -231,7 +231,7 @@ export function Partners() {
 
   return (
     <>
-      <section id="partners" className="bg-muted/30 overflow-hidden py-24">
+      <section id="partners" className="bg-background overflow-hidden py-24">
         <div className="container mx-auto px-4">
           {/* Section Header */}
           <motion.div
