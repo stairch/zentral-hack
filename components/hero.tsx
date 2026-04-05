@@ -183,7 +183,7 @@ function RotatingText({ words }: { words: readonly string[] }) {
           ))}
         </motion.span>
       </AnimatePresence>
-      <motion.span className="bg-primary absolute bottom-0 left-0 h-0.5" style={{ width: widthSpring }} />
+      <motion.span className="bg-secondary absolute bottom-0 left-0 h-0.5" style={{ width: widthSpring }} />
     </motion.span>
   )
 }
