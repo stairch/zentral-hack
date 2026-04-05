@@ -8,48 +8,55 @@ import { sponsorPackages } from "@/lib/sponsorship-packages"
 import { useLanguage } from "@/lib/language-context"
 import { type SponsorPackage } from "@/lib/sponsorship-packages"
 
-type Organiser = { name: string; logo: string; link: string; bgColor: string }
+type Organiser = { name: string; logo: string; link: string; bgColor: string; logoWidth: string }
 const partners: { organisers: Organiser[] } = {
   organisers: [
     {
       name: "HSLU",
       logo: "/partners/hslu-logo.png",
+      logoWidth: "w-36",
       link: "https://hslu.ch",
       bgColor: "bg-transparent"
     },
     {
       name: "ICT Berufsbildung Zentralschweiz",
       logo: "/partners/ict-bz-logo.png",
+      logoWidth: "w-24",
       link: "https://ict-bz.ch",
       bgColor: "bg-transparent"
     },
     {
       name: "UMB AG",
       logo: "/partners/umb-logo.png",
+      logoWidth: "w-28",
       link: "https://umb.ch",
       bgColor: "bg-black"
     },
     {
       name: "Digital & AI Community",
       logo: "/partners/ai-community-logo.png",
+      logoWidth: "w-26",
       link: "https://ai-community.ch",
       bgColor: "bg-[#0a0a14]"
     },
     {
       name: "getAbstract",
       logo: "/partners/getabstract-logo.png",
+      logoWidth: "w-32",
       link: "https://getabstract.com",
       bgColor: "bg-transparent"
     },
     {
       name: "STAIR",
       logo: "/partners/stair-logo.png",
+      logoWidth: "w-28",
       link: "https://stair.ch",
       bgColor: "bg-transparent"
     },
     {
       name: "SchwyzNext",
       logo: "/partners/schwyznext-logo.png",
+      logoWidth: "w-20",
       link: "https://schwyz-next.ch",
       bgColor: "bg-transparent"
     }
@@ -105,7 +112,13 @@ function MarqueeRow({
             key={`partners-item-${item.name}-${index}`}
             className="flex shrink-0 items-center rounded-lg px-8 py-4">
             <a className={`p-1 ${item.bgColor} rounded-xs`} href={item.link} target="_blank">
-              <Image src={item.logo} alt={item.name} width={1000} height={1000} className="h-auto w-28" />
+              <Image
+                src={item.logo}
+                alt={item.name}
+                width={1000}
+                height={1000}
+                className={`h-auto ${item.logoWidth}`}
+              />
             </a>
           </div>
         ))}
