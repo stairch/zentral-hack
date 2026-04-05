@@ -104,7 +104,7 @@ export function Navigation() {
                 value={language}
                 onChange={(event) => setLanguage(event.target.value as "de" | "en")}
                 aria-label={text.language}
-                className="border-border bg-background h-9 rounded-md border px-2 text-sm">
+                className="border-border bg-background h-9 cursor-pointer rounded-md border px-2 text-sm">
                 <option value="de">DE</option>
                 <option value="en">EN</option>
               </select>
@@ -133,7 +133,7 @@ export function Navigation() {
 
           {/* Mobile Menu Button */}
           <button
-            className="text-foreground p-2 md:hidden"
+            className="text-foreground cursor-pointer p-2 md:hidden"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label={text.toggleMenu}>
             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -172,7 +172,7 @@ export function Navigation() {
                   value={language}
                   onChange={(event) => setLanguage(event.target.value as "de" | "en")}
                   aria-label={text.language}
-                  className="border-border bg-background h-12 rounded-md border px-3 text-sm">
+                  className="border-border bg-background h-12 cursor-pointer rounded-md border px-3 text-sm">
                   <option value="de">Deutsch</option>
                   <option value="en">English</option>
                 </select>

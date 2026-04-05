@@ -147,7 +147,7 @@ export default function RegistrationsPage() {
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="rounded-md border px-4 py-2">
+          className="cursor-pointer rounded-md border px-4 py-2">
           <option value="">Alle Kategorien</option>
           {categories.map((cat) => (
             <option key={cat.id} value={cat.id}>

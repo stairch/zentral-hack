@@ -31,7 +31,7 @@ export function AdminSidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-card fixed top-4 left-4 z-50 rounded-lg border p-2 md:hidden">
+        className="bg-card fixed top-4 left-4 z-50 cursor-pointer rounded-lg border p-2 md:hidden">
         {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 

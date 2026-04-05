@@ -232,7 +232,7 @@ export function Partners() {
             <p className="text-muted-foreground mb-4">{text.ctaQuestion}</p>
             <button
               onClick={() => setSponsorshipModalOpen(true)}
-              className="text-violet group inline-flex items-center gap-2 font-semibold">
+              className="text-violet group inline-flex cursor-pointer items-center gap-2 font-semibold">
               <span className="group-hover:underline">{text.ctaAction}</span>
               <span
                 aria-hidden="true"

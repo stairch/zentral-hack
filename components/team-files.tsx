@@ -267,7 +267,7 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
                     </a>
                     <button
                       onClick={() => handleDeleteFile(file.id)}
-                      className="hover:bg-destructive/10 hover:text-destructive rounded p-1">
+                      className="hover:bg-destructive/10 hover:text-destructive cursor-pointer rounded p-1">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
@@ -366,7 +366,7 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
                     </a>
                     <button
                       onClick={() => handleDeleteRepo(repo.id)}
-                      className="hover:bg-destructive/10 hover:text-destructive rounded p-1">
+                      className="hover:bg-destructive/10 hover:text-destructive cursor-pointer rounded p-1">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
