@@ -322,7 +322,7 @@ export function Hero() {
             <Button
               size="lg"
               variant="outline"
-              className="border-violet text-violet hover:bg-violet px-8 py-6 text-lg font-semibold hover:text-white">
+              className="border-violet text-violet hover:bg-violet px-8 py-6 text-lg font-semibold duration-300 hover:text-white">
               {text.secondaryCta}
             </Button>
           </a>
