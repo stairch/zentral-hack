@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "rm -r .next | next dev",
     "build": "next build",
     "start": "next start",
     "format": "prettier --write --list-different .",
