@@ -230,13 +230,16 @@ export function Partners() {
             animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.8 }}>
             <p className="text-muted-foreground mb-4">{text.ctaQuestion}</p>
-            <motion.button
+            <button
               onClick={() => setSponsorshipModalOpen(true)}
-              className="text-violet inline-flex items-center gap-2 font-semibold hover:underline"
-              whileHover={{ x: 5 }}>
-              {text.ctaAction}
-              <span aria-hidden="true">→</span>
-            </motion.button>
+              className="text-violet group inline-flex items-center gap-2 font-semibold">
+              <span className="group-hover:underline">{text.ctaAction}</span>
+              <span
+                aria-hidden="true"
+                className="inline-block transition-transform duration-200 ease-out group-hover:translate-x-1">
+                →
+              </span>
+            </button>
           </motion.div>
         </div>
       </section>
