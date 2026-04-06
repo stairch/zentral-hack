@@ -1,6 +1,6 @@
 {
   "name": "zentral-hack-website",
-  "version": "1.0.0",
+  "version": "1.0.0-alpha.1",
   "private": true,
   "scripts": {
     "dev": "rm -r .next | next dev",
