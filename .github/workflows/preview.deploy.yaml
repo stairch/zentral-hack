@@ -31,6 +31,7 @@ jobs:
   Deploy:
     needs: [Lint]
     runs-on: ubuntu-latest
+    environment: Preview
     steps:
       - uses: actions/checkout@v3
       - name: Install Vercel CLI
