@@ -87,12 +87,19 @@ export function Navigation() {
               <motion.a
                 key={item.label}
                 href={item.href}
-                className="text-foreground/80 hover:text-violet group relative text-sm font-medium transition-colors"
+                className="relative h-5 overflow-hidden text-sm font-medium"
+                style={{ display: "block" }}
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * index }}>
-                {item.label}
-                <span className="bg-yellow absolute -bottom-1 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full" />
+                <motion.div
+                  className="flex flex-col px-1"
+                  initial={{ y: "0%" }}
+                  whileHover={{ y: "-50%" }}
+                  transition={{ type: "spring", stiffness: 600, damping: 30 }}>
+                  <span className="text-foreground/80 flex h-5 items-center">{item.label}</span>
+                  <span className="text-primary flex h-5 items-center">{item.label}</span>
+                </motion.div>
               </motion.a>
             ))}
             <motion.div
