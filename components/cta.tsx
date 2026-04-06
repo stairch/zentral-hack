@@ -87,26 +87,6 @@ export function CTA() {
 
   return (
     <section ref={sectionRef} className="relative overflow-hidden bg-[#530A5D] py-24">
-      {/* Animated background elements */}
-      <motion.div
-        className="absolute top-20 left-10 h-64 w-64 rounded-full blur-3xl"
-        style={{ backgroundColor: "rgba(230, 255, 23, 0.2)" }}
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.3, 0.5, 0.3]
-        }}
-        transition={{ duration: 5, repeat: Infinity }}
-      />
-      <motion.div
-        className="absolute right-10 bottom-20 h-96 w-96 rounded-full blur-3xl"
-        style={{ backgroundColor: "rgba(213, 194, 247, 0.2)" }}
-        animate={{
-          scale: [1.2, 1, 1.2],
-          opacity: [0.3, 0.5, 0.3]
-        }}
-        transition={{ duration: 7, repeat: Infinity }}
-      />
-
       <div className="relative z-10 container mx-auto px-4">
         <motion.div
           className="mx-auto max-w-3xl text-center"

@@ -171,17 +171,6 @@ export function About() {
 
   return (
     <section id="about" ref={sectionRef} className="bg-violet relative overflow-hidden py-24">
-      {/* Static background */}
-      <div className="absolute inset-0 opacity-10">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `radial-gradient(circle at 30% 30%, #E6FF17 0%, transparent 50%),
-                              radial-gradient(circle at 70% 70%, #D5C2F7 0%, transparent 50%)`
-          }}
-        />
-      </div>
-
       <div className="relative z-10 container mx-auto px-4">
         {/* Section Header */}
         <motion.div
