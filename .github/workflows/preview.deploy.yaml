@@ -34,7 +34,7 @@ jobs:
     environment:
       name: Preview
       url: ${{ steps.deployment.outputs.preview_url }}
-    
+
     steps:
       - uses: actions/checkout@v3
       - name: Install Vercel CLI
