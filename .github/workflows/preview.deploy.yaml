@@ -8,7 +8,7 @@ on:
       # only on pre-releases (e.g. v1.0.0-alpha, v1.0.0-beta.1, ...)
       - "v[0-9]+.[0-9]+.[0-9]+-*"
 jobs:
-  Lint:
+  Check:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -29,7 +29,7 @@ jobs:
         run: npx tsc --noEmit --noUnusedLocals --noUnusedParameters --composite false
 
   Deploy:
-    needs: [Lint]
+    needs: [Check]
     runs-on: ubuntu-latest
     environment:
       name: Preview
