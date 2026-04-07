@@ -4,21 +4,19 @@ import { useRef, useState } from "react"
 import { motion, useInView } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { ArrowRight, CheckCircle, Sparkles, Loader2 } from "lucide-react"
+import { ArrowRight, CheckCircle, Calendar, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 
 const copy = {
   de: {
-    date: "23.-24. OKTOBER 2026",
+    date: "23. - 24. OKTOBER 2026",
     heading1: "BEREIT ZU",
     heading2: "HACKEN",
-    description: "Melde dich jetzt für den Newsletter an und erhalte alle Updates zum Zentral Hack 2026.",
+    description: "Abonniere den Newsletter, um alle Updates zum Zentral Hack 2026 zu erhalten.",
     register: "Jetzt anmelden",
     or: "oder",
-    newsletterButton: "Newsletter",
+    newsletterButton: "Abonnieren",
     newsletterPlaceholder: "deine@email.ch",
     wantsEmail: "Ich möchte Updates per E-Mail erhalten",
     success: "Super! Du bist angemeldet.",
@@ -27,13 +25,13 @@ const copy = {
     genericError: "Ein Fehler ist aufgetreten. Bitte versuche es erneut."
   },
   en: {
-    date: "23-24 OCTOBER 2026",
+    date: "23 - 24 OCTOBER 2026",
     heading1: "READY TO",
     heading2: "HACK",
-    description: "Sign up for the newsletter now and receive all updates about Zentral Hack 2026.",
+    description: "Sign up for the newsletter to receive all the latest updates on Zentral Hack 2026.",
     register: "Register now",
     or: "or",
-    newsletterButton: "Newsletter",
+    newsletterButton: "Subscribe",
     newsletterPlaceholder: "your@email.com",
     wantsEmail: "I want to receive updates by email",
     success: "Great! You are subscribed.",
@@ -47,7 +45,6 @@ export function CTA() {
   const sectionRef = useRef(null)
   const isInView = useInView(sectionRef, { once: true })
   const [email, setEmail] = useState("")
-  const [wantsEmails, setWantsEmails] = useState(true)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -93,34 +90,27 @@ export function CTA() {
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}>
-          {/* Badge */}
-          <motion.div
-            className="mb-8 inline-flex items-center gap-2 rounded-full border px-4 py-2"
-            style={{ backgroundColor: "rgba(255, 255, 255, 0.1)", borderColor: "rgba(255, 255, 255, 0.2)" }}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={isInView ? { opacity: 1, scale: 1 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}>
-            <Sparkles className="h-4 w-4 text-[#E6FF17]" />
-            <span className="text-sm font-medium text-white">{text.date}</span>
-          </motion.div>
+          <div>
+            {/* Badge */}
+            <motion.div
+              className="mb-8 inline-flex items-center gap-2 rounded-full border px-4 py-2"
+              style={{ backgroundColor: "rgba(255, 255, 255, 0.1)", borderColor: "rgba(255, 255, 255, 0.2)" }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={isInView ? { opacity: 1, scale: 1 } : {}}
+              transition={{ duration: 0.6, delay: 0.2 }}>
+              <Calendar className="text-accent h-4 w-4" />
+              <span className="text-sm font-medium text-white">{text.date}</span>
+            </motion.div>
 
-          {/* Heading */}
-          <motion.h2
-            className="mb-6 text-4xl font-bold text-white md:text-6xl"
-            style={{ fontFamily: "var(--font-display)" }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.3 }}>
-            {text.heading1} <span className="text-[#E6FF17]">{text.heading2}</span>?
-          </motion.h2>
-
-          <motion.p
-            className="mb-10 text-lg leading-relaxed text-[#D5C2F7]"
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.4 }}>
-            {text.description}
-          </motion.p>
+            {/* Heading */}
+            <motion.h2
+              className="font-display mb-12 text-4xl font-bold text-white md:text-6xl"
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.3 }}>
+              {text.heading1} <span className="text-[#E6FF17]">{text.heading2}</span>?
+            </motion.h2>
+          </div>
 
           {/* Form / Registration CTA */}
           <motion.div
@@ -132,17 +122,22 @@ export function CTA() {
             <Link href="/anmeldung">
               <Button
                 size="lg"
-                className="group h-16 rounded-full bg-[#E6FF17] px-10 text-lg font-bold text-[#530A5D] hover:bg-[#E6FF17]/90">
+                className="bg-accent text-primary hover:bg-accent/90 group mb-20 rounded-full px-8 py-6 text-lg font-semibold">
                 {text.register}
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
 
-            <p className="text-sm text-white/60">{text.or}</p>
-
+            <motion.p
+              className="text-secondary mb-5 leading-relaxed"
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.4 }}>
+              {text.description}
+            </motion.p>
             {/* Newsletter signup */}
             {!isSubmitted ? (
-              <form onSubmit={handleSubmit} className="mx-auto max-w-md space-y-4">
+              <form onSubmit={handleSubmit} className="mx-auto max-w-md">
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <Input
                     type="email"
@@ -159,19 +154,6 @@ export function CTA() {
                     {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : text.newsletterButton}
                   </Button>
                 </div>
-
-                <div className="flex items-center justify-center gap-2">
-                  <Checkbox
-                    id="wants-emails"
-                    checked={wantsEmails}
-                    onCheckedChange={(checked) => setWantsEmails(checked as boolean)}
-                    className="border-white/50 data-[state=checked]:border-[#E6FF17] data-[state=checked]:bg-[#E6FF17]"
-                  />
-                  <Label htmlFor="wants-emails" className="cursor-pointer text-sm text-white/70">
-                    {text.wantsEmail}
-                  </Label>
-                </div>
-
                 {error && <p className="text-sm text-red-300">{error}</p>}
               </form>
             ) : (
@@ -184,15 +166,6 @@ export function CTA() {
               </motion.div>
             )}
           </motion.div>
-
-          {/* Trust text */}
-          <motion.p
-            className="mt-8 text-sm text-white/50"
-            initial={{ opacity: 0 }}
-            animate={isInView ? { opacity: 1 } : {}}
-            transition={{ duration: 0.6, delay: 0.7 }}>
-            {text.noSpam}
-          </motion.p>
         </motion.div>
       </div>
     </section>
