@@ -260,7 +260,7 @@ export function Hero() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="font-display mb-4 text-5xl font-bold tracking-tight md:text-7xl lg:text-8xl">
+          className="font-display mb-4 text-6xl font-bold tracking-tight md:text-7xl lg:text-8xl">
           <span className="text-violet">ZENTRAL</span>
           <br />
           <motion.span
@@ -279,7 +279,7 @@ export function Hero() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.6 }}
-          className="font-display text-violet/20 mb-8 text-6xl font-bold md:text-8xl">
+          className="font-display text-violet/20 mb-8 text-6xl font-bold md:text-7xl lg:text-8xl">
           2026
         </motion.p>
 
