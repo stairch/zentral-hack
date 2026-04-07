@@ -35,12 +35,12 @@ The script will prompt for a new version number and validate it. Versions must f
 
 ## Deployment
 
+[Latest deployments](https://github.com/stairch/hack-zentral/deployments)
+
 A deployment is created automatically whenever a tag is created that follows [Semantic Versioning](https://semver.org).
 
 ### Preview Deployment
 
 Every tag that is a prelease (e.g. `1.0.0-alpha.1`, `1.2.0-beta.5`) automatically creates a Preview Deployment.
-
-[Latest Preview deployments](https://github.com/stairch/hack-zentral/deployments/Preview)
 
 > **Note:** The preview is only visible when logged in with the **STAIR Vercel account**, which requires being authenticated with the **STAIR GitHub account**.
