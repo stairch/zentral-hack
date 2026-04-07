@@ -13,7 +13,7 @@ import { toast } from "sonner"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login, user, isLoading } = useAuth()
+  const { login, verify2FA, user, isLoading } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -35,13 +35,7 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      // Try to sign up first
-      try {
-        await login(email, password)
-      } catch (signupError) {
-        throw new Error(signupError instanceof Error ? signupError.message : "Registrierung fehlgeschlagen")
-      }
-
+      await login(email, password)
       setShow2FA(true)
       toast.success("2FA Code wurde an deine E-Mail gesendet")
     } catch (err) {
@@ -63,29 +57,11 @@ export default function LoginPage() {
         throw new Error("Bitte geben Sie den 2FA-Code ein")
       }
 
-      const res = await fetch("/api/auth/2fa/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, code: code2FA.toUpperCase() })
-      })
-
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.data?.error || errorData.error || "2FA Verifizierung fehlgeschlagen")
-      }
-
-      const data = await res.json()
-      console.log("[Login] 2FA response:", data)
-
+      await verify2FA(email, code2FA)
       toast.success("2FA erfolgreich verifiziert")
-
-      // Wait a moment to ensure cookie is set, then navigate to dashboard
-      // The httpOnly cookie is now set by the server and will be sent automatically
-      await new Promise((resolve) => setTimeout(resolve, 300))
       router.push("/dashboard")
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Fehler bei der Verifizierung"
+      const message = err instanceof Error ? err.message : "Fehler bei der 2FA Verifizierung"
       setError(message)
       toast.error(message)
     } finally {
