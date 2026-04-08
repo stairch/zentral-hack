@@ -16,9 +16,9 @@ const usual = localFont({
     { path: "../public/fonts/usual/Bold.otf", weight: "700", style: "normal" },
     { path: "../public/fonts/usual/Bold Italic.otf", weight: "700", style: "italic" },
     { path: "../public/fonts/usual/ExtraBold.otf", weight: "800", style: "normal" },
-    { path: "../public/fonts/usual/ExtraBold Italic.otf", weight: "800", style: "italic" },
+    { path: "../public/fonts/usual/ExtraBold Italic.otf", weight: "800", style: "italic" }
   ],
-  variable: "--font-usual",
+  variable: "--font-usual"
 })
 
 export const metadata: Metadata = {

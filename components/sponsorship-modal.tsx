@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { X, CheckCircle2, Loader2, Check } from "lucide-react"
 import { toast } from "sonner"
 import { getSponsorPackageBySlug, sponsorPackages } from "@/lib/sponsorship-packages"
+import { useLanguage } from "@/lib/language-context"
 
 interface FormData {
   companyName: string
@@ -37,6 +38,7 @@ export function SponsorshipModal({ isOpen, onClose, selectedPackageSlug }: Spons
   })
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const { language } = useLanguage()
 
   useEffect(() => {
     if (!isOpen) {
@@ -162,20 +164,22 @@ export function SponsorshipModal({ isOpen, onClose, selectedPackageSlug }: Spons
                         <p
                           className="mb-3 text-xs font-semibold tracking-[0.2em] uppercase"
                           style={{ color: selectedPackage.color }}>
-                          {selectedPackage.name}
+                          {selectedPackage.name[language]}
                         </p>
-                        <h3 className="mb-2 text-xl font-semibold">{selectedPackage.shortDescription}</h3>
+                        <h3 className="mb-2 text-xl font-semibold">
+                          {selectedPackage.shortDescription[language]}
+                        </h3>
                         <p className="text-muted-foreground mb-5 text-sm leading-relaxed">
-                          {selectedPackage.description}
+                          {selectedPackage.description[language]}
                         </p>
                         <div className="space-y-2">
                           {selectedPackage.benefits.map((benefit) => (
-                            <div key={benefit} className="flex items-start gap-2 text-sm">
+                            <div key={benefit[language]} className="flex items-start gap-2 text-sm">
                               <Check
                                 className="mt-0.5 h-4 w-4 flex-shrink-0"
                                 style={{ color: selectedPackage.color }}
                               />
-                              <span>{benefit}</span>
+                              <span>{benefit[language]}</span>
                             </div>
                           ))}
                         </div>
@@ -196,9 +200,11 @@ export function SponsorshipModal({ isOpen, onClose, selectedPackageSlug }: Spons
                                   selectedPackage.slug === pkg.slug ? `${pkg.color}12` : "transparent"
                               }}>
                               <p className="font-semibold" style={{ color: pkg.color }}>
-                                {pkg.name}
+                                {pkg.name[language]}
                               </p>
-                              <p className="text-muted-foreground mt-1 text-xs">{pkg.shortDescription}</p>
+                              <p className="text-muted-foreground mt-1 text-xs">
+                                {pkg.shortDescription[language]}
+                              </p>
                             </button>
                           ))}
                         </div>
@@ -268,7 +274,7 @@ export function SponsorshipModal({ isOpen, onClose, selectedPackageSlug }: Spons
 
                       <div className="space-y-2">
                         <Label className="text-sm">Interessiert an</Label>
-                        <Input value={selectedPackage.name} readOnly />
+                        <Input value={selectedPackage.name[language]} readOnly />
                       </div>
 
                       <div className="space-y-2">
