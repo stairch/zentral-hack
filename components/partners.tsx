@@ -2,11 +2,13 @@
 
 import Image from "next/image"
 import { useRef, useState, useEffect } from "react"
-import { motion, useInView, useMotionValue, useSpring } from "framer-motion"
+import { motion, useInView } from "framer-motion"
 import { SponsorshipModal } from "./sponsorship-modal"
 import { sponsorPackages } from "@/lib/sponsorship-packages"
 import { useLanguage } from "@/lib/language-context"
 import { type SponsorPackage } from "@/lib/sponsorship-packages"
+import { type Language } from "@/lib/language-context"
+import { Emails } from "@/lib/constants"
 
 type Organiser = { name: string; logo: string; link: string; bgColor: string; logoWidth: string }
 const partners: { organisers: Organiser[] } = {
@@ -130,36 +132,28 @@ function MarqueeRow({
 function TierCard({
   tier,
   index,
-  zIndex,
-  onOpen
+  onOpen,
+  language
 }: {
   tier: SponsorPackage
   index: number
-  zIndex: number
   onOpen: () => void
+  language: Language
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: "-100px" })
+  const isInView = useInView(ref, { once: true, margin: "-80px" })
+  const [hovered, setHovered] = useState(false)
 
-  const x = useMotionValue(0)
-  const y = useMotionValue(0)
-  const springConfig = { stiffness: 150, damping: 20, mass: 0.2 }
-  const xSpring = useSpring(x, springConfig)
-  const ySpring = useSpring(y, springConfig)
+  const copy = {
+    de: {
+      requestPackage: "Paket anfragen"
+    },
+    en: {
+      requestPackage: "Request package"
+    }
+  } as const
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!ref.current) return
-    const cardRect = ref.current.getBoundingClientRect()
-    const centerX = cardRect.left + cardRect.width / 2
-    const centerY = cardRect.top + cardRect.height / 2
-    x.set((e.clientX - centerX) * 0.07)
-    y.set((e.clientY - centerY) * 0.07)
-  }
-
-  const handleMouseLeave = () => {
-    x.set(0)
-    y.set(0)
-  }
+  const text = copy[language]
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -168,44 +162,57 @@ function TierCard({
     }
   }
 
-  const cardVariants = {
-    rest: { opacity: 0, y: 50, rotateX: -15 },
-    visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      rotateX: 0,
-      transition: { duration: 0.6, delay: i * 0.15 }
-    }),
-    hover: {
-      scale: 1.03,
-      transition: { duration: 0.3, delay: 0 }
-    }
-  }
-
   return (
     <motion.div
       ref={ref}
-      variants={cardVariants}
-      custom={index}
-      initial="rest"
-      animate={isInView ? "visible" : "rest"}
-      whileHover="hover"
+      initial={{ opacity: 0, y: 24 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.45, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
       onClick={onOpen}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
-      className="flex h-48 cursor-pointer flex-col items-center justify-center rounded-xl border border-black/5 p-6 text-center"
+      aria-label={`${tier.name} Sponsoring-Paket anfragen`}
+      className="group relative flex cursor-pointer flex-col rounded-2xl border p-5 transition-all duration-200 hover:border-black/[0.14] hover:shadow-sm focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
       style={{
-        x: xSpring,
-        y: ySpring,
-        zIndex,
-        position: "relative",
-        background: `linear-gradient(-45deg, ${tier.color}E6 50%, rgba(255,255,255,0.92) 110%)` // E6 = 90% opacity
+        background: `${tier.color}12`, // 7% opacity
+        borderColor: `${tier.color}33` // 20% opacity
       }}>
-      <span className="font-display text-foreground mb-2 text-2xl font-bold">{tier.name.toUpperCase()}</span>
-      <p className="text-foreground/75 max-w-[16rem] text-sm leading-relaxed">{tier.shortDescription}</p>
+      {/* Tier indicator dot + name */}
+      <div className="mb-3 flex items-center gap-2.5">
+        <span className="block h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: tier.color }} />
+        <span className="font-display text-foreground font-medium">{tier.name[language]}</span>
+      </div>
+
+      {/* Price / amount */}
+      {tier.price[language] && (
+        <p className="text-muted-foreground mb-3 text-sm font-medium tabular-nums">{tier.price[language]}</p>
+      )}
+
+      {/* Benefits list */}
+      <ul className="mb-4 flex flex-col gap-1.5">
+        {tier.benefits.map((benefit, i) => (
+          <li key={i} className="flex items-start gap-2 text-xs text-black/50 dark:text-white/50">
+            <span
+              className="mt-1 block h-1.25 w-1.25 shrink-0 rounded-full opacity-60"
+              style={{ background: tier.color }}
+            />
+            {benefit[language]}
+          </li>
+        ))}
+      </ul>
+
+      {/* CTA */}
+      <div
+        className="mt-auto flex items-center gap-1 text-sm font-semibold transition-colors duration-150"
+        style={{ color: tier.color }}>
+        <span>{text.requestPackage}</span>
+        <motion.span animate={{ x: hovered ? 3 : 0 }} transition={{ duration: 0.2 }} aria-hidden="true">
+          →
+        </motion.span>
+      </div>
     </motion.div>
   )
 }
@@ -225,8 +232,9 @@ export function Partners() {
       description: "Unterstützt von führenden Unternehmen und Institutionen der Zentralschweiz.",
       organisers: "CO-ORGANISATOREN",
       sponsors: "SPONSOREN",
-      ctaQuestion: "Interessiert an einer Partnerschaft?",
-      ctaAction: "Kontaktiere uns"
+      tierListsTitle: "Werden Sie ein Sponsor",
+      ctaQuestion: "Noch unsicher welches Paket passt?",
+      ctaAction: "Kontakt aufnehmen"
     },
     en: {
       badge: "PARTNERS & SPONSORS",
@@ -235,8 +243,9 @@ export function Partners() {
       description: "Supported by leading companies and institutions in Central Switzerland.",
       organisers: "CO-ORGANIZERS",
       sponsors: "SPONSORS",
-      ctaQuestion: "Interested in a partnership?",
-      ctaAction: "Contact us"
+      tierListsTitle: "Become a sponsor",
+      ctaQuestion: "Not sure which package fits?",
+      ctaAction: "Get in touch"
     }
   } as const
 
@@ -288,30 +297,35 @@ export function Partners() {
           </div>
 
           {/* Sponsor Tiers */}
-          <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {sponsorPackages.map((tier, index) => (
-              <TierCard
-                key={tier.slug}
-                tier={tier}
-                index={index}
-                zIndex={sponsorPackages.length - index}
-                onOpen={() => {
-                  setSelectedPackageSlug(tier.slug)
-                  setSponsorshipModalOpen(true)
-                }}
-              />
-            ))}
+          <div className="mx-auto max-w-5xl">
+            <p className="text-muted-foreground mb-5 text-center tracking-widest uppercase">
+              {text.tierListsTitle}
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {sponsorPackages.map((tier, index) => (
+                <TierCard
+                  key={tier.slug}
+                  tier={tier}
+                  index={index}
+                  onOpen={() => {
+                    setSelectedPackageSlug(tier.slug)
+                    setSponsorshipModalOpen(true)
+                  }}
+                  language={language}
+                />
+              ))}
+            </div>
           </div>
 
           {/* CTA */}
-          <motion.div
+          <motion.p
             className="mt-12 text-center"
             initial={{ opacity: 0, y: 20 }}
             animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.8 }}>
-            <p className="text-muted-foreground mb-4">{text.ctaQuestion}</p>
-            <button
-              onClick={() => setSponsorshipModalOpen(true)}
+            <span className="text-muted-foreground mb-4">{text.ctaQuestion} • </span>
+            <a
+              href={`mailto:${Emails.infoZentralHack}`}
               className="text-violet group inline-flex cursor-pointer items-center gap-2 font-semibold">
               <span className="group-hover:underline">{text.ctaAction}</span>
               <span
@@ -319,8 +333,8 @@ export function Partners() {
                 className="inline-block transition-transform duration-200 ease-out group-hover:translate-x-1">
                 →
               </span>
-            </button>
-          </motion.div>
+            </a>
+          </motion.p>
         </div>
       </section>
 

@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { Github, Linkedin, Instagram, Mail } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
+import { Emails } from "@/lib/constants"
 
 const footerLinks = {
   event: {
@@ -36,7 +37,7 @@ const footerLinks = {
     { icon: Instagram, href: "#", label: "Instagram" },
     { icon: Linkedin, href: "#", label: "LinkedIn" },
     { icon: Github, href: "#", label: "GitHub" },
-    { icon: Mail, href: "mailto:info@zentralhack.ch", label: "E-Mail" }
+    { icon: Mail, href: Emails.infoZentralHack, label: "E-Mail" }
   ]
 }
 
