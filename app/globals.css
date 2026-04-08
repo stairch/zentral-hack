@@ -79,8 +79,11 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
-  --font-display: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
+  /* Body text: Helvetica Neue LT Std Roman (system fallback until font file is provided) */
+  /* TODO: Add localFont entry in layout.tsx for HelveticaNeueLTStd-Roman.otf and update stack below */
+  --font-sans: "Helvetica Neue LT Std", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* Headings/titles: Usual Bold, all-caps per CD */
+  --font-display: var(--font-usual), "Usual", sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback";
 
   /* Zentral Hack brand colors */
@@ -152,5 +155,9 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* CD: Übertitel/Untertitel → Usual Bold, Versalien */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold uppercase;
   }
 }
