@@ -15,7 +15,7 @@ const copy = {
     subtitleLineRotate: ["Innovation", "Junge Talente", "Networking"],
     subtitleLinePost: "in der Zentralschweiz.",
     location: "HSLU - Hochschule Luzern",
-    primaryCta: "Jetzt Anmelden",
+    primaryCta: "Jetzt Registrieren",
     primaryCtaLoggedIn: "Zum Dashboard",
     secondaryCta: "Mehr Erfahren"
   },

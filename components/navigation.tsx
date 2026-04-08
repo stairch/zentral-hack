@@ -27,15 +27,15 @@ const navItems = {
 
 const copy = {
   de: {
-    register: "Anmelden",
-    login: "Login",
+    register: "Registrieren",
+    login: "Anmelden",
     dashboard: "Dashboard",
     toggleMenu: "Menü umschalten",
     language: "Sprache"
   },
   en: {
     register: "Register",
-    login: "Login",
+    login: "Sign In",
     dashboard: "Dashboard",
     toggleMenu: "Toggle menu",
     language: "Language"

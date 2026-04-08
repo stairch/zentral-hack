@@ -9,7 +9,7 @@ export default function AnmeldungPage() {
   const { language } = useLanguage()
   const text = {
     de: {
-      heading: "JETZT ANMELDEN",
+      heading: "JETZT REGISTRIEREN",
       description: "Sichere dir deinen Platz am Zentral Hack 2026"
     },
     en: {

@@ -674,7 +674,7 @@ export function EmailManagementPage() {
                             id="ctaText"
                             value={emailForm.ctaText}
                             onChange={(e) => setEmailForm({ ...emailForm, ctaText: e.target.value })}
-                            placeholder="z.B. Jetzt anmelden"
+                            placeholder="z.B. Jetzt registrieren"
                           />
                         </div>
                         <div>
