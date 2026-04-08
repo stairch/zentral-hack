@@ -49,7 +49,7 @@ interface FAQItem {
 const copy = {
   de: {
     badge: "FAQ",
-    heading: "HÄUFIGE",
+    heading: "HÄUFIG GESTELLTE",
     headingAccent: "FRAGEN",
     description: "Alles was du über den Zentral Hack wissen musst."
   },
@@ -60,6 +60,73 @@ const copy = {
     description: "Everything you need to know about Zentral Hack."
   }
 } as const
+
+interface FAQ {
+  id?: string
+  question: string
+  question_en?: string
+  answer: string
+  answer_en?: string
+}
+
+interface FAQAccordionProps {
+  faqs: FAQ[]
+  language?: string
+  isHeaderInView?: boolean
+}
+
+function FAQAccordion({ faqs, language = "de", isHeaderInView = true }: FAQAccordionProps) {
+  return (
+    <motion.div
+      className="mx-auto max-w-3xl"
+      initial={{ opacity: 0, y: 30 }}
+      animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, delay: 0.3 }}>
+      <Accordion type="single" collapsible className="space-y-4">
+        {faqs.map((faq, index) => {
+          const question = language === "en" ? faq.question_en || faq.question : faq.question
+          const answer = language === "en" ? faq.answer_en || faq.answer : faq.answer
+          const words = answer.split(" ")
+
+          return (
+            <motion.div
+              key={faq.id || faq.question}
+              initial={{ opacity: 0, x: -20 }}
+              animate={isHeaderInView ? { opacity: 1, x: 0 } : {}}
+              transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}>
+              <AccordionItem
+                value={`item-${index}`}
+                className="border-border bg-muted/50 data-[state=open]:border-primary/20 relative overflow-hidden rounded-xl border! border-b-0 px-6 transition-colors">
+                {/* Background Ripple via CSS + data-state */}
+                <div className="in-data-[state=open]:bg-secondary/20 pointer-events-none absolute inset-0 origin-top bg-transparent transition-colors duration-300 ease-in-out" />
+
+                <AccordionTrigger className="font-display text-foreground hover:text-primary data-[state=open]:text-primary relative py-6 text-left font-bold transition-colors">
+                  {question}
+                </AccordionTrigger>
+
+                <AccordionContent className="text-muted-foreground relative pb-6 leading-relaxed">
+                  {words.map((word, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{
+                        duration: 0.5,
+                        delay: 0.1 + i * 0.05,
+                        ease: "easeOut"
+                      }}>
+                      {word}{" "}
+                    </motion.span>
+                  ))}
+                </AccordionContent>
+              </AccordionItem>
+            </motion.div>
+          )
+        })}
+      </Accordion>
+    </motion.div>
+  )
+}
 
 export function FAQ() {
   const headerRef = useRef(null)
@@ -126,32 +193,7 @@ export function FAQ() {
         </motion.div>
 
         {/* Accordion */}
-        <motion.div
-          className="mx-auto max-w-3xl"
-          initial={{ opacity: 0, y: 30 }}
-          animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.3 }}>
-          <Accordion type="single" collapsible className="space-y-4">
-            {faqs.map((faq, index) => (
-              <motion.div
-                key={faq.id || faq.question}
-                initial={{ opacity: 0, x: -20 }}
-                animate={isHeaderInView ? { opacity: 1, x: 0 } : {}}
-                transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}>
-                <AccordionItem
-                  value={`item-${index}`}
-                  className="bg-muted/50 border-border data-[state=open]:bg-violet/5 data-[state=open]:border-violet/20 rounded-xl border px-6 transition-colors">
-                  <AccordionTrigger className="font-display text-foreground hover:text-violet [&[data-state=open]]:text-violet py-6 text-left font-bold transition-colors">
-                    {language === "en" ? faq.question_en || faq.question : faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground pb-6 leading-relaxed">
-                    {language === "en" ? faq.answer_en || faq.answer : faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              </motion.div>
-            ))}
-          </Accordion>
-        </motion.div>
+        <FAQAccordion faqs={faqs} language={language} isHeaderInView={isHeaderInView} />
       </div>
     </section>
   )

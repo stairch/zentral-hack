@@ -580,7 +580,7 @@ export function EmailManagementPage() {
                               key={preset.id}
                               type="button"
                               onClick={() => applyPreset(preset)}
-                              className="border-border bg-card rounded-md border px-3 py-3 text-left transition-colors hover:border-[#530A5D]/50 hover:bg-[#530A5D]/5">
+                              className="border-border bg-card cursor-pointer rounded-md border px-3 py-3 text-left transition-colors hover:border-[#530A5D]/50 hover:bg-[#530A5D]/5">
                               <p className="text-sm font-semibold">{preset.name}</p>
                               <p className="text-muted-foreground mt-1 text-xs">{preset.description}</p>
                             </button>
@@ -597,7 +597,7 @@ export function EmailManagementPage() {
                               key={t.id}
                               type="button"
                               onClick={() => setEmailForm({ ...emailForm, templateId: t.id })}
-                              className={`rounded-lg border-2 p-3 text-left transition-all ${
+                              className={`cursor-pointer rounded-lg border-2 p-3 text-left transition-all ${
                                 emailForm.templateId === t.id
                                   ? "border-[#530A5D] bg-[#530A5D]/5"
                                   : "border-border hover:border-[#530A5D]/40"

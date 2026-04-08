@@ -27,7 +27,7 @@ export function RegistrationForm() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-  const { signup } = useAuth()
+  const { signup, verify2FA } = useAuth()
   const router = useRouter()
   const [show2FA, setShow2FA] = useState(false)
   const [code2FA, setCode2FA] = useState("")
@@ -254,17 +254,13 @@ export function RegistrationForm() {
 
     try {
       // Try to sign up first
-      try {
-        await signup(formData.email, formData.password, formData.firstName, formData.lastName)
-      } catch (signupError) {
-        throw new Error(signupError instanceof Error ? signupError.message : t.signupFailed)
-      }
+      await signup(formData.email, formData.password, formData.firstName, formData.lastName)
 
       // Verification is required for all users
       setShow2FA(true)
       toast.success(t.twoFaSent)
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Registrierung fehlgeschlagen"
+      const message = error instanceof Error ? error.message : t.signupFailed
       toast.error(message)
     } finally {
       setLoading(false)
@@ -280,20 +276,7 @@ export function RegistrationForm() {
         throw new Error(t.enter2faCode)
       }
 
-      const res = await fetch("/api/auth/2fa/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email: formData.email, code: code2FA.toUpperCase() })
-      })
-
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.data?.error || errorData.error || t.verifyFailed)
-      }
-
-      const data = await res.json()
-      console.log("[Login] 2FA response:", data)
+      await verify2FA(formData.email, code2FA.toUpperCase())
 
       // Complete registration with category and details
       const registerRes = await fetch("/api/hackathon/register", {
@@ -316,18 +299,14 @@ export function RegistrationForm() {
 
       if (!registerRes.ok) {
         const errorData = await registerRes.json().catch(() => null)
-        throw new Error(errorData?.error || "Registrierung fehlgeschlagen")
+        throw new Error(errorData?.error || t.signupFailed)
       }
 
       setSuccess(true)
       toast.success(t.registrationSuccess)
-
-      // Wait a moment to ensure cookie is set, then navigate to dashboard
-      // The httpOnly cookie is now set by the server and will be sent automatically
-      await new Promise((resolve) => setTimeout(resolve, 300))
       router.push("/dashboard")
     } catch (err) {
-      const message = err instanceof Error ? err.message : t.verifyError
+      const message = err instanceof Error ? err.message : t.signupFailed
       toast.error(message)
     } finally {
       setLoading(false)

@@ -87,12 +87,19 @@ export function Navigation() {
               <motion.a
                 key={item.label}
                 href={item.href}
-                className="text-foreground/80 hover:text-violet group relative text-sm font-medium transition-colors"
+                className="relative h-5 overflow-hidden text-sm font-medium"
+                style={{ display: "block" }}
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * index }}>
-                {item.label}
-                <span className="bg-yellow absolute -bottom-1 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full" />
+                <motion.div
+                  className="flex flex-col px-1"
+                  initial={{ y: "0%" }}
+                  whileHover={{ y: "-50%" }}
+                  transition={{ type: "spring", stiffness: 600, damping: 30 }}>
+                  <span className="text-foreground/80 flex h-5 items-center">{item.label}</span>
+                  <span className="text-primary flex h-5 items-center">{item.label}</span>
+                </motion.div>
               </motion.a>
             ))}
             <motion.div
@@ -104,7 +111,7 @@ export function Navigation() {
                 value={language}
                 onChange={(event) => setLanguage(event.target.value as "de" | "en")}
                 aria-label={text.language}
-                className="border-border bg-background h-9 rounded-md border px-2 text-sm">
+                className="border-border bg-background h-9 cursor-pointer rounded-md border px-2 text-sm">
                 <option value="de">DE</option>
                 <option value="en">EN</option>
               </select>
@@ -133,7 +140,7 @@ export function Navigation() {
 
           {/* Mobile Menu Button */}
           <button
-            className="text-foreground p-2 md:hidden"
+            className="text-foreground cursor-pointer p-2 md:hidden"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label={text.toggleMenu}>
             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -172,7 +179,7 @@ export function Navigation() {
                   value={language}
                   onChange={(event) => setLanguage(event.target.value as "de" | "en")}
                   aria-label={text.language}
-                  className="border-border bg-background h-12 rounded-md border px-3 text-sm">
+                  className="border-border bg-background h-12 cursor-pointer rounded-md border px-3 text-sm">
                   <option value="de">Deutsch</option>
                   <option value="en">English</option>
                 </select>

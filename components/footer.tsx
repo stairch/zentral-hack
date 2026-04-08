@@ -46,16 +46,14 @@ const copy = {
       "Ein Hackathon für die Zentralschweiz. Verbindung von Bildung, Wirtschaft und Community für Innovation und Nachwuchsförderung.",
     event: "EVENT",
     legal: "RECHTLICHES",
-    rights: "© 2026 Zentral Hack. Alle Rechte vorbehalten.",
-    madeWith: "Made with"
+    rights: "© 2026 Zentral Hack. Alle Rechte vorbehalten."
   },
   en: {
     description:
       "A hackathon for Central Switzerland. Connecting education, business, and community for innovation and young talent.",
     event: "EVENT",
     legal: "LEGAL",
-    rights: "© 2026 Zentral Hack. All rights reserved.",
-    madeWith: "Made with"
+    rights: "© 2026 Zentral Hack. All rights reserved."
   }
 } as const
 
@@ -135,11 +133,32 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 md:flex-row">
           <p className="text-muted-foreground text-sm">{text.rights}</p>
-          <div className="text-muted-foreground flex items-center gap-2 text-sm">
-            <span>
-              {text.madeWith} <span className="text-red-500">♥ by</span>
-            </span>
-            <span className="text-light-violet font-semibold">STAIR</span>
+          <div className="text-muted-foreground flex items-center gap-1 text-xs">
+            <div>
+              Made with <span className="text-red-500">♥</span> by
+            </div>
+            <div className="flex items-center gap-1">
+              <a
+                href="https://www.linkedin.com/in/ahmad-el-hajj-chehade-461a61241/"
+                target="_blank"
+                className="bg-muted-foreground hover:bg-accent px-0.5 text-black transition-colors duration-300">
+                Ahmad
+              </a>
+              <span>and</span>
+              <a
+                href="https://www.linkedin.com/in/andrin-schaller/"
+                target="_blank"
+                className="bg-muted-foreground hover:bg-accent px-0.5 text-black transition-colors duration-300">
+                Andrin
+              </a>
+              <span>at</span>
+              <a
+                href="https://stair.ch"
+                target="_blank"
+                className="bg-muted-foreground px-0.5 text-black transition-colors duration-300 hover:bg-[#04956c]">
+                STAIR
+              </a>
+            </div>
           </div>
         </div>
       </div>

@@ -16,6 +16,7 @@ interface AuthContextType {
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string, firstName: string, lastName: string) => Promise<void>
+  verify2FA: (email: string, code: string) => Promise<void>
   logout: () => void
 }
 
@@ -103,7 +104,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const data = await res.json()
-    // Token is now in httpOnly cookie, but we store it locally for context
+    if (data.data.requiresTwoFa) {
+      // Pending 2FA, let's not set user in context already
+      return
+    }
+
+    // No 2FA, login directly
     setToken(data.data.token)
     setUser(data.data.user)
   }
@@ -122,9 +128,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const data = await res.json()
-    // Token is now in httpOnly cookie
+    if (data.data.requiresTwoFa) {
+      // Pending 2FA, let's not set user in context already
+      return
+    }
+
+    // No 2FA, login directly
     setToken(data.data.token)
     setUser(data.data.user)
+  }
+
+  const verify2FA = async (email: string, code: string) => {
+    const res = await fetch("/api/auth/2fa/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, code: code.toUpperCase() })
+    })
+
+    if (!res.ok) {
+      const errorData = await res.json()
+      throw new Error(errorData.data?.error || errorData.error || "2FA Verifizierung fehlgeschlagen")
+    }
+
+    const data = await res.json()
+    setUser(data.data.user)
+    setToken(data.data.token)
   }
 
   const logout = async () => {
@@ -142,7 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, signup, verify2FA, logout }}>
       {children}
     </AuthContext.Provider>
   )

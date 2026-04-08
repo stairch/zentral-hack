@@ -100,7 +100,7 @@ export default function NewsletterUnsubscribePage() {
                 id="language"
                 value={language}
                 onChange={(event) => setLanguage(event.target.value as Language)}
-                className="border-input bg-background h-9 w-full rounded-md border px-2 text-sm">
+                className="border-input bg-background h-9 w-full cursor-pointer rounded-md border px-2 text-sm">
                 <option value="de">Deutsch</option>
                 <option value="en">English</option>
               </select>
@@ -133,7 +133,7 @@ export default function NewsletterUnsubscribePage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="inline-flex h-11 items-center justify-center rounded-md bg-[#530A5D] px-5 text-sm font-semibold text-white transition hover:bg-[#43084b] disabled:cursor-not-allowed disabled:opacity-70">
+                  className="inline-flex h-11 cursor-pointer items-center justify-center rounded-md bg-[#530A5D] px-5 text-sm font-semibold text-white transition hover:bg-[#43084b] disabled:cursor-not-allowed disabled:opacity-70">
                   {submitting ? text.submitting : text.submit}
                 </button>
               </form>

@@ -212,6 +212,7 @@ export function DocumentsManagementPage() {
                     id="file"
                     type="file"
                     onChange={(e) => setFile(e.target.files?.[0] || null)}
+                    className="cursor-pointer"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
                   />
                   {file && <p className="text-muted-foreground mt-2 text-sm">📎 {file.name}</p>}

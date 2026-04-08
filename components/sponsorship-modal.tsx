@@ -189,7 +189,7 @@ export function SponsorshipModal({ isOpen, onClose, selectedPackageSlug }: Spons
                               key={pkg.slug}
                               type="button"
                               onClick={() => handleSelectChange(pkg.slug)}
-                              className="rounded-lg border px-4 py-3 text-left transition-all"
+                              className="cursor-pointer rounded-lg border px-4 py-3 text-left transition-all"
                               style={{
                                 borderColor: selectedPackage.slug === pkg.slug ? pkg.color : "#e5e7eb",
                                 backgroundColor:
