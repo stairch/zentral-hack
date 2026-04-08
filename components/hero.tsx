@@ -144,12 +144,10 @@ function RotatingText({ words }: { words: readonly string[] }) {
     const doMeasure = () => {
       if (measureRef.current && containerRef.current) {
         const w = measureRef.current.getBoundingClientRect().width + 8
-        // Set container width immediately (no spring) to never clip letters
         containerRef.current.style.width = `${w}px`
         underlineWidth.set(w)
       }
     }
-    // rAF ensures the new font/text is painted before measuring
     const raf = requestAnimationFrame(() => {
       if (document.fonts?.ready) {
         document.fonts.ready.then(doMeasure)
@@ -163,7 +161,6 @@ function RotatingText({ words }: { words: readonly string[] }) {
   const letters = words[displayIndex].split("")
 
   return (
-    // No overflow-hidden on container — each letter clips itself vertically
     <span
       ref={containerRef}
       className="relative inline-block align-middle"
@@ -180,7 +177,6 @@ function RotatingText({ words }: { words: readonly string[] }) {
           key={index}
           className="absolute inset-0 flex items-center justify-center whitespace-nowrap">
           {letters.map((letter, i) => (
-            // Per-letter overflow-hidden clips the y-slide animation vertically
             <span key={i} className="inline-block overflow-hidden" style={{ height: "1.3em" }}>
               <motion.span
                 initial={{ y: "100%", opacity: 0 }}
