@@ -23,7 +23,8 @@ The script will prompt for a new version number and validate it. Versions must f
 5. Creates an annotated git tag and pushes it
 6. Restores the previous local git `user.email`
 
-> **Note:** The release email is only set locally (`.git/config`) temporary and never affects your global git configuration.
+> [!NOTE]
+> The release email is only set locally (`.git/config`) temporary and never affects your global git configuration.
 
 ---
 
