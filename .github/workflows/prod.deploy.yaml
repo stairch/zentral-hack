@@ -1,12 +1,12 @@
-name: Preview Deployment
+name: Production Deployment
 env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_PROD_ORG_ID: ${{ secrets.VERCEL_PROD_ORG_ID }}
+  VERCEL_PROD_PROJECT_ID: ${{ secrets.VERCEL_PROD_PROJECT_ID }}
 on:
   push:
     tags:
-      # only on pre-releases (e.g. v1.0.0-alpha, v1.0.0-beta.1, ...)
-      - "v[0-9]+.[0-9]+.[0-9]+-*"
+      # only on non pre-releases (e.g. v1.0.0, v1.0.5, ...)
+      - "v[0-9]+.[0-9]+.[0-9]+"
 jobs:
   Check:
     runs-on: ubuntu-latest
@@ -32,17 +32,16 @@ jobs:
     needs: [Check]
     runs-on: ubuntu-latest
     environment:
-      name: Preview
-      url: ${{ steps.deployment.outputs.preview_url }}
+      name: Production
 
     steps:
       - uses: actions/checkout@v3
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
       - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_PROD_TOKEN }}
       - name: Build Project Artifacts
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --token=${{ secrets.VERCEL_PROD_TOKEN }}
       - name: Deploy Project Artifacts to Vercel
         id: deployment
-        run: echo "preview_url=$(vercel deploy --archive=tgz --prebuilt --token=${{ secrets.VERCEL_TOKEN }})" >> $GITHUB_OUTPUT
+        run: vercel deploy --archive=tgz --prod --token=${{ secrets.VERCEL_PROD_TOKEN }})
