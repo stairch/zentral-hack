@@ -34,6 +34,16 @@ The script will prompt for a new version number and validate it. Versions must f
 
 A deployment is created automatically whenever a tag is created that follows [Semantic Versioning](https://semver.org).
 
+| Deployment  | Tag Example     | Vercel Project                                                            | Environment | Vercel Deployment Type |
+| ----------- | --------------- | ------------------------------------------------------------------------- | ----------- | ---------------------- |
+| Production  | `1.0.0`         | [prod-hack-zentral](https://vercel.com/stairs-projects/prod-hack-zentral) | Production  | Production             |
+| Demo        | `1.0.0-beta.1`  | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development | Production             |
+| Development | `1.0.0-alpha.1` | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development | Preview                |
+
+###### For more information, see below
+
+<br/>
+
 ### Production Deployment
 
 Every tag that is a stable release (e.g. `1.0.0`, `1.2.0`) automatically creates a Production Deployment on the [**production Vercel project**](https://vercel.com/stairs-projects/prod-hack-zentral).
