@@ -1,0 +1,48 @@
+name: Development Deployment
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_DEV_PROJECT_ID }}
+on:
+  push:
+    tags:
+      # only on ALPHA releases (e.g. v1.0.0-alpha, v1.0.0-alpha.5, ...)
+      - "v[0-9]+.[0-9]+.[0-9]+-alpha*"
+jobs:
+  Check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - name: Install dependencies
+        run: npm install prettier-plugin-tailwindcss
+      - name: Run Formatter
+        run: npx prettier --check .
+      - name: Run Typechecker
+        run: npx tsc --noEmit --noUnusedLocals --noUnusedParameters --composite false
+
+  Deploy:
+    needs: [Check]
+    runs-on: ubuntu-latest
+    environment:
+      name: Development
+      url: ${{ steps.deployment.outputs.preview_url }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Build Project Artifacts
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy Project Artifacts to Vercel
+        id: deployment
+        run: echo "preview_url=$(vercel deploy --archive=tgz --prebuilt --token=${{ secrets.VERCEL_TOKEN }})" >> $GITHUB_OUTPUT
