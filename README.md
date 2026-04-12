@@ -35,20 +35,22 @@ A deployment is created automatically whenever a tag is created that follows [Se
 
 ### Production Deployment
 
-Every tag that is a stable release (e.g. `1.0.0`, `1.2.0`) automatically creates a Production Deployment on the [**production Vercel project**](https://vercel.com/stairs-projects/prod-hack-zentral).
+> [!NOTE]
+> This is the publicly accessible live website used by end-users.
 
-This is the publicly accessible live website used by end-users.
+Every tag that is a stable release (e.g. `1.0.0`, `1.2.0`) automatically creates a Production Deployment on the [**production Vercel project**](https://vercel.com/stairs-projects/prod-hack-zentral).
 
 ### Demo Deployment
 
-Every tag that is a beta pre-release (e.g. `1.0.0-beta.1`, `1.2.0-beta.5`) automatically creates a Demo Deployment on the [**development Vercel project**](https://vercel.com/stairs-projects/dev-hack-zentral).
+> [!NOTE]
+> This is used to showcase and test new features in a production-like environment before they are released to production.
 
-This is used to showcase new features to external stakeholders before they are released to production.
+Every tag that is a pre-release (e.g. `1.0.0-alpha.1`, `1.2.0-beta.5`) automatically creates a Demo Deployment on the [**development Vercel project**](https://vercel.com/stairs-projects/dev-hack-zentral).
 
 ### Development Deployment
 
+> [!NOTE]
+> This is used to test incomplete or experimental changes in a production-like environment without exposing them to stakeholders or end-users.
+> The development deployment is only visible when logged in with the **STAIR Vercel account**, which ultimately requires being logged in with the **STAIR GitHub account**.
+
 Every tag that is an alpha pre-release (e.g. `1.0.0-alpha.1`, `1.2.0-alpha.3`) automatically creates a Development Deployment as a preview on the [**development Vercel project**](https://vercel.com/stairs-projects/dev-hack-zentral).
-
-This is used to test incomplete or experimental changes in a production-like environment without exposing them to stakeholders or end-users.
-
-> **Note:** The development deployment is only visible when logged in with the **STAIR Vercel account**, which ultimately requires being logged in with the **STAIR GitHub account**.
