@@ -37,7 +37,7 @@ A deployment is created automatically whenever a tag is created that follows [Se
 | Deployment  | Tag Example     | Vercel Project                                                            | Environment    | Vercel Deployment Type  |
 | ----------- | --------------- | ------------------------------------------------------------------------- | -------------- | ----------------------- |
 | Production  | `1.0.0`         | [prod-hack-zentral](https://vercel.com/stairs-projects/prod-hack-zentral) | Production     | Production (live)       |
-| Demo        | `1.0.0-beta.1`  | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | ⚠️ Development | ⚠️ Production (live)    |
+| Demo        | `1.0.0-beta.1`  | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development ⚠️ | Production (live) ⚠️    |
 | Development | `1.0.0-alpha.1` | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development    | Preview (auth required) |
 
 ###### For more information, see below
