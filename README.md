@@ -34,11 +34,10 @@ The script will prompt for a new version number and validate it. Versions must f
 
 A deployment is created automatically whenever a tag is created that follows [Semantic Versioning](https://semver.org).
 
-| Deployment  | Tag Example     | Vercel Project                                                            | Environment    | Vercel Deployment Type  |
-| ----------- | --------------- | ------------------------------------------------------------------------- | -------------- | ----------------------- |
-| Production  | `1.0.0`         | [prod-hack-zentral](https://vercel.com/stairs-projects/prod-hack-zentral) | Production     | Production (live)       |
-| Demo        | `1.0.0-beta.1`  | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development ⚠️ | Production (live) ⚠️    |
-| Development | `1.0.0-alpha.1` | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development    | Preview (auth required) |
+| Deployment | Tag Example     | Vercel Project                                                            | Environment    | Vercel Deployment Type |
+| ---------- | --------------- | ------------------------------------------------------------------------- | -------------- | ---------------------- |
+| Production | `1.0.0`         | [prod-hack-zentral](https://vercel.com/stairs-projects/prod-hack-zentral) | Production     | Production (live)      |
+| Demo       | `1.0.0-alpha.1` | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development ⚠️ | Production (live) ⚠️   |
 
 ###### For more information, see below
 
@@ -51,13 +50,5 @@ This is the publicly accessible live website used by end-users.
 
 ### Demo Deployment
 
-Every tag that is a beta pre-release (e.g. `1.0.0-beta.1`, `1.2.0-beta.5`) automatically creates a Vercel production deployment on the [**development Vercel project**](https://vercel.com/stairs-projects/dev-hack-zentral).
+Every tag that is a pre-release (e.g. `1.0.0-alpha.1`, `1.2.0-beta.5`) automatically creates a Vercel production deployment on the [**development Vercel project**](https://vercel.com/stairs-projects/dev-hack-zentral).
 This is used to showcase and test new features in a production-like environment before they are released to production.
-
-### Development Deployment
-
-Every tag that is an alpha pre-release (e.g. `1.0.0-alpha.1`, `1.2.0-alpha.3`) automatically creates a Vercel preview deployment on the [**development Vercel project**](https://vercel.com/stairs-projects/dev-hack-zentral).
-This is used to test incomplete or experimental changes in a production-like environment without exposing them to stakeholders or end-users.
-
-> [!NOTE]
-> The development deployment is only visible when logged in with the **STAIR Vercel account**, which ultimately requires being logged in with the **STAIR GitHub account**.

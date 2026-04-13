@@ -5,8 +5,8 @@ env:
 on:
   push:
     tags:
-      # only on BETA releases (e.g. v1.0.0-beta, v1.0.0-beta.5, ...)
-      - "v[0-9]+.[0-9]+.[0-9]+-beta*"
+      # only on pre-releases (e.g. v1.0.0-alpha.1, v1.0.0-beta.5, ...)
+      - "v[0-9]+.[0-9]+.[0-9]+-*"
 jobs:
   Check:
     runs-on: ubuntu-latest
