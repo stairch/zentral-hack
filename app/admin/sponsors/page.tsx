@@ -267,6 +267,14 @@ export default function AdminSponsorsPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -287,9 +295,7 @@ export default function AdminSponsorsPage() {
           <CardDescription>{contacts.length} Anfragen insgesamt</CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <p className="text-muted-foreground py-8 text-center text-sm">Lädt…</p>
-          ) : contacts.length === 0 ? (
+          {contacts.length === 0 ? (
             <p className="text-muted-foreground py-8 text-center text-sm">Noch keine Sponsor-Anfragen</p>
           ) : (
             <div className="flex flex-col gap-3">
