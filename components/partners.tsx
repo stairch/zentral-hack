@@ -133,11 +133,15 @@ function TierCard({
   tier,
   index,
   onOpen,
+  onHover,
+  isSpotlit,
   language
 }: {
   tier: SponsorPackage
   index: number
   onOpen: () => void
+  onHover: () => void
+  isSpotlit: boolean
   language: Language
 }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -145,12 +149,8 @@ function TierCard({
   const [hovered, setHovered] = useState(false)
 
   const copy = {
-    de: {
-      requestPackage: "Paket anfragen"
-    },
-    en: {
-      requestPackage: "Request package"
-    }
+    de: { requestPackage: "Paket anfragen" },
+    en: { requestPackage: "Request package" }
   } as const
 
   const text = copy[language]
@@ -166,32 +166,34 @@ function TierCard({
     <motion.div
       ref={ref}
       initial={{ opacity: 0, y: 24 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.45, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+      animate={
+        isInView ? { opacity: isSpotlit ? 1 : 0.35, scale: hovered ? 1.01 : 1, y: 0 } : { opacity: 0, y: 24 }
+      }
+      transition={{ duration: 0.2, delay: isInView ? 0 : index * 0.1 }}
       onClick={onOpen}
-      onMouseEnter={() => setHovered(true)}
+      onMouseEnter={() => {
+        setHovered(true)
+        onHover()
+      }}
       onMouseLeave={() => setHovered(false)}
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
       aria-label={`${tier.name} Sponsoring-Paket anfragen`}
-      className="group relative flex cursor-pointer flex-col rounded-2xl border p-5 transition-all duration-200 hover:border-black/[0.14] hover:shadow-sm focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
+      className="group relative flex cursor-pointer flex-col rounded-2xl border p-5 hover:border-black/[0.14] hover:shadow-sm focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
       style={{
-        background: `${tier.color}12`, // 7% opacity
-        borderColor: `${tier.color}33` // 20% opacity
+        background: `color-mix(in srgb, ${tier.color} 15%, transparent)`,
+        borderColor: `color-mix(in srgb, ${tier.color} 20%, transparent)`
       }}>
-      {/* Tier indicator dot + name */}
       <div className="mb-3 flex items-center gap-2.5">
         <span className="block h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: tier.color }} />
         <span className="font-display text-foreground font-medium">{tier.name[language]}</span>
       </div>
 
-      {/* Price / amount */}
       {tier.price[language] && (
         <p className="text-muted-foreground mb-3 text-sm font-medium tabular-nums">{tier.price[language]}</p>
       )}
 
-      {/* Benefits list */}
       <ul className="mb-4 flex flex-col gap-1.5">
         {tier.benefits.map((benefit, i) => (
           <li key={i} className="flex items-start gap-2 text-xs text-black/50 dark:text-white/50">
@@ -204,10 +206,9 @@ function TierCard({
         ))}
       </ul>
 
-      {/* CTA */}
       <div
         className="mt-auto flex items-center gap-1 text-sm font-semibold transition-colors duration-150"
-        style={{ color: tier.color }}>
+        style={{ color: `color-mix(in srgb, ${tier.color} 80%, black)` }}>
         <span>{text.requestPackage}</span>
         <motion.span animate={{ x: hovered ? 3 : 0 }} transition={{ duration: 0.2 }} aria-hidden="true">
           →
@@ -222,6 +223,7 @@ export function Partners() {
   const isHeaderInView = useInView(headerRef, { once: true })
   const [sponsorshipModalOpen, setSponsorshipModalOpen] = useState(false)
   const [selectedPackageSlug, setSelectedPackageSlug] = useState<string | null>(null)
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const { language } = useLanguage()
 
   const copy = {
@@ -298,15 +300,19 @@ export function Partners() {
 
           {/* Sponsor Tiers */}
           <div className="mx-auto max-w-5xl">
-            <p className="text-muted-foreground mb-5 text-center tracking-widest uppercase">
+            <p className="text-muted-foreground mb-5 text-center font-medium tracking-widest uppercase">
               {text.tierListsTitle}
             </p>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div
+              className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+              onMouseLeave={() => setHoveredIndex(null)}>
               {sponsorPackages.map((tier, index) => (
                 <TierCard
                   key={tier.slug}
                   tier={tier}
                   index={index}
+                  isSpotlit={hoveredIndex === null || hoveredIndex === index}
+                  onHover={() => setHoveredIndex(index)}
                   onOpen={() => {
                     setSelectedPackageSlug(tier.slug)
                     setSponsorshipModalOpen(true)
