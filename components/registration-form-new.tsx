@@ -44,9 +44,8 @@ export function RegistrationForm() {
       passwordUpper: "Passwort muss mindestens einen Großbuchstaben enthalten",
       passwordNumber: "Passwort muss mindestens eine Zahl enthalten",
       passwordSpecial: "Passwort muss mindestens ein Sonderzeichen enthalten (!@#$%^&*...)",
-      universityRequired: "Universität erforderlich",
-      studyRequired: "Studiengang erforderlich",
-      semesterRequired: "Semester erforderlich",
+      studyRequired: "Studiengang erforderlich, wenn Hochschule/Schule angegeben ist",
+      semesterRequired: "Semester erforderlich, wenn Hochschule/Schule angegeben ist",
       categoryRequired: "Kategorie erforderlich",
       signupFailed: "Registrierung fehlgeschlagen",
       twoFaSent: "2FA Code wurde an deine E-Mail gesendet",
@@ -64,9 +63,9 @@ export function RegistrationForm() {
       password: "Passwort *",
       confirmPassword: "Passwort bestätigen *",
       uniInfo: "Universitäts-Informationen",
-      university: "Universität/Schule *",
-      studyProgram: "Studiengang *",
-      semester: "Semester *",
+      university: "Universität/Schule (optional)",
+      studyProgram: "Studiengang",
+      semester: "Semester",
       allergies: "Allergien (optional)",
       intolerances: "Unverträglichkeiten (optional)",
       categorySettings: "Kategorie & Einstellungen",
@@ -98,9 +97,8 @@ export function RegistrationForm() {
       passwordUpper: "Password must include at least one uppercase letter",
       passwordNumber: "Password must include at least one number",
       passwordSpecial: "Password must include at least one special character (!@#$%^&*...)",
-      universityRequired: "University is required",
-      studyRequired: "Study program is required",
-      semesterRequired: "Semester is required",
+      studyRequired: "Study program is required if university/school is provided",
+      semesterRequired: "Semester is required if university/school is provided",
       categoryRequired: "Category is required",
       signupFailed: "Registration failed",
       twoFaSent: "2FA code was sent to your email",
@@ -118,9 +116,9 @@ export function RegistrationForm() {
       password: "Password *",
       confirmPassword: "Confirm password *",
       uniInfo: "University Information",
-      university: "University/School *",
-      studyProgram: "Study program *",
-      semester: "Semester *",
+      university: "University/School (optional)",
+      studyProgram: "Study program",
+      semester: "Semester",
       allergies: "Allergies (optional)",
       intolerances: "Intolerances (optional)",
       categorySettings: "Category & Preferences",
@@ -225,15 +223,13 @@ export function RegistrationForm() {
       }
     }
     if (step === 3) {
-      if (!formData.university) {
-        toast.error(t.universityRequired)
-        return false
-      }
-      if (!formData.studyProgram) {
+      const hasUniversity = formData.university.trim().length > 0
+
+      if (hasUniversity && !formData.studyProgram.trim()) {
         toast.error(t.studyRequired)
         return false
       }
-      if (!formData.semester) {
+      if (hasUniversity && !formData.semester.trim()) {
         toast.error(t.semesterRequired)
         return false
       }
