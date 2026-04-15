@@ -79,11 +79,8 @@
 }
 
 @theme inline {
-  /* Body text: Helvetica Neue LT Std Roman (system fallback until font file is provided) */
-  /* TODO: Add localFont entry in layout.tsx for HelveticaNeueLTStd-Roman.otf and update stack below */
-  --font-sans: "Helvetica Neue LT Std", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  /* Headings/titles: Usual Bold, all-caps per CD */
-  --font-display: var(--font-usual), "Usual", sans-serif;
+  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback";
 
   /* Zentral Hack brand colors */
