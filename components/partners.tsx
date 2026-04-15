@@ -4,11 +4,35 @@ import Image from "next/image"
 import { useRef, useState, useEffect } from "react"
 import { motion, useInView } from "framer-motion"
 import { SponsorshipModal } from "./sponsorship-modal"
-import { sponsorPackages } from "@/lib/sponsorship-packages"
+import { sponsorPackages as fallbackSponsorPackages } from "@/lib/sponsorship-packages"
 import { useLanguage } from "@/lib/language-context"
-import { type SponsorPackage } from "@/lib/sponsorship-packages"
 import { type Language } from "@/lib/language-context"
 import { Emails } from "@/lib/constants"
+
+interface SponsorPackage {
+  id: string
+  slug: string
+  name: string
+  description: string
+  shortDescription: string
+  color: string
+  benefits: string[]
+  display_order: number
+}
+
+function getContrastTextColor(hexColor: string): string {
+  const hex = (hexColor || "#530A5D").replace("#", "")
+  if (!/^[0-9A-Fa-f]{6}$/.test(hex)) {
+    return "#FFFFFF"
+  }
+
+  const r = Number.parseInt(hex.slice(0, 2), 16)
+  const g = Number.parseInt(hex.slice(2, 4), 16)
+  const b = Number.parseInt(hex.slice(4, 6), 16)
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000
+
+  return brightness > 165 ? "#1A1A1A" : "#FFFFFF"
+}
 
 type Organiser = { name: string; logo: string; link: string; bgColor: string; logoWidth: string }
 const partners: { organisers: Organiser[] } = {
@@ -134,26 +158,18 @@ function TierCard({
   index,
   onOpen,
   onHover,
-  isSpotlit,
-  language
+  isSpotlit
 }: {
   tier: SponsorPackage
   index: number
   onOpen: () => void
   onHover: () => void
   isSpotlit: boolean
-  language: Language
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: "-80px" })
   const [hovered, setHovered] = useState(false)
-
-  const copy = {
-    de: { requestPackage: "Paket anfragen" },
-    en: { requestPackage: "Request package" }
-  } as const
-
-  const text = copy[language]
+  const textColor = getContrastTextColor(tier.color)
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -180,39 +196,18 @@ function TierCard({
       role="button"
       tabIndex={0}
       aria-label={`${tier.name} Sponsoring-Paket anfragen`}
-      className="group relative flex cursor-pointer flex-col rounded-2xl border p-5 hover:border-black/[0.14] hover:shadow-sm focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
+      className="group relative flex min-h-28 cursor-pointer items-center justify-center rounded-2xl border p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
       style={{
-        background: `color-mix(in srgb, ${tier.color} 15%, transparent)`,
-        borderColor: `color-mix(in srgb, ${tier.color} 20%, transparent)`
+        backgroundColor: tier.color,
+        borderColor: tier.color,
+        color: textColor
       }}>
-      <div className="mb-3 flex items-center gap-2.5">
-        <span className="block h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: tier.color }} />
-        <span className="font-display text-foreground font-medium">{tier.name[language]}</span>
-      </div>
-
-      {tier.price[language] && (
-        <p className="text-muted-foreground mb-3 text-sm font-medium tabular-nums">{tier.price[language]}</p>
-      )}
-
-      <ul className="mb-4 flex flex-col gap-1.5">
-        {tier.benefits.map((benefit, i) => (
-          <li key={i} className="flex items-start gap-2 text-xs text-black/50 dark:text-white/50">
-            <span
-              className="mt-1 block h-1.25 w-1.25 shrink-0 rounded-full opacity-60"
-              style={{ background: tier.color }}
-            />
-            {benefit[language]}
-          </li>
-        ))}
-      </ul>
-
-      <div
-        className="mt-auto flex items-center gap-1 text-sm font-semibold transition-colors duration-150"
-        style={{ color: `color-mix(in srgb, ${tier.color} 80%, black)` }}>
-        <span>{text.requestPackage}</span>
-        <motion.span animate={{ x: hovered ? 3 : 0 }} transition={{ duration: 0.2 }} aria-hidden="true">
-          →
-        </motion.span>
+      <div className="flex items-center gap-2.5">
+        <span
+          className="block h-2.5 w-2.5 shrink-0 rounded-full"
+          style={{ backgroundColor: textColor, opacity: 0.85 }}
+        />
+        <span className="font-display text-2xl font-semibold tracking-wide">{tier.name}</span>
       </div>
     </motion.div>
   )
@@ -224,7 +219,39 @@ export function Partners() {
   const [sponsorshipModalOpen, setSponsorshipModalOpen] = useState(false)
   const [selectedPackageSlug, setSelectedPackageSlug] = useState<string | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const [sponsorPackageItems, setSponsorPackageItems] = useState<SponsorPackage[]>(
+    fallbackSponsorPackages
+      .map((pkg) => ({
+        id: pkg.id,
+        slug: pkg.slug,
+        name: pkg.name.de,
+        description: pkg.description.de,
+        shortDescription: pkg.shortDescription.de,
+        color: pkg.color,
+        benefits: pkg.benefits.map((benefit) => benefit.de),
+        display_order: pkg.display_order
+      }))
+      .sort((a, b) => a.display_order - b.display_order)
+  )
   const { language } = useLanguage()
+
+  useEffect(() => {
+    const fetchSponsorPackages = async () => {
+      try {
+        const res = await fetch("/api/sponsor-contact")
+        if (!res.ok) return
+        const json = await res.json()
+        const list = (json.data?.packages || []) as SponsorPackage[]
+        if (list.length > 0) {
+          setSponsorPackageItems([...list].sort((a, b) => a.display_order - b.display_order))
+        }
+      } catch {
+        // Keep fallback data
+      }
+    }
+
+    void fetchSponsorPackages()
+  }, [])
 
   const copy = {
     de: {
@@ -306,7 +333,7 @@ export function Partners() {
             <div
               className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
               onMouseLeave={() => setHoveredIndex(null)}>
-              {sponsorPackages.map((tier, index) => (
+              {sponsorPackageItems.map((tier, index) => (
                 <TierCard
                   key={tier.slug}
                   tier={tier}
@@ -317,7 +344,6 @@ export function Partners() {
                     setSelectedPackageSlug(tier.slug)
                     setSponsorshipModalOpen(true)
                   }}
-                  language={language}
                 />
               ))}
             </div>

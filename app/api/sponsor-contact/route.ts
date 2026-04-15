@@ -7,6 +7,21 @@ import {
   sponsorPackages
 } from "@/lib/sponsorship-packages"
 
+function toText(value: unknown): string {
+  if (typeof value === "string") return value
+  if (value && typeof value === "object") {
+    const candidate = value as { de?: unknown; en?: unknown }
+    if (typeof candidate.de === "string") return candidate.de
+    if (typeof candidate.en === "string") return candidate.en
+  }
+  return ""
+}
+
+function toTextArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.map((item) => toText(item)).filter(Boolean)
+}
+
 export async function GET() {
   try {
     const result = await query(
@@ -29,15 +44,11 @@ export async function GET() {
         return {
           id: row.id,
           slug: row.slug,
-          name: row.name,
-          description: row.description || fallbackPackage?.description || "",
-          shortDescription:
-            fallbackPackage?.shortDescription || row.description || "Sponsoring-Paket für den Zentral Hack",
+          name: row.name || toText(fallbackPackage?.name) || "Paket",
+          description: row.description || toText(fallbackPackage?.description) || "",
+          shortDescription: toText(fallbackPackage?.shortDescription) || row.description || "Sponsoring-Paket für den Zentral Hack",
           color: row.color || fallbackPackage?.color || "#530A5D",
-          benefits:
-            Array.isArray(row.benefits) && row.benefits.length > 0
-              ? row.benefits
-              : fallbackPackage?.benefits || [],
+          benefits: Array.isArray(row.benefits) && row.benefits.length > 0 ? row.benefits : toTextArray(fallbackPackage?.benefits),
           display_order: row.display_order
         }
       })
@@ -48,7 +59,18 @@ export async function GET() {
     console.error("Sponsor package fetch error:", error)
   }
 
-  return successResponse({ packages: sponsorPackages })
+  return successResponse({
+    packages: sponsorPackages.map((pkg) => ({
+      id: pkg.id,
+      slug: pkg.slug,
+      name: pkg.name.de,
+      description: pkg.description.de,
+      shortDescription: pkg.shortDescription.de,
+      color: pkg.color,
+      benefits: pkg.benefits.map((benefit) => benefit.de),
+      display_order: pkg.display_order
+    }))
+  })
 }
 
 export async function POST(request: Request) {

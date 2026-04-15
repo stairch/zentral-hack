@@ -185,18 +185,24 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-light-violet/30 border-light-violet mb-8 inline-flex items-center gap-2 rounded-full border px-4 py-2">
-          <Calendar className="text-violet h-4 w-4" />
-          <span className="text-violet text-sm font-medium">{text.date}</span>
-        </motion.div>
+          className="mb-4 flex flex-col items-center gap-4">
+          <div className="bg-light-violet/30 border-light-violet inline-flex items-center gap-2 rounded-full border px-4 py-2">
+            <Calendar className="text-violet h-4 w-4" />
+            <span className="text-violet text-sm font-medium">{text.date}</span>
+          </div>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="mb-4 flex justify-center">
-          <BrandMark className="w-52 sm:w-64 md:w-72 lg:w-80 xl:w-96" imageClassName="mx-auto" priority />
-        </motion.h1>
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="flex justify-center">
+            <BrandMark
+              className="w-52 sm:w-64 md:w-72 lg:w-80 xl:w-96"
+              imageClassName="mx-auto -translate-y-6 sm:-translate-y-7 md:-translate-y-8"
+              priority
+            />
+          </motion.h1>
+        </motion.div>
 
         <motion.p
           initial={{ opacity: 0, scale: 0.8 }}
