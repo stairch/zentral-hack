@@ -4,7 +4,7 @@
  * Automates the release process for this package:
  *   1. Prompts for a new version and validates it against the current one
  *   2. Writes the new version to package.json
- *   3. Temporarily switches the local git user.email to the release email
+ *   3. Temporarily switches the local git user.email and remote URL with PAT to the release account
  *   4. Commits and pushes the version bump
  *   5. Creates an annotated git tag and pushes it
  *   6. Restores the previous local git user.email
