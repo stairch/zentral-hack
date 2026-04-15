@@ -129,9 +129,8 @@ function RotatingText({ words }: { words: readonly string[] }) {
   const [index, setIndex] = useState(0)
   const [displayIndex, setDisplayIndex] = useState(0)
   const measureRef = useRef<HTMLSpanElement>(null)
-  const containerRef = useRef<HTMLSpanElement>(null)
-  const underlineWidth = useMotionValue(0)
-  const underlineSpring = useSpring(underlineWidth, { stiffness: 120, damping: 18 })
+  const width = useMotionValue(0)
+  const widthSpring = useSpring(width, { stiffness: 120, damping: 18 })
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -141,30 +140,20 @@ function RotatingText({ words }: { words: readonly string[] }) {
   }, [words])
 
   useEffect(() => {
-    const doMeasure = () => {
-      if (measureRef.current && containerRef.current) {
-        const w = measureRef.current.getBoundingClientRect().width + 8
-        containerRef.current.style.width = `${w}px`
-        underlineWidth.set(w)
-      }
+    if (measureRef.current) {
+      width.set(measureRef.current.offsetWidth + 5)
     }
-    const raf = requestAnimationFrame(() => {
-      if (document.fonts?.ready) {
-        document.fonts.ready.then(doMeasure)
-      } else {
-        doMeasure()
-      }
-    })
-    return () => cancelAnimationFrame(raf)
-  }, [displayIndex, words, underlineWidth])
+  }, [displayIndex, words])
 
   const letters = words[displayIndex].split("")
 
   return (
-    <span
-      ref={containerRef}
-      className="relative inline-block align-middle"
-      style={{ height: "1.3em", transition: "width 200ms ease" }}>
+    <motion.span
+      className="relative inline-block overflow-hidden align-middle"
+      style={{ width: widthSpring, height: "1.3em" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: (letters.length - 1) * 0.02 }}>
       <span
         ref={measureRef}
         className="pointer-events-none invisible absolute font-semibold whitespace-nowrap"
@@ -177,40 +166,36 @@ function RotatingText({ words }: { words: readonly string[] }) {
           key={index}
           className="absolute inset-0 flex items-center justify-center whitespace-nowrap">
           {letters.map((letter, i) => (
-            <span key={i} className="inline-block overflow-hidden" style={{ height: "1.3em" }}>
-              <motion.span
-                initial={{ y: "100%", opacity: 0 }}
-                animate={{
-                  y: "0%",
-                  opacity: 1,
-                  transition: {
-                    type: "spring",
-                    stiffness: 250,
-                    damping: 25,
-                    delay: (letters.length - 1 - i) * 0.015 + 0.2
-                  }
-                }}
-                exit={{
-                  y: "-80%",
-                  opacity: 0,
-                  transition: {
-                    duration: 0.15,
-                    delay: i * 0.01
-                  }
-                }}
-                className="text-primary inline-block font-semibold">
-                {letter === " " ? "\u00A0" : letter}
-              </motion.span>
-            </span>
+            <motion.span
+              key={i}
+              initial={{ y: "100%", opacity: 0 }}
+              animate={{
+                y: "0%",
+                opacity: 1,
+                transition: {
+                  type: "spring",
+                  stiffness: 250,
+                  damping: 25,
+                  delay: (letters.length - 1 - i) * 0.015 + 0.2
+                }
+              }}
+              exit={{
+                y: "-80%",
+                opacity: 0,
+                transition: {
+                  duration: 0.15,
+                  delay: i * 0.01
+                }
+              }}
+              className="text-primary inline-block font-semibold">
+              {letter === " " ? "\u00A0" : letter}
+            </motion.span>
           ))}
         </motion.span>
       </AnimatePresence>
 
-      <motion.span
-        className="bg-secondary absolute bottom-0 left-0 h-0.5"
-        style={{ width: underlineSpring }}
-      />
-    </span>
+      <motion.span className="bg-secondary absolute bottom-0 left-0 h-0.5" style={{ width: widthSpring }} />
+    </motion.span>
   )
 }
 
