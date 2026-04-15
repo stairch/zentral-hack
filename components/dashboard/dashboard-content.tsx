@@ -21,6 +21,7 @@ import {
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { TeamFilesComponent } from "@/components/team-files"
+import { BrandMark } from "@/components/brand-mark"
 
 interface DashboardData {
   profile: {
@@ -138,9 +139,8 @@ export function DashboardContent() {
       {/* Header */}
       <header className="border-border bg-card border-b">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <Link href="/" className="text-xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
-            <span className="text-[#530A5D]">ZENTRAL</span>{" "}
-            <span className="bg-[#530A5D] px-2 text-[#E6FF17]">HACK</span>
+          <Link href="/" className="inline-block" aria-label="Zentral Hack Startseite">
+            <BrandMark className="w-32 sm:w-36" imageClassName="drop-shadow-sm" priority />
           </Link>
           <div className="flex items-center gap-3">
             {(user?.role === "admin" || user?.role === "category_partner") && (

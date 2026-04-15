@@ -45,10 +45,8 @@ const textColor = "#222222"
 const mutedTextColor = "#5f5a68"
 const borderColor = "#ece7f5"
 
-function brandWordmark(): string {
-  return `<p style="margin:0;font-size:22px;font-weight:800;letter-spacing:0.08em;font-family:'Space Grotesk','Inter','Segoe UI',Arial,sans-serif;line-height:1.1;">
-    <span style="color:#ffffff;">ZENTRAL</span> <span style="color:${accentColor};">HACK</span>
-  </p>`
+function brandWordmark(baseUrl: string): string {
+  return `<img src="${escapeHtml(baseUrl)}/branding/logo-light.svg" alt="Zentral Hack" width="150" style="display:block;width:150px;max-width:100%;height:auto;border:0;outline:none;text-decoration:none;" />`
 }
 
 function ctaButton(text: string, url: string): string {
@@ -63,12 +61,12 @@ function ctaButton(text: string, url: string): string {
   </table>`
 }
 
-function topBanner(label: string): string {
+function topBanner(label: string, baseUrl: string): string {
   return `<tr>
     <td style="padding:0 32px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${brandColor};border-radius:16px 16px 0 0;overflow:hidden;">
         <tr>
-          <td style="padding:26px 26px 14px;">${brandWordmark()}</td>
+          <td style="padding:26px 26px 14px;">${brandWordmark(baseUrl)}</td>
           <td align="right" style="padding:26px 26px 14px 10px;">
             <span style="display:inline-block;background:rgba(230,255,23,0.14);border:1px solid rgba(230,255,23,0.42);border-radius:999px;padding:6px 12px;color:${accentColor};font-size:11px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;font-family:'Inter','Segoe UI',Arial,sans-serif;">${escapeHtml(label)}</span>
           </td>
@@ -127,7 +125,7 @@ function wrapLayout({
     <tr>
       <td align="center" style="padding:34px 16px;">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
-          ${topBanner(label)}
+          ${topBanner(label, baseUrl)}
           <tr>
             <td style="padding:0 32px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${cardColor};border:1px solid ${borderColor};border-top:none;border-radius:0 0 16px 16px;overflow:hidden;">

@@ -7,6 +7,8 @@ import { ArrowRight, Calendar, MapPin } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
+import { BrandMark } from "@/components/brand-mark"
+import { BrandMountain } from "@/components/brand-mountain"
 
 const copy = {
   de: {
@@ -60,68 +62,6 @@ function FloatingParticle({
         ease: "easeOut"
       }}
     />
-  )
-}
-
-function AnimatedMountain() {
-  return (
-    <motion.svg
-      viewBox="0 0 800 400"
-      className="mx-auto h-auto w-full max-w-4xl"
-      initial="hidden"
-      animate="visible">
-      {/* Background mountain - light violet */}
-      <motion.path
-        d="M0 400 L200 150 L400 300 L600 100 L800 400 Z"
-        fill="#D5C2F7"
-        variants={{
-          hidden: { pathLength: 0, opacity: 0 },
-          visible: {
-            pathLength: 1,
-            opacity: 1,
-            transition: { duration: 1.5, ease: "easeOut" }
-          }
-        }}
-      />
-      {/* Foreground mountain - violet */}
-      <motion.path
-        d="M100 400 L300 200 L500 350 L700 180 L800 400 Z"
-        fill="#530A5D"
-        variants={{
-          hidden: { pathLength: 0, opacity: 0 },
-          visible: {
-            pathLength: 1,
-            opacity: 1,
-            transition: { duration: 1.5, delay: 0.3, ease: "easeOut" }
-          }
-        }}
-      />
-      {/* Accent peaks - yellow */}
-      <motion.path
-        d="M280 200 L300 170 L320 200"
-        fill="#E6FF17"
-        variants={{
-          hidden: { scale: 0, opacity: 0 },
-          visible: {
-            scale: 1,
-            opacity: 1,
-            transition: { duration: 0.5, delay: 1.2, ease: "backOut" }
-          }
-        }}
-      />
-      <motion.path
-        d="M680 180 L700 150 L720 180"
-        fill="#E6FF17"
-        variants={{
-          hidden: { scale: 0, opacity: 0 },
-          visible: {
-            scale: 1,
-            opacity: 1,
-            transition: { duration: 0.5, delay: 1.4, ease: "backOut" }
-          }
-        }}
-      />
-    </motion.svg>
   )
 }
 
@@ -219,22 +159,18 @@ export function Hero() {
   }, [])
 
   return (
-    <section className="bg-background relative flex min-h-svh items-center justify-center overflow-hidden pt-16 md:min-h-screen md:pt-0">
-      {/* Animated background gradient */}
+    <section className="bg-background relative isolate flex min-h-svh items-center overflow-hidden pb-0 pt-16 md:min-h-screen md:pt-0">
       <motion.div
-        className="absolute inset-0 opacity-30"
+        className="absolute inset-0 opacity-35"
         style={{
-          background: "radial-gradient(ellipse at 50% 50%, #D5C2F7 0%, transparent 70%)"
+          background:
+            "radial-gradient(circle at 15% 20%, rgba(213, 194, 247, 0.7) 0%, transparent 36%), radial-gradient(circle at 85% 18%, rgba(230, 255, 23, 0.14) 0%, transparent 28%), radial-gradient(circle at 50% 60%, rgba(83, 10, 93, 0.12) 0%, transparent 48%)"
         }}
-        animate={{
-          scale: [1, 1.2, 1]
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
+        animate={{ scale: [1, 1.08, 1] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       />
+
+      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background via-background/90 to-transparent" />
 
       {/* Floating particles */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -244,8 +180,7 @@ export function Hero() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 text-center">
-        {/* Date badge */}
+      <div className="relative z-10 container mx-auto px-4 pb-10 text-center md:pb-14 lg:pb-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -255,26 +190,14 @@ export function Hero() {
           <span className="text-violet text-sm font-medium">{text.date}</span>
         </motion.div>
 
-        {/* Main title */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="font-display mb-4 text-6xl font-bold tracking-tight md:text-7xl lg:text-8xl">
-          <span className="text-violet">ZENTRAL</span>
-          <br />
-          <motion.span
-            className="text-yellow inline-block"
-            style={{ textShadow: "2px 2px 0px #530A5D" }}
-            animate={{
-              textShadow: ["2px 2px 0px #530A5D", "4px 4px 0px #530A5D", "2px 2px 0px #530A5D"]
-            }}
-            transition={{ duration: 2, repeat: Infinity }}>
-            HACK
-          </motion.span>
+          className="mb-4 flex justify-center">
+          <BrandMark className="w-52 sm:w-64 md:w-72 lg:w-80 xl:w-96" imageClassName="mx-auto" priority />
         </motion.h1>
 
-        {/* Year */}
         <motion.p
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -283,13 +206,11 @@ export function Hero() {
           2026
         </motion.p>
 
-        {/* Subtitle */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
           className="text-muted-foreground mx-auto mb-8 max-w-2xl text-center text-lg md:text-2xl">
-          {/* Mobile: stacked, Desktop: inline row */}
           <span className="md:hidden">
             <div className="leading-snug">{text.subtitleLinePre}</div>
             <div className="my-1 flex justify-center leading-snug">
@@ -304,7 +225,6 @@ export function Hero() {
           </span>
         </motion.div>
 
-        {/* Location */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -314,7 +234,6 @@ export function Hero() {
           <span>{text.location}</span>
         </motion.div>
 
-        {/* CTA Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -339,13 +258,16 @@ export function Hero() {
         </motion.div>
       </div>
 
-      {/* Animated Mountain Graphic */}
       <motion.div
-        className="pointer-events-none absolute right-0 bottom-0 left-0"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-0 flex justify-center translate-y-[38%] opacity-32 md:translate-y-[34%]"
         initial={{ opacity: 0, y: 100 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 0.5 }}>
-        <AnimatedMountain />
+        <BrandMountain
+          className="w-[min(118vw,1460px)] max-w-none"
+          imageClassName="mx-auto"
+          wide
+        />
       </motion.div>
     </section>
   )

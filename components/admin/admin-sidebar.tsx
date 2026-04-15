@@ -20,6 +20,7 @@ import {
   HelpCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { BrandMark } from "@/components/brand-mark"
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -50,9 +51,8 @@ export function AdminSidebar() {
     <>
       {/* Logo */}
       <div className="border-border border-b p-6">
-        <Link href="/" className="text-xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
-          <span className="text-[#530A5D]">ZENTRAL</span>{" "}
-          <span className="bg-[#530A5D] px-2 text-[#E6FF17]">HACK</span>
+        <Link href="/" className="inline-block" aria-label="Zentral Hack Startseite">
+          <BrandMark className="w-32" imageClassName="drop-shadow-sm" priority />
         </Link>
         <p className="text-muted-foreground mt-1 text-xs">Admin Panel</p>
       </div>
@@ -101,9 +101,8 @@ export function AdminSidebar() {
 
       {/* Mobile Header */}
       <header className="bg-card border-border fixed top-0 right-0 left-0 z-40 flex items-center justify-between border-b px-4 py-3 lg:hidden">
-        <Link href="/" className="text-lg font-bold" style={{ fontFamily: "var(--font-display)" }}>
-          <span className="text-[#530A5D]">ZENTRAL</span>{" "}
-          <span className="bg-[#530A5D] px-1 text-[#E6FF17]">HACK</span>
+        <Link href="/" className="inline-block" aria-label="Zentral Hack Startseite">
+          <BrandMark className="w-28" imageClassName="drop-shadow-sm" priority />
         </Link>
         <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
           {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
