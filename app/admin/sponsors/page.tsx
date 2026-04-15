@@ -80,7 +80,11 @@ function PublishDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="gap-1.5 text-xs">
+        <Button
+          disabled={contact.status != "confirmed"}
+          size="sm"
+          variant="outline"
+          className="gap-1.5 text-xs">
           <Globe className="h-3 w-3" />
           Veröffentlichen
         </Button>
@@ -238,13 +242,12 @@ export default function AdminSponsorsPage() {
   }
 
   const handleStatusUpdate = async (id: string, status: string) => {
-    // TODO
     try {
-      const res = await fetch(``, {
+      const res = await fetch(`/api/admin/sponsors`, {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ id, status })
       })
       if (res.ok) {
         setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c)))
