@@ -5,6 +5,7 @@ import { Github, Linkedin, Instagram, Mail } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { Emails } from "@/lib/constants"
+import { BrandMark } from "@/components/brand-mark"
 
 const footerLinks = {
   event: {
@@ -71,11 +72,10 @@ export function Footer() {
           {/* Logo & Description */}
           <div className="md:col-span-2">
             <motion.a
-              href="#"
-              className="font-display mb-4 inline-block text-2xl font-bold"
+              href="/"
+              className="mb-4 inline-block"
               whileHover={{ scale: 1.05 }}>
-              <span className="text-light-violet">ZENTRAL</span>
-              <span className="text-yellow">HACK</span>
+              <BrandMark className="w-32 sm:w-40" imageClassName="drop-shadow-sm" variant="light" priority />
             </motion.a>
             <p className="text-muted-foreground max-w-sm leading-relaxed">{text.description}</p>
 
