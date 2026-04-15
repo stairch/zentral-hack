@@ -41,10 +41,10 @@ The script will prompt for a new version number and validate it. Versions must f
 
 A deployment is created automatically whenever a tag is created that follows [Semantic Versioning](https://semver.org).
 
-| Deployment | URL                                                           | Tag Example                                   | Vercel Project                                                            | Environment    | Vercel Deployment Type |
-| ---------- | ------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------- | -------------- | ---------------------- |
-| Production | [zentralhack.ch](https://zentralhack.ch)                      | `1.0.0` (stable)                              | [prod-hack-zentral](https://vercel.com/stairs-projects/prod-hack-zentral) | Production     | Production (live)      |
-| Demo       | [project-7ly5q.vercel.app](https://project-7ly5q.vercel.app/) | `1.0.0-alpha.1`, `1.1.0-beta.5` (pre-release) | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development ⚠️ | Production (live) ⚠️   |
+| Deployment | URL                                                           | Vercel Project                                                            | Environment    | Vercel Deployment Type |
+| ---------- | ------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------- | ---------------------- |
+| Production | [zentralhack.ch](https://zentralhack.ch)                      | [prod-hack-zentral](https://vercel.com/stairs-projects/prod-hack-zentral) | Production     | Production (live)      |
+| Demo       | [project-7ly5q.vercel.app](https://project-7ly5q.vercel.app/) | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development ⚠️ | Production (live) ⚠️   |
 
 ###### For more information, see below
 
