@@ -8,7 +8,7 @@
     "start": "next start",
     "format": "prettier --write --list-different .",
     "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --composite false --incremental false",
-    "check": "rm -r .next; npm run format && npm run typecheck",
+    "check": "npm run format && npm run typecheck",
     "lint": "eslint .",
     "release": "node scripts/release.mjs"
   },
