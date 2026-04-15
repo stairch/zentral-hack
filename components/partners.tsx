@@ -6,7 +6,6 @@ import { motion, useInView } from "framer-motion"
 import { SponsorshipModal } from "./sponsorship-modal"
 import { sponsorPackages as fallbackSponsorPackages } from "@/lib/sponsorship-packages"
 import { useLanguage } from "@/lib/language-context"
-import { type Language } from "@/lib/language-context"
 import { Emails } from "@/lib/constants"
 
 interface SponsorPackage {

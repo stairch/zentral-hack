@@ -159,7 +159,7 @@ export function Hero() {
   }, [])
 
   return (
-    <section className="bg-background relative isolate flex min-h-svh items-center overflow-hidden pb-0 pt-16 md:min-h-screen md:pt-0">
+    <section className="bg-background relative isolate flex min-h-svh items-center overflow-hidden pt-16 pb-0 md:min-h-screen md:pt-0">
       <motion.div
         className="absolute inset-0 opacity-35"
         style={{
@@ -170,7 +170,7 @@ export function Hero() {
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background via-background/90 to-transparent" />
+      <div className="from-background via-background/90 absolute inset-x-0 top-0 h-24 bg-gradient-to-b to-transparent" />
 
       {/* Floating particles */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -265,15 +265,11 @@ export function Hero() {
       </div>
 
       <motion.div
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-0 flex justify-center translate-y-[38%] opacity-32 md:translate-y-[34%]"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-0 flex translate-y-[38%] justify-center opacity-32 md:translate-y-[34%]"
         initial={{ opacity: 0, y: 100 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 0.5 }}>
-        <BrandMountain
-          className="w-[min(118vw,1460px)] max-w-none"
-          imageClassName="mx-auto"
-          wide
-        />
+        <BrandMountain className="w-[min(118vw,1460px)] max-w-none" imageClassName="mx-auto" wide />
       </motion.div>
     </section>
   )

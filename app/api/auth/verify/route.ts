@@ -32,9 +32,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch user details from database
-    const result = await query("SELECT id, email, first_name, last_name, role, category_id FROM users WHERE id = $1", [
-      payload.userId
-    ])
+    const result = await query(
+      "SELECT id, email, first_name, last_name, role, category_id FROM users WHERE id = $1",
+      [payload.userId]
+    )
 
     console.log("[Verify] User query result:", result.rows.length > 0 ? "Found" : "Not found")
 

@@ -5,7 +5,11 @@ import { motion, useInView, useMotionValue, useSpring } from "framer-motion"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { categoryDisplayOrder, getCategoryPresentationByLanguage, type CategoryRecord } from "@/lib/category-config"
+import {
+  categoryDisplayOrder,
+  getCategoryPresentationByLanguage,
+  type CategoryRecord
+} from "@/lib/category-config"
 import { useLanguage } from "@/lib/language-context"
 
 interface DisplayCategory {
@@ -186,7 +190,9 @@ export function Categories() {
 
         setDisplayCategories(merged)
       } catch {
-        setDisplayCategories(categoryDisplayOrder.map((slug) => getCategoryPresentationByLanguage({ slug }, language)))
+        setDisplayCategories(
+          categoryDisplayOrder.map((slug) => getCategoryPresentationByLanguage({ slug }, language))
+        )
       }
     }
 
@@ -263,7 +269,7 @@ export function Categories() {
               <>
                 <div className="relative h-full min-h-0 bg-gradient-to-br from-[#530A5D] via-[#6F177A] to-[#E6FF17] p-[1px]">
                   <div
-                    className="relative h-full min-h-0 overflow-y-scroll overflow-x-hidden overscroll-contain rounded-[2px] bg-background/95 p-4 backdrop-blur-sm md:p-6"
+                    className="bg-background/95 relative h-full min-h-0 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-[2px] p-4 backdrop-blur-sm md:p-6"
                     style={{ scrollbarGutter: "stable" }}>
                     {!isChallengeBrowserOpen ? (
                       <div className="space-y-6">
@@ -281,7 +287,9 @@ export function Categories() {
 
                         <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
                           <div className="rounded-2xl border border-[#530A5D]/20 bg-[#530A5D]/5 p-4">
-                            <p className="mb-2 text-xs font-semibold tracking-wider text-[#530A5D] uppercase">{text.partner}</p>
+                            <p className="mb-2 text-xs font-semibold tracking-wider text-[#530A5D] uppercase">
+                              {text.partner}
+                            </p>
                             <p className="text-foreground font-semibold">{selectedCategory.partnerName}</p>
                           </div>
                           <Button
@@ -294,7 +302,7 @@ export function Categories() {
                         </div>
 
                         {availableChallenges.length === 0 ? (
-                          <div className="rounded-2xl border border-dashed p-5 text-sm text-muted-foreground">
+                          <div className="text-muted-foreground rounded-2xl border border-dashed p-5 text-sm">
                             {text.noChallengeAvailable}
                           </div>
                         ) : null}
@@ -303,17 +311,26 @@ export function Categories() {
                       <div className="space-y-5">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div>
-                            <p className="text-xs font-semibold tracking-wider text-[#530A5D] uppercase">{text.chooseChallenge}</p>
-                            <h3 className="font-display text-2xl font-bold text-[#530A5D]">{selectedCategory.title}</h3>
+                            <p className="text-xs font-semibold tracking-wider text-[#530A5D] uppercase">
+                              {text.chooseChallenge}
+                            </p>
+                            <h3 className="font-display text-2xl font-bold text-[#530A5D]">
+                              {selectedCategory.title}
+                            </h3>
                           </div>
-                          <Button type="button" variant="outline" onClick={() => setIsChallengeBrowserOpen(false)}>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsChallengeBrowserOpen(false)}>
                             {text.backToOverview}
                           </Button>
                         </div>
 
                         {availableChallenges.length > 0 ? (
                           <div className="space-y-3">
-                            <Select value={selectedChallenge?.id || ""} onValueChange={setSelectedChallengeId}>
+                            <Select
+                              value={selectedChallenge?.id || ""}
+                              onValueChange={setSelectedChallengeId}>
                               <SelectTrigger className="h-11 border-[#530A5D]/30 focus:ring-[#530A5D]/30">
                                 <SelectValue placeholder={text.chooseChallenge} />
                               </SelectTrigger>
@@ -347,7 +364,8 @@ export function Categories() {
                           </div>
                         ) : null}
 
-                        {hasChallenge && (selectedChallenge?.short_description || selectedCategory.challengeDescription) ? (
+                        {hasChallenge &&
+                        (selectedChallenge?.short_description || selectedCategory.challengeDescription) ? (
                           <div className="rounded-2xl border border-[#530A5D]/20 bg-[#530A5D]/5 p-4 md:p-5">
                             <p className="mb-2 text-xs font-semibold tracking-wider text-[#530A5D] uppercase">
                               {text.challengeDescription}
@@ -360,10 +378,16 @@ export function Categories() {
 
                         {hasChallenge && selectedData ? (
                           <div className="grid gap-4 md:grid-cols-2">
-                            <DetailBlock title="Problemstellung" value={String(selectedData.problemStatement || "")} />
+                            <DetailBlock
+                              title="Problemstellung"
+                              value={String(selectedData.problemStatement || "")}
+                            />
                             <DetailBlock title="Zielsetzung" value={String(selectedData.goal || "")} />
                             <div className="md:col-span-2">
-                              <DetailBlock title="Anforderungen" value={String(selectedData.mustRequirements || "")} />
+                              <DetailBlock
+                                title="Anforderungen"
+                                value={String(selectedData.mustRequirements || "")}
+                              />
                             </div>
                             <div className="md:col-span-2">
                               <DetailBlock
@@ -372,19 +396,34 @@ export function Categories() {
                               />
                             </div>
                             <div className="md:col-span-2">
-                              <DetailBlock title="Einschränkungen" value={String(selectedData.restrictions || "")} />
+                              <DetailBlock
+                                title="Einschränkungen"
+                                value={String(selectedData.restrictions || "")}
+                              />
                             </div>
                             <div className="md:col-span-2">
-                              <DetailBlock title="Ressourcen" value={String(selectedData.resources?.details || "")} />
+                              <DetailBlock
+                                title="Ressourcen"
+                                value={String(selectedData.resources?.details || "")}
+                              />
                             </div>
                             <div className="md:col-span-2">
-                              <DetailBlock title="Deliverables" value={String(selectedData.deliverables?.other || "")} />
+                              <DetailBlock
+                                title="Deliverables"
+                                value={String(selectedData.deliverables?.other || "")}
+                              />
                             </div>
                             <div className="md:col-span-2">
-                              <DetailBlock title="Bewertung" value={String(selectedData.evaluation?.criteria || "")} />
+                              <DetailBlock
+                                title="Bewertung"
+                                value={String(selectedData.evaluation?.criteria || "")}
+                              />
                             </div>
                             <div className="md:col-span-2">
-                              <DetailBlock title="Preise & Anreize" value={String(selectedData.prizes?.first || "")} />
+                              <DetailBlock
+                                title="Preise & Anreize"
+                                value={String(selectedData.prizes?.first || "")}
+                              />
                             </div>
                           </div>
                         ) : null}

@@ -218,7 +218,9 @@ export function AdminSponsorsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Sponsorpakete</CardTitle>
-          <CardDescription>Alle Felder inklusive Farbe, Reihenfolge und Benefits sind editierbar.</CardDescription>
+          <CardDescription>
+            Alle Felder inklusive Farbe, Reihenfolge und Benefits sind editierbar.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -234,14 +236,18 @@ export function AdminSponsorsPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="rounded-md border p-2 text-xs">Farbe: {pkg.color || "#530A5D"}</div>
-                  <div className="space-y-1 text-xs text-muted-foreground">
+                  <div className="text-muted-foreground space-y-1 text-xs">
                     {(pkg.benefits || []).slice(0, 3).map((benefit, index) => (
                       <p key={`${pkg.id}-${index}`}>- {benefit}</p>
                     ))}
                     {(pkg.benefits || []).length > 3 && <p>+ {(pkg.benefits || []).length - 3} weitere</p>}
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditDialog(pkg)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => openEditDialog(pkg)}>
                       <Edit2 className="mr-1 h-3 w-3" />
                       Bearbeiten
                     </Button>
@@ -272,12 +278,14 @@ export function AdminSponsorsPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <p className="font-semibold">{contact.company_name}</p>
-                      <p className="text-sm text-muted-foreground">{contact.contact_name} - {contact.email}</p>
+                      <p className="text-muted-foreground text-sm">
+                        {contact.contact_name} - {contact.email}
+                      </p>
                     </div>
                     <Badge variant="outline">{contact.status}</Badge>
                   </div>
                   {contact.interested_in ? (
-                    <p className="mt-2 text-sm text-muted-foreground">Paket: {contact.interested_in}</p>
+                    <p className="text-muted-foreground mt-2 text-sm">Paket: {contact.interested_in}</p>
                   ) : null}
                   {contact.message ? <p className="mt-2 text-sm">{contact.message}</p> : null}
                 </div>
@@ -296,7 +304,9 @@ export function AdminSponsorsPage() {
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{form.id ? "Sponsorpaket bearbeiten" : "Sponsorpaket erstellen"}</DialogTitle>
-            <DialogDescription>Alle Inhalte werden direkt auf der Sponsoring-Seite übernommen.</DialogDescription>
+            <DialogDescription>
+              Alle Inhalte werden direkt auf der Sponsoring-Seite übernommen.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -352,8 +362,13 @@ export function AdminSponsorsPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
-            <Button onClick={() => void savePackage()} disabled={saving} className="bg-[#530A5D] text-white hover:bg-[#3f0847]">
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Abbrechen
+            </Button>
+            <Button
+              onClick={() => void savePackage()}
+              disabled={saving}
+              className="bg-[#530A5D] text-white hover:bg-[#3f0847]">
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Speichern
             </Button>

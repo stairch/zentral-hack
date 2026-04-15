@@ -85,7 +85,9 @@ export const GET = withSponsorAuth(async (req: AuthenticatedRequest) => {
     const challenge = selectedRow
       ? {
           ...selectedRow,
-          challenge_data: normalizeSponsorChallengeData(selectedRow.challenge_data as SponsorChallengeData | null)
+          challenge_data: normalizeSponsorChallengeData(
+            selectedRow.challenge_data as SponsorChallengeData | null
+          )
         }
       : null
 

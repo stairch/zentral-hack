@@ -71,10 +71,7 @@ export function Navigation() {
         <nav className="container mx-auto flex h-16 items-center justify-between px-4">
           {/* Logo */}
           <Link href="/">
-            <motion.div
-              className="cursor-pointer"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}>
+            <motion.div className="cursor-pointer" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <BrandMark className="w-28 sm:w-32" imageClassName="drop-shadow-sm" priority />
             </motion.div>
           </Link>

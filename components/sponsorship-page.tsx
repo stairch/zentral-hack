@@ -43,11 +43,11 @@ export function SponsorshipPage() {
         const res = await fetch("/api/sponsor-contact")
         if (res.ok) {
           const data = await res.json()
-            const nextPackages = data.data?.packages || []
-            setPackages(nextPackages)
-            if (nextPackages.length > 0) {
-              setActivePackageId(nextPackages[0].id)
-            }
+          const nextPackages = data.data?.packages || []
+          setPackages(nextPackages)
+          if (nextPackages.length > 0) {
+            setActivePackageId(nextPackages[0].id)
+          }
         }
       } catch (error) {
         console.error("Failed to fetch packages:", error)
@@ -173,7 +173,9 @@ export function SponsorshipPage() {
             <CardContent>
               <ul className="grid gap-2 md:grid-cols-2">
                 {activePackage.benefits.map((benefit, idx) => (
-                  <li key={idx} className="flex items-start gap-2 rounded-md border border-[#530A5D]/10 bg-[#530A5D]/5 p-2">
+                  <li
+                    key={idx}
+                    className="flex items-start gap-2 rounded-md border border-[#530A5D]/10 bg-[#530A5D]/5 p-2">
                     <Check className="mt-0.5 h-4 w-4 flex-shrink-0" style={{ color: activePackage.color }} />
                     <span className="text-sm text-[#4f4760]">{benefit}</span>
                   </li>
@@ -277,7 +279,10 @@ export function SponsorshipPage() {
                   />
                 </div>
 
-                <Button type="submit" disabled={submitting} className="w-full bg-[#530A5D] hover:bg-[#3f0847]">
+                <Button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full bg-[#530A5D] hover:bg-[#3f0847]">
                   {submitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

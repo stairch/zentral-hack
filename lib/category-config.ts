@@ -222,7 +222,13 @@ export function getCategoryPresentationByLanguage(category: CategoryRecord, lang
 
   const localizedChallengeDescription =
     language === "en"
-      ? (category.challenge_short_description_en || category.challenge_description_en || category.challenge_short_description || category.challenge_description || "").trim()
+      ? (
+          category.challenge_short_description_en ||
+          category.challenge_description_en ||
+          category.challenge_short_description ||
+          category.challenge_description ||
+          ""
+        ).trim()
       : (category.challenge_short_description || category.challenge_description || "").trim()
 
   const challengeTitle =

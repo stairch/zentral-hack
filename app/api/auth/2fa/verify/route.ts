@@ -13,7 +13,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Find user by email
-    const userResult = await query("SELECT id, role, category_id FROM users WHERE email = $1", [email.toLowerCase()])
+    const userResult = await query("SELECT id, role, category_id FROM users WHERE email = $1", [
+      email.toLowerCase()
+    ])
 
     if (userResult.rows.length === 0) {
       return unauthorizedError()

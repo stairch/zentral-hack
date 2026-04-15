@@ -69,7 +69,13 @@ function CheckboxRow({
   )
 }
 
-export function SponsorChallengeEditor({ categoryName, categorySlug, categoryId, initialChallenge, onSaved }: SponsorChallengeEditorProps) {
+export function SponsorChallengeEditor({
+  categoryName,
+  categorySlug,
+  categoryId,
+  initialChallenge,
+  onSaved
+}: SponsorChallengeEditorProps) {
   const [formData, setFormData] = useState<SponsorChallengeData>(() => createEmptySponsorChallengeData())
   const [status, setStatus] = useState<"draft" | "published">("draft")
   const [saving, setSaving] = useState(false)
@@ -120,7 +126,8 @@ export function SponsorChallengeEditor({ categoryName, categorySlug, categoryId,
           difficulty: (selected.difficulty as SponsorChallengeData["difficulty"]) || normalized.difficulty,
           teamSize: selected.team_size || normalized.teamSize,
           challengeLanguage:
-            (selected.challenge_language as SponsorChallengeData["challengeLanguage"]) || normalized.challengeLanguage
+            (selected.challenge_language as SponsorChallengeData["challengeLanguage"]) ||
+            normalized.challengeLanguage
         })
       } else {
         setStatus("draft")
@@ -166,10 +173,12 @@ export function SponsorChallengeEditor({ categoryName, categorySlug, categoryId,
       logoNote: initialChallenge.logo_note || normalized.logoNote,
       challengeTitle: initialChallenge.challenge_title || normalized.challengeTitle,
       shortDescription: initialChallenge.short_description || normalized.shortDescription,
-      difficulty: (initialChallenge.difficulty as SponsorChallengeData["difficulty"]) || normalized.difficulty,
+      difficulty:
+        (initialChallenge.difficulty as SponsorChallengeData["difficulty"]) || normalized.difficulty,
       teamSize: initialChallenge.team_size || normalized.teamSize,
       challengeLanguage:
-        (initialChallenge.challenge_language as SponsorChallengeData["challengeLanguage"]) || normalized.challengeLanguage
+        (initialChallenge.challenge_language as SponsorChallengeData["challengeLanguage"]) ||
+        normalized.challengeLanguage
     })
   }, [initialChallenge, categoryId])
 
@@ -189,7 +198,10 @@ export function SponsorChallengeEditor({ categoryName, categorySlug, categoryId,
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      categorySpecific: { ...prev.categorySpecific, youngTalentsTargetAudience: e.target.value }
+                      categorySpecific: {
+                        ...prev.categorySpecific,
+                        youngTalentsTargetAudience: e.target.value
+                      }
                     }))
                   }
                   placeholder="z.B. 1. bis 3. Lehrjahr, Fachrichtung"
@@ -203,7 +215,10 @@ export function SponsorChallengeEditor({ categoryName, categorySlug, categoryId,
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      categorySpecific: { ...prev.categorySpecific, youngTalentsPrerequisiteKnowledge: e.target.value }
+                      categorySpecific: {
+                        ...prev.categorySpecific,
+                        youngTalentsPrerequisiteKnowledge: e.target.value
+                      }
                     }))
                   }
                   placeholder="z.B. Grundkenntnisse in Python"
@@ -228,7 +243,10 @@ export function SponsorChallengeEditor({ categoryName, categorySlug, categoryId,
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      categorySpecific: { ...prev.categorySpecific, youngTalentsLearningGoals: e.target.value }
+                      categorySpecific: {
+                        ...prev.categorySpecific,
+                        youngTalentsLearningGoals: e.target.value
+                      }
                     }))
                   }
                 />
@@ -418,7 +436,10 @@ export function SponsorChallengeEditor({ categoryName, categorySlug, categoryId,
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      categorySpecific: { ...prev.categorySpecific, campusInfrastructureProvidedBy: e.target.value }
+                      categorySpecific: {
+                        ...prev.categorySpecific,
+                        campusInfrastructureProvidedBy: e.target.value
+                      }
                     }))
                   }
                   placeholder="Unternehmen, HSLU, Gemeinsam"
@@ -598,19 +619,36 @@ export function SponsorChallengeEditor({ categoryName, categorySlug, categoryId,
             <div>
               <CardTitle className="flex items-center gap-2 text-2xl">
                 Deine Challenge
-                <Badge variant={isPublished ? "default" : "outline"} className={isPublished ? "bg-green-600" : ""}>
+                <Badge
+                  variant={isPublished ? "default" : "outline"}
+                  className={isPublished ? "bg-green-600" : ""}>
                   {isPublished ? "Veröffentlicht" : "Entwurf"}
                 </Badge>
               </CardTitle>
               <p className="text-muted-foreground mt-1 text-sm">{categoryName}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={() => saveChallenge("draft")} disabled={saving} className="gap-2">
-                {saving && status === "draft" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              <Button
+                variant="outline"
+                onClick={() => saveChallenge("draft")}
+                disabled={saving}
+                className="gap-2">
+                {saving && status === "draft" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
                 Entwurf speichern
               </Button>
-              <Button onClick={() => saveChallenge("published")} disabled={saving} className="gap-2 bg-[#530A5D] hover:bg-[#530A5D]/90">
-                {saving && status === "published" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              <Button
+                onClick={() => saveChallenge("published")}
+                disabled={saving}
+                className="gap-2 bg-[#530A5D] hover:bg-[#530A5D]/90">
+                {saving && status === "published" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
                 Veröffentlichen
               </Button>
             </div>
@@ -622,35 +660,69 @@ export function SponsorChallengeEditor({ categoryName, categorySlug, categoryId,
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="companyName">Unternehmensname</Label>
-            <Input id="companyName" value={formData.companyName} onChange={(e) => setFormData((prev) => ({ ...prev, companyName: e.target.value }))} />
+            <Input
+              id="companyName"
+              value={formData.companyName}
+              onChange={(e) => setFormData((prev) => ({ ...prev, companyName: e.target.value }))}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="branch">Branche</Label>
-            <Input id="branch" value={formData.branch} onChange={(e) => setFormData((prev) => ({ ...prev, branch: e.target.value }))} />
+            <Input
+              id="branch"
+              value={formData.branch}
+              onChange={(e) => setFormData((prev) => ({ ...prev, branch: e.target.value }))}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="contactName">Ansprechperson</Label>
-            <Input id="contactName" value={formData.contactName} onChange={(e) => setFormData((prev) => ({ ...prev, contactName: e.target.value }))} />
+            <Input
+              id="contactName"
+              value={formData.contactName}
+              onChange={(e) => setFormData((prev) => ({ ...prev, contactName: e.target.value }))}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="contactFunction">Funktion</Label>
-            <Input id="contactFunction" value={formData.contactFunction} onChange={(e) => setFormData((prev) => ({ ...prev, contactFunction: e.target.value }))} />
+            <Input
+              id="contactFunction"
+              value={formData.contactFunction}
+              onChange={(e) => setFormData((prev) => ({ ...prev, contactFunction: e.target.value }))}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="contactEmail">E-Mail</Label>
-            <Input id="contactEmail" type="email" value={formData.contactEmail} onChange={(e) => setFormData((prev) => ({ ...prev, contactEmail: e.target.value }))} />
+            <Input
+              id="contactEmail"
+              type="email"
+              value={formData.contactEmail}
+              onChange={(e) => setFormData((prev) => ({ ...prev, contactEmail: e.target.value }))}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="contactPhone">Telefon</Label>
-            <Input id="contactPhone" value={formData.contactPhone} onChange={(e) => setFormData((prev) => ({ ...prev, contactPhone: e.target.value }))} />
+            <Input
+              id="contactPhone"
+              value={formData.contactPhone}
+              onChange={(e) => setFormData((prev) => ({ ...prev, contactPhone: e.target.value }))}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="website">Website</Label>
-            <Input id="website" value={formData.website} onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))} />
+            <Input
+              id="website"
+              value={formData.website}
+              onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="logoNote">Logo</Label>
-            <Input id="logoNote" value={formData.logoNote} onChange={(e) => setFormData((prev) => ({ ...prev, logoNote: e.target.value }))} placeholder="PNG oder SVG separat beilegen" />
+            <Input
+              id="logoNote"
+              value={formData.logoNote}
+              onChange={(e) => setFormData((prev) => ({ ...prev, logoNote: e.target.value }))}
+              placeholder="PNG oder SVG separat beilegen"
+            />
           </div>
         </div>
       </SectionCard>
@@ -659,15 +731,28 @@ export function SponsorChallengeEditor({ categoryName, categorySlug, categoryId,
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="challengeTitle">Challenge-Titel</Label>
-            <Input id="challengeTitle" value={formData.challengeTitle} onChange={(e) => setFormData((prev) => ({ ...prev, challengeTitle: e.target.value }))} />
+            <Input
+              id="challengeTitle"
+              value={formData.challengeTitle}
+              onChange={(e) => setFormData((prev) => ({ ...prev, challengeTitle: e.target.value }))}
+            />
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="shortDescription">Kurzbeschreibung</Label>
-            <Textarea id="shortDescription" value={formData.shortDescription} onChange={(e) => setFormData((prev) => ({ ...prev, shortDescription: e.target.value }))} placeholder="Max. 2-3 Sätze für die Website" />
+            <Textarea
+              id="shortDescription"
+              value={formData.shortDescription}
+              onChange={(e) => setFormData((prev) => ({ ...prev, shortDescription: e.target.value }))}
+              placeholder="Max. 2-3 Sätze für die Website"
+            />
           </div>
           <div className="space-y-2">
             <Label>Schwierigkeitsgrad</Label>
-            <Select value={formData.difficulty} onValueChange={(value) => setFormData((prev) => ({ ...prev, difficulty: value as SponsorChallengeData["difficulty"] }))}>
+            <Select
+              value={formData.difficulty}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, difficulty: value as SponsorChallengeData["difficulty"] }))
+              }>
               <SelectTrigger>
                 <SelectValue placeholder="Wählen" />
               </SelectTrigger>
@@ -680,11 +765,23 @@ export function SponsorChallengeEditor({ categoryName, categorySlug, categoryId,
           </div>
           <div className="space-y-2">
             <Label htmlFor="teamSize">Empfohlene Teamgrösse</Label>
-            <Input id="teamSize" value={formData.teamSize} onChange={(e) => setFormData((prev) => ({ ...prev, teamSize: e.target.value }))} placeholder="z.B. 2-4 Personen" />
+            <Input
+              id="teamSize"
+              value={formData.teamSize}
+              onChange={(e) => setFormData((prev) => ({ ...prev, teamSize: e.target.value }))}
+              placeholder="z.B. 2-4 Personen"
+            />
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label>Sprache der Challenge</Label>
-            <Select value={formData.challengeLanguage} onValueChange={(value) => setFormData((prev) => ({ ...prev, challengeLanguage: value as SponsorChallengeData["challengeLanguage"] }))}>
+            <Select
+              value={formData.challengeLanguage}
+              onValueChange={(value) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  challengeLanguage: value as SponsorChallengeData["challengeLanguage"]
+                }))
+              }>
               <SelectTrigger>
                 <SelectValue placeholder="Wählen" />
               </SelectTrigger>
@@ -702,15 +799,30 @@ export function SponsorChallengeEditor({ categoryName, categorySlug, categoryId,
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="background">4.1 Hintergrund</Label>
-            <Textarea id="background" value={formData.background} onChange={(e) => setFormData((prev) => ({ ...prev, background: e.target.value }))} rows={5} />
+            <Textarea
+              id="background"
+              value={formData.background}
+              onChange={(e) => setFormData((prev) => ({ ...prev, background: e.target.value }))}
+              rows={5}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="problemStatement">4.2 Das Problem</Label>
-            <Textarea id="problemStatement" value={formData.problemStatement} onChange={(e) => setFormData((prev) => ({ ...prev, problemStatement: e.target.value }))} rows={5} />
+            <Textarea
+              id="problemStatement"
+              value={formData.problemStatement}
+              onChange={(e) => setFormData((prev) => ({ ...prev, problemStatement: e.target.value }))}
+              rows={5}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="goal">4.3 Zielsetzung</Label>
-            <Textarea id="goal" value={formData.goal} onChange={(e) => setFormData((prev) => ({ ...prev, goal: e.target.value }))} rows={4} />
+            <Textarea
+              id="goal"
+              value={formData.goal}
+              onChange={(e) => setFormData((prev) => ({ ...prev, goal: e.target.value }))}
+              rows={4}
+            />
           </div>
         </div>
       </SectionCard>
@@ -719,15 +831,33 @@ export function SponsorChallengeEditor({ categoryName, categorySlug, categoryId,
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="mustRequirements">5.1 MUSS-Anforderungen</Label>
-            <Textarea id="mustRequirements" value={formData.mustRequirements} onChange={(e) => setFormData((prev) => ({ ...prev, mustRequirements: e.target.value }))} rows={4} placeholder="Eine Anforderung pro Zeile" />
+            <Textarea
+              id="mustRequirements"
+              value={formData.mustRequirements}
+              onChange={(e) => setFormData((prev) => ({ ...prev, mustRequirements: e.target.value }))}
+              rows={4}
+              placeholder="Eine Anforderung pro Zeile"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="canRequirements">5.2 KANN-Anforderungen</Label>
-            <Textarea id="canRequirements" value={formData.canRequirements} onChange={(e) => setFormData((prev) => ({ ...prev, canRequirements: e.target.value }))} rows={4} placeholder="Bonus-Anforderungen" />
+            <Textarea
+              id="canRequirements"
+              value={formData.canRequirements}
+              onChange={(e) => setFormData((prev) => ({ ...prev, canRequirements: e.target.value }))}
+              rows={4}
+              placeholder="Bonus-Anforderungen"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="outOfScope">5.3 Nicht im Scope</Label>
-            <Textarea id="outOfScope" value={formData.outOfScope} onChange={(e) => setFormData((prev) => ({ ...prev, outOfScope: e.target.value }))} rows={4} placeholder="Was explizit nicht Teil der Lösung sein soll" />
+            <Textarea
+              id="outOfScope"
+              value={formData.outOfScope}
+              onChange={(e) => setFormData((prev) => ({ ...prev, outOfScope: e.target.value }))}
+              rows={4}
+              placeholder="Was explizit nicht Teil der Lösung sein soll"
+            />
           </div>
         </div>
       </SectionCard>
@@ -736,58 +866,214 @@ export function SponsorChallengeEditor({ categoryName, categorySlug, categoryId,
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="allowedTechnologies">6.1 Erlaubte Technologien / Vorgaben</Label>
-            <Textarea id="allowedTechnologies" value={formData.allowedTechnologies} onChange={(e) => setFormData((prev) => ({ ...prev, allowedTechnologies: e.target.value }))} rows={4} />
+            <Textarea
+              id="allowedTechnologies"
+              value={formData.allowedTechnologies}
+              onChange={(e) => setFormData((prev) => ({ ...prev, allowedTechnologies: e.target.value }))}
+              rows={4}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="restrictions">6.2 Einschränkungen</Label>
-            <Textarea id="restrictions" value={formData.restrictions} onChange={(e) => setFormData((prev) => ({ ...prev, restrictions: e.target.value }))} rows={4} />
+            <Textarea
+              id="restrictions"
+              value={formData.restrictions}
+              onChange={(e) => setFormData((prev) => ({ ...prev, restrictions: e.target.value }))}
+              rows={4}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="infrastructure">6.3 Infrastruktur / Umgebung</Label>
-            <Textarea id="infrastructure" value={formData.infrastructure} onChange={(e) => setFormData((prev) => ({ ...prev, infrastructure: e.target.value }))} rows={4} />
+            <Textarea
+              id="infrastructure"
+              value={formData.infrastructure}
+              onChange={(e) => setFormData((prev) => ({ ...prev, infrastructure: e.target.value }))}
+              rows={4}
+            />
           </div>
         </div>
       </SectionCard>
 
       <SectionCard title="Bereitgestellte Ressourcen">
         <div className="grid gap-3 md:grid-cols-2">
-          <CheckboxRow id="datasets" label="Datensätze / Daten" checked={formData.resources.datasets} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, resources: { ...prev.resources, datasets: value } }))} />
-          <CheckboxRow id="apis" label="APIs / Endpoints" checked={formData.resources.apis} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, resources: { ...prev.resources, apis: value } }))} />
-          <CheckboxRow id="documentation" label="Dokumentation" checked={formData.resources.documentation} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, resources: { ...prev.resources, documentation: value } }))} />
-          <CheckboxRow id="credentials" label="Zugangsdaten / Credentials" checked={formData.resources.credentials} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, resources: { ...prev.resources, credentials: value } }))} />
-          <CheckboxRow id="sdk" label="SDK / Libraries" checked={formData.resources.sdk} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, resources: { ...prev.resources, sdk: value } }))} />
-          <CheckboxRow id="hardware" label="Hardware" checked={formData.resources.hardware} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, resources: { ...prev.resources, hardware: value } }))} />
-          <CheckboxRow id="aiModels" label="KI-Modelle / LLMs" checked={formData.resources.aiModels} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, resources: { ...prev.resources, aiModels: value } }))} />
-          <CheckboxRow id="mentoringSupport" label="Mentoring-Support" checked={formData.resources.mentoringSupport} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, resources: { ...prev.resources, mentoringSupport: value } }))} />
+          <CheckboxRow
+            id="datasets"
+            label="Datensätze / Daten"
+            checked={formData.resources.datasets}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, datasets: value } }))
+            }
+          />
+          <CheckboxRow
+            id="apis"
+            label="APIs / Endpoints"
+            checked={formData.resources.apis}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, apis: value } }))
+            }
+          />
+          <CheckboxRow
+            id="documentation"
+            label="Dokumentation"
+            checked={formData.resources.documentation}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, documentation: value } }))
+            }
+          />
+          <CheckboxRow
+            id="credentials"
+            label="Zugangsdaten / Credentials"
+            checked={formData.resources.credentials}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, credentials: value } }))
+            }
+          />
+          <CheckboxRow
+            id="sdk"
+            label="SDK / Libraries"
+            checked={formData.resources.sdk}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, sdk: value } }))
+            }
+          />
+          <CheckboxRow
+            id="hardware"
+            label="Hardware"
+            checked={formData.resources.hardware}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, hardware: value } }))
+            }
+          />
+          <CheckboxRow
+            id="aiModels"
+            label="KI-Modelle / LLMs"
+            checked={formData.resources.aiModels}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, aiModels: value } }))
+            }
+          />
+          <CheckboxRow
+            id="mentoringSupport"
+            label="Mentoring-Support"
+            checked={formData.resources.mentoringSupport}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, mentoringSupport: value } }))
+            }
+          />
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="resourceDetails">Details / Zeiten</Label>
-            <Textarea id="resourceDetails" value={formData.resources.details} onChange={(e) => setFormData((prev) => ({ ...prev, resources: { ...prev.resources, details: e.target.value } }))} rows={3} />
+            <Textarea
+              id="resourceDetails"
+              value={formData.resources.details}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  resources: { ...prev.resources, details: e.target.value }
+                }))
+              }
+              rows={3}
+            />
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="resourceTimes">Zeiten</Label>
-            <Input id="resourceTimes" value={formData.resources.times} onChange={(e) => setFormData((prev) => ({ ...prev, resources: { ...prev.resources, times: e.target.value } }))} placeholder="Spätestens 1 Woche vor Event bereitstellen" />
+            <Input
+              id="resourceTimes"
+              value={formData.resources.times}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, resources: { ...prev.resources, times: e.target.value } }))
+              }
+              placeholder="Spätestens 1 Woche vor Event bereitstellen"
+            />
           </div>
         </div>
       </SectionCard>
 
       <SectionCard title="Erwartete Deliverables">
         <div className="grid gap-3 md:grid-cols-2">
-          <CheckboxRow id="prototype" label="Funktionierender Prototyp / Demo" checked={formData.deliverables.prototype} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, prototype: value } }))} />
-          <CheckboxRow id="pitch" label="Präsentation / Pitch" checked={formData.deliverables.pitch} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, pitch: value } }))} />
-          <CheckboxRow id="codeRepository" label="Code-Repository" checked={formData.deliverables.codeRepository} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, codeRepository: value } }))} />
-          <CheckboxRow id="readme" label="README / Dokumentation" checked={formData.deliverables.readme} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, readme: value } }))} />
-          <CheckboxRow id="video" label="Kurzvideo" checked={formData.deliverables.video} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, video: value } }))} />
+          <CheckboxRow
+            id="prototype"
+            label="Funktionierender Prototyp / Demo"
+            checked={formData.deliverables.prototype}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, prototype: value } }))
+            }
+          />
+          <CheckboxRow
+            id="pitch"
+            label="Präsentation / Pitch"
+            checked={formData.deliverables.pitch}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, pitch: value } }))
+            }
+          />
+          <CheckboxRow
+            id="codeRepository"
+            label="Code-Repository"
+            checked={formData.deliverables.codeRepository}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({
+                ...prev,
+                deliverables: { ...prev.deliverables, codeRepository: value }
+              }))
+            }
+          />
+          <CheckboxRow
+            id="readme"
+            label="README / Dokumentation"
+            checked={formData.deliverables.readme}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, readme: value } }))
+            }
+          />
+          <CheckboxRow
+            id="video"
+            label="Kurzvideo"
+            checked={formData.deliverables.video}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, video: value } }))
+            }
+          />
           <div className="space-y-2">
             <Label htmlFor="pitchFormat">Max. Folien / Min.</Label>
-            <Input id="pitchFormat" value={formData.deliverables.pitchFormat} onChange={(e) => setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, pitchFormat: e.target.value } }))} placeholder="z.B. 5 Folien / 3 Min." />
+            <Input
+              id="pitchFormat"
+              value={formData.deliverables.pitchFormat}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  deliverables: { ...prev.deliverables, pitchFormat: e.target.value }
+                }))
+              }
+              placeholder="z.B. 5 Folien / 3 Min."
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="videoLength">Max. Video-Minuten</Label>
-            <Input id="videoLength" value={formData.deliverables.videoLength} onChange={(e) => setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, videoLength: e.target.value } }))} placeholder="z.B. 2 Minuten" />
+            <Input
+              id="videoLength"
+              value={formData.deliverables.videoLength}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  deliverables: { ...prev.deliverables, videoLength: e.target.value }
+                }))
+              }
+              placeholder="z.B. 2 Minuten"
+            />
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="deliverableOther">Sonstiges</Label>
-            <Textarea id="deliverableOther" value={formData.deliverables.other} onChange={(e) => setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, other: e.target.value } }))} rows={3} />
+            <Textarea
+              id="deliverableOther"
+              value={formData.deliverables.other}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  deliverables: { ...prev.deliverables, other: e.target.value }
+                }))
+              }
+              rows={3}
+            />
           </div>
         </div>
       </SectionCard>
@@ -796,46 +1082,172 @@ export function SponsorChallengeEditor({ categoryName, categorySlug, categoryId,
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="evaluationCriteria">Kriterien</Label>
-            <Textarea id="evaluationCriteria" value={formData.evaluation.criteria} onChange={(e) => setFormData((prev) => ({ ...prev, evaluation: { ...prev.evaluation, criteria: e.target.value } }))} rows={8} />
+            <Textarea
+              id="evaluationCriteria"
+              value={formData.evaluation.criteria}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  evaluation: { ...prev.evaluation, criteria: e.target.value }
+                }))
+              }
+              rows={8}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="weightingNotes">Gewichtungs-Hinweise</Label>
-            <Textarea id="weightingNotes" value={formData.evaluation.weightingNotes} onChange={(e) => setFormData((prev) => ({ ...prev, evaluation: { ...prev.evaluation, weightingNotes: e.target.value } }))} rows={3} />
+            <Textarea
+              id="weightingNotes"
+              value={formData.evaluation.weightingNotes}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  evaluation: { ...prev.evaluation, weightingNotes: e.target.value }
+                }))
+              }
+              rows={3}
+            />
           </div>
         </div>
       </SectionCard>
 
       <SectionCard title="Preise & Anreize">
         <div className="space-y-4">
-          <div className="space-y-2"><Label htmlFor="prizeFirst">1. Platz</Label><Textarea id="prizeFirst" value={formData.prizes.first} onChange={(e) => setFormData((prev) => ({ ...prev, prizes: { ...prev.prizes, first: e.target.value } }))} rows={2} /></div>
-          <div className="space-y-2"><Label htmlFor="prizeSecond">2. Platz</Label><Textarea id="prizeSecond" value={formData.prizes.second} onChange={(e) => setFormData((prev) => ({ ...prev, prizes: { ...prev.prizes, second: e.target.value } }))} rows={2} /></div>
-          <div className="space-y-2"><Label htmlFor="prizeThird">3. Platz</Label><Textarea id="prizeThird" value={formData.prizes.third} onChange={(e) => setFormData((prev) => ({ ...prev, prizes: { ...prev.prizes, third: e.target.value } }))} rows={2} /></div>
-          <div className="space-y-2"><Label htmlFor="prizeSpecial">Sonderpreis</Label><Textarea id="prizeSpecial" value={formData.prizes.special} onChange={(e) => setFormData((prev) => ({ ...prev, prizes: { ...prev.prizes, special: e.target.value } }))} rows={2} /></div>
+          <div className="space-y-2">
+            <Label htmlFor="prizeFirst">1. Platz</Label>
+            <Textarea
+              id="prizeFirst"
+              value={formData.prizes.first}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, prizes: { ...prev.prizes, first: e.target.value } }))
+              }
+              rows={2}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="prizeSecond">2. Platz</Label>
+            <Textarea
+              id="prizeSecond"
+              value={formData.prizes.second}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, prizes: { ...prev.prizes, second: e.target.value } }))
+              }
+              rows={2}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="prizeThird">3. Platz</Label>
+            <Textarea
+              id="prizeThird"
+              value={formData.prizes.third}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, prizes: { ...prev.prizes, third: e.target.value } }))
+              }
+              rows={2}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="prizeSpecial">Sonderpreis</Label>
+            <Textarea
+              id="prizeSpecial"
+              value={formData.prizes.special}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, prizes: { ...prev.prizes, special: e.target.value } }))
+              }
+              rows={2}
+            />
+          </div>
         </div>
       </SectionCard>
 
-      <SectionCard title="Kategoriespezifische Ergänzungen">
-        {categorySpecificFields}
-      </SectionCard>
+      <SectionCard title="Kategoriespezifische Ergänzungen">{categorySpecificFields}</SectionCard>
 
       <SectionCard title="Datenschutz & Rechtliches">
         <div className="grid gap-3 md:grid-cols-2">
-          <CheckboxRow id="dataAnonymous" label="Alle bereitgestellten Daten sind anonymisiert oder frei verwendbar" checked={formData.legal.dataAnonymous} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, legal: { ...prev.legal, dataAnonymous: value } }))} />
-          <CheckboxRow id="noRestrictions" label="Es bestehen keine rechtlichen Einschränkungen für die Teilnahme" checked={formData.legal.noRestrictions} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, legal: { ...prev.legal, noRestrictions: value } }))} />
-          <CheckboxRow id="portfolioAllowed" label="Teams dürfen die Lösung nach dem Event im Portfolio verwenden" checked={formData.legal.portfolioAllowed} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, legal: { ...prev.legal, portfolioAllowed: value } }))} />
-          <CheckboxRow id="noSpecialIpRules" label="IP/Urheberrecht: keine Sonderregelungen" checked={formData.legal.noSpecialIpRules} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, legal: { ...prev.legal, noSpecialIpRules: value } }))} />
+          <CheckboxRow
+            id="dataAnonymous"
+            label="Alle bereitgestellten Daten sind anonymisiert oder frei verwendbar"
+            checked={formData.legal.dataAnonymous}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, legal: { ...prev.legal, dataAnonymous: value } }))
+            }
+          />
+          <CheckboxRow
+            id="noRestrictions"
+            label="Es bestehen keine rechtlichen Einschränkungen für die Teilnahme"
+            checked={formData.legal.noRestrictions}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, legal: { ...prev.legal, noRestrictions: value } }))
+            }
+          />
+          <CheckboxRow
+            id="portfolioAllowed"
+            label="Teams dürfen die Lösung nach dem Event im Portfolio verwenden"
+            checked={formData.legal.portfolioAllowed}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, legal: { ...prev.legal, portfolioAllowed: value } }))
+            }
+          />
+          <CheckboxRow
+            id="noSpecialIpRules"
+            label="IP/Urheberrecht: keine Sonderregelungen"
+            checked={formData.legal.noSpecialIpRules}
+            onCheckedChange={(value) =>
+              setFormData((prev) => ({ ...prev, legal: { ...prev.legal, noSpecialIpRules: value } }))
+            }
+          />
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="specialIpRules">Sonderregelungen bezüglich IP/Urheberrecht</Label>
-            <Textarea id="specialIpRules" value={formData.legal.specialIpRules} onChange={(e) => setFormData((prev) => ({ ...prev, legal: { ...prev.legal, specialIpRules: e.target.value } }))} rows={3} />
+            <Textarea
+              id="specialIpRules"
+              value={formData.legal.specialIpRules}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, legal: { ...prev.legal, specialIpRules: e.target.value } }))
+              }
+              rows={3}
+            />
           </div>
         </div>
       </SectionCard>
 
       <SectionCard title="Unterschrift & Einreichung">
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="space-y-2"><Label htmlFor="placeDate">Ort, Datum</Label><Input id="placeDate" value={formData.signature.placeDate} onChange={(e) => setFormData((prev) => ({ ...prev, signature: { ...prev.signature, placeDate: e.target.value } }))} /></div>
-          <div className="space-y-2"><Label htmlFor="signatureName">Name</Label><Input id="signatureName" value={formData.signature.name} onChange={(e) => setFormData((prev) => ({ ...prev, signature: { ...prev.signature, name: e.target.value } }))} /></div>
-          <div className="space-y-2"><Label htmlFor="signatureFunction">Funktion</Label><Input id="signatureFunction" value={formData.signature.function} onChange={(e) => setFormData((prev) => ({ ...prev, signature: { ...prev.signature, function: e.target.value } }))} /></div>
+          <div className="space-y-2">
+            <Label htmlFor="placeDate">Ort, Datum</Label>
+            <Input
+              id="placeDate"
+              value={formData.signature.placeDate}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  signature: { ...prev.signature, placeDate: e.target.value }
+                }))
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="signatureName">Name</Label>
+            <Input
+              id="signatureName"
+              value={formData.signature.name}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, signature: { ...prev.signature, name: e.target.value } }))
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="signatureFunction">Funktion</Label>
+            <Input
+              id="signatureFunction"
+              value={formData.signature.function}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  signature: { ...prev.signature, function: e.target.value }
+                }))
+              }
+            />
+          </div>
         </div>
       </SectionCard>
     </div>

@@ -46,9 +46,15 @@ export async function GET() {
           slug: row.slug,
           name: row.name || toText(fallbackPackage?.name) || "Paket",
           description: row.description || toText(fallbackPackage?.description) || "",
-          shortDescription: toText(fallbackPackage?.shortDescription) || row.description || "Sponsoring-Paket für den Zentral Hack",
+          shortDescription:
+            toText(fallbackPackage?.shortDescription) ||
+            row.description ||
+            "Sponsoring-Paket für den Zentral Hack",
           color: row.color || fallbackPackage?.color || "#530A5D",
-          benefits: Array.isArray(row.benefits) && row.benefits.length > 0 ? row.benefits : toTextArray(fallbackPackage?.benefits),
+          benefits:
+            Array.isArray(row.benefits) && row.benefits.length > 0
+              ? row.benefits
+              : toTextArray(fallbackPackage?.benefits),
           display_order: row.display_order
         }
       })

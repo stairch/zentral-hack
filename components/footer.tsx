@@ -71,10 +71,7 @@ export function Footer() {
         <div className="mb-12 grid gap-12 md:grid-cols-4">
           {/* Logo & Description */}
           <div className="md:col-span-2">
-            <motion.a
-              href="/"
-              className="mb-4 inline-block"
-              whileHover={{ scale: 1.05 }}>
+            <motion.a href="/" className="mb-4 inline-block" whileHover={{ scale: 1.05 }}>
               <BrandMark className="w-32 sm:w-40" imageClassName="drop-shadow-sm" variant="light" priority />
             </motion.a>
             <p className="text-muted-foreground max-w-sm leading-relaxed">{text.description}</p>

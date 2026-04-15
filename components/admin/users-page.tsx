@@ -337,7 +337,8 @@ export function UsersAdminPage() {
               {pendingRoleChange?.newRole === "sponsor" ? "Sponsor zuweisen" : "Kategorien-Admin zuweisen"}
             </DialogTitle>
             <DialogDescription>
-              Wähle die Kategorie, für die <strong>{pendingRoleChange?.userName}</strong> Rechte erhalten soll.
+              Wähle die Kategorie, für die <strong>{pendingRoleChange?.userName}</strong> Rechte erhalten
+              soll.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">

@@ -137,11 +137,13 @@ export function DashboardContent() {
       if (!res.ok) return
 
       const json = await res.json()
-      const categories = (json.data?.categories || []).map((category: { id: string; name: string; slug: string }) => ({
-        id: category.id,
-        name: category.name,
-        slug: category.slug
-      })) as CategoryOption[]
+      const categories = (json.data?.categories || []).map(
+        (category: { id: string; name: string; slug: string }) => ({
+          id: category.id,
+          name: category.name,
+          slug: category.slug
+        })
+      ) as CategoryOption[]
 
       setChallengeCategories(categories)
       if (categories.length === 0) {
@@ -151,7 +153,8 @@ export function DashboardContent() {
       }
 
       const preferredCategoryId =
-        (data?.profile?.category_id && categories.some((category) => category.id === data.profile?.category_id)
+        (data?.profile?.category_id &&
+        categories.some((category) => category.id === data.profile?.category_id)
           ? data.profile.category_id
           : categories[0]?.id) || ""
 
@@ -216,8 +219,11 @@ export function DashboardContent() {
   const isChallengeManager = isSponsor || isAdmin
   const showChallengeTab = isChallengeManager
   const showTeamTab = !isChallengeManager
-  const sponsorCategoryName = registration?.category?.name || profile?.category_slug?.replace(/-/g, " ") || "Deine Kategorie"
-  const selectedChallengeCategory = challengeCategories.find((category) => category.id === selectedChallengeCategoryId)
+  const sponsorCategoryName =
+    registration?.category?.name || profile?.category_slug?.replace(/-/g, " ") || "Deine Kategorie"
+  const selectedChallengeCategory = challengeCategories.find(
+    (category) => category.id === selectedChallengeCategoryId
+  )
   const challengeCategoryName = isAdmin ? selectedChallengeCategory?.name || "Kategorie" : sponsorCategoryName
   const challengeCategorySlug = isAdmin
     ? selectedChallengeCategory?.slug || "regional-impact"
@@ -297,7 +303,8 @@ export function DashboardContent() {
 
         {/* Main Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className={`grid w-full ${(showTeamTab || showChallengeTab) ? "grid-cols-3" : "grid-cols-2"} lg:inline-grid lg:w-auto`}>
+          <TabsList
+            className={`grid w-full ${showTeamTab || showChallengeTab ? "grid-cols-3" : "grid-cols-2"} lg:inline-grid lg:w-auto`}>
             <TabsTrigger value="profile" className="gap-2">
               <UserIcon className="h-4 w-4" />
               Profil
@@ -465,51 +472,51 @@ export function DashboardContent() {
           {/* Team Tab */}
           {showTeamTab && (
             <TabsContent value="team">
-            <Card>
-              <CardHeader>
-                <CardTitle>Dein Team</CardTitle>
-                <CardDescription>Informationen zu deinem Hackathon-Team</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {team ? (
-                  <div className="space-y-6">
-                    <div>
-                      <Label className="text-muted-foreground text-sm">Team-Name</Label>
-                      <p className="text-lg font-medium">{team.name}</p>
-                    </div>
-                    {team.description && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Dein Team</CardTitle>
+                  <CardDescription>Informationen zu deinem Hackathon-Team</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {team ? (
+                    <div className="space-y-6">
                       <div>
-                        <Label className="text-muted-foreground text-sm">Beschreibung</Label>
-                        <p>{team.description}</p>
+                        <Label className="text-muted-foreground text-sm">Team-Name</Label>
+                        <p className="text-lg font-medium">{team.name}</p>
                       </div>
-                    )}
-                    <div>
-                      <Label className="text-muted-foreground text-sm">Kategorie</Label>
-                      <p className="font-medium">{team.category.name}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground text-sm">Deine Rolle</Label>
-                      <Badge variant="outline">
-                        {team.member_role === "leader" ? "Team-Leader" : "Mitglied"}
-                      </Badge>
-                    </div>
+                      {team.description && (
+                        <div>
+                          <Label className="text-muted-foreground text-sm">Beschreibung</Label>
+                          <p>{team.description}</p>
+                        </div>
+                      )}
+                      <div>
+                        <Label className="text-muted-foreground text-sm">Kategorie</Label>
+                        <p className="font-medium">{team.category.name}</p>
+                      </div>
+                      <div>
+                        <Label className="text-muted-foreground text-sm">Deine Rolle</Label>
+                        <Badge variant="outline">
+                          {team.member_role === "leader" ? "Team-Leader" : "Mitglied"}
+                        </Badge>
+                      </div>
 
-                    {/* Team files & repos are shown in the documents tab */}
-                    <p className="text-muted-foreground text-sm">
-                      Team-Dokumente und GitHub-Repos findest du im Tab &quot;Dokumente&quot;
-                    </p>
-                  </div>
-                ) : (
-                  <div className="py-8 text-center">
-                    <Users className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-                    <p className="text-muted-foreground mb-2">Du bist noch keinem Team zugewiesen</p>
-                    <p className="text-muted-foreground text-sm">
-                      Teams werden während des Hackathons von den Admins erstellt
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      {/* Team files & repos are shown in the documents tab */}
+                      <p className="text-muted-foreground text-sm">
+                        Team-Dokumente und GitHub-Repos findest du im Tab &quot;Dokumente&quot;
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center">
+                      <Users className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+                      <p className="text-muted-foreground mb-2">Du bist noch keinem Team zugewiesen</p>
+                      <p className="text-muted-foreground text-sm">
+                        Teams werden während des Hackathons von den Admins erstellt
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
           )}
 

@@ -171,7 +171,8 @@ export function createEmptySponsorChallengeData(): SponsorChallengeData {
       other: ""
     },
     evaluation: {
-      criteria: "Innovation & Kreativität | 25 | Neuartigkeit, Originalität\nTechnische Umsetzung | 25 | Code-Qualität, Architektur\nProblemlösung & Relevanz | 20 | Löst die Challenge das definierte Problem?\nPräsentation & Pitch | 15 | Klarheit, Demo, Überzeugungskraft\nBusiness-Potenzial | 15 | Umsetzbarkeit, Skalierbarkeit",
+      criteria:
+        "Innovation & Kreativität | 25 | Neuartigkeit, Originalität\nTechnische Umsetzung | 25 | Code-Qualität, Architektur\nProblemlösung & Relevanz | 20 | Löst die Challenge das definierte Problem?\nPräsentation & Pitch | 15 | Klarheit, Demo, Überzeugungskraft\nBusiness-Potenzial | 15 | Umsetzbarkeit, Skalierbarkeit",
       weightingNotes: "Die Gewichtung muss gesamthaft 100% ergeben."
     },
     prizes: {
@@ -223,7 +224,9 @@ export function createEmptySponsorChallengeData(): SponsorChallengeData {
   }
 }
 
-export function normalizeSponsorChallengeData(value?: Partial<SponsorChallengeData> | null): SponsorChallengeData {
+export function normalizeSponsorChallengeData(
+  value?: Partial<SponsorChallengeData> | null
+): SponsorChallengeData {
   const empty = createEmptySponsorChallengeData()
   if (!value) {
     return empty
