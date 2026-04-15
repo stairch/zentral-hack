@@ -129,8 +129,9 @@ function RotatingText({ words }: { words: readonly string[] }) {
   const [index, setIndex] = useState(0)
   const [displayIndex, setDisplayIndex] = useState(0)
   const measureRef = useRef<HTMLSpanElement>(null)
-  const width = useMotionValue(0)
-  const widthSpring = useSpring(width, { stiffness: 120, damping: 18 })
+  const containerRef = useRef<HTMLSpanElement>(null)
+  const underlineWidth = useMotionValue(0)
+  const underlineSpring = useSpring(underlineWidth, { stiffness: 120, damping: 18 })
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -140,20 +141,30 @@ function RotatingText({ words }: { words: readonly string[] }) {
   }, [words])
 
   useEffect(() => {
-    if (measureRef.current) {
-      width.set(measureRef.current.offsetWidth + 5)
+    const doMeasure = () => {
+      if (measureRef.current && containerRef.current) {
+        const w = measureRef.current.getBoundingClientRect().width + 8
+        containerRef.current.style.width = `${w}px`
+        underlineWidth.set(w)
+      }
     }
-  }, [displayIndex, words])
+    const raf = requestAnimationFrame(() => {
+      if (document.fonts?.ready) {
+        document.fonts.ready.then(doMeasure)
+      } else {
+        doMeasure()
+      }
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [displayIndex, words, underlineWidth])
 
   const letters = words[displayIndex].split("")
 
   return (
-    <motion.span
-      className="relative inline-block overflow-hidden align-middle"
-      style={{ width: widthSpring, height: "1.3em" }}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: (letters.length - 1) * 0.02 }}>
+    <span
+      ref={containerRef}
+      className="relative inline-block align-middle"
+      style={{ height: "1.3em", transition: "width 200ms ease" }}>
       <span
         ref={measureRef}
         className="pointer-events-none invisible absolute font-semibold whitespace-nowrap"
@@ -166,36 +177,40 @@ function RotatingText({ words }: { words: readonly string[] }) {
           key={index}
           className="absolute inset-0 flex items-center justify-center whitespace-nowrap">
           {letters.map((letter, i) => (
-            <motion.span
-              key={i}
-              initial={{ y: "100%", opacity: 0 }}
-              animate={{
-                y: "0%",
-                opacity: 1,
-                transition: {
-                  type: "spring",
-                  stiffness: 250,
-                  damping: 25,
-                  delay: (letters.length - 1 - i) * 0.015 + 0.2
-                }
-              }}
-              exit={{
-                y: "-80%",
-                opacity: 0,
-                transition: {
-                  duration: 0.15,
-                  delay: i * 0.01
-                }
-              }}
-              className="text-primary inline-block font-semibold">
-              {letter === " " ? "\u00A0" : letter}
-            </motion.span>
+            <span key={i} className="inline-block overflow-hidden" style={{ height: "1.3em" }}>
+              <motion.span
+                initial={{ y: "100%", opacity: 0 }}
+                animate={{
+                  y: "0%",
+                  opacity: 1,
+                  transition: {
+                    type: "spring",
+                    stiffness: 250,
+                    damping: 25,
+                    delay: (letters.length - 1 - i) * 0.015 + 0.2
+                  }
+                }}
+                exit={{
+                  y: "-80%",
+                  opacity: 0,
+                  transition: {
+                    duration: 0.15,
+                    delay: i * 0.01
+                  }
+                }}
+                className="text-primary inline-block font-semibold">
+                {letter === " " ? "\u00A0" : letter}
+              </motion.span>
+            </span>
           ))}
         </motion.span>
       </AnimatePresence>
 
-      <motion.span className="bg-secondary absolute bottom-0 left-0 h-0.5" style={{ width: widthSpring }} />
-    </motion.span>
+      <motion.span
+        className="bg-secondary absolute bottom-0 left-0 h-0.5"
+        style={{ width: underlineSpring }}
+      />
+    </span>
   )
 }
 
@@ -219,7 +234,7 @@ export function Hero() {
   }, [])
 
   return (
-    <section className="bg-background relative flex min-h-screen items-center justify-center overflow-hidden">
+    <section className="bg-background relative flex min-h-svh items-center justify-center overflow-hidden pt-16 md:min-h-screen md:pt-0">
       {/* Animated background gradient */}
       <motion.div
         className="absolute inset-0 opacity-30"
@@ -288,10 +303,20 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
-          className="text-muted-foreground mx-auto mb-8 flex w-fit max-w-2xl items-center gap-2 text-xl leading-relaxed md:text-2xl">
-          <div>{text.subtitleLinePre}</div>
-          <RotatingText words={text.subtitleLineRotate} />
-          <div>{text.subtitleLinePost}</div>
+          className="text-muted-foreground mx-auto mb-8 max-w-2xl text-center text-lg md:text-2xl">
+          {/* Mobile: stacked, Desktop: inline row */}
+          <span className="md:hidden">
+            <div className="leading-snug">{text.subtitleLinePre}</div>
+            <div className="my-1 flex justify-center leading-snug">
+              <RotatingText words={text.subtitleLineRotate} />
+            </div>
+            <div className="leading-snug">{text.subtitleLinePost}</div>
+          </span>
+          <span className="hidden md:inline-flex md:items-center md:gap-2 md:leading-relaxed">
+            <span>{text.subtitleLinePre}</span>
+            <RotatingText words={text.subtitleLineRotate} />
+            <span>{text.subtitleLinePost}</span>
+          </span>
         </motion.div>
 
         {/* Location */}

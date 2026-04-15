@@ -4,7 +4,7 @@
  * Automates the release process for this package:
  *   1. Prompts for a new version and validates it against the current one
  *   2. Writes the new version to package.json
- *   3. Temporarily switches the local git user.email to the release email
+ *   3. Temporarily switches the local git user.email and remote URL with PAT to the release account
  *   4. Commits and pushes the version bump
  *   5. Creates an annotated git tag and pushes it
  *   6. Restores the previous local git user.email
@@ -13,9 +13,13 @@
 import { execSync } from "child_process"
 import { readFileSync, writeFileSync } from "fs"
 import { createInterface } from "readline"
+import { config } from "dotenv"
 
 // ─── Configuration ──────────────────────────────────────────────────────────
+config()
+
 const RELEASE_EMAIL = "45304902+ch-stair@users.noreply.github.com"
+const RELEASE_TOKEN = process.env.RELEASE_TOKEN
 // ────────────────────────────────────────────────────────────────────────────
 
 function run(cmd, opts = {}) {
@@ -84,6 +88,11 @@ function validateBump(current, next) {
 }
 
 async function main() {
+  if (!RELEASE_TOKEN) {
+    console.error("Error: RELEASE_TOKEN is not set. Add it to your .env file.")
+    process.exit(1)
+  }
+
   const pkg = JSON.parse(readFileSync("package.json", "utf-8"))
   const currentVersion = pkg.version
 
@@ -121,6 +130,10 @@ async function main() {
   run(`git config --local user.email "${RELEASE_EMAIL}"`)
   console.log(`✓ Git email set to: ${RELEASE_EMAIL}`)
 
+  const originalUrl = run("git remote get-url origin")
+  const authedUrl = originalUrl.replace("https://", `https://x-access-token:${RELEASE_TOKEN}@`)
+  run(`git remote set-url origin "${authedUrl}"`)
+
   try {
     run("git add package.json")
     run(`git commit -m "Bump version to v${newVersion}"`)
@@ -132,6 +145,9 @@ async function main() {
     run(`git push origin ${tag}`)
     console.log(`✓ Tag ${tag} pushed`)
   } finally {
+    run(`git remote set-url origin "${originalUrl}"`)
+    console.log(`✓ Remote URL restored`)
+
     if (previousEmail) {
       run(`git config --local user.email "${previousEmail}"`)
       console.log(`✓ Local git email setting restored (previous: ${previousEmail})`)

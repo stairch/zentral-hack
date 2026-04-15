@@ -1,24 +1,18 @@
 import type { Metadata, Viewport } from "next"
-import localFont from "next/font/local"
+import { Inter, Space_Grotesk } from "next/font/google"
 import { AuthProvider } from "@/lib/auth-context"
 import { LanguageProvider } from "@/lib/language-context"
 import { Toaster } from "sonner"
 import "./globals.css"
 
-const usual = localFont({
-  src: [
-    { path: "../public/fonts/usual/Light.otf", weight: "300", style: "normal" },
-    { path: "../public/fonts/usual/Light Italic.otf", weight: "300", style: "italic" },
-    { path: "../public/fonts/usual/Regular.otf", weight: "400", style: "normal" },
-    { path: "../public/fonts/usual/Italic.otf", weight: "400", style: "italic" },
-    { path: "../public/fonts/usual/Medium.otf", weight: "500", style: "normal" },
-    { path: "../public/fonts/usual/Medium Italic.otf", weight: "500", style: "italic" },
-    { path: "../public/fonts/usual/Bold.otf", weight: "700", style: "normal" },
-    { path: "../public/fonts/usual/Bold Italic.otf", weight: "700", style: "italic" },
-    { path: "../public/fonts/usual/ExtraBold.otf", weight: "800", style: "normal" },
-    { path: "../public/fonts/usual/ExtraBold Italic.otf", weight: "800", style: "italic" }
-  ],
-  variable: "--font-usual"
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter"
+})
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk"
 })
 
 export const metadata: Metadata = {
@@ -56,7 +50,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
-      <body className={`${usual.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
         <LanguageProvider>
           <AuthProvider>{children}</AuthProvider>
         </LanguageProvider>
