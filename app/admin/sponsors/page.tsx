@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { MessageSquare, Building2, User, Tag, Mail, Phone, Globe, Loader2 } from "lucide-react"
+import { isValidUrl } from "@/lib/helpers"
 // import { toast } from "sonner"
 
 interface SponsorContact {
@@ -31,23 +32,44 @@ interface SponsorContact {
   created_at: string
 }
 
-const STATUS_MAP: Record<string, { label: string; className: string }> = {
+// TODO: language
+const STATUS_BADGES: Record<string, { label: string; className: string }> = {
   new: { label: "Neu", className: "bg-blue-100 text-blue-800" },
   contacted: { label: "Kontaktiert", className: "bg-yellow-100 text-yellow-800" },
   confirmed: { label: "Bestätigt", className: "bg-green-100 text-green-800" },
-  rejected: { label: "Abgelehnt", className: "bg-red-100 text-red-800" }
+  rejected: { label: "Abgelehnt", className: "bg-red-100 text-red-800" },
+  published: { label: "Veröffentlicht", className: "bg-purple-100 text-purple-800" }
 }
 
-// TODO: von DB
-const TIER_OPTIONS = ["Platin", "Gold", "Silber", "Bronze"] as const
-const LOGO_SIZE_OPTIONS = ["small", "medium", "large"] as const
+// TODO: language
+const STATUS_OPTIONS: Record<string, string> = {
+  new: "Neu",
+  contacted: "Kontaktiert",
+  confirmed: "Bestätigt",
+  rejected: "Abgelehnt"
+}
+
+// TODO: language
+const TIER_OPTIONS: Record<string, string> = {
+  platin: "Platin",
+  gold: "Gold",
+  silber: "Silber",
+  bronze: "Bronze"
+}
+
+// TODO: language
+const LOGO_SIZE_OPTIONS: Record<string, string> = {
+  small: "Small",
+  medium: "Medium",
+  large: "Large"
+}
 
 interface PublishFormData {
   logoUrl: string
   websiteUrl: string
-  backgroundColor: string
+  logoBgColor: string | null
   logoSize: "small" | "medium" | "large"
-  tier: "Platin" | "Gold" | "Silber" | "Bronze"
+  tier: "platin" | "gold" | "silber" | "bronze"
 }
 
 function PublishDialog({
@@ -59,15 +81,41 @@ function PublishDialog({
 }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<Partial<Record<keyof PublishFormData, string>>>({})
   const [form, setForm] = useState<PublishFormData>({
     logoUrl: "",
     websiteUrl: "",
-    backgroundColor: "transparent",
+    logoBgColor: null,
     logoSize: "medium",
-    tier: (contact.interestedIn as PublishFormData["tier"]) ?? "Gold"
+    tier: contact.interestedIn as PublishFormData["tier"]
   })
 
+  useEffect(() => {
+    if (!open) {
+      setForm((f) => ({ ...f, tier: contact.interestedIn as PublishFormData["tier"] }))
+      setErrors({})
+    }
+  }, [open])
+
+  const validate = (): boolean => {
+    const newErrors: Partial<Record<keyof PublishFormData, string>> = {}
+
+    if (!form.logoUrl.trim()) {
+      newErrors.logoUrl = "Logo URL ist erforderlich"
+    } else if (!isValidUrl(form.logoUrl)) {
+      newErrors.logoUrl = "Ungültige URL"
+    }
+
+    if (form.websiteUrl && !isValidUrl(form.websiteUrl)) {
+      newErrors.websiteUrl = "Ungültige URL"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handlePublish = async () => {
+    if (!validate()) return
     setLoading(true)
     try {
       await onPublish(contact.id, form)
@@ -98,13 +146,18 @@ function PublishDialog({
         <div className="flex flex-col gap-4 py-2">
           {/* Logo URL */}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="logoUrl">Logo URL</Label>
+            <Label htmlFor="logoUrl">Logo URL *</Label>
             <Input
               id="logoUrl"
               placeholder="https://example.com/logo.png"
               value={form.logoUrl}
-              onChange={(e) => setForm((f) => ({ ...f, logoUrl: e.target.value }))}
+              className={errors.logoUrl ? "border-destructive" : ""}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, logoUrl: e.target.value }))
+                if (errors.logoUrl) setErrors((err) => ({ ...err, logoUrl: undefined }))
+              }}
             />
+            {errors.logoUrl && <p className="text-destructive text-xs">{errors.logoUrl}</p>}
           </div>
 
           {/* Website */}
@@ -114,8 +167,13 @@ function PublishDialog({
               id="websiteUrl"
               placeholder="https://example.com"
               value={form.websiteUrl}
-              onChange={(e) => setForm((f) => ({ ...f, websiteUrl: e.target.value }))}
+              className={errors.websiteUrl ? "border-destructive" : ""}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, websiteUrl: e.target.value }))
+                if (errors.websiteUrl) setErrors((err) => ({ ...err, websiteUrl: undefined }))
+              }}
             />
+            {errors.websiteUrl && <p className="text-destructive text-xs">{errors.websiteUrl}</p>}
           </div>
 
           {/* Background Color */}
@@ -125,21 +183,20 @@ function PublishDialog({
               <input
                 type="color"
                 id="bgColor"
-                value={form.backgroundColor === "transparent" ? "#ffffff" : form.backgroundColor}
-                onChange={(e) => setForm((f) => ({ ...f, backgroundColor: e.target.value }))}
+                value={form.logoBgColor === null ? "#ffffff" : form.logoBgColor}
+                onChange={(e) => setForm((f) => ({ ...f, logoBgColor: e.target.value }))}
                 className="border-input h-9 w-10 cursor-pointer rounded border p-0.5"
               />
               <Input
-                value={form.backgroundColor}
-                onChange={(e) => setForm((f) => ({ ...f, backgroundColor: e.target.value }))}
+                value={form.logoBgColor === null ? "transparent" : form.logoBgColor}
+                onChange={(e) => setForm((f) => ({ ...f, logoBgColor: e.target.value }))}
                 placeholder="transparent"
-                className="font-mono text-sm"
               />
               <Button
                 size="sm"
                 variant="ghost"
                 className="text-xs"
-                onClick={() => setForm((f) => ({ ...f, backgroundColor: "transparent" }))}>
+                onClick={() => setForm((f) => ({ ...f, logoBgColor: null }))}>
                 Reset
               </Button>
             </div>
@@ -156,9 +213,9 @@ function PublishDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {LOGO_SIZE_OPTIONS.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                  {Object.entries(LOGO_SIZE_OPTIONS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>
+                      {v}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -174,9 +231,9 @@ function PublishDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIER_OPTIONS.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
+                  {Object.entries(TIER_OPTIONS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>
+                      {v}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -189,7 +246,7 @@ function PublishDialog({
             <div
               className="flex items-center justify-center rounded-lg border border-dashed p-4"
               style={{
-                backgroundColor: form.backgroundColor === "transparent" ? undefined : form.backgroundColor
+                backgroundColor: form.logoBgColor === null ? undefined : form.logoBgColor
               }}>
               <img
                 src={form.logoUrl}
@@ -205,10 +262,7 @@ function PublishDialog({
           <Button variant="outline" onClick={() => setOpen(false)}>
             Abbrechen
           </Button>
-          <Button
-            onClick={handlePublish}
-            disabled={loading || !form.logoUrl || !form.websiteUrl}
-            className="gap-1.5">
+          <Button onClick={handlePublish} disabled={loading} className="gap-1.5">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
             Publizieren
           </Button>
@@ -258,15 +312,18 @@ export default function AdminSponsorsPage() {
   }
 
   const handlePublish = async (id: string, data: PublishFormData) => {
-    // TODO
-    const res = await fetch(``, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    })
-    if (res.ok) {
-      setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, status: "published" } : c)))
+    try {
+      const res = await fetch(`/api/admin/sponsors/publish`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...data })
+      })
+      if (res.ok) {
+        setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, status: "published" } : c)))
+      }
+    } catch {
+      // TODO: toast.error(...)
     }
   }
 
@@ -303,7 +360,7 @@ export default function AdminSponsorsPage() {
           ) : (
             <div className="flex flex-col gap-3">
               {contacts.map((contact) => {
-                const status = STATUS_MAP[contact.status] ?? {
+                const status = STATUS_BADGES[contact.status] ?? {
                   label: contact.status,
                   className: "bg-gray-100 text-gray-700"
                 }
@@ -377,9 +434,9 @@ export default function AdminSponsorsPage() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {Object.entries(STATUS_MAP).map(([value, { label }]) => (
-                              <SelectItem key={value} value={value} className="text-xs">
-                                {label}
+                            {Object.entries(STATUS_OPTIONS).map(([k, v]) => (
+                              <SelectItem key={k} value={k} className="text-xs">
+                                {v}
                               </SelectItem>
                             ))}
                           </SelectContent>
