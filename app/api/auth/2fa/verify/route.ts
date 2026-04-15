@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find user by email
-    const userResult = await query("SELECT id, role FROM users WHERE email = $1", [email.toLowerCase()])
+    const userResult = await query("SELECT id, role, category_id FROM users WHERE email = $1", [email.toLowerCase()])
 
     if (userResult.rows.length === 0) {
       return unauthorizedError()
@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       email,
       role: user.role,
+      categoryId: user.category_id || undefined,
       twoFaVerified: true
     }
 
@@ -57,7 +58,8 @@ export async function POST(request: NextRequest) {
       user: {
         id: user.id,
         email,
-        role: user.role
+        role: user.role,
+        categoryId: user.category_id || null
       },
       message: "2FA verified successfully"
     })

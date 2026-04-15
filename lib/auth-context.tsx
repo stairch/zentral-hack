@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect } from "react"
 export interface User {
   id: string
   email: string
-  role: "user" | "category_partner" | "admin"
+  role: "user" | "category_partner" | "sponsor" | "admin"
   firstName?: string
   lastName?: string
 }

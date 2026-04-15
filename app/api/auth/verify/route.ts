@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch user details from database
-    const result = await query("SELECT id, email, first_name, last_name, role FROM users WHERE id = $1", [
+    const result = await query("SELECT id, email, first_name, last_name, role, category_id FROM users WHERE id = $1", [
       payload.userId
     ])
 
@@ -52,7 +52,8 @@ export async function GET(request: NextRequest) {
         email: user.email,
         firstName: user.first_name,
         lastName: user.last_name,
-        role: user.role
+        role: user.role,
+        categoryId: user.category_id || null
       },
       token
     })

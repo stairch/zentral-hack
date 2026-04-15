@@ -17,7 +17,7 @@ interface User {
   email: string
   first_name: string
   last_name: string
-  role: "user" | "category_partner" | "admin"
+  role: "user" | "category_partner" | "sponsor" | "admin"
   is_active: boolean
   category_name: string | null
   created_at: string
@@ -33,6 +33,10 @@ const roleBadgeMap: Record<string, { label: string; className: string }> = {
   category_partner: {
     label: "Kategorien-Admin",
     className: "bg-violet-600 text-white"
+  },
+  sponsor: {
+    label: "Sponsor",
+    className: "bg-[#530A5D] text-white"
   },
   user: { label: "Teilnehmer", className: "bg-gray-500 text-white" }
 }
@@ -83,7 +87,7 @@ export function UsersAdminPage() {
     const user = users.find((u) => u.id === userId)
     if (!user) return
 
-    if (newRole === "category_partner") {
+    if (newRole === "category_partner" || newRole === "sponsor") {
       setPendingRoleChange({
         userId,
         newRole,
@@ -158,6 +162,7 @@ export function UsersAdminPage() {
     total: users.length,
     admins: users.filter((u) => u.role === "admin").length,
     categoryPartners: users.filter((u) => u.role === "category_partner").length,
+    sponsors: users.filter((u) => u.role === "sponsor").length,
     participants: users.filter((u) => u.role === "user").length
   }
 
@@ -207,6 +212,15 @@ export function UsersAdminPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Sponsoren</CardTitle>
+            <UserCog className="h-4 w-4 text-[#530A5D]" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.sponsors}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Teilnehmer</CardTitle>
             <Users className="h-4 w-4 text-gray-500" />
           </CardHeader>
@@ -235,6 +249,7 @@ export function UsersAdminPage() {
             <SelectItem value="all">Alle Rollen</SelectItem>
             <SelectItem value="admin">Super Admin</SelectItem>
             <SelectItem value="category_partner">Kategorien-Admin</SelectItem>
+            <SelectItem value="sponsor">Sponsor</SelectItem>
             <SelectItem value="user">Teilnehmer</SelectItem>
           </SelectContent>
         </Select>
@@ -300,6 +315,7 @@ export function UsersAdminPage() {
                           <SelectContent>
                             <SelectItem value="admin">Super Admin</SelectItem>
                             <SelectItem value="category_partner">Kategorien-Admin</SelectItem>
+                            <SelectItem value="sponsor">Sponsor</SelectItem>
                             <SelectItem value="user">Teilnehmer</SelectItem>
                           </SelectContent>
                         </Select>
@@ -313,14 +329,15 @@ export function UsersAdminPage() {
         </CardContent>
       </Card>
 
-      {/* Category selection dialog for category_partner role */}
+      {/* Category selection dialog for category-linked roles */}
       <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Kategorien-Admin zuweisen</DialogTitle>
+            <DialogTitle>
+              {pendingRoleChange?.newRole === "sponsor" ? "Sponsor zuweisen" : "Kategorien-Admin zuweisen"}
+            </DialogTitle>
             <DialogDescription>
-              Wähle die Kategorie, für die <strong>{pendingRoleChange?.userName}</strong> Admin-Rechte
-              erhalten soll.
+              Wähle die Kategorie, für die <strong>{pendingRoleChange?.userName}</strong> Rechte erhalten soll.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">

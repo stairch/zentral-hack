@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
 import { verifyJWT } from "@/lib/auth"
+import { normalizeSponsorChallengeData, type SponsorChallengeData } from "@/lib/sponsor-challenge"
+import { isMissingTableError } from "@/lib/db-errors"
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,9 +21,11 @@ export async function GET(req: NextRequest) {
     // Fetch profile
     const profileResult = await query(
       `SELECT u.id, u.email, u.first_name, u.last_name, u.role,
+              u.category_id, c.slug as category_slug,
               p.university, p.study_program, p.semester, p.linkedin_url
        FROM users u
        LEFT JOIN profiles p ON u.id = p.user_id
+       LEFT JOIN categories c ON u.category_id = c.id
        WHERE u.id = $1`,
       [userId]
     )
@@ -101,7 +105,63 @@ export async function GET(req: NextRequest) {
       teamRepos = reposResult.rows
     }
 
-    // Fetch category documents (if registered)
+    const categoryContextId = registration?.category?.id || profile?.category_id || null
+
+    // Fetch sponsor challenge details for sponsor users
+    let sponsorChallenge: {
+      id: string
+      status: string
+      company_name: string | null
+      branch: string | null
+      contact_name: string | null
+      contact_function: string | null
+      contact_email: string | null
+      contact_phone: string | null
+      website: string | null
+      logo_note: string | null
+      challenge_title: string | null
+      short_description: string | null
+      difficulty: string | null
+      team_size: string | null
+      challenge_language: string | null
+      challenge_data: SponsorChallengeData
+      published_at: string | null
+      created_at: string
+      updated_at: string
+    } | null = null
+
+    if (profile?.role === "sponsor" && categoryContextId) {
+      try {
+        const sponsorChallengeResult = await query(
+          `SELECT id, status, company_name, branch, contact_name, contact_function,
+                  contact_email, contact_phone, website, logo_note,
+                  challenge_title, short_description, difficulty, team_size,
+                  challenge_language, challenge_data, published_at, created_at, updated_at
+           FROM sponsor_challenges
+           WHERE user_id = $1 OR category_id = $2
+           ORDER BY updated_at DESC
+           LIMIT 1`,
+          [userId, categoryContextId]
+        )
+
+        sponsorChallenge = sponsorChallengeResult.rows[0]
+          ? {
+              ...sponsorChallengeResult.rows[0],
+              challenge_data: normalizeSponsorChallengeData(
+                sponsorChallengeResult.rows[0].challenge_data as SponsorChallengeData | null
+              )
+            }
+          : null
+      } catch (error) {
+        if (!isMissingTableError(error, "sponsor_challenges")) {
+          throw error
+        }
+
+        sponsorChallenge = null
+      }
+    }
+
+    // Fetch category documents (if registered or sponsor challenge is linked to a category)
     let categoryDocuments: {
       id: string
       name: string
@@ -109,10 +169,10 @@ export async function GET(req: NextRequest) {
       file_path: string
       created_at: string
     }[] = []
-    if (registration) {
+    if (categoryContextId) {
       const catDocsResult = await query(
         "SELECT id, name, description, file_path, created_at FROM category_documents WHERE category_id = $1 ORDER BY created_at DESC",
-        [registration.category.id]
+        [categoryContextId]
       )
       categoryDocuments = catDocsResult.rows
     }
@@ -134,7 +194,8 @@ export async function GET(req: NextRequest) {
         teamFiles,
         teamRepos,
         categoryDocuments,
-        globalDocuments
+        globalDocuments,
+        sponsorChallenge
       }
     })
   } catch (error) {
