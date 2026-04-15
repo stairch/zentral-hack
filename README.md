@@ -4,6 +4,14 @@ The [release script](/scripts/release.mjs) automates versioning, tagging, and pu
 
 A deployment is created automatically, see [Deployment](#deployment)
 
+### Setup
+
+Create a `.env` file from `.env.example` in the project root if not already and add the GitHub PAT (see Bitwarden):
+
+```
+RELEASE_TOKEN=ghp_xxxxxxxxxxxx
+```
+
 ### Usage
 
 Run the release script with:
@@ -19,12 +27,13 @@ The script will prompt for a new version number and validate it. Versions must f
 1. Prompts for a new version and validates it
 2. Writes the new version to `package.json`
 3. Temporarily sets the local git `user.email` to the release email (STAIR GitHub E-Mail)
-4. Commits and pushes the version bump
-5. Creates an annotated git tag and pushes it
-6. Restores the previous local git `user.email`
+4. Temporarily authenticates as the STAIR release account via token
+5. Commits and pushes the version bump
+6. Creates an annotated git tag and pushes it
+7. Restores the previous local git `user.email` and remote URL
 
 > [!NOTE]
-> The release email is only set locally (`.git/config`) temporary and never affects your global git configuration.
+> The release email and token are only used temporarily during the script execution and never affect your global git configuration.
 
 ---
 
