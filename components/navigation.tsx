@@ -82,7 +82,7 @@ export function Navigation() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden items-center gap-8 md:flex">
+          <div className="hidden items-center gap-4 lg:flex xl:gap-8">
             {items.map((item, index) => (
               <motion.a
                 key={item.label}
@@ -140,7 +140,7 @@ export function Navigation() {
 
           {/* Mobile Menu Button */}
           <button
-            className="text-foreground cursor-pointer p-2 md:hidden"
+            className="text-foreground cursor-pointer p-2 lg:hidden"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label={text.toggleMenu}>
             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -156,7 +156,7 @@ export function Navigation() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="bg-background fixed inset-0 z-40 md:hidden">
+            className="bg-background fixed inset-0 z-40 lg:hidden">
             <div className="flex h-full flex-col items-center justify-center gap-8">
               {items.map((item, index) => (
                 <motion.a
