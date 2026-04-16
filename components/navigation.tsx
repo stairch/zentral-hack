@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
+import { BrandMark } from "@/components/brand-mark"
 
 const navItems = {
   de: [
@@ -70,14 +71,8 @@ export function Navigation() {
         <nav className="container mx-auto flex h-16 items-center justify-between px-4">
           {/* Logo */}
           <Link href="/">
-            <motion.div
-              className="font-display cursor-pointer text-xl font-bold"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}>
-              <span className="text-violet">ZENTRAL</span>
-              <span className="text-yellow" style={{ textShadow: "1px 1px 0px #530A5D" }}>
-                HACK
-              </span>
+            <motion.div className="cursor-pointer" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <BrandMark className="w-20" imageClassName="drop-shadow-sm" priority />
             </motion.div>
           </Link>
 

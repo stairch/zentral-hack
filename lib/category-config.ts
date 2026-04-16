@@ -36,6 +36,24 @@ export interface CategoryRecord {
   challenge_description?: string | null
   challenge_description_en?: string | null
   show_challenge_description?: boolean | null
+  challenge_title?: string | null
+  challenge_title_en?: string | null
+  challenge_short_description?: string | null
+  challenge_short_description_en?: string | null
+  challenge_status?: string | null
+  challenge_data?: Record<string, unknown> | null
+  challenges?: Array<{
+    id: string
+    title: string | null
+    short_description: string | null
+    challenge_data: Record<string, unknown> | null
+    difficulty: string | null
+    team_size: string | null
+    challenge_language: string | null
+    company_name: string | null
+    status: string | null
+    updated_at: string | null
+  }> | null
 }
 
 export const categoryIconMap: Record<CategoryIconName, LucideIcon> = {
@@ -204,13 +222,27 @@ export function getCategoryPresentationByLanguage(category: CategoryRecord, lang
 
   const localizedChallengeDescription =
     language === "en"
-      ? (category.challenge_description_en || category.challenge_description || "").trim()
-      : (category.challenge_description || "").trim()
+      ? (
+          category.challenge_short_description_en ||
+          category.challenge_description_en ||
+          category.challenge_short_description ||
+          category.challenge_description ||
+          ""
+        ).trim()
+      : (category.challenge_short_description || category.challenge_description || "").trim()
+
+  const challengeTitle =
+    language === "en"
+      ? (category.challenge_title_en || category.challenge_title || localizedTitle).trim()
+      : (category.challenge_title || localizedTitle).trim()
+
+  const publishedChallenges = Array.isArray(category.challenges) ? category.challenges : []
 
   return {
     id: category.id,
     slug: category.slug,
     title: localizedTitle,
+    challengeTitle,
     description: localizedDescription,
     partnerName: localizedPartnerName,
     color,
@@ -218,6 +250,9 @@ export function getCategoryPresentationByLanguage(category: CategoryRecord, lang
     icon: categoryIconMap[iconName],
     iconName,
     challengeDescription: localizedChallengeDescription,
-    showChallengeDescription: Boolean(category.show_challenge_description)
+    showChallengeDescription: Boolean(category.show_challenge_description),
+    challengeStatus: category.challenge_status || null,
+    challengeData: category.challenge_data || null,
+    challenges: publishedChallenges
   }
 }

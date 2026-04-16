@@ -25,6 +25,7 @@ export function SponsorshipPage() {
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [selectedPackage, setSelectedPackage] = useState<string>("")
+  const [activePackageId, setActivePackageId] = useState<string>("")
   const [formData, setFormData] = useState({
     companyName: "",
     contactName: "",
@@ -42,7 +43,11 @@ export function SponsorshipPage() {
         const res = await fetch("/api/sponsor-contact")
         if (res.ok) {
           const data = await res.json()
-          setPackages(data.data?.packages || [])
+          const nextPackages = data.data?.packages || []
+          setPackages(nextPackages)
+          if (nextPackages.length > 0) {
+            setActivePackageId(nextPackages[0].id)
+          }
         }
       } catch (error) {
         console.error("Failed to fetch packages:", error)
@@ -104,15 +109,20 @@ export function SponsorshipPage() {
     )
   }
 
+  const activePackage = packages.find((pkg) => pkg.id === activePackageId) || null
+
   return (
-    <div className="min-h-screen px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-b from-[#f7f4fb] via-white to-[#f4f0fa] px-4 py-12">
       <div className="mx-auto max-w-6xl space-y-12">
         {/* Header */}
         <div className="space-y-4 text-center">
-          <h1 className="text-5xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
+          <span className="inline-flex rounded-full border border-[#530A5D]/20 bg-[#530A5D]/10 px-4 py-1 text-xs font-semibold tracking-[0.14em] text-[#530A5D] uppercase">
+            Partnerschaften
+          </span>
+          <h1 className="text-5xl font-bold text-[#1f1022]" style={{ fontFamily: "var(--font-display)" }}>
             SPONSORSHIP PACKAGES
           </h1>
-          <p className="text-muted-foreground text-xl">
+          <p className="mx-auto max-w-2xl text-xl text-[#4f4760]">
             Werde ein Teil des Zentral Hack 2026 und unterstütze Innovation
           </p>
         </div>
@@ -122,42 +132,61 @@ export function SponsorshipPage() {
           {packages.map((pkg) => (
             <Card
               key={pkg.id}
-              className={`cursor-pointer overflow-hidden transition-all ${
-                selectedPackage === pkg.name ? "ring-violet ring-2 ring-offset-2" : ""
+              className={`group cursor-pointer overflow-hidden border-0 bg-white/95 shadow-[0_10px_30px_rgba(83,10,93,0.08)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(83,10,93,0.14)] ${
+                activePackageId === pkg.id
+                  ? "ring-2 ring-[#530A5D] ring-offset-2"
+                  : "ring-1 ring-[#530A5D]/10"
               }`}
-              onClick={() => setSelectedPackage(pkg.name.toLowerCase())}>
-              <div className="h-1" style={{ backgroundColor: pkg.color }} />
-              <CardHeader>
-                <CardTitle className="text-2xl" style={{ color: pkg.color }}>
+              onClick={() => {
+                setActivePackageId(pkg.id)
+              }}>
+              <div className="h-3" style={{ backgroundColor: pkg.color }} />
+              <CardHeader className="items-center py-10 text-center">
+                <CardTitle className="text-3xl" style={{ color: pkg.color }}>
                   {pkg.name}
                 </CardTitle>
-                <CardDescription>{pkg.description}</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-2">
-                  {pkg.benefits.map((benefit, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
-                      <span className="text-muted-foreground text-sm">{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  variant={selectedPackage === pkg.name.toLowerCase() ? "default" : "outline"}
-                  className="w-full"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSelectedPackage(pkg.name.toLowerCase())
-                  }}>
-                  {selectedPackage === pkg.name.toLowerCase() ? "Ausgewählt" : "Auswählen"}
-                </Button>
-              </CardContent>
             </Card>
           ))}
         </div>
 
+        {activePackage ? (
+          <Card className="border border-[#530A5D]/15 bg-white/95 shadow-[0_14px_34px_rgba(83,10,93,0.12)]">
+            <div className="h-2" style={{ backgroundColor: activePackage.color }} />
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-2xl" style={{ color: activePackage.color }}>
+                    {activePackage.name}
+                  </CardTitle>
+                  <CardDescription className="mt-1 text-sm leading-relaxed text-[#5a536b]">
+                    {activePackage.description}
+                  </CardDescription>
+                </div>
+                <Button
+                  className="bg-[#530A5D] text-white hover:bg-[#3f0847]"
+                  onClick={() => setSelectedPackage(activePackage.name.toLowerCase())}>
+                  Dieses Paket anfragen
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ul className="grid gap-2 md:grid-cols-2">
+                {activePackage.benefits.map((benefit, idx) => (
+                  <li
+                    key={idx}
+                    className="flex items-start gap-2 rounded-md border border-[#530A5D]/10 bg-[#530A5D]/5 p-2">
+                    <Check className="mt-0.5 h-4 w-4 flex-shrink-0" style={{ color: activePackage.color }} />
+                    <span className="text-sm text-[#4f4760]">{benefit}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        ) : null}
+
         {/* Contact Form */}
-        <Card className="mx-auto max-w-2xl">
+        <Card className="mx-auto max-w-2xl border-0 bg-white/95 shadow-[0_14px_34px_rgba(83,10,93,0.12)]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5" />
@@ -250,7 +279,10 @@ export function SponsorshipPage() {
                   />
                 </div>
 
-                <Button type="submit" disabled={submitting} className="bg-violet hover:bg-violet/90 w-full">
+                <Button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full bg-[#530A5D] hover:bg-[#3f0847]">
                   {submitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -269,7 +301,7 @@ export function SponsorshipPage() {
         </Card>
 
         {/* Info Section */}
-        <Card className="from-violet/10 bg-gradient-to-r to-purple-400/10">
+        <Card className="border border-[#530A5D]/15 bg-gradient-to-r from-[#530A5D]/10 to-[#e6ff17]/20">
           <CardHeader>
             <CardTitle>Warum Zentral Hack sponsern?</CardTitle>
           </CardHeader>

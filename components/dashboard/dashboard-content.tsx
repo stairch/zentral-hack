@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -21,6 +22,9 @@ import {
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { TeamFilesComponent } from "@/components/team-files"
+import { BrandMark } from "@/components/brand-mark"
+import { SponsorChallengeEditor } from "@/components/dashboard/sponsor-challenge-editor"
+import { type SponsorChallengeRecord } from "@/lib/sponsor-challenge"
 
 interface DashboardData {
   profile: {
@@ -29,6 +33,8 @@ interface DashboardData {
     first_name: string | null
     last_name: string | null
     role: string
+    category_id: string | null
+    category_slug: string | null
     university: string | null
     study_program: string | null
     semester: number | null
@@ -81,6 +87,13 @@ interface DashboardData {
     file_path: string
     created_at: string
   }>
+  sponsorChallenge: SponsorChallengeRecord | null
+}
+
+interface CategoryOption {
+  id: string
+  name: string
+  slug: string
 }
 
 export function DashboardContent() {
@@ -89,10 +102,20 @@ export function DashboardContent() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [loggingOut, setLoggingOut] = useState(false)
+  const [challengeCategories, setChallengeCategories] = useState<CategoryOption[]>([])
+  const [selectedChallengeCategoryId, setSelectedChallengeCategoryId] = useState("")
+  const [adminChallenge, setAdminChallenge] = useState<SponsorChallengeRecord | null>(null)
+  const [loadingAdminChallenge, setLoadingAdminChallenge] = useState(false)
 
   useEffect(() => {
     fetchDashboardData()
   }, [])
+
+  useEffect(() => {
+    if (user?.role === "admin") {
+      void initializeAdminChallengeEditor()
+    }
+  }, [user?.role, data?.profile?.category_id])
 
   async function fetchDashboardData() {
     try {
@@ -105,6 +128,64 @@ export function DashboardContent() {
       console.error("Failed to fetch dashboard data:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function initializeAdminChallengeEditor() {
+    try {
+      const res = await fetch("/api/categories", { credentials: "include" })
+      if (!res.ok) return
+
+      const json = await res.json()
+      const categories = (json.data?.categories || []).map(
+        (category: { id: string; name: string; slug: string }) => ({
+          id: category.id,
+          name: category.name,
+          slug: category.slug
+        })
+      ) as CategoryOption[]
+
+      setChallengeCategories(categories)
+      if (categories.length === 0) {
+        setSelectedChallengeCategoryId("")
+        setAdminChallenge(null)
+        return
+      }
+
+      const preferredCategoryId =
+        (data?.profile?.category_id &&
+        categories.some((category) => category.id === data.profile?.category_id)
+          ? data.profile.category_id
+          : categories[0]?.id) || ""
+
+      setSelectedChallengeCategoryId(preferredCategoryId)
+      if (preferredCategoryId) {
+        void fetchAdminChallenge(preferredCategoryId)
+      }
+    } catch (error) {
+      console.error("Failed to initialize admin challenge editor:", error)
+    }
+  }
+
+  async function fetchAdminChallenge(categoryId: string) {
+    setLoadingAdminChallenge(true)
+    try {
+      const res = await fetch(`/api/sponsor/challenge?categoryId=${encodeURIComponent(categoryId)}`, {
+        credentials: "include"
+      })
+
+      if (!res.ok) {
+        setAdminChallenge(null)
+        return
+      }
+
+      const json = await res.json()
+      setAdminChallenge((json.data?.challenge as SponsorChallengeRecord | null) || null)
+    } catch (error) {
+      console.error("Failed to fetch admin challenge:", error)
+      setAdminChallenge(null)
+    } finally {
+      setLoadingAdminChallenge(false)
     }
   }
 
@@ -132,15 +213,32 @@ export function DashboardContent() {
   const team = data?.team
   const categoryDocuments = data?.categoryDocuments || []
   const globalDocuments = data?.globalDocuments || []
+  const sponsorChallenge = data?.sponsorChallenge || null
+  const isAdmin = user?.role === "admin"
+  const isSponsor = user?.role === "sponsor"
+  const isChallengeManager = isSponsor || isAdmin
+  const showChallengeTab = isChallengeManager
+  const showTeamTab = !isChallengeManager
+  const sponsorCategoryName =
+    registration?.category?.name || profile?.category_slug?.replace(/-/g, " ") || "Deine Kategorie"
+  const selectedChallengeCategory = challengeCategories.find(
+    (category) => category.id === selectedChallengeCategoryId
+  )
+  const challengeCategoryName = isAdmin ? selectedChallengeCategory?.name || "Kategorie" : sponsorCategoryName
+  const challengeCategorySlug = isAdmin
+    ? selectedChallengeCategory?.slug || "regional-impact"
+    : registration?.category?.slug || profile?.category_slug || "regional-impact"
+  const challengeCategoryId = isAdmin
+    ? selectedChallengeCategoryId
+    : registration?.category?.id || profile?.category_id || undefined
 
   return (
     <main className="bg-background min-h-screen">
       {/* Header */}
       <header className="border-border bg-card border-b">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <Link href="/" className="text-xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
-            <span className="text-[#530A5D]">ZENTRAL</span>{" "}
-            <span className="bg-[#530A5D] px-2 text-[#E6FF17]">HACK</span>
+          <Link href="/" className="inline-block" aria-label="Zentral Hack Startseite">
+            <BrandMark className="w-32 sm:w-36" imageClassName="drop-shadow-sm" priority />
           </Link>
           <div className="flex items-center gap-3">
             {(user?.role === "admin" || user?.role === "category_partner") && (
@@ -168,7 +266,7 @@ export function DashboardContent() {
         </motion.div>
 
         {/* Registration Status */}
-        {registration ? (
+        {showTeamTab && registration ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -190,7 +288,7 @@ export function DashboardContent() {
               </CardContent>
             </Card>
           </motion.div>
-        ) : (
+        ) : showTeamTab ? (
           <Card className="mb-8 border-amber-200 bg-amber-50">
             <CardContent className="pt-6">
               <p className="text-amber-800">
@@ -201,11 +299,12 @@ export function DashboardContent() {
               </p>
             </CardContent>
           </Card>
-        )}
+        ) : null}
 
         {/* Main Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:inline-grid lg:w-auto">
+          <TabsList
+            className={`grid w-full ${showTeamTab || showChallengeTab ? "grid-cols-3" : "grid-cols-2"} lg:inline-grid lg:w-auto`}>
             <TabsTrigger value="profile" className="gap-2">
               <UserIcon className="h-4 w-4" />
               Profil
@@ -214,10 +313,18 @@ export function DashboardContent() {
               <FileText className="h-4 w-4" />
               Dokumente
             </TabsTrigger>
-            <TabsTrigger value="team" className="gap-2">
-              <Users className="h-4 w-4" />
-              Team
-            </TabsTrigger>
+            {showChallengeTab && (
+              <TabsTrigger value="challenge" className="gap-2">
+                <FolderOpen className="h-4 w-4" />
+                Challenges
+              </TabsTrigger>
+            )}
+            {showTeamTab && (
+              <TabsTrigger value="team" className="gap-2">
+                <Users className="h-4 w-4" />
+                Team
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Profile Tab */}
@@ -363,53 +470,116 @@ export function DashboardContent() {
           </TabsContent>
 
           {/* Team Tab */}
-          <TabsContent value="team">
-            <Card>
-              <CardHeader>
-                <CardTitle>Dein Team</CardTitle>
-                <CardDescription>Informationen zu deinem Hackathon-Team</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {team ? (
-                  <div className="space-y-6">
-                    <div>
-                      <Label className="text-muted-foreground text-sm">Team-Name</Label>
-                      <p className="text-lg font-medium">{team.name}</p>
-                    </div>
-                    {team.description && (
+          {showTeamTab && (
+            <TabsContent value="team">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Dein Team</CardTitle>
+                  <CardDescription>Informationen zu deinem Hackathon-Team</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {team ? (
+                    <div className="space-y-6">
                       <div>
-                        <Label className="text-muted-foreground text-sm">Beschreibung</Label>
-                        <p>{team.description}</p>
+                        <Label className="text-muted-foreground text-sm">Team-Name</Label>
+                        <p className="text-lg font-medium">{team.name}</p>
                       </div>
-                    )}
-                    <div>
-                      <Label className="text-muted-foreground text-sm">Kategorie</Label>
-                      <p className="font-medium">{team.category.name}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground text-sm">Deine Rolle</Label>
-                      <Badge variant="outline">
-                        {team.member_role === "leader" ? "Team-Leader" : "Mitglied"}
-                      </Badge>
-                    </div>
+                      {team.description && (
+                        <div>
+                          <Label className="text-muted-foreground text-sm">Beschreibung</Label>
+                          <p>{team.description}</p>
+                        </div>
+                      )}
+                      <div>
+                        <Label className="text-muted-foreground text-sm">Kategorie</Label>
+                        <p className="font-medium">{team.category.name}</p>
+                      </div>
+                      <div>
+                        <Label className="text-muted-foreground text-sm">Deine Rolle</Label>
+                        <Badge variant="outline">
+                          {team.member_role === "leader" ? "Team-Leader" : "Mitglied"}
+                        </Badge>
+                      </div>
 
-                    {/* Team files & repos are shown in the documents tab */}
-                    <p className="text-muted-foreground text-sm">
-                      Team-Dokumente und GitHub-Repos findest du im Tab &quot;Dokumente&quot;
-                    </p>
+                      {/* Team files & repos are shown in the documents tab */}
+                      <p className="text-muted-foreground text-sm">
+                        Team-Dokumente und GitHub-Repos findest du im Tab &quot;Dokumente&quot;
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center">
+                      <Users className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+                      <p className="text-muted-foreground mb-2">Du bist noch keinem Team zugewiesen</p>
+                      <p className="text-muted-foreground text-sm">
+                        Teams werden während des Hackathons von den Admins erstellt
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {/* Challenge Tab */}
+          {showChallengeTab && (
+            <TabsContent value="challenge">
+              <div className="space-y-4">
+                {isAdmin && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Challenge verwalten</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <Label htmlFor="challenge-category-select">Kategorie</Label>
+                        <Select
+                          value={selectedChallengeCategoryId}
+                          onValueChange={(value) => {
+                            setSelectedChallengeCategoryId(value)
+                            void fetchAdminChallenge(value)
+                          }}>
+                          <SelectTrigger id="challenge-category-select">
+                            <SelectValue placeholder="Kategorie wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {challengeCategories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {isAdmin && !selectedChallengeCategoryId ? (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <p className="text-muted-foreground">Keine Kategorie verfügbar oder ausgewählt.</p>
+                    </CardContent>
+                  </Card>
+                ) : loadingAdminChallenge ? (
+                  <div className="flex min-h-[160px] items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-[#530A5D]" />
                   </div>
                 ) : (
-                  <div className="py-8 text-center">
-                    <Users className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-                    <p className="text-muted-foreground mb-2">Du bist noch keinem Team zugewiesen</p>
-                    <p className="text-muted-foreground text-sm">
-                      Teams werden während des Hackathons von den Admins erstellt
-                    </p>
-                  </div>
+                  <SponsorChallengeEditor
+                    categoryName={challengeCategoryName}
+                    categorySlug={challengeCategorySlug}
+                    categoryId={challengeCategoryId}
+                    initialChallenge={isAdmin ? adminChallenge : sponsorChallenge}
+                    onSaved={(challenge) => {
+                      if (isAdmin) {
+                        setAdminChallenge(challenge)
+                      }
+                    }}
+                  />
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </main>

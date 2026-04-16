@@ -30,16 +30,16 @@ async function handlePut(req: AuthenticatedRequest) {
       return validationError("userId and role are required")
     }
 
-    const validRoles = ["user", "category_partner", "admin"]
+    const validRoles = ["user", "category_partner", "sponsor", "admin"]
     if (!validRoles.includes(role)) {
-      return validationError("Invalid role. Must be: user, category_partner, or admin")
+      return validationError("Invalid role. Must be: user, category_partner, sponsor, or admin")
     }
 
-    if (role === "category_partner" && !categoryId) {
-      return validationError("Category is required for category_partner role")
+    if ((role === "category_partner" || role === "sponsor") && !categoryId) {
+      return validationError("Category is required for category_partner and sponsor roles")
     }
 
-    const newCategoryId = role === "category_partner" ? categoryId : null
+    const newCategoryId = role === "category_partner" || role === "sponsor" ? categoryId : null
     await query("UPDATE users SET role = $1, category_id = $2, updated_at = NOW() WHERE id = $3", [
       role,
       newCategoryId,
@@ -48,6 +48,14 @@ async function handlePut(req: AuthenticatedRequest) {
     return successResponse({ message: "Role updated successfully" })
   } catch (error) {
     console.error("[Admin Users] PUT Error:", error)
+
+    const pgError = error as { code?: string; constraint?: string } | null
+    if (pgError?.code === "23514" && pgError?.constraint === "users_role_check") {
+      return validationError(
+        "Database role constraint not updated yet. Please run scripts/119_sponsor_role_constraint_fix.sql"
+      )
+    }
+
     return serverError("Failed to update role")
   }
 }
