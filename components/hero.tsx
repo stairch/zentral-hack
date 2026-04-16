@@ -159,7 +159,7 @@ export function Hero() {
   }, [])
 
   return (
-    <section className="bg-background relative isolate flex min-h-svh items-center overflow-hidden pt-16 pb-0 md:min-h-screen md:pt-0">
+    <section className="bg-background relative isolate min-h-svh overflow-hidden pt-16 sm:pb-70">
       <motion.div
         className="absolute inset-0 opacity-35"
         style={{
@@ -180,13 +180,13 @@ export function Hero() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 pb-10 text-center md:pb-14 lg:pb-16">
+      <div className="relative z-10 container mx-auto mt-14 px-4 pb-32 text-center sm:mt-40">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-4 flex flex-col items-center gap-4">
-          <div className="bg-light-violet/30 border-light-violet inline-flex items-center gap-2 rounded-full border px-4 py-2">
+          className="mb-4 flex flex-col items-center gap-8 sm:gap-10">
+          <div className="bg-light-violet/30 border-light-violet inline-flex items-center gap-2 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2">
             <Calendar className="text-violet h-4 w-4" />
             <span className="text-violet text-sm font-medium">{text.date}</span>
           </div>
@@ -197,8 +197,8 @@ export function Hero() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="flex justify-center">
             <BrandMark
-              className="w-52 sm:w-64 md:w-72 lg:w-80 xl:w-96"
-              imageClassName="mx-auto -translate-y-6 sm:-translate-y-7 md:-translate-y-8"
+              className="h-fit w-52 sm:w-64 md:w-72 lg:w-80 xl:w-96"
+              imageClassName="mx-auto"
               priority
             />
           </motion.h1>
@@ -265,11 +265,11 @@ export function Hero() {
       </div>
 
       <motion.div
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-0 flex translate-y-[38%] justify-center opacity-32 md:translate-y-[34%]"
+        className="pointer-events-none absolute inset-x-0 bottom-0 left-0 z-0 mx-auto flex max-w-3xl scale-120 justify-center opacity-32"
         initial={{ opacity: 0, y: 100 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 0.5 }}>
-        <BrandMountain className="w-[min(118vw,1460px)] max-w-none" imageClassName="mx-auto" wide />
+        <BrandMountain className="w-[min(118vw,1460px)]" imageClassName="mx-auto" wide />
       </motion.div>
     </section>
   )
