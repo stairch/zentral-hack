@@ -8,6 +8,7 @@ import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { BrandMark } from "@/components/brand-mark"
+import { BrandMountain } from "./brand-mountain"
 
 const navItems = {
   de: [
@@ -72,7 +73,7 @@ export function Navigation() {
           {/* Logo */}
           <Link href="/">
             <motion.div className="cursor-pointer" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <BrandMark className="w-28 sm:w-32" imageClassName="drop-shadow-sm" priority />
+              <BrandMark className="w-20" imageClassName="drop-shadow-sm" priority />
             </motion.div>
           </Link>
 
