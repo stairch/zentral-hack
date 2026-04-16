@@ -8,7 +8,6 @@ import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { BrandMark } from "@/components/brand-mark"
-import { BrandMountain } from "./brand-mountain"
 
 const navItems = {
   de: [
