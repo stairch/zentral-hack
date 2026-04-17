@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
@@ -33,6 +33,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { isValidUrl } from "@/lib/helpers"
+import { motion } from "framer-motion"
 
 type SponsorPackage = {
   id: string
@@ -113,6 +114,88 @@ interface PublishFormData {
   tier: "platin" | "gold" | "silber" | "bronze"
 }
 
+const PLACEHOLDER_SPONSORS = [
+  { name: "Sponsor A", logo: "https://placehold.co/120x40/e2e8f0/94a3b8?text=Sponsor A" },
+  { name: "Sponsor B", logo: "https://placehold.co/100x40/e2e8f0/94a3b8?text=Sponsor B" }
+]
+
+function PreviewMarqueeRow({
+  currentLogo,
+  currentBgColor,
+  currentLogoSize,
+  currentWebsite
+}: {
+  currentLogo: string
+  currentBgColor: string | null
+  currentLogoSize: "small" | "medium" | "large"
+  currentWebsite: string
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [containerWidth, setContainerWidth] = useState(0)
+
+  const logoSizeClass = currentLogoSize === "small" ? "w-16" : currentLogoSize === "medium" ? "w-24" : "w-36"
+
+  const allItems = [
+    ...PLACEHOLDER_SPONSORS,
+    { name: "current", logo: currentLogo, isCurrent: true },
+    ...PLACEHOLDER_SPONSORS,
+    { name: "current2", logo: currentLogo, isCurrent: true }
+  ]
+  const duplicatedItems = [...allItems, ...allItems, ...allItems]
+
+  useEffect(() => {
+    if (!ref.current) return
+    const observer = new ResizeObserver(() => {
+      if (ref.current) {
+        setContainerWidth(ref.current.scrollWidth / 2)
+      }
+    })
+    observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [currentLogo, currentLogoSize])
+
+  return (
+    <div className="relative overflow-hidden py-3">
+      <motion.div
+        ref={ref}
+        className="flex gap-6"
+        style={{ willChange: "transform" }}
+        animate={containerWidth ? { x: [0, -containerWidth] } : {}}
+        transition={{
+          x: { duration: 18, repeat: Infinity, ease: "linear", repeatType: "loop" }
+        }}>
+        {duplicatedItems.map((item, index) => {
+          const isCurrent = "isCurrent" in item && item.isCurrent
+          return (
+            <div
+              key={`preview-${item.name}-${index}`}
+              className="flex shrink-0 items-center rounded-lg px-6 py-3">
+              {isCurrent ? (
+                <a
+                  href={currentWebsite || "#"}
+                  className="rounded-xs p-1"
+                  style={{ backgroundColor: currentBgColor ?? undefined }}
+                  onClick={(e) => e.preventDefault()}>
+                  <img
+                    src={currentLogo}
+                    alt="Preview logo"
+                    className={`h-auto ${logoSizeClass}`}
+                    onError={(e) => (e.currentTarget.style.display = "none")}
+                  />
+                </a>
+              ) : (
+                <div className="bg-muted rounded-xs p-1">
+                  <img src={item.logo} alt={item.name} className="h-auto w-20 opacity-40" />
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </motion.div>
+    </div>
+  )
+}
+
 function PublishDialog({
   contact,
   onPublish
@@ -140,17 +223,14 @@ function PublishDialog({
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof PublishFormData, string>> = {}
-
     if (!form.logoUrl.trim()) {
       newErrors.logoUrl = "Logo URL ist erforderlich"
     } else if (!isValidUrl(form.logoUrl)) {
       newErrors.logoUrl = "Ungültige URL"
     }
-
     if (form.websiteUrl && !isValidUrl(form.websiteUrl)) {
       newErrors.websiteUrl = "Ungültige URL"
     }
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -171,7 +251,7 @@ function PublishDialog({
       <DialogTrigger asChild>
         {contact.status !== "published" && (
           <Button
-            disabled={contact.status != "confirmed"}
+            disabled={contact.status !== "confirmed"}
             size="sm"
             variant="outline"
             className="gap-1.5 text-xs">
@@ -180,136 +260,137 @@ function PublishDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Sponsor veröffentlichen</DialogTitle>
-          <DialogDescription>{contact.company_name} auf der Landing Page publizieren</DialogDescription>
-        </DialogHeader>
-
-        <div className="flex flex-col gap-4 py-2">
-          {/* Logo URL */}
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="logoUrl">Logo URL *</Label>
-            <Input
-              id="logoUrl"
-              placeholder="https://example.com/logo.png"
-              value={form.logoUrl}
-              className={errors.logoUrl ? "border-destructive" : ""}
-              onChange={(e) => {
-                setForm((f) => ({ ...f, logoUrl: e.target.value }))
-                if (errors.logoUrl) setErrors((err) => ({ ...err, logoUrl: undefined }))
-              }}
-            />
-            {errors.logoUrl && <p className="text-destructive text-xs">{errors.logoUrl}</p>}
-          </div>
-
-          {/* Website */}
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="websiteUrl">Website</Label>
-            <Input
-              id="websiteUrl"
-              placeholder="https://example.com"
-              value={form.websiteUrl}
-              className={errors.websiteUrl ? "border-destructive" : ""}
-              onChange={(e) => {
-                setForm((f) => ({ ...f, websiteUrl: e.target.value }))
-                if (errors.websiteUrl) setErrors((err) => ({ ...err, websiteUrl: undefined }))
-              }}
-            />
-            {errors.websiteUrl && <p className="text-destructive text-xs">{errors.websiteUrl}</p>}
-          </div>
-
-          {/* Background Color */}
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="bgColor">Hintergrundfarbe</Label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                id="bgColor"
-                value={form.logoBgColor === null ? "#ffffff" : form.logoBgColor}
-                onChange={(e) => setForm((f) => ({ ...f, logoBgColor: e.target.value }))}
-                className="border-input h-9 w-10 cursor-pointer rounded border p-0.5"
-              />
+      <DialogContent className="flex sm:max-w-lg">
+        <div className="w-full">
+          <DialogHeader>
+            <DialogTitle>Sponsor veröffentlichen</DialogTitle>
+            <DialogDescription>{contact.company_name} auf der Landing Page publizieren</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-2">
+            {/* Logo URL */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="logoUrl">Logo URL *</Label>
               <Input
-                value={form.logoBgColor === null ? "transparent" : form.logoBgColor}
-                onChange={(e) => setForm((f) => ({ ...f, logoBgColor: e.target.value }))}
-                placeholder="transparent"
+                id="logoUrl"
+                placeholder="https://example.com/logo.png"
+                value={form.logoUrl}
+                className={errors.logoUrl ? "border-destructive" : ""}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, logoUrl: e.target.value }))
+                  if (errors.logoUrl) setErrors((err) => ({ ...err, logoUrl: undefined }))
+                }}
               />
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-xs"
-                onClick={() => setForm((f) => ({ ...f, logoBgColor: null }))}>
-                Reset
-              </Button>
+              {errors.logoUrl && <p className="text-destructive text-xs">{errors.logoUrl}</p>}
             </div>
+
+            {/* Website */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="websiteUrl">Website</Label>
+              <Input
+                id="websiteUrl"
+                placeholder="https://example.com"
+                value={form.websiteUrl}
+                className={errors.websiteUrl ? "border-destructive" : ""}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, websiteUrl: e.target.value }))
+                  if (errors.websiteUrl) setErrors((err) => ({ ...err, websiteUrl: undefined }))
+                }}
+              />
+              {errors.websiteUrl && <p className="text-destructive text-xs">{errors.websiteUrl}</p>}
+            </div>
+
+            {/* Background Color */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="bgColor">Hintergrundfarbe</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  id="bgColor"
+                  value={form.logoBgColor === null ? "#ffffff" : form.logoBgColor}
+                  onChange={(e) => setForm((f) => ({ ...f, logoBgColor: e.target.value }))}
+                  className="border-input h-9 w-10 cursor-pointer rounded border p-0.5"
+                />
+                <Input
+                  value={form.logoBgColor === null ? "transparent" : form.logoBgColor}
+                  onChange={(e) => setForm((f) => ({ ...f, logoBgColor: e.target.value }))}
+                  placeholder="transparent"
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-xs"
+                  onClick={() => setForm((f) => ({ ...f, logoBgColor: null }))}>
+                  Reset
+                </Button>
+              </div>
+            </div>
+
+            {/* Logo Size + Tier */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label>Logo-Grösse</Label>
+                <Select
+                  value={form.logoSize}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, logoSize: v as PublishFormData["logoSize"] }))
+                  }>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(LOGO_SIZE_OPTIONS).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <Label>Tier</Label>
+                <Select
+                  value={form.tier}
+                  onValueChange={(v) => setForm((f) => ({ ...f, tier: v as PublishFormData["tier"] }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(TIER_OPTIONS).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {/* Marquee Preview */}
+            {form.logoUrl && (
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-muted-foreground text-xs">Vorschau</Label>
+                <div className="rounded-lg border">
+                  <PreviewMarqueeRow
+                    currentLogo={form.logoUrl}
+                    currentBgColor={form.logoBgColor}
+                    currentLogoSize={form.logoSize}
+                    currentWebsite={form.websiteUrl}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Logo Size + Tier in a row */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label>Logo-Grösse</Label>
-              <Select
-                value={form.logoSize}
-                onValueChange={(v) => setForm((f) => ({ ...f, logoSize: v as PublishFormData["logoSize"] }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(LOGO_SIZE_OPTIONS).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>
-                      {v}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label>Tier</Label>
-              <Select
-                value={form.tier}
-                onValueChange={(v) => setForm((f) => ({ ...f, tier: v as PublishFormData["tier"] }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(TIER_OPTIONS).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>
-                      {v}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Logo preview */}
-          {form.logoUrl && (
-            <div
-              className="flex items-center justify-center rounded-lg border border-dashed p-4"
-              style={{
-                backgroundColor: form.logoBgColor === null ? undefined : form.logoBgColor
-              }}>
-              <img
-                src={form.logoUrl}
-                alt="Logo-Vorschau"
-                className={form.logoSize === "small" ? "h-8" : form.logoSize === "medium" ? "h-12" : "h-16"}
-                onError={(e) => (e.currentTarget.style.display = "none")}
-              />
-            </div>
-          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Abbrechen
+            </Button>
+            <Button onClick={handlePublish} disabled={loading} className="gap-1.5">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+              Publizieren
+            </Button>
+          </DialogFooter>
         </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Abbrechen
-          </Button>
-          <Button onClick={handlePublish} disabled={loading} className="gap-1.5">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
-            Publizieren
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
