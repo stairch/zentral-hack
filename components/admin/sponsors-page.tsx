@@ -28,7 +28,8 @@ import {
   User,
   Mail,
   Tag,
-  Phone
+  Phone,
+  RotateCcw
 } from "lucide-react"
 import { toast } from "sonner"
 import { isValidUrl } from "@/lib/helpers"
@@ -168,14 +169,16 @@ function PublishDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          disabled={contact.status != "confirmed"}
-          size="sm"
-          variant="outline"
-          className="gap-1.5 text-xs">
-          <Globe className="h-3 w-3" />
-          Veröffentlichen
-        </Button>
+        {contact.status !== "published" && (
+          <Button
+            disabled={contact.status != "confirmed"}
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-xs">
+            <Globe className="h-3 w-3" />
+            Veröffentlichen
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -469,6 +472,7 @@ export function AdminSponsorsPage() {
         body: JSON.stringify({ id, status })
       })
       if (res.ok) {
+        // TODO: add toast
         setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c)))
       }
     } catch {
@@ -485,6 +489,7 @@ export function AdminSponsorsPage() {
         body: JSON.stringify({ id, ...data })
       })
       if (res.ok) {
+        // TODO: add toast
         setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, status: "published" } : c)))
       }
     } catch {
@@ -651,23 +656,36 @@ export function AdminSponsorsPage() {
                         </span>
                         <div className="flex items-center gap-2">
                           {/* Status updaten */}
-                          <Select
-                            value={contact.status}
-                            onValueChange={(v) => handleContactStatusUpdate(contact.id, v)}>
-                            <SelectTrigger className="h-7 w-auto gap-1 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.entries(STATUS_OPTIONS).map(([k, v]) => (
-                                <SelectItem key={k} value={k} className="text-xs">
-                                  {v}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          {contact.status != "published" && (
+                            <Select
+                              value={contact.status}
+                              onValueChange={(v) => handleContactStatusUpdate(contact.id, v)}>
+                              <SelectTrigger className="h-7 w-auto gap-1 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(STATUS_OPTIONS).map(([k, v]) => (
+                                  <SelectItem key={k} value={k} className="text-xs">
+                                    {v}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
 
-                          {/* Publish */}
-                          <PublishDialog contact={contact} onPublish={handleContactPublish} />
+                          {/* Publish related */}
+                          {contact.status === "published" ? (
+                            <Button
+                              onClick={() => handleContactStatusUpdate(contact.id, "confirmed")}
+                              size="sm"
+                              variant="destructive"
+                              className="gap-1.5 text-xs">
+                              <RotateCcw className="h-3 w-3" />
+                              Zurückziehen
+                            </Button>
+                          ) : (
+                            <PublishDialog contact={contact} onPublish={handleContactPublish} />
+                          )}
                         </div>
                       </div>
                     </div>
