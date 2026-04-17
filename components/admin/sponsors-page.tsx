@@ -115,8 +115,8 @@ interface PublishFormData {
 }
 
 const PLACEHOLDER_SPONSORS = [
-  { name: "Sponsor A", logo: "https://placehold.co/120x40/e2e8f0/94a3b8?text=Sponsor A" },
-  { name: "Sponsor B", logo: "https://placehold.co/100x40/e2e8f0/94a3b8?text=Sponsor B" }
+  { name: "Sponsor A", logo: "https://placehold.co/130x20/e2e8f0/94a3b8?text=Sponsor A" },
+  { name: "Sponsor B", logo: "https://placehold.co/110x35/e2e8f0/94a3b8?text=Sponsor B" }
 ]
 
 function PreviewMarqueeRow({
@@ -173,7 +173,7 @@ function PreviewMarqueeRow({
               {isCurrent ? (
                 <a
                   href={currentWebsite || "#"}
-                  className="rounded-xs p-1"
+                  className="rounded-xs"
                   style={{ backgroundColor: currentBgColor ?? undefined }}
                   onClick={(e) => e.preventDefault()}>
                   <img
