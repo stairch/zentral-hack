@@ -262,7 +262,7 @@ function PublishDialog({
         )}
       </DialogTrigger>
       <DialogContent className="flex sm:max-w-lg">
-        <div className="w-full">
+        <div className="flex w-full flex-col gap-5">
           <DialogHeader>
             <DialogTitle>Sponsor veröffentlichen</DialogTitle>
             <DialogDescription>{contact.company_name} auf der Landing Page publizieren</DialogDescription>
@@ -304,17 +304,9 @@ function PublishDialog({
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="bgColor">Hintergrundfarbe</Label>
               <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  id="bgColor"
-                  value={form.logoBgColor === null ? "#ffffff" : form.logoBgColor}
-                  onChange={(e) => setForm((f) => ({ ...f, logoBgColor: e.target.value }))}
-                  className="border-input h-9 w-10 cursor-pointer rounded border p-0.5"
-                />
-                <Input
-                  value={form.logoBgColor === null ? "transparent" : form.logoBgColor}
-                  onChange={(e) => setForm((f) => ({ ...f, logoBgColor: e.target.value }))}
-                  placeholder="transparent"
+                <ColorPicker
+                  current={form.logoBgColor}
+                  onChange={(color) => setForm((f) => ({ ...f, logoBgColor: color }))}
                 />
                 <Button
                   size="sm"

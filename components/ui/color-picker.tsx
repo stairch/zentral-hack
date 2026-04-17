@@ -9,7 +9,7 @@ const COLOR_PRESETS = [
 ]
 
 type ColorPickerPropsType = {
-  current: string
+  current: string | null
   onChange: (color: string) => void
 } & (
   | { withPresets: true; onPresetClick: (color: string) => void }
@@ -23,17 +23,17 @@ export default function ColorPicker({
   onPresetClick
 }: ColorPickerPropsType) {
   return (
-    <div className="space-y-2">
+    <div className="w-full space-y-2">
       <div className="flex items-center gap-2">
         <input
           type="color"
           id="pkg-color"
-          value={current}
+          value={current || "#ffffff"}
           onChange={(e) => onChange(e.target.value.toUpperCase())}
           className="border-input h-9 w-10 cursor-pointer rounded border p-0.5"
         />
         <Input
-          value={current}
+          value={current || "transparent"}
           onChange={(e) => onChange(e.target.value.toUpperCase())}
           placeholder="#530A5D"
         />
