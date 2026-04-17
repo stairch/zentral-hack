@@ -167,7 +167,6 @@ function TierCard({
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: "-80px" })
-  const [hovered, setHovered] = useState(false)
   const textColor = getContrastTextColor(tier.color)
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -181,21 +180,17 @@ function TierCard({
     <motion.div
       ref={ref}
       initial={{ opacity: 0, y: 24 }}
-      animate={
-        isInView ? { opacity: isSpotlit ? 1 : 0.35, scale: hovered ? 1.01 : 1, y: 0 } : { opacity: 0, y: 24 }
-      }
+      animate={isInView ? { opacity: isSpotlit ? 1 : 0.35 } : { opacity: 0, y: 24 }}
       transition={{ duration: 0.2, delay: isInView ? 0 : index * 0.1 }}
       onClick={onOpen}
       onMouseEnter={() => {
-        setHovered(true)
         onHover()
       }}
-      onMouseLeave={() => setHovered(false)}
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
       aria-label={`${tier.name} Sponsoring-Paket anfragen`}
-      className="group relative flex min-h-28 cursor-pointer items-center justify-center rounded-2xl border p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
+      className="group relative flex min-h-28 cursor-pointer items-center justify-center rounded-2xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
       style={{
         backgroundColor: tier.color,
         borderColor: tier.color,
