@@ -17,6 +17,7 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
+import ColorPicker from "../ui/color-picker"
 import {
   Edit2,
   Loader2,
@@ -790,7 +791,7 @@ export function AdminSponsorsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="md:grid-cols- grid gap-4">
             <div className="space-y-2">
               <Label htmlFor="pkg-name">Name</Label>
               <Input
@@ -811,16 +812,12 @@ export function AdminSponsorsPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="pkg-color">Farbe (Hex)</Label>
-              <Input
-                id="pkg-color"
-                value={form.color}
-                onChange={(e) => setForm((prev) => ({ ...prev, color: e.target.value }))}
-                placeholder="#530A5D"
+              <ColorPicker
+                withPresets
+                onPresetClick={(color) => setForm((prev) => ({ ...prev, color }))}
+                current={form.color}
+                onChange={(color) => setForm((prev) => ({ ...prev, color }))}
               />
-            </div>
-            <div className="space-y-2">
-              <Label>Vorschau</Label>
-              <div className="h-10 rounded-md border" style={{ backgroundColor: form.color || "#530A5D" }} />
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="pkg-description">Beschreibung</Label>
