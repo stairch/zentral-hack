@@ -33,27 +33,17 @@ const copy = {
   }
 } as const
 
-function FloatingParticle({
-  delay,
-  duration,
-  x,
-  y
-}: {
-  delay: number
-  duration: number
-  x: number
-  y: number
-}) {
+function FloatingParticle({ delay, duration, x }: { delay: number; duration: number; x: number }) {
   return (
     <motion.div
-      className="absolute h-2 w-2 rounded-full"
+      className="absolute -bottom-30 h-2 w-2 rounded-full sm:bottom-0"
       style={{ backgroundColor: "#E6FF17", opacity: 0.6 }}
       initial={{ opacity: 0, scale: 0 }}
       animate={{
-        opacity: [0, 1, 1, 0],
-        scale: [0, 1, 1.2, 0],
-        x: [x, x + 50, x - 30, x + 20],
-        y: [y, y - 100, y - 200, y - 300]
+        opacity: [0, 1, 1, 1, 0],
+        scale: [0, 1, 1.2, 1.2, 0],
+        x: [x, x + 50, x - 30, x + 20, x - 10],
+        y: [0, -100, -200, -300, -350]
       }}
       transition={{
         duration,
@@ -141,7 +131,7 @@ function RotatingText({ words }: { words: readonly string[] }) {
 
 export function Hero() {
   const [particles, setParticles] = useState<
-    Array<{ id: number; delay: number; duration: number; x: number; y: number }>
+    Array<{ id: number; delay: number; duration: number; x: number }>
   >([])
   const { language } = useLanguage()
   const { user } = useAuth()
@@ -152,14 +142,13 @@ export function Hero() {
       id: i,
       delay: Math.random() * 5,
       duration: 3 + Math.random() * 2,
-      x: Math.random() * (typeof window !== "undefined" ? window.innerWidth : 1000),
-      y: (typeof window !== "undefined" ? window.innerHeight : 800) - 100
+      x: Math.random() * (typeof window !== "undefined" ? window.innerWidth : 1000)
     }))
     setParticles(newParticles)
   }, [])
 
   return (
-    <section className="bg-background relative isolate min-h-svh overflow-hidden pt-16 sm:pb-70">
+    <section className="bg-background relative isolate overflow-hidden pt-16 pb-32 sm:pb-96">
       <motion.div
         className="absolute inset-0 opacity-35"
         style={{
@@ -180,7 +169,7 @@ export function Hero() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto mt-14 px-4 pb-32 text-center sm:mt-28">
+      <div className="relative z-10 container mx-auto mt-14 px-4 pb-16 text-center sm:mt-28">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -265,7 +254,7 @@ export function Hero() {
       </div>
 
       <motion.div
-        className="pointer-events-none absolute inset-x-0 bottom-0 left-0 z-0 mx-auto flex max-w-3xl scale-120 justify-center opacity-32"
+        className="pointer-events-none absolute inset-x-0 bottom-0 left-0 z-0 mx-auto flex max-w-3xl translate-y-10 scale-120 justify-center opacity-32"
         initial={{ opacity: 0, y: 100 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 0.5 }}>
