@@ -134,7 +134,7 @@ function PreviewMarqueeRow({
   const ref = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
 
-  const logoSizeClass = currentLogoSize === "small" ? "w-16" : currentLogoSize === "medium" ? "w-24" : "w-36"
+  const logoSizeClass = currentLogoSize === "small" ? "w-20" : currentLogoSize === "medium" ? "w-28" : "w-36"
 
   const allItems = [
     ...PLACEHOLDER_SPONSORS,

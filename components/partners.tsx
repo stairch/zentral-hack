@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import { useRef, useState, useEffect } from "react"
 import { motion, useInView } from "framer-motion"
 import { SponsorshipModal } from "./sponsorship-modal"
@@ -17,6 +16,17 @@ interface SponsorPackage {
   color: string
   benefits: string[]
   display_order: number
+}
+
+interface Sponsor {
+  id: string
+  company_name: string
+  status: string
+  logo_url: string | null
+  website_url: string | null
+  logo_size: string | null
+  tier: string | null
+  logo_bg_color: string | null
 }
 
 function getContrastTextColor(hexColor: string): string {
@@ -41,49 +51,49 @@ const partners: { organisers: Organiser[] } = {
       logo: "/partners/hslu-logo.png",
       logoWidth: "w-36",
       link: "https://hslu.ch",
-      bgColor: "bg-transparent"
+      bgColor: "transparent"
     },
     {
       name: "ICT Berufsbildung Zentralschweiz",
       logo: "/partners/ict-bz-logo.png",
       logoWidth: "w-24",
       link: "https://ict-bz.ch",
-      bgColor: "bg-transparent"
+      bgColor: "transparent"
     },
     {
       name: "UMB AG",
       logo: "/partners/umb-logo.png",
       logoWidth: "w-28",
       link: "https://umb.ch",
-      bgColor: "bg-black"
+      bgColor: "#000000"
     },
     {
       name: "Digital & AI Community",
       logo: "/partners/ai-community-logo.png",
       logoWidth: "w-26",
       link: "https://ai-community.ch",
-      bgColor: "bg-[#0a0a14]"
+      bgColor: "#0a0a14"
     },
     {
       name: "getAbstract",
       logo: "/partners/getabstract-logo.png",
       logoWidth: "w-32",
       link: "https://getabstract.com",
-      bgColor: "bg-transparent"
+      bgColor: "transparent"
     },
     {
       name: "STAIR",
       logo: "/partners/stair-logo.png",
       logoWidth: "w-28",
       link: "https://stair.ch",
-      bgColor: "bg-transparent"
+      bgColor: "transparent"
     },
     {
       name: "SchwyzNext",
       logo: "/partners/schwyznext-logo.png",
       logoWidth: "w-20",
       link: "https://schwyz-next.ch",
-      bgColor: "bg-transparent"
+      bgColor: "transparent"
     }
   ]
 }
@@ -93,7 +103,7 @@ function MarqueeRow({
   direction = "left",
   speed = 30
 }: {
-  items: Organiser[]
+  items: { name: string; logo: string; logoWidth: string; link: string | null; bgColor: string }[]
   direction?: "left" | "right"
   speed?: number
 }) {
@@ -109,45 +119,79 @@ function MarqueeRow({
 
   return (
     <div className="relative overflow-hidden py-4">
-      {/* fade left */}
-      <div className="from-background pointer-events-none absolute top-0 left-0 z-10 h-full w-12 bg-linear-to-r to-transparent sm:w-28" />
-      {/* fade right */}
-      <div className="from-background pointer-events-none absolute top-0 right-0 z-10 h-full w-12 bg-linear-to-l to-transparent sm:w-28" />
+      {items.length > 4 ? (
+        <>
+          {/* fade left */}
+          <div className="from-background pointer-events-none absolute top-0 left-0 z-10 h-full w-12 bg-linear-to-r to-transparent sm:w-28" />
+          {/* fade right */}
+          <div className="from-background pointer-events-none absolute top-0 right-0 z-10 h-full w-12 bg-linear-to-l to-transparent sm:w-28" />
 
-      <motion.div
-        ref={ref}
-        className="flex gap-8 whitespace-nowrap"
-        animate={
-          containerWidth
-            ? {
-                x: direction === "left" ? [0, -containerWidth] : [-containerWidth, 0]
+          <motion.div
+            ref={ref}
+            className="flex gap-8 whitespace-nowrap"
+            animate={
+              containerWidth
+                ? {
+                    x: direction === "left" ? [0, -containerWidth] : [-containerWidth, 0]
+                  }
+                : {}
+            }
+            transition={{
+              x: {
+                duration: speed,
+                repeat: Infinity,
+                ease: "linear",
+                repeatType: "loop"
               }
-            : {}
-        }
-        transition={{
-          x: {
-            duration: speed,
-            repeat: Infinity,
-            ease: "linear",
-            repeatType: "loop"
-          }
-        }}>
-        {duplicatedItems.map((item, index) => (
-          <div
-            key={`partners-item-${item.name}-${index}`}
-            className="flex shrink-0 items-center rounded-lg px-8 py-4">
-            <a className={`p-1 ${item.bgColor} rounded-xs`} href={item.link} target="_blank">
-              <Image
-                src={item.logo}
-                alt={item.name}
-                width={1000}
-                height={1000}
-                className={`h-auto ${item.logoWidth}`}
-              />
-            </a>
-          </div>
-        ))}
-      </motion.div>
+            }}>
+            {duplicatedItems.map((item, index) => (
+              <div
+                key={`partners-item-${item.name}-${index}`}
+                className="flex shrink-0 items-center rounded-lg px-8 py-4">
+                <a
+                  className={`rounded-xs p-1`}
+                  style={{ background: item.bgColor }}
+                  href={item.link === null ? undefined : item.link}
+                  target="_blank">
+                  {/* We use img insted of Image, because external urls must be whitelisted in next.config, but we don't the image origin */}
+                  {/* TODO: replace logo url with vercel blob upload */}
+                  <img
+                    src={item.logo}
+                    alt={item.name}
+                    width={1000}
+                    height={1000}
+                    className={`h-auto ${item.logoWidth}`}
+                  />
+                </a>
+              </div>
+            ))}
+          </motion.div>
+        </>
+      ) : (
+        <div className="flex flex-wrap justify-center gap-8">
+          {items.map((item, index) => (
+            <div
+              key={`partners-item-${item.name}-${index}`}
+              className="flex shrink-0 items-center rounded-lg px-8 py-4">
+              <a
+                className={`rounded-xs p-1`}
+                style={{ background: item.bgColor }}
+                href={item.link === null ? undefined : item.link}
+                target="_blank">
+                {/* We use img insted of Image, because external urls must be whitelisted in next.config, but we don't the image origin */}
+                {/* TODO: replace logo url with vercel blob upload */}
+                <img
+                  src={item.logo}
+                  alt={item.name}
+                  width={1000}
+                  height={1000}
+                  className={`h-auto ${item.logoWidth}`}
+                />
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -218,6 +262,7 @@ export function Partners() {
   const [sponsorshipModalOpen, setSponsorshipModalOpen] = useState(false)
   const [selectedPackageSlug, setSelectedPackageSlug] = useState<string | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const [sponsors, setSponsors] = useState<Sponsor[]>([])
   const [sponsorPackageItems, setSponsorPackageItems] = useState<SponsorPackage[]>(
     fallbackSponsorPackages
       .map((pkg) => ({
@@ -249,8 +294,62 @@ export function Partners() {
       }
     }
 
+    const fetchSponsorContacts = async () => {
+      try {
+        const res = await fetch("/api/sponsors")
+        if (!res.ok) return
+        const json = await res.json()
+        const list = (json.data?.sponsors || []) as Sponsor[]
+        if (list.length > 0) {
+          setSponsors(list)
+        }
+      } catch {
+        // Keep fallback data (empty list)
+      }
+    }
+
     void fetchSponsorPackages()
+    void fetchSponsorContacts()
   }, [])
+
+  // items: { name: string, logo: string, logoWidth: string, link: string, bgColor: string }[]
+
+  function mapSponsor(e: Sponsor) {
+    let logoWidth = ""
+    if (e.logo_size === "small") {
+      logoWidth = "w-20"
+    } else if (e.logo_size === "medium") {
+      logoWidth = "w-28"
+    } else if (e.logo_size === "large") {
+      logoWidth = "w-36"
+    }
+
+    return {
+      name: e.company_name,
+      logo: e.logo_url as string,
+      logoWidth,
+      bgColor: e.logo_bg_color === null ? "transparent" : e.logo_bg_color,
+      link: e.website_url
+    }
+  }
+
+  const platinSponsors = sponsors
+    .filter((e) => e.tier === "platin" && e.status === "published" && e.logo_url)
+    .map((e) => mapSponsor(e))
+  const goldSponsors = sponsors
+    .filter((e) => e.tier === "gold" && e.status === "published" && e.logo_url)
+    .map((e) => mapSponsor(e))
+  const silverSponsors = sponsors
+    .filter((e) => e.tier === "silber" && e.status === "published" && e.logo_url)
+    .map((e) => mapSponsor(e))
+  const bronzeSponsors = sponsors
+    .filter((e) => e.tier === "bronze" && e.status === "published" && e.logo_url)
+    .map((e) => mapSponsor(e))
+
+  const platinColor = sponsorPackageItems.filter((e) => e.slug === "platin")[0].color
+  const goldColor = sponsorPackageItems.filter((e) => e.slug === "gold")[0].color
+  const silverColor = sponsorPackageItems.filter((e) => e.slug === "silber")[0].color
+  const bronzeColor = sponsorPackageItems.filter((e) => e.slug === "bronze")[0].color
 
   const copy = {
     de: {
@@ -259,7 +358,10 @@ export function Partners() {
       headingAccent: "STÄRKER",
       description: "Unterstützt von führenden Unternehmen und Institutionen der Zentralschweiz.",
       organisers: "CO-ORGANISATOREN",
-      sponsors: "SPONSOREN",
+      platinSponsors: "PLATIN SPONSOREN",
+      goldSponsors: "GOLD SPONSOREN",
+      silverSponsors: "SILBER SPONSOREN",
+      bronzeSponsors: "BRONZE SPONSOREN",
       tierListsTitle: "Werden Sie ein Sponsor",
       ctaQuestion: "Noch unsicher welches Paket passt?",
       ctaAction: "Kontakt aufnehmen"
@@ -270,7 +372,10 @@ export function Partners() {
       headingAccent: "TOGETHER",
       description: "Supported by leading companies and institutions in Central Switzerland.",
       organisers: "CO-ORGANIZERS",
-      sponsors: "SPONSORS",
+      platinSponsors: "PLATIN SPONSORS",
+      goldSponsors: "GOLD SPONSORS",
+      silverSponsors: "SILVER SPONSORS",
+      bronzeSponsors: "BRONZE SPONSORS",
       tierListsTitle: "Become a sponsor",
       ctaQuestion: "Not sure which package fits?",
       ctaAction: "Get in touch"
@@ -303,25 +408,64 @@ export function Partners() {
             <p className="text-muted-foreground mx-auto max-w-2xl text-lg">{text.description}</p>
           </motion.div>
 
-          {/* Co-Organisers Marquee */}
           <div className="mb-16">
-            <motion.h3
-              className="font-display text-foreground mb-6 text-center text-xl font-bold"
-              initial={{ opacity: 0 }}
-              animate={isHeaderInView ? { opacity: 1 } : {}}
-              transition={{ delay: 0.3 }}>
-              {text.organisers}
-            </motion.h3>
+            {/* Co-Organisers Marquee */}
+            <h3 className="font-display text-foreground mb-4 flex justify-center text-center text-lg font-bold">
+              <div className="bg-primary w-fit rounded-md px-5 text-white">{text.organisers}</div>
+            </h3>
             <MarqueeRow items={partners.organisers} direction="left" speed={30} />
-            {/* TODO uncomment if there are sponsors */}
-            {/* <motion.h3
-              className="font-display text-foreground mb-6 mt-12 text-center text-xl font-bold"
-              initial={{ opacity: 0 }}
-              animate={isHeaderInView ? { opacity: 1 } : {}}
-              transition={{ delay: 0.3 }}>
-              {text.sponsors}
-            </motion.h3>
-            <MarqueeRow items={partners.organisers} direction="right" speed={20} /> */}
+            {/* Platin Sponsors Marquee */}
+            {platinSponsors.length > 0 && (
+              <>
+                <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
+                  <div
+                    className="w-fit rounded-md px-5"
+                    style={{ background: platinColor, color: getContrastTextColor(platinColor) }}>
+                    {text.platinSponsors}
+                  </div>
+                </h3>
+                <MarqueeRow items={platinSponsors} direction="right" speed={20} />
+              </>
+            )}
+            {/* Gold Sponsors Marquee */}
+            {goldSponsors.length > 0 && (
+              <>
+                <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
+                  <div
+                    className="w-fit rounded-md px-5"
+                    style={{ background: goldColor, color: getContrastTextColor(goldColor) }}>
+                    {text.goldSponsors}
+                  </div>
+                </h3>
+                <MarqueeRow items={goldSponsors} direction="left" speed={20} />
+              </>
+            )}
+            {/* Silver Sponsors Marquee */}
+            {silverSponsors.length > 0 && (
+              <>
+                <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
+                  <div
+                    className="w-fit rounded-md px-5"
+                    style={{ background: silverColor, color: getContrastTextColor(silverColor) }}>
+                    {text.silverSponsors}
+                  </div>
+                </h3>
+                <MarqueeRow items={silverSponsors} direction="right" speed={20} />
+              </>
+            )}
+            {/* Bronze Sponsors Marquee */}
+            {bronzeSponsors.length > 0 && (
+              <>
+                <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
+                  <div
+                    className="w-fit rounded-md px-5"
+                    style={{ background: bronzeColor, color: getContrastTextColor(bronzeColor) }}>
+                    {text.bronzeSponsors}
+                  </div>
+                </h3>
+                <MarqueeRow items={bronzeSponsors} direction="left" speed={20} />
+              </>
+            )}
           </div>
 
           {/* Sponsor Tiers */}
