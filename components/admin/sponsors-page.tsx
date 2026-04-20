@@ -169,16 +169,21 @@ const copy = {
     },
     errors: {
       fetchGeneral: "Fehler beim Laden",
-      fetchPackages: "Fehler beim Laden der Sponsor-Verwaltung",
-      saveNameRequired: "Name ist erforderlich",
-      saveDisplayOrderRequired: "Display-Order ist erforderlich",
-      saveFailed: "Fehler beim Speichern",
-      deleteFailed: "Fehler beim Löschen"
+      fetchPackages: "Fehler beim Laden der Sponsor-Pakete",
+      fetchContacts: "Fehler beim Laden der Sponsor-Anfragen",
+      packageSaveNameRequired: "Name ist erforderlich",
+      packageSaveDisplayOrderRequired: "Display-Order ist erforderlich",
+      packageSaveFailed: "Fehler beim Speichern",
+      packageDeleteFailed: "Fehler beim Löschen",
+      sponsorUpdateFailed: "Fehler beim Aktualisieren der Sponsor-Anfrage",
+      sponsorPublishFailed: "Fehler beim Veröffentlichen des Sponsors"
     },
-    toasts: {
+    success: {
       packageSavedCreate: "Sponsorpaket erstellt",
       packageSavedUpdate: "Sponsorpaket aktualisiert",
-      packageDeleted: "Sponsorpaket gelöscht"
+      packageDeleted: "Sponsorpaket gelöscht",
+      sponsorSavedUpdate: "Sponsor-Anfrage aktualisiert",
+      sponsorPublish: "Sponsor veröffentlicht"
     },
     publishLabels: {
       logoSize: {
@@ -263,16 +268,21 @@ const copy = {
     },
     errors: {
       fetchGeneral: "Error while loading",
-      fetchPackages: "Error while loading sponsor administration",
-      saveNameRequired: "Name is required",
-      saveDisplayOrderRequired: "Display order is required",
-      saveFailed: "Error while saving",
-      deleteFailed: "Error while deleting"
+      fetchPackages: "Error while loading sponsor packages",
+      fetchContacts: "Error while loading sponsor inquiries",
+      packageSaveNameRequired: "Name is required",
+      packageSaveDisplayOrderRequired: "Display order is required",
+      packageSaveFailed: "Error while saving",
+      packageDeleteFailed: "Error while deleting",
+      sponsorUpdateFailed: "Error while updating sponsor inquiry",
+      sponsorPublishFailed: "Error while publishing sponsor"
     },
-    toasts: {
+    success: {
       packageSavedCreate: "Sponsor package created",
       packageSavedUpdate: "Sponsor package updated",
-      packageDeleted: "Sponsor package deleted"
+      packageDeleted: "Sponsor package deleted",
+      sponsorSavedUpdate: "Sponsor contact updated",
+      sponsorPublish: "Sponsor contact published"
     },
     publishLabels: {
       logoSize: {
@@ -580,18 +590,21 @@ export function AdminSponsorsPage() {
   const [saving, setSaving] = useState(false)
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState<EditForm>(emptyForm)
-  const { language } = useLanguage()
+  const { language, isReady } = useLanguage()
+  const hasDataFetched = useRef(false)
 
   const sortedPackages = useMemo(
     () => [...packages].sort((a, b) => a.display_order - b.display_order),
     [packages]
   )
 
-  const text = copy[language]
-
   useEffect(() => {
+    if (!isReady || hasDataFetched.current) return
+    hasDataFetched.current = true
     fetchData()
-  }, [])
+  }, [isReady])
+
+  const text = copy[language]
 
   async function fetchData() {
     setLoading(true)
@@ -615,20 +628,21 @@ export function AdminSponsorsPage() {
   async function fetchContacts() {
     try {
       const res = await fetch("/api/admin/sponsor-contacts", { credentials: "include" })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.data?.contacts) {
-          setContacts(
-            data.data?.contacts.sort(
-              (a: SponsorContact, b: SponsorContact) =>
-                STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status) ||
-                a.company_name.localeCompare(b.company_name)
-            )
+      if (!res.ok) throw new Error(text.errors.fetchGeneral)
+
+      const data = await res.json()
+      if (data.data?.contacts) {
+        setContacts(
+          data.data?.contacts.sort(
+            (a: SponsorContact, b: SponsorContact) =>
+              STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status) ||
+              a.company_name.localeCompare(b.company_name)
           )
-        }
+        )
       }
-    } catch {
-      // TODO: toast.error(...)
+    } catch (err) {
+      console.error(err)
+      toast.error(text.errors.fetchContacts)
     }
   }
 
@@ -657,12 +671,12 @@ export function AdminSponsorsPage() {
     const displayOrder = Number(form.displayOrder)
 
     if (!name) {
-      toast.error(text.errors.saveNameRequired)
+      toast.error(text.errors.packageSaveNameRequired)
       return
     }
 
     if (!Number.isFinite(displayOrder)) {
-      toast.error(text.errors.saveDisplayOrderRequired)
+      toast.error(text.errors.packageSaveDisplayOrderRequired)
       return
     }
 
@@ -689,7 +703,7 @@ export function AdminSponsorsPage() {
 
       if (!res.ok) {
         const error = await res.json()
-        throw new Error(error.error || text.errors.saveFailed)
+        throw new Error(error.error || text.errors.packageSaveFailed)
       }
 
       const json = await res.json()
@@ -701,10 +715,10 @@ export function AdminSponsorsPage() {
       })
 
       setOpen(false)
-      toast.success(form.id ? text.toasts.packageSavedUpdate : text.toasts.packageSavedCreate)
+      toast.success(form.id ? text.success.packageSavedUpdate : text.success.packageSavedCreate)
     } catch (error) {
       console.error(error)
-      toast.error(error instanceof Error ? error.message : text.errors.saveFailed)
+      toast.error(error instanceof Error ? error.message : text.errors.packageSaveFailed)
     } finally {
       setSaving(false)
     }
@@ -721,14 +735,14 @@ export function AdminSponsorsPage() {
 
       if (!res.ok) {
         const error = await res.json()
-        throw new Error(error.error || text.errors.deleteFailed)
+        throw new Error(error.error || text.errors.packageDeleteFailed)
       }
 
       setPackages((prev) => prev.filter((pkg) => pkg.id !== id))
-      toast.success(text.toasts.packageDeleted)
+      toast.success(text.success.packageDeleted)
     } catch (error) {
       console.error(error)
-      toast.error(error instanceof Error ? error.message : text.errors.deleteFailed)
+      toast.error(error instanceof Error ? error.message : text.errors.packageDeleteFailed)
     }
   }
 
@@ -740,12 +754,17 @@ export function AdminSponsorsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status })
       })
-      if (res.ok) {
-        // TODO: add toast
-        setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c)))
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || text.errors.sponsorUpdateFailed)
       }
-    } catch {
-      // TODO: toast.error(...)
+
+      setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c)))
+      toast.success(text.success.sponsorSavedUpdate)
+    } catch (err) {
+      console.error(err)
+      toast.error(err instanceof Error ? err.message : text.errors.sponsorUpdateFailed)
     }
   }
 
@@ -758,13 +777,17 @@ export function AdminSponsorsPage() {
         body: JSON.stringify({ id, ...data })
       })
 
-      if (res.ok) {
-        const resData = await res.json()
-        setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, ...resData.data?.sponsor } : c)))
-        // TODO: add toast
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || text.errors.sponsorPublishFailed)
       }
-    } catch {
-      // TODO: toast.error(...)
+
+      const resData = await res.json()
+      setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, ...resData.data?.sponsor } : c)))
+      toast.success(text.success.sponsorPublish)
+    } catch (err) {
+      console.error(err)
+      toast.error(err instanceof Error ? err.message : text.errors.sponsorPublishFailed)
     }
   }
 
