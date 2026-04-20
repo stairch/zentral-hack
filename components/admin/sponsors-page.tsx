@@ -35,6 +35,7 @@ import {
 import { toast } from "sonner"
 import { isValidUrl } from "@/lib/helpers"
 import { motion } from "framer-motion"
+import { useLanguage } from "@/lib/language-context"
 
 type SponsorPackage = {
   id: string
@@ -80,39 +81,7 @@ const emptyForm: EditForm = {
   benefitsText: ""
 }
 
-// TODO: language
-const STATUS_BADGES: Record<string, { label: string; className: string }> = {
-  new: { label: "Neu", className: "bg-blue-100 text-blue-800" },
-  contacted: { label: "Kontaktiert", className: "bg-yellow-100 text-yellow-800" },
-  confirmed: { label: "Bestätigt", className: "bg-green-100 text-green-800" },
-  rejected: { label: "Abgelehnt", className: "bg-red-100 text-red-800" },
-  published: { label: "Veröffentlicht", className: "bg-purple-100 text-purple-800" }
-}
-
-// TODO: language
-const STATUS_OPTIONS: Record<string, string> = {
-  new: "Neu",
-  contacted: "Kontaktiert",
-  confirmed: "Bestätigt",
-  rejected: "Abgelehnt"
-}
-
 const STATUS_ORDER = ["new", "contacted", "confirmed", "published", "rejected"]
-
-// TODO: language
-const TIER_OPTIONS: Record<string, string> = {
-  platin: "Platin",
-  gold: "Gold",
-  silber: "Silber",
-  bronze: "Bronze"
-}
-
-// TODO: language
-const LOGO_SIZE_OPTIONS: Record<string, string> = {
-  small: "Small",
-  medium: "Medium",
-  large: "Large"
-}
 
 interface PublishFormData {
   logoUrl: string
@@ -120,6 +89,205 @@ interface PublishFormData {
   logoBgColor: string | null
   logoSize: "small" | "medium" | "large"
   tier: "platin" | "gold" | "silber" | "bronze"
+}
+
+const STATUS_CLASSES = {
+  new: "bg-blue-100 text-blue-800",
+  contacted: "bg-yellow-100 text-yellow-800",
+  confirmed: "bg-green-100 text-green-800",
+  rejected: "bg-red-100 text-red-800",
+  published: "bg-purple-100 text-purple-800"
+}
+
+const copy = {
+  de: {
+    pageTitle: "SPONSOREN",
+    pageDescription: "Sponsorpakete und Sponsoranfragen verwalten",
+    packagesTitle: "Sponsorpakete",
+    packagesDescription: "Alle Felder inklusive Farbe, Reihenfolge und Benefits sind editierbar.",
+    newPackageButton: "Neues Paket",
+    packageCardColorLabel: "Farbe",
+    packageCardNoDescription: "Keine Beschreibung",
+    packageCardMoreBenefits: (count: number) => `+ ${count} weitere`,
+    packageCardEditButton: "Bearbeiten",
+    requestsTitle: "Alle Anfragen",
+    requestsCount: (count: number) => `${count} Anfragen insgesamt`,
+    noRequests: "Noch keine Sponsor-Anfragen",
+    requestStatusLabels: {
+      new: "Neu",
+      contacted: "Kontaktiert",
+      confirmed: "Bestätigt",
+      rejected: "Abgelehnt",
+      published: "Veröffentlicht"
+    },
+    requestStatusOptions: {
+      new: "Neu",
+      contacted: "Kontaktiert",
+      confirmed: "Bestätigt",
+      rejected: "Abgelehnt"
+    },
+    requestActions: {
+      backButton: "Zurückziehen",
+      publishButton: "Publizieren"
+    },
+    requestLabels: {
+      contactPerson: "Ansprechperson",
+      interestedIn: "Interessiert an"
+    },
+    packageDialog: {
+      createTitle: "Sponsorpaket erstellen",
+      editTitle: "Sponsorpaket bearbeiten",
+      description: "Alle Inhalte werden direkt auf der Sponsoring-Seite übernommen.",
+      nameLabel: "Name",
+      namePlaceholder: "z.B. Gold",
+      displayOrderLabel: "Display-Order",
+      colorLabel: "Farbe (Hex)",
+      descriptionLabel: "Beschreibung",
+      benefitsLabel: "Benefits (eine Zeile pro Benefit)",
+      cancelButton: "Abbrechen",
+      saveButton: "Speichern",
+      saveButtonLoading: "Speichern"
+    },
+    publishDialog: {
+      title: "Sponsor veröffentlichen",
+      description: (companyName: string) => `${companyName} auf der Landing Page publizieren`,
+      logoUrlLabel: "Logo URL *",
+      websiteUrlLabel: "Website",
+      backgroundColorLabel: "Hintergrundfarbe",
+      resetButton: "Zurücksetzen",
+      logoSizeLabel: "Logo-Grösse",
+      tierLabel: "Tier",
+      previewLabel: "Vorschau",
+      cancelButton: "Abbrechen",
+      publishButton: "Publizieren",
+      publishButtonLoading: "Publizieren",
+      previewLogoAlt: "Logo-Vorschau"
+    },
+    validation: {
+      logoUrlRequired: "Logo URL ist erforderlich",
+      invalidUrl: "Ungültige URL"
+    },
+    errors: {
+      fetchGeneral: "Fehler beim Laden",
+      fetchPackages: "Fehler beim Laden der Sponsor-Verwaltung",
+      saveNameRequired: "Name ist erforderlich",
+      saveDisplayOrderRequired: "Display-Order ist erforderlich",
+      saveFailed: "Fehler beim Speichern",
+      deleteFailed: "Fehler beim Löschen"
+    },
+    toasts: {
+      packageSavedCreate: "Sponsorpaket erstellt",
+      packageSavedUpdate: "Sponsorpaket aktualisiert",
+      packageDeleted: "Sponsorpaket gelöscht"
+    },
+    publishLabels: {
+      logoSize: {
+        small: "Klein",
+        medium: "Mittel",
+        large: "Gross"
+      },
+      tier: {
+        platin: "Platin",
+        gold: "Gold",
+        silber: "Silber",
+        bronze: "Bronze"
+      }
+    }
+  },
+  en: {
+    pageTitle: "SPONSORS",
+    pageDescription: "Manage sponsor packages and sponsor inquiries",
+    packagesTitle: "Sponsor packages",
+    packagesDescription: "All fields including color, order, and benefits are editable.",
+    newPackageButton: "New package",
+    packageCardColorLabel: "Color",
+    packageCardNoDescription: "No description",
+    packageCardMoreBenefits: (count: number) => `+ ${count} more`,
+    packageCardEditButton: "Edit",
+    requestsTitle: "All inquiries",
+    requestsCount: (count: number) => `${count} inquiries total`,
+    noRequests: "No sponsor inquiries yet",
+    requestStatusLabels: {
+      new: "New",
+      contacted: "Contacted",
+      confirmed: "Confirmed",
+      rejected: "Rejected",
+      published: "Published"
+    },
+    requestStatusOptions: {
+      new: "New",
+      contacted: "Contacted",
+      confirmed: "Confirmed",
+      rejected: "Rejected"
+    },
+    requestActions: {
+      backButton: "Revert",
+      publishButton: "Publish"
+    },
+    requestLabels: {
+      contactPerson: "Contact person",
+      interestedIn: "Interested in"
+    },
+    packageDialog: {
+      createTitle: "Create sponsor package",
+      editTitle: "Edit sponsor package",
+      description: "All content is applied directly to the sponsorship page.",
+      nameLabel: "Name",
+      namePlaceholder: "e.g. Gold",
+      displayOrderLabel: "Display order",
+      colorLabel: "Color (hex)",
+      descriptionLabel: "Description",
+      benefitsLabel: "Benefits (one line per benefit)",
+      cancelButton: "Cancel",
+      saveButton: "Save",
+      saveButtonLoading: "Save"
+    },
+    publishDialog: {
+      title: "Publish sponsor",
+      description: (companyName: string) => `Publish ${companyName} on the landing page`,
+      logoUrlLabel: "Logo URL *",
+      websiteUrlLabel: "Website",
+      backgroundColorLabel: "Background color",
+      resetButton: "Reset",
+      logoSizeLabel: "Logo size",
+      tierLabel: "Tier",
+      previewLabel: "Preview",
+      cancelButton: "Cancel",
+      publishButton: "Publish",
+      publishButtonLoading: "Publish",
+      previewLogoAlt: "Logo preview"
+    },
+    validation: {
+      logoUrlRequired: "Logo URL is required",
+      invalidUrl: "Invalid URL"
+    },
+    errors: {
+      fetchGeneral: "Error while loading",
+      fetchPackages: "Error while loading sponsor administration",
+      saveNameRequired: "Name is required",
+      saveDisplayOrderRequired: "Display order is required",
+      saveFailed: "Error while saving",
+      deleteFailed: "Error while deleting"
+    },
+    toasts: {
+      packageSavedCreate: "Sponsor package created",
+      packageSavedUpdate: "Sponsor package updated",
+      packageDeleted: "Sponsor package deleted"
+    },
+    publishLabels: {
+      logoSize: {
+        small: "Small",
+        medium: "Medium",
+        large: "Large"
+      },
+      tier: {
+        platin: "Platinum",
+        gold: "Gold",
+        silber: "Silver",
+        bronze: "Bronze"
+      }
+    }
+  }
 }
 
 const PLACEHOLDER_SPONSORS = [
@@ -221,6 +389,8 @@ function PublishDialog({
     logoSize: "medium",
     tier: contact.interested_in as PublishFormData["tier"]
   })
+  const { language } = useLanguage()
+  const text = copy[language]
 
   useEffect(() => {
     if (open) {
@@ -239,12 +409,12 @@ function PublishDialog({
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof PublishFormData, string>> = {}
     if (!form.logoUrl.trim()) {
-      newErrors.logoUrl = "Logo URL ist erforderlich"
+      newErrors.logoUrl = text.validation.logoUrlRequired
     } else if (!isValidUrl(form.logoUrl)) {
-      newErrors.logoUrl = "Ungültige URL"
+      newErrors.logoUrl = text.validation.invalidUrl
     }
     if (form.websiteUrl && !isValidUrl(form.websiteUrl)) {
-      newErrors.websiteUrl = "Ungültige URL"
+      newErrors.websiteUrl = text.validation.invalidUrl
     }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -271,20 +441,20 @@ function PublishDialog({
             variant="outline"
             className="gap-1.5 text-xs">
             <Globe className="h-3 w-3" />
-            Veröffentlichen
+            {text.requestActions.publishButton}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="flex sm:max-w-lg">
         <div className="flex w-full flex-col gap-5">
           <DialogHeader>
-            <DialogTitle>Sponsor veröffentlichen</DialogTitle>
-            <DialogDescription>{contact.company_name} auf der Landing Page publizieren</DialogDescription>
+            <DialogTitle>{text.publishDialog.title}</DialogTitle>
+            <DialogDescription>{text.publishDialog.description(contact.company_name)}</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 py-2">
             {/* Logo URL */}
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="logoUrl">Logo URL *</Label>
+              <Label htmlFor="logoUrl">{text.publishDialog.logoUrlLabel}</Label>
               <Input
                 id="logoUrl"
                 placeholder="https://example.com/logo.png"
@@ -300,7 +470,7 @@ function PublishDialog({
 
             {/* Website */}
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="websiteUrl">Website</Label>
+              <Label htmlFor="websiteUrl">{text.publishDialog.websiteUrlLabel}</Label>
               <Input
                 id="websiteUrl"
                 placeholder="https://example.com"
@@ -316,7 +486,7 @@ function PublishDialog({
 
             {/* Background Color */}
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="bgColor">Hintergrundfarbe</Label>
+              <Label htmlFor="bgColor">{text.publishDialog.backgroundColorLabel}</Label>
               <div className="flex items-center gap-2">
                 <ColorPicker
                   current={form.logoBgColor}
@@ -327,7 +497,7 @@ function PublishDialog({
                   variant="ghost"
                   className="text-xs"
                   onClick={() => setForm((f) => ({ ...f, logoBgColor: null }))}>
-                  Reset
+                  {text.publishDialog.resetButton}
                 </Button>
               </div>
             </div>
@@ -335,7 +505,7 @@ function PublishDialog({
             {/* Logo Size + Tier */}
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
-                <Label>Logo-Grösse</Label>
+                <Label>{text.publishDialog.logoSizeLabel}</Label>
                 <Select
                   value={form.logoSize}
                   onValueChange={(v) =>
@@ -345,7 +515,7 @@ function PublishDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(LOGO_SIZE_OPTIONS).map(([k, v]) => (
+                    {Object.entries(text.publishLabels.logoSize).map(([k, v]) => (
                       <SelectItem key={k} value={k}>
                         {v}
                       </SelectItem>
@@ -355,7 +525,7 @@ function PublishDialog({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <Label>Tier</Label>
+                <Label>{text.publishDialog.tierLabel}</Label>
                 <Select
                   value={form.tier}
                   onValueChange={(v) => setForm((f) => ({ ...f, tier: v as PublishFormData["tier"] }))}>
@@ -363,7 +533,7 @@ function PublishDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(TIER_OPTIONS).map(([k, v]) => (
+                    {Object.entries(text.publishLabels.tier).map(([k, v]) => (
                       <SelectItem key={k} value={k}>
                         {v}
                       </SelectItem>
@@ -375,7 +545,7 @@ function PublishDialog({
             {/* Marquee Preview */}
             {form.logoUrl && (
               <div className="flex flex-col gap-1.5">
-                <Label className="text-muted-foreground text-xs">Vorschau</Label>
+                <Label className="text-muted-foreground text-xs">{text.publishDialog.previewLabel}</Label>
                 <div className="rounded-lg border">
                   <PreviewMarqueeRow
                     currentLogo={form.logoUrl}
@@ -390,11 +560,11 @@ function PublishDialog({
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
-              Abbrechen
+              {text.publishDialog.cancelButton}
             </Button>
             <Button onClick={handlePublish} disabled={loading} className="gap-1.5">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
-              Publizieren
+              {loading ? text.publishDialog.publishButtonLoading : text.publishDialog.publishButton}
             </Button>
           </DialogFooter>
         </div>
@@ -410,11 +580,14 @@ export function AdminSponsorsPage() {
   const [saving, setSaving] = useState(false)
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState<EditForm>(emptyForm)
+  const { language } = useLanguage()
 
   const sortedPackages = useMemo(
     () => [...packages].sort((a, b) => a.display_order - b.display_order),
     [packages]
   )
+
+  const text = copy[language]
 
   useEffect(() => {
     fetchData()
@@ -430,12 +603,12 @@ export function AdminSponsorsPage() {
   async function fetchSponsorPackages() {
     try {
       const res = await fetch("/api/admin/sponsors", { credentials: "include" })
-      if (!res.ok) throw new Error("Fehler beim Laden")
+      if (!res.ok) throw new Error(text.errors.fetchGeneral)
       const json = await res.json()
       setPackages(json.data?.packages || [])
     } catch (error) {
       console.error(error)
-      toast.error("Fehler beim Laden der Sponsor-Verwaltung")
+      toast.error(text.errors.fetchPackages)
     }
   }
 
@@ -484,12 +657,12 @@ export function AdminSponsorsPage() {
     const displayOrder = Number(form.displayOrder)
 
     if (!name) {
-      toast.error("Name ist erforderlich")
+      toast.error(text.errors.saveNameRequired)
       return
     }
 
     if (!Number.isFinite(displayOrder)) {
-      toast.error("Display-Order ist erforderlich")
+      toast.error(text.errors.saveDisplayOrderRequired)
       return
     }
 
@@ -516,7 +689,7 @@ export function AdminSponsorsPage() {
 
       if (!res.ok) {
         const error = await res.json()
-        throw new Error(error.error || "Fehler beim Speichern")
+        throw new Error(error.error || text.errors.saveFailed)
       }
 
       const json = await res.json()
@@ -528,10 +701,10 @@ export function AdminSponsorsPage() {
       })
 
       setOpen(false)
-      toast.success(form.id ? "Sponsorpaket aktualisiert" : "Sponsorpaket erstellt")
+      toast.success(form.id ? text.toasts.packageSavedUpdate : text.toasts.packageSavedCreate)
     } catch (error) {
       console.error(error)
-      toast.error(error instanceof Error ? error.message : "Fehler beim Speichern")
+      toast.error(error instanceof Error ? error.message : text.errors.saveFailed)
     } finally {
       setSaving(false)
     }
@@ -548,14 +721,14 @@ export function AdminSponsorsPage() {
 
       if (!res.ok) {
         const error = await res.json()
-        throw new Error(error.error || "Fehler beim Löschen")
+        throw new Error(error.error || text.errors.deleteFailed)
       }
 
       setPackages((prev) => prev.filter((pkg) => pkg.id !== id))
-      toast.success("Sponsorpaket gelöscht")
+      toast.success(text.toasts.packageDeleted)
     } catch (error) {
       console.error(error)
-      toast.error(error instanceof Error ? error.message : "Fehler beim Löschen")
+      toast.error(error instanceof Error ? error.message : text.errors.deleteFailed)
     }
   }
 
@@ -608,9 +781,9 @@ export function AdminSponsorsPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-foreground text-3xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
-            SPONSOREN
+            {text.pageTitle}
           </h1>
-          <p className="text-muted-foreground mt-2">Sponsorpakete und Sponsoranfragen verwalten</p>
+          <p className="text-muted-foreground mt-2">{text.pageDescription}</p>
         </div>
       </div>
 
@@ -620,15 +793,13 @@ export function AdminSponsorsPage() {
             <div className="grid gap-2">
               <CardTitle className="flex items-center gap-2">
                 <Tag className="h-5 w-5 text-[#530A5D]" />
-                Sponsorpakete
+                {text.packagesTitle}
               </CardTitle>
-              <CardDescription>
-                Alle Felder inklusive Farbe, Reihenfolge und Benefits sind editierbar.
-              </CardDescription>
+              <CardDescription>{text.packagesDescription}</CardDescription>
             </div>
             <Button className="bg-[#530A5D] text-white hover:bg-[#3f0847]" onClick={openCreateDialog}>
               <Plus className="mr-2 h-4 w-4" />
-              Neues Paket
+              {text.newPackageButton}
             </Button>
           </div>
         </CardHeader>
@@ -642,15 +813,19 @@ export function AdminSponsorsPage() {
                     <CardTitle>{pkg.name}</CardTitle>
                     <Badge variant="outline">#{pkg.display_order}</Badge>
                   </div>
-                  <CardDescription>{pkg.description || "Keine Beschreibung"}</CardDescription>
+                  <CardDescription>{pkg.description || text.packageCardNoDescription}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="rounded-md border p-2 text-xs">Farbe: {pkg.color || "#530A5D"}</div>
+                  <div className="rounded-md border p-2 text-xs">
+                    {text.packageCardColorLabel}: {pkg.color || "#530A5D"}
+                  </div>
                   <div className="text-muted-foreground space-y-1 text-xs">
                     {(pkg.benefits || []).slice(0, 3).map((benefit, index) => (
                       <p key={`${pkg.id}-${index}`}>- {benefit}</p>
                     ))}
-                    {(pkg.benefits || []).length > 3 && <p>+ {(pkg.benefits || []).length - 3} weitere</p>}
+                    {(pkg.benefits || []).length > 3 && (
+                      <p>{text.packageCardMoreBenefits((pkg.benefits || []).length - 3)}</p>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -659,7 +834,7 @@ export function AdminSponsorsPage() {
                       className="flex-1"
                       onClick={() => openEditDialog(pkg)}>
                       <Edit2 className="mr-1 h-3 w-3" />
-                      Bearbeiten
+                      {text.packageCardEditButton}
                     </Button>
                     <Button variant="destructive" size="sm" onClick={() => void removePackage(pkg.id)}>
                       <Trash2 className="h-3 w-3" />
@@ -677,20 +852,21 @@ export function AdminSponsorsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5 text-[#530A5D]" />
-              Alle Anfragen
+              {text.requestsTitle}
             </CardTitle>
-            <CardDescription>{contacts.length} Anfragen insgesamt</CardDescription>
+            <CardDescription>{text.requestsCount(contacts.length)}</CardDescription>
           </CardHeader>
           <CardContent>
             {contacts.length === 0 ? (
-              <p className="text-muted-foreground py-8 text-center text-sm">Noch keine Sponsor-Anfragen</p>
+              <p className="text-muted-foreground py-8 text-center text-sm">{text.noRequests}</p>
             ) : (
               <div className="flex flex-col gap-3">
                 {contacts.map((contact) => {
-                  const status = STATUS_BADGES[contact.status] ?? {
-                    label: contact.status,
-                    className: "bg-gray-100 text-gray-700"
-                  }
+                  const status = contact.status
+                  const statusLabel =
+                    text.requestStatusLabels[status as keyof typeof text.requestStatusLabels]
+                  const statusClasses = STATUS_CLASSES[status as keyof typeof STATUS_CLASSES]
+
                   return (
                     <div
                       key={contact.id}
@@ -703,8 +879,8 @@ export function AdminSponsorsPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <div
-                            className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}>
-                            {status.label}
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${statusClasses}`}>
+                            {statusLabel}
                           </div>
                           {contact.status === "published" && (
                             <div
@@ -713,7 +889,7 @@ export function AdminSponsorsPage() {
                                 background: `color-mix(in srgb, ${sortedPackages.filter((e) => e.name.toLowerCase() === contact.tier)[0]?.color || ""} 50%, white)`,
                                 color: `color-mix(in srgb, ${sortedPackages.filter((e) => e.name.toLowerCase() === contact.tier)[0]?.color || ""} 50%, black)`
                               }}>
-                              {contact.tier}
+                              {contact.tier ? text.publishLabels.tier[contact.tier] : contact.tier}
                             </div>
                           )}
                         </div>
@@ -723,6 +899,7 @@ export function AdminSponsorsPage() {
                       <div className="text-muted-foreground flex flex-col gap-1 text-xs">
                         <div className="flex items-center gap-1.5">
                           <User className="h-3 w-3 shrink-0" />
+                          <span className="sr-only">{text.requestLabels.contactPerson}:</span>
                           <span>{contact.contact_name}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -744,7 +921,8 @@ export function AdminSponsorsPage() {
                           <div className="mt-2 flex items-center gap-1.5">
                             <Tag className="h-3 w-3 shrink-0" />
                             <p>
-                              Interessiert an: <span className="capitalize">{contact.interested_in}</span>
+                              {text.requestLabels.interestedIn}:{" "}
+                              <span className="capitalize">{contact.interested_in}</span>
                             </p>
                           </div>
                         )}
@@ -776,7 +954,7 @@ export function AdminSponsorsPage() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {Object.entries(STATUS_OPTIONS).map(([k, v]) => (
+                                {Object.entries(text.requestStatusOptions).map(([k, v]) => (
                                   <SelectItem key={k} value={k} className="text-xs">
                                     {v}
                                   </SelectItem>
@@ -793,7 +971,7 @@ export function AdminSponsorsPage() {
                               variant="destructive"
                               className="gap-1.5 text-xs">
                               <RotateCcw className="h-3 w-3" />
-                              Zurückziehen
+                              {text.requestActions.backButton}
                             </Button>
                           ) : (
                             <PublishDialog contact={contact} onPublish={handleContactPublish} />
@@ -815,24 +993,24 @@ export function AdminSponsorsPage() {
         </DialogTrigger>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{form.id ? "Sponsorpaket bearbeiten" : "Sponsorpaket erstellen"}</DialogTitle>
-            <DialogDescription>
-              Alle Inhalte werden direkt auf der Sponsoring-Seite übernommen.
-            </DialogDescription>
+            <DialogTitle>
+              {form.id ? text.packageDialog.editTitle : text.packageDialog.createTitle}
+            </DialogTitle>
+            <DialogDescription>{text.packageDialog.description}</DialogDescription>
           </DialogHeader>
 
           <div className="md:grid-cols- grid gap-4">
             <div className="space-y-2">
-              <Label htmlFor="pkg-name">Name</Label>
+              <Label htmlFor="pkg-name">{text.packageDialog.nameLabel}</Label>
               <Input
                 id="pkg-name"
                 value={form.name}
                 onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder="z.B. Gold"
+                placeholder={text.packageDialog.namePlaceholder}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pkg-order">Display-Order</Label>
+              <Label htmlFor="pkg-order">{text.packageDialog.displayOrderLabel}</Label>
               <Input
                 id="pkg-order"
                 type="number"
@@ -841,7 +1019,7 @@ export function AdminSponsorsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pkg-color">Farbe (Hex)</Label>
+              <Label htmlFor="pkg-color">{text.packageDialog.colorLabel}</Label>
               <ColorPicker
                 withPresets
                 onPresetClick={(color) => setForm((prev) => ({ ...prev, color }))}
@@ -850,7 +1028,7 @@ export function AdminSponsorsPage() {
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="pkg-description">Beschreibung</Label>
+              <Label htmlFor="pkg-description">{text.packageDialog.descriptionLabel}</Label>
               <Textarea
                 id="pkg-description"
                 rows={3}
@@ -859,7 +1037,7 @@ export function AdminSponsorsPage() {
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="pkg-benefits">Benefits (eine Zeile pro Benefit)</Label>
+              <Label htmlFor="pkg-benefits">{text.packageDialog.benefitsLabel}</Label>
               <Textarea
                 id="pkg-benefits"
                 rows={8}
@@ -871,14 +1049,14 @@ export function AdminSponsorsPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
-              Abbrechen
+              {text.packageDialog.cancelButton}
             </Button>
             <Button
               onClick={() => void savePackage()}
               disabled={saving}
               className="bg-[#530A5D] text-white hover:bg-[#3f0847]">
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Speichern
+              {saving ? text.packageDialog.saveButtonLoading : text.packageDialog.saveButton}
             </Button>
           </DialogFooter>
         </DialogContent>
