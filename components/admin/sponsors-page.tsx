@@ -30,7 +30,7 @@ import {
   Mail,
   Tag,
   Phone,
-  RotateCcw
+  GlobeOff
 } from "lucide-react"
 import { toast } from "sonner"
 import { isValidUrl } from "@/lib/helpers"
@@ -128,7 +128,7 @@ const copy = {
     },
     requestActions: {
       revertButton: "Zurückziehen",
-      publishButton: "Publizieren"
+      publishButton: "Veröffentlichen"
     },
     requestLabels: {
       contactPerson: "Ansprechperson",
@@ -159,8 +159,8 @@ const copy = {
       tierLabel: "Tier",
       previewLabel: "Vorschau",
       cancelButton: "Abbrechen",
-      publishButton: "Publizieren",
-      publishButtonLoading: "Publizieren",
+      publishButton: "Veröffentlichen",
+      publishButtonLoading: "Veröffentlichen",
       previewLogoAlt: "Logo-Vorschau"
     },
     validation: {
@@ -226,7 +226,7 @@ const copy = {
       rejected: "Rejected"
     },
     requestActions: {
-      revertButton: "Revert",
+      revertButton: "Unpublish",
       publishButton: "Publish"
     },
     requestLabels: {
@@ -999,7 +999,7 @@ export function AdminSponsorsPage() {
                               size="sm"
                               variant="destructive"
                               className="gap-1.5 text-xs">
-                              <RotateCcw className="h-3 w-3" />
+                              <GlobeOff className="h-3 w-3" />
                               {text.requestActions.revertButton}
                             </Button>
                           ) : (
