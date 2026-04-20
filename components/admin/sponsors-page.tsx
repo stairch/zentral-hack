@@ -35,6 +35,7 @@ import {
 import { toast } from "sonner"
 import { isValidUrl } from "@/lib/helpers"
 import { motion } from "framer-motion"
+import { getSponsorContrastTextColor } from "@/lib/sponsorship-packages"
 
 type SponsorPackage = {
   id: string
@@ -701,10 +702,22 @@ export function AdminSponsorsPage() {
                           <Building2 className="h-4 w-4 shrink-0 text-[#530A5D]" />
                           <span className="truncate text-sm font-semibold">{contact.company_name}</span>
                         </div>
-                        <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}>
-                          {status.label}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}>
+                            {status.label}
+                          </div>
+                          {contact.status === "published" && (
+                            <div
+                              className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium capitalize`}
+                              style={{
+                                background: `color-mix(in srgb, ${sortedPackages.filter((e) => e.name.toLowerCase() === contact.tier)[0]?.color || ""} 50%, white)`,
+                                color: `color-mix(in srgb, ${sortedPackages.filter((e) => e.name.toLowerCase() === contact.tier)[0]?.color || ""} 50%, black)`
+                              }}>
+                              {contact.tier}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Contact details */}
@@ -729,9 +742,11 @@ export function AdminSponsorsPage() {
                           </div>
                         )}
                         {contact.interested_in && (
-                          <div className="flex items-center gap-1.5">
+                          <div className="mt-2 flex items-center gap-1.5">
                             <Tag className="h-3 w-3 shrink-0" />
-                            <span>{contact.interested_in}</span>
+                            <p>
+                              Interessiert an: <span className="capitalize">{contact.interested_in}</span>
+                            </p>
                           </div>
                         )}
                       </div>

@@ -6,6 +6,7 @@ import { SponsorshipModal } from "./sponsorship-modal"
 import { sponsorPackages as fallbackSponsorPackages } from "@/lib/sponsorship-packages"
 import { useLanguage } from "@/lib/language-context"
 import { Emails } from "@/lib/constants"
+import { getSponsorContrastTextColor } from "@/lib/sponsorship-packages"
 
 interface SponsorPackage {
   id: string
@@ -27,20 +28,6 @@ interface Sponsor {
   logo_size: string | null
   tier: string | null
   logo_bg_color: string | null
-}
-
-function getContrastTextColor(hexColor: string): string {
-  const hex = (hexColor || "#530A5D").replace("#", "")
-  if (!/^[0-9A-Fa-f]{6}$/.test(hex)) {
-    return "#FFFFFF"
-  }
-
-  const r = Number.parseInt(hex.slice(0, 2), 16)
-  const g = Number.parseInt(hex.slice(2, 4), 16)
-  const b = Number.parseInt(hex.slice(4, 6), 16)
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000
-
-  return brightness > 165 ? "#1A1A1A" : "#FFFFFF"
 }
 
 type Organiser = { name: string; logo: string; link: string; bgColor: string; logoWidth: string }
@@ -212,7 +199,7 @@ function TierCard({
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: "-80px" })
   const [hovered, setHovered] = useState(false)
-  const textColor = getContrastTextColor(tier.color)
+  const textColor = getSponsorContrastTextColor(tier.color)
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -420,7 +407,7 @@ export function Partners() {
                 <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
                   <div
                     className="w-fit rounded-md px-5"
-                    style={{ background: platinColor, color: getContrastTextColor(platinColor) }}>
+                    style={{ background: platinColor, color: getSponsorContrastTextColor(platinColor) }}>
                     {text.platinSponsors}
                   </div>
                 </h3>
@@ -433,7 +420,7 @@ export function Partners() {
                 <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
                   <div
                     className="w-fit rounded-md px-5"
-                    style={{ background: goldColor, color: getContrastTextColor(goldColor) }}>
+                    style={{ background: goldColor, color: getSponsorContrastTextColor(goldColor) }}>
                     {text.goldSponsors}
                   </div>
                 </h3>
@@ -446,7 +433,7 @@ export function Partners() {
                 <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
                   <div
                     className="w-fit rounded-md px-5"
-                    style={{ background: silverColor, color: getContrastTextColor(silverColor) }}>
+                    style={{ background: silverColor, color: getSponsorContrastTextColor(silverColor) }}>
                     {text.silverSponsors}
                   </div>
                 </h3>
@@ -459,7 +446,7 @@ export function Partners() {
                 <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
                   <div
                     className="w-fit rounded-md px-5"
-                    style={{ background: bronzeColor, color: getContrastTextColor(bronzeColor) }}>
+                    style={{ background: bronzeColor, color: getSponsorContrastTextColor(bronzeColor) }}>
                     {text.bronzeSponsors}
                   </div>
                 </h3>
