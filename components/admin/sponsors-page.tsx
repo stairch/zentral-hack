@@ -35,7 +35,6 @@ import {
 import { toast } from "sonner"
 import { isValidUrl } from "@/lib/helpers"
 import { motion } from "framer-motion"
-import { getSponsorContrastTextColor } from "@/lib/sponsorship-packages"
 
 type SponsorPackage = {
   id: string
