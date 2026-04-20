@@ -97,6 +97,8 @@ const STATUS_OPTIONS: Record<string, string> = {
   rejected: "Abgelehnt"
 }
 
+const STATUS_ORDER = ["new", "contacted", "confirmed", "published", "rejected"]
+
 // TODO: language
 const TIER_OPTIONS: Record<string, string> = {
   platin: "Platin",
@@ -442,7 +444,15 @@ export function AdminSponsorsPage() {
       const res = await fetch("/api/admin/sponsor-contacts", { credentials: "include" })
       if (res.ok) {
         const data = await res.json()
-        setContacts(data.data?.contacts || [])
+        if (data.data?.contacts) {
+          setContacts(
+            data.data?.contacts.sort(
+              (a: SponsorContact, b: SponsorContact) =>
+                STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status) ||
+                a.company_name.localeCompare(b.company_name)
+            )
+          )
+        }
       }
     } catch {
       // TODO: toast.error(...)
