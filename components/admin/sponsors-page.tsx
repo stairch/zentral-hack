@@ -127,7 +127,7 @@ const copy = {
       rejected: "Abgelehnt"
     },
     requestActions: {
-      backButton: "Zurückziehen",
+      revertButton: "Zurückziehen",
       publishButton: "Publizieren"
     },
     requestLabels: {
@@ -226,7 +226,7 @@ const copy = {
       rejected: "Rejected"
     },
     requestActions: {
-      backButton: "Revert",
+      revertButton: "Revert",
       publishButton: "Publish"
     },
     requestLabels: {
@@ -1000,7 +1000,7 @@ export function AdminSponsorsPage() {
                               variant="destructive"
                               className="gap-1.5 text-xs">
                               <RotateCcw className="h-3 w-3" />
-                              {text.requestActions.backButton}
+                              {text.requestActions.revertButton}
                             </Button>
                           ) : (
                             <PublishDialog contact={contact} onPublish={handleContactPublish} />
