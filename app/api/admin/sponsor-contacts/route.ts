@@ -14,7 +14,12 @@ async function handleGet() {
          interested_in,
          message,
          status,
-         created_at
+         created_at,
+         logo_url,
+         website_url,
+         logo_size,
+         tier,
+         logo_bg_color
        FROM sponsor_contacts
        ORDER BY created_at ASC`
     )
@@ -30,7 +35,12 @@ async function handleGet() {
           interested_in: row.interested_in,
           message: row.message,
           status: row.status,
-          created_at: row.created_at
+          created_at: row.created_at,
+          logo_url: row.logo_url,
+          website_url: row.website_url,
+          logo_size: row.logo_size,
+          tier: row.tier,
+          logo_bg_color: row.logo_bg_color
         }
       })
 

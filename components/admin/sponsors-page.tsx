@@ -56,6 +56,11 @@ type SponsorContact = {
   message: string | null
   status: string
   created_at: string
+  logo_url: string | null
+  website_url: string | null
+  logo_size: "small" | "medium" | "large" | null
+  tier: "platin" | "gold" | "silber" | "bronze" | null
+  logo_bg_color: string | null
 }
 
 interface EditForm {
@@ -216,8 +221,15 @@ function PublishDialog({
   })
 
   useEffect(() => {
-    if (!open) {
-      setForm((f) => ({ ...f, tier: contact.interested_in as PublishFormData["tier"] }))
+    if (open) {
+      setForm({
+        logoUrl: contact.logo_url || "",
+        websiteUrl: contact.website_url || "",
+        logoBgColor: contact.logo_bg_color || null,
+        logoSize: contact.logo_size || "medium",
+        tier: contact.tier || (contact.interested_in as PublishFormData["tier"])
+      })
+    } else {
       setErrors({})
     }
   }, [open])
@@ -562,9 +574,11 @@ export function AdminSponsorsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, ...data })
       })
+
       if (res.ok) {
+        const resData = await res.json()
+        setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, ...resData.data?.sponsor } : c)))
         // TODO: add toast
-        setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, status: "published" } : c)))
       }
     } catch {
       // TODO: toast.error(...)
