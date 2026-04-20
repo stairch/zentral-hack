@@ -631,12 +631,13 @@ export function AdminSponsorsPage() {
       if (!res.ok) throw new Error(text.errors.fetchGeneral)
 
       const data = await res.json()
+      // Sort contacts after fetch (and not dynamically) to prevent throwing order
       if (data.data?.contacts) {
         setContacts(
           data.data?.contacts.sort(
             (a: SponsorContact, b: SponsorContact) =>
               STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status) ||
-              a.company_name.localeCompare(b.company_name)
+              b.created_at.localeCompare(a.created_at)
           )
         )
       }
