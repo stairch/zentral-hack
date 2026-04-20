@@ -922,7 +922,13 @@ export function AdminSponsorsPage() {
                             <Tag className="h-3 w-3 shrink-0" />
                             <p>
                               {text.requestLabels.interestedIn}:{" "}
-                              <span className="capitalize">{contact.interested_in}</span>
+                              <span>
+                                {contact.interested_in
+                                  ? text.publishLabels.tier[
+                                      contact.interested_in as keyof typeof text.publishLabels.tier
+                                    ]
+                                  : contact.interested_in}
+                              </span>
                             </p>
                           </div>
                         )}
