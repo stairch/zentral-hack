@@ -129,7 +129,7 @@ export function SponsorshipModal({ isOpen, onClose, selectedPackageSlug }: Spons
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-4 z-50 max-h-[90vh] max-w-3xl overflow-y-auto md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2">
+            className="fixed inset-4 z-50 m-auto max-h-[90vh] max-w-3xl overflow-y-auto">
             <Card className="rounded-xl shadow-2xl">
               {/* Header */}
               <CardHeader className="relative border-b pb-4">
@@ -166,7 +166,7 @@ export function SponsorshipModal({ isOpen, onClose, selectedPackageSlug }: Spons
                           style={{ color: selectedPackage.color }}>
                           {selectedPackage.name[language]}
                         </p>
-                        <h3 className="mb-2 text-xl font-semibold">
+                        <h3 className="mb-2 text-xl font-semibold hyphens-auto" lang={language}>
                           {selectedPackage.shortDescription[language]}
                         </h3>
                         <p className="text-muted-foreground mb-5 text-sm leading-relaxed">
