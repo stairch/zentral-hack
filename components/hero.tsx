@@ -14,7 +14,7 @@ const copy = {
   de: {
     date: "23. - 24. OKTOBER 2026",
     subtitleLinePre: "Ein Hackathon für",
-    subtitleLineRotate: ["Innovation", "Junge Talente", "Networking"],
+    subtitleLineRotate: ["Innovation", "Talente", "Networking"],
     subtitleLinePost: "in der Zentralschweiz.",
     location: "Hochschule Luzern Informatik, Rotkreuz",
     primaryCta: "Jetzt Registrieren",
@@ -24,7 +24,7 @@ const copy = {
   en: {
     date: "23 - 24 OCTOBER 2026",
     subtitleLinePre: "A hackathon for",
-    subtitleLineRotate: ["Innovation", "Young Talent", "Networking"],
+    subtitleLineRotate: ["Innovation", "Talents", "Networking"],
     subtitleLinePost: "in Central Switzerland.",
     location: "Lucerne School of Computer Science, Rotkreuz",
     primaryCta: "Register Now",
@@ -206,6 +206,7 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
           className="text-muted-foreground mx-auto mb-8 max-w-2xl text-center text-lg md:text-2xl">
+          {/* Subtitle Mobile */}
           <span className="md:hidden">
             <div className="leading-snug">{text.subtitleLinePre}</div>
             <div className="my-1 flex justify-center leading-snug">
@@ -213,6 +214,7 @@ export function Hero() {
             </div>
             <div className="leading-snug">{text.subtitleLinePost}</div>
           </span>
+          {/* Subtitle Desktop */}
           <span className="hidden md:inline-flex md:items-center md:gap-2 md:leading-relaxed">
             <span>{text.subtitleLinePre}</span>
             <RotatingText words={text.subtitleLineRotate} />
