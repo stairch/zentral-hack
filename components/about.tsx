@@ -16,10 +16,10 @@ const values = [
   },
   {
     icon: Users,
-    title: { de: "Nachwuchs", en: "Young Talent" },
+    title: { de: "Nachwuchs", en: "Next Generation" },
     description: {
-      de: "Förderung junger Talente der ICT-Branche.",
-      en: "Supporting young talents in the ICT industry."
+      de: "Förderung der nächsten Generation von ICT-Talenten.",
+      en: "Empowering the next generation of ICT talent."
     }
   },
   {
@@ -47,7 +47,7 @@ const copy = {
     headingAccent: "ZENTRALSCHWEIZ",
     description:
       "Zentral Hack vereint bestehende Events und Hackathons zu einem gemeinsamen Grossevent. Wir bringen Bildung, Wirtschaft und Community zusammen, um Innovation und Nachwuchsförderung in der Region voranzutreiben.",
-    stats: ["Hacken", "Kategorien", "Teilnehmer", "Ziel"]
+    stats: ["Stunden", "Kategorien", "Teilnehmende", "Ziel"]
   },
   en: {
     badge: "ABOUT",
@@ -198,7 +198,7 @@ export function About() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.3 }}>
           {[
-            { value: 24, suffix: "h", label: text.stats[0], ticking: true },
+            { value: 24, suffix: "", label: text.stats[0], ticking: true },
             { value: 4, suffix: "", label: text.stats[1], ticking: true },
             { value: 200, suffix: "+", label: text.stats[2], ticking: true },
             { value: 1, suffix: "", label: text.stats[3], ticking: false }
