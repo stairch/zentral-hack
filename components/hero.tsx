@@ -16,7 +16,7 @@ const copy = {
     subtitleLinePre: "Ein Hackathon für",
     subtitleLineRotate: ["Innovation", "Junge Talente", "Networking"],
     subtitleLinePost: "in der Zentralschweiz.",
-    location: "HSLU - Hochschule Luzern",
+    location: "Hochschule Luzern Informatik, Rotkreuz",
     primaryCta: "Jetzt Registrieren",
     primaryCtaLoggedIn: "Zum Dashboard",
     secondaryCta: "Mehr Erfahren"
@@ -26,7 +26,7 @@ const copy = {
     subtitleLinePre: "A hackathon for",
     subtitleLineRotate: ["Innovation", "Young Talent", "Networking"],
     subtitleLinePost: "in Central Switzerland.",
-    location: "HSLU - Lucerne University of Applied Sciences",
+    location: "Lucerne School of Computer Science, Rotkreuz",
     primaryCta: "Register Now",
     primaryCtaLoggedIn: "To Dashboard",
     secondaryCta: "Learn More"
