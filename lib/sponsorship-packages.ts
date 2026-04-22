@@ -218,3 +218,17 @@ export function getSponsorPackageBySlug(slug?: string | null) {
 export function normalizeSponsorInterest(value?: string | null) {
   return getSponsorPackageBySlug(value)?.slug || value?.trim().toLowerCase() || null
 }
+
+export function getSponsorContrastTextColor(hexColor: string): string {
+  const hex = (hexColor || "#530A5D").replace("#", "")
+  if (!/^[0-9A-Fa-f]{6}$/.test(hex)) {
+    return "#FFFFFF"
+  }
+
+  const r = Number.parseInt(hex.slice(0, 2), 16)
+  const g = Number.parseInt(hex.slice(2, 4), 16)
+  const b = Number.parseInt(hex.slice(4, 6), 16)
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000
+
+  return brightness > 165 ? "#1A1A1A" : "#FFFFFF"
+}

@@ -7,6 +7,7 @@ export type Language = "de" | "en"
 interface LanguageContextValue {
   language: Language
   setLanguage: (language: Language) => void
+  isReady: boolean
 }
 
 const LanguageContext = createContext<LanguageContextValue | undefined>(undefined)
@@ -15,18 +16,19 @@ const storageKey = "zh-language"
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>("de")
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
     const saved = window.localStorage.getItem(storageKey)
     if (saved === "de" || saved === "en") {
       setLanguage(saved)
-      return
+    } else {
+      const browserLanguage = navigator.language.toLowerCase()
+      if (browserLanguage.startsWith("en")) {
+        setLanguage("en")
+      }
     }
-
-    const browserLanguage = navigator.language.toLowerCase()
-    if (browserLanguage.startsWith("en")) {
-      setLanguage("en")
-    }
+    setIsReady(true)
   }, [])
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.lang = language
   }, [language])
 
-  const value = useMemo(() => ({ language, setLanguage }), [language])
+  const value = useMemo(() => ({ language, setLanguage, isReady }), [language, isReady])
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
 }

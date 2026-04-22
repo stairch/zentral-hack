@@ -36,26 +36,17 @@ function normalizeBenefits(value: unknown): string[] {
 
 export const GET = withAdminAuth(async () => {
   try {
-    const [packagesResult, contactsResult] = await Promise.all([
-      query(
-        `SELECT id::text, name, description, color, benefits, display_order, created_at
-         FROM sponsor_packages
-         ORDER BY display_order ASC, created_at ASC`
-      ),
-      query(
-        `SELECT id::text, company_name, contact_name, email, phone, interested_in, message, status, created_at
-         FROM sponsor_contacts
-         ORDER BY created_at DESC`
-      )
-    ])
+    const result = await query(`
+      SELECT id::text, name, description, color, benefits, display_order, created_at
+      FROM sponsor_packages
+      ORDER BY display_order ASC, created_at ASC`)
 
     return successResponse({
-      packages: packagesResult.rows as SponsorPackageRow[],
-      contacts: contactsResult.rows
+      packages: result.rows as SponsorPackageRow[]
     })
   } catch (error) {
     console.error("[Admin Sponsors] GET error:", error)
-    return serverError("Fehler beim Laden der Sponsordaten")
+    return serverError("Fehler beim Laden der Sponsorpakete")
   }
 })
 

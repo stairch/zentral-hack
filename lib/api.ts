@@ -32,6 +32,7 @@ export function validationError(
   message: string,
   errors?: Record<string, string>
 ): NextResponse<ApiResponse<null>> {
+  console.error(message, errors)
   return NextResponse.json(
     {
       success: false,
