@@ -3,6 +3,7 @@
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { useLanguage } from "@/lib/language-context"
+import { Emails } from "@/lib/constants"
 
 export default function ImpressumPage() {
   const { language } = useLanguage()
@@ -64,11 +65,11 @@ export default function ImpressumPage() {
               <div className="bg-light-violet/10 mt-4 rounded-xl p-6">
                 <p className="text-lg font-semibold">
                   {language === "de"
-                    ? "Hochschule Luzern"
-                    : "Lucerne University of Applied Sciences and Arts"}
+                    ? "Hochschule Luzern – Informatik"
+                    : "Lucerne School of Computer Science and Information Technology"}
                 </p>
-                <p>Werftestrasse 4</p>
-                <p>6002 Luzern</p>
+                <p>Suurstoffi 1</p>
+                <p>6343 Rotkreuz</p>
                 <p>{language === "de" ? "Schweiz" : "Switzerland"}</p>
               </div>
             </section>
@@ -78,24 +79,24 @@ export default function ImpressumPage() {
               <div className="mt-4 space-y-2">
                 <p>
                   <span className="font-semibold">{copy.phone}:</span>{" "}
-                  <a href="tel:+41412284242" className="text-violet hover:underline">
-                    +41 41 228 42 42
+                  <a href="tel:+41417576811" className="text-violet hover:underline">
+                    +41 41 757 68 11
                   </a>
                 </p>
                 <p>
                   <span className="font-semibold">{copy.email}:</span>{" "}
-                  <a href="mailto:info@hslu.ch" className="text-violet hover:underline">
-                    info@hslu.ch
+                  <a href={`mailto:${Emails.contactHSLU}`} className="text-violet hover:underline">
+                    {Emails.contactHSLU}
                   </a>
                 </p>
                 <p>
                   <span className="font-semibold">{copy.website}:</span>{" "}
                   <a
-                    href="https://www.hslu.ch"
+                    href="https://www.hslu.ch/future-talents"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-violet hover:underline">
-                    www.hslu.ch
+                    hslu.ch/future-talents
                   </a>
                 </p>
               </div>
