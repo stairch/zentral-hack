@@ -294,8 +294,6 @@ export function Partners() {
     void fetchSponsorContacts()
   }, [])
 
-  // items: { name: string, logo: string, logoWidth: string, link: string, bgColor: string }[]
-
   function mapSponsor(e: Sponsor) {
     let logoWidth = ""
     if (e.logo_size === "small") {
