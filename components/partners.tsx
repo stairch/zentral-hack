@@ -50,16 +50,16 @@ const partners: { organisers: Organiser[] } = {
     {
       name: "UMB AG",
       logo: "/partners/umb-logo.png",
-      logoWidth: "w-28",
+      logoWidth: "w-24",
       link: "https://umb.ch",
-      bgColor: "#000000"
+      bgColor: "transparent"
     },
     {
       name: "Digital & AI Community",
       logo: "/partners/ai-community-logo.png",
-      logoWidth: "w-26",
+      logoWidth: "w-30",
       link: "https://ai-community.ch",
-      bgColor: "#0a0a14"
+      bgColor: "transparent"
     },
     {
       name: "getAbstract",
