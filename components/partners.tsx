@@ -37,7 +37,7 @@ const partners: { organisers: Organiser[] } = {
       name: "HSLU",
       logo: "/partners/hslu-logo.png",
       logoWidth: "w-36",
-      link: "https://hslu.ch",
+      link: "https://hslu.ch/informatik",
       bgColor: "transparent"
     },
     {
