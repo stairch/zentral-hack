@@ -119,8 +119,8 @@ function MarqueeRow({
             animate={
               containerWidth
                 ? {
-                  x: direction === "left" ? [0, -containerWidth] : [-containerWidth, 0]
-                }
+                    x: direction === "left" ? [0, -containerWidth] : [-containerWidth, 0]
+                  }
                 : {}
             }
             transition={{
