@@ -24,8 +24,6 @@ export default function MarkdownContent({ children, toReplace }: MarkdownContent
     content = content.replaceAll("{{" + k + "}}", v)
   })
 
-  console.log(content)
-
   return (
     <div className="md-content">
       <Markdown
