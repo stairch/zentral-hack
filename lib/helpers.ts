@@ -14,3 +14,7 @@ export function isValidHex(value: string): boolean {
 export function resolveCSSVar(variable: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(variable).trim().toUpperCase()
 }
+
+export function normalizeUrl(url: string): string {
+  return url.replace(/^https?:\/\/(www\.)?/, "")
+}

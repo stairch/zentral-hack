@@ -163,3 +163,37 @@
     @apply font-display font-bold uppercase;
   }
 }
+
+/* Markdown content */
+
+.md-content h1 {
+  @apply text-primary pb-6 text-4xl font-bold sm:text-5xl;
+}
+
+.md-content h2 {
+  @apply pb-3 text-3xl font-semibold;
+}
+
+.md-content h3 {
+  @apply pt-12 pb-3 text-2xl font-semibold text-neutral-900;
+}
+
+.md-content p {
+  @apply text-muted-foreground text-lg;
+}
+
+.md-content ul {
+  @apply my-3 ml-3 list-inside list-disc text-xl text-neutral-700;
+}
+
+.md-content .spacer {
+  @apply h-3 sm:h-4;
+}
+
+.md-content .spacer-lg {
+  @apply h-10;
+}
+
+.md-content strong {
+  @apply font-semibold;
+}
