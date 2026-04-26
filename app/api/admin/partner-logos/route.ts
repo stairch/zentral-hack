@@ -1,0 +1,101 @@
+import { query } from "@/lib/db"
+import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
+import { successResponse, serverError, validationError } from "@/lib/api"
+
+type QueryValue = string | number | boolean | null | string[]
+
+async function handleGet() {
+  try {
+    const result = await query(
+      `SELECT id, name, logo_url, website_url, logo_size, sort_order, is_active
+       FROM partner_logos ORDER BY sort_order ASC`
+    )
+    return successResponse({ logos: result.rows })
+  } catch {
+    return serverError("Failed to load partner logos")
+  }
+}
+
+async function handlePost(req: AuthenticatedRequest) {
+  try {
+    const { name, logo_url, website_url, logo_size, sort_order } = await req.json()
+    if (!name || !logo_url) return validationError("name and logo_url are required")
+
+    const result = await query(
+      `INSERT INTO partner_logos (name, logo_url, website_url, logo_size, sort_order)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [
+        String(name).trim(),
+        String(logo_url).trim(),
+        website_url ? String(website_url).trim() : null,
+        ["small", "medium", "large"].includes(logo_size) ? logo_size : "medium",
+        Number(sort_order) || 0
+      ]
+    )
+    return successResponse({ logo: result.rows[0] })
+  } catch {
+    return serverError("Failed to create partner logo")
+  }
+}
+
+async function handlePut(req: AuthenticatedRequest) {
+  try {
+    const { id, name, logo_url, website_url, logo_size, sort_order, is_active } = await req.json()
+    if (!id) return validationError("id required")
+
+    const fields: string[] = []
+    const values: QueryValue[] = []
+
+    if (name !== undefined) {
+      values.push(String(name).trim())
+      fields.push(`name = $${values.length}`)
+    }
+    if (logo_url !== undefined) {
+      values.push(String(logo_url).trim())
+      fields.push(`logo_url = $${values.length}`)
+    }
+    if (website_url !== undefined) {
+      values.push(website_url ? String(website_url).trim() : null)
+      fields.push(`website_url = $${values.length}`)
+    }
+    if (logo_size !== undefined) {
+      values.push(["small", "medium", "large"].includes(logo_size) ? logo_size : "medium")
+      fields.push(`logo_size = $${values.length}`)
+    }
+    if (sort_order !== undefined) {
+      values.push(Number(sort_order))
+      fields.push(`sort_order = $${values.length}`)
+    }
+    if (is_active !== undefined) {
+      values.push(Boolean(is_active))
+      fields.push(`is_active = $${values.length}`)
+    }
+
+    if (fields.length === 0) return validationError("No fields to update")
+    fields.push("updated_at = NOW()")
+    values.push(String(id))
+
+    await query(`UPDATE partner_logos SET ${fields.join(", ")} WHERE id = $${values.length}`, values)
+    return successResponse({ message: "Logo updated" })
+  } catch {
+    return serverError("Failed to update partner logo")
+  }
+}
+
+async function handleDelete(req: AuthenticatedRequest) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const id = searchParams.get("id")
+    if (!id) return validationError("id required")
+
+    await query("DELETE FROM partner_logos WHERE id = $1", [id])
+    return successResponse({ message: "Logo deleted" })
+  } catch {
+    return serverError("Failed to delete partner logo")
+  }
+}
+
+export const GET = withAdminAuth(handleGet as Parameters<typeof withAdminAuth>[0])
+export const POST = withAdminAuth(handlePost)
+export const PUT = withAdminAuth(handlePut)
+export const DELETE = withAdminAuth(handleDelete)

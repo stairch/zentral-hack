@@ -99,23 +99,18 @@ export async function POST(request: Request) {
       [companyName, contactName, email, phone || null, message || null, normalizedInterest]
     )
 
-    const emails: string[] = []
+    const emails: string[] = ["sponsoring@zentralhack.ch"]
     if (process.env.NODE_ENV === "production") {
       try {
-        const result = await query(
-          `SELECT u.id, u.email
-             FROM users u
-             WHERE u.role = 'admin'
-          `
-        )
+        const result = await query(`SELECT u.id, u.email FROM users u WHERE u.role = 'admin'`)
         result.rows?.forEach((element) => {
-          emails.push(element.email)
+          if (!emails.includes(element.email)) emails.push(element.email)
         })
       } catch (error) {
         console.error("[Admin Sponsor Contact Admins] GET Error:", error)
       }
     } else {
-      if (process.env.TEST_EMAIL) {
+      if (process.env.TEST_EMAIL && !emails.includes(process.env.TEST_EMAIL)) {
         emails.push(process.env.TEST_EMAIL)
       }
     }

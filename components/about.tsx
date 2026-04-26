@@ -169,6 +169,33 @@ export function About() {
   const { language } = useLanguage()
   const text = copy[language]
 
+  const [dbStats, setDbStats] = useState<
+    { value: number; suffix: string; label_de: string; label_en: string }[] | null
+  >(null)
+
+  useEffect(() => {
+    fetch("/api/site-settings?key=about_stats")
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d.data?.value)) setDbStats(d.data.value)
+      })
+      .catch(() => {})
+  }, [])
+
+  const stats = dbStats
+    ? dbStats.map((s) => ({
+        value: s.value,
+        suffix: s.suffix,
+        label: language === "en" ? s.label_en : s.label_de,
+        ticking: s.value > 1
+      }))
+    : [
+        { value: 24, suffix: "", label: text.stats[0], ticking: true },
+        { value: 4, suffix: "", label: text.stats[1], ticking: true },
+        { value: 200, suffix: "+", label: text.stats[2], ticking: true },
+        { value: 1, suffix: "", label: text.stats[3], ticking: false }
+      ]
+
   return (
     <section id="about" ref={sectionRef} className="bg-violet relative overflow-hidden py-24">
       <div className="relative z-10 container mx-auto px-4">
@@ -197,12 +224,7 @@ export function About() {
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.3 }}>
-          {[
-            { value: 24, suffix: "", label: text.stats[0], ticking: true },
-            { value: 4, suffix: "", label: text.stats[1], ticking: true },
-            { value: 200, suffix: "+", label: text.stats[2], ticking: true },
-            { value: 1, suffix: "", label: text.stats[3], ticking: false }
-          ].map((stat, index) => (
+          {stats.map((stat, index) => (
             <motion.div
               key={stat.label}
               className="text-center"

@@ -118,6 +118,7 @@ export interface SponsorChallengeRecord {
   difficulty: SponsorChallengeDifficulty | null
   team_size: string | null
   challenge_language: SponsorChallengeLanguage | null
+  prize: string | null
   challenge_data: SponsorChallengeData | null
   published_at: string | null
   created_at: string

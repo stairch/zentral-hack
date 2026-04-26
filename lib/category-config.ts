@@ -36,6 +36,8 @@ export interface CategoryRecord {
   challenge_description?: string | null
   challenge_description_en?: string | null
   show_challenge_description?: boolean | null
+  prize?: string | null
+  target_group?: string | null
   challenge_title?: string | null
   challenge_title_en?: string | null
   challenge_short_description?: string | null
@@ -53,6 +55,7 @@ export interface CategoryRecord {
     company_name: string | null
     status: string | null
     updated_at: string | null
+    prize: string | null
   }> | null
 }
 
@@ -253,6 +256,8 @@ export function getCategoryPresentationByLanguage(category: CategoryRecord, lang
     showChallengeDescription: Boolean(category.show_challenge_description),
     challengeStatus: category.challenge_status || null,
     challengeData: category.challenge_data || null,
-    challenges: publishedChallenges
+    challenges: publishedChallenges,
+    prize: category.prize || null,
+    targetGroup: category.target_group || null
   }
 }

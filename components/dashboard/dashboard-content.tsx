@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { useAuth } from "@/lib/auth-context"
+import { useLanguage } from "@/lib/language-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -98,6 +99,7 @@ interface CategoryOption {
 
 export function DashboardContent() {
   const { user, logout } = useAuth()
+  const { language, setLanguage } = useLanguage()
   const router = useRouter()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -106,6 +108,105 @@ export function DashboardContent() {
   const [selectedChallengeCategoryId, setSelectedChallengeCategoryId] = useState("")
   const [adminChallenge, setAdminChallenge] = useState<SponsorChallengeRecord | null>(null)
   const [loadingAdminChallenge, setLoadingAdminChallenge] = useState(false)
+
+  const t = {
+    de: {
+      adminPanel: "Admin Panel",
+      logout: "Abmelden",
+      greeting: (name: string) => `Hallo, ${name}!`,
+      welcomeSubtitle: "Willkommen in deinem Zentral Hack Dashboard",
+      registrationConfirmed: "✓ Anmeldung bestätigt",
+      registrationPending: "Ausstehend",
+      notRegistered: "Du hast dich noch nicht für eine Kategorie registriert.",
+      registerNow: "Jetzt registrieren",
+      tabProfile: "Profil",
+      tabDocuments: "Dokumente",
+      tabChallenges: "Challenges",
+      tabTeam: "Team",
+      profileTitle: "Dein Profil",
+      profileSubtitle: "Deine Registrierungsdaten für den Zentral Hack",
+      labelEmail: "E-Mail",
+      labelName: "Name",
+      labelUniversity: "Hochschule",
+      labelStudyProgram: "Studiengang",
+      labelSemester: "Semester",
+      labelLinkedIn: "LinkedIn",
+      viewProfile: "Profil ansehen",
+      semesterSuffix: ". Semester",
+      globalDocsTitle: "Allgemeine Dokumente",
+      globalDocsSubtitle: "Dokumente und Ressourcen für alle Teilnehmer",
+      categoryDocsTitle: "Kategorie-Dokumente",
+      categoryDocsSubtitle: (name: string) => `Dokumente und Ressourcen für ${name}`,
+      noDocsAvailable: "Noch keine Dokumente verfügbar",
+      registerForDocs: "Melde dich für eine Kategorie an, um Dokumente zu sehen",
+      teamTitle: "Dein Team",
+      teamSubtitle: "Informationen zu deinem Hackathon-Team",
+      teamName: "Team-Name",
+      teamDescription: "Beschreibung",
+      teamCategory: "Kategorie",
+      teamRole: "Deine Rolle",
+      teamRoleLeader: "Team-Leader",
+      teamRoleMember: "Mitglied",
+      teamDocsHint: 'Team-Dokumente und GitHub-Repos findest du im Tab "Dokumente"',
+      noTeam: "Du bist noch keinem Team zugewiesen",
+      noTeamNote: "Teams werden während des Hackathons von den Admins erstellt",
+      manageChallenge: "Challenge verwalten",
+      selectCategory: "Kategorie",
+      selectCategoryPlaceholder: "Kategorie wählen",
+      noCategorySelected: "Keine Kategorie verfügbar oder ausgewählt.",
+      yourCategory: "Deine Kategorie",
+      category: "Kategorie",
+      homeAriaLabel: "Zentral Hack Startseite"
+    },
+    en: {
+      adminPanel: "Admin Panel",
+      logout: "Sign out",
+      greeting: (name: string) => `Hello, ${name}!`,
+      welcomeSubtitle: "Welcome to your Zentral Hack dashboard",
+      registrationConfirmed: "✓ Registration confirmed",
+      registrationPending: "Pending",
+      notRegistered: "You haven't registered for a category yet.",
+      registerNow: "Register now",
+      tabProfile: "Profile",
+      tabDocuments: "Documents",
+      tabChallenges: "Challenges",
+      tabTeam: "Team",
+      profileTitle: "Your Profile",
+      profileSubtitle: "Your registration details for Zentral Hack",
+      labelEmail: "Email",
+      labelName: "Name",
+      labelUniversity: "University",
+      labelStudyProgram: "Study program",
+      labelSemester: "Semester",
+      labelLinkedIn: "LinkedIn",
+      viewProfile: "View profile",
+      semesterSuffix: ". semester",
+      globalDocsTitle: "General Documents",
+      globalDocsSubtitle: "Documents and resources for all participants",
+      categoryDocsTitle: "Category Documents",
+      categoryDocsSubtitle: (name: string) => `Documents and resources for ${name}`,
+      noDocsAvailable: "No documents available yet",
+      registerForDocs: "Register for a category to see documents",
+      teamTitle: "Your Team",
+      teamSubtitle: "Information about your hackathon team",
+      teamName: "Team name",
+      teamDescription: "Description",
+      teamCategory: "Category",
+      teamRole: "Your role",
+      teamRoleLeader: "Team leader",
+      teamRoleMember: "Member",
+      teamDocsHint: 'Team documents and GitHub repos can be found in the "Documents" tab',
+      noTeam: "You haven't been assigned to a team yet",
+      noTeamNote: "Teams are created by admins during the hackathon",
+      manageChallenge: "Manage challenge",
+      selectCategory: "Category",
+      selectCategoryPlaceholder: "Select category",
+      noCategorySelected: "No category available or selected.",
+      yourCategory: "Your Category",
+      category: "Category",
+      homeAriaLabel: "Zentral Hack Home"
+    }
+  }[language]
 
   useEffect(() => {
     fetchDashboardData()
@@ -173,12 +274,10 @@ export function DashboardContent() {
       const res = await fetch(`/api/sponsor/challenge?categoryId=${encodeURIComponent(categoryId)}`, {
         credentials: "include"
       })
-
       if (!res.ok) {
         setAdminChallenge(null)
         return
       }
-
       const json = await res.json()
       setAdminChallenge((json.data?.challenge as SponsorChallengeRecord | null) || null)
     } catch (error) {
@@ -220,11 +319,11 @@ export function DashboardContent() {
   const showChallengeTab = isChallengeManager
   const showTeamTab = !isChallengeManager
   const sponsorCategoryName =
-    registration?.category?.name || profile?.category_slug?.replace(/-/g, " ") || "Deine Kategorie"
+    registration?.category?.name || profile?.category_slug?.replace(/-/g, " ") || t.yourCategory
   const selectedChallengeCategory = challengeCategories.find(
     (category) => category.id === selectedChallengeCategoryId
   )
-  const challengeCategoryName = isAdmin ? selectedChallengeCategory?.name || "Kategorie" : sponsorCategoryName
+  const challengeCategoryName = isAdmin ? selectedChallengeCategory?.name || t.category : sponsorCategoryName
   const challengeCategorySlug = isAdmin
     ? selectedChallengeCategory?.slug || "regional-impact"
     : registration?.category?.slug || profile?.category_slug || "regional-impact"
@@ -237,20 +336,29 @@ export function DashboardContent() {
       {/* Header */}
       <header className="border-border bg-card border-b">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <Link href="/" className="inline-block" aria-label="Zentral Hack Startseite">
+          <Link href="/" className="inline-block" aria-label={t.homeAriaLabel}>
             <BrandMark className="w-32 sm:w-36" imageClassName="drop-shadow-sm" priority />
           </Link>
           <div className="flex items-center gap-3">
             {(user?.role === "admin" || user?.role === "category_partner") && (
               <Link href="/admin">
                 <Button variant="outline" size="sm">
-                  Admin Panel
+                  {t.adminPanel}
                 </Button>
               </Link>
             )}
+            <Select value={language} onValueChange={(v) => setLanguage(v as "de" | "en")}>
+              <SelectTrigger className="w-20 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="de">DE</SelectItem>
+                <SelectItem value="en">EN</SelectItem>
+              </SelectContent>
+            </Select>
             <Button variant="outline" onClick={handleLogout} disabled={loggingOut} className="gap-2">
               {loggingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
-              Abmelden
+              {t.logout}
             </Button>
           </div>
         </div>
@@ -260,9 +368,9 @@ export function DashboardContent() {
         {/* Welcome */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="text-foreground mb-2 text-3xl font-bold">
-            Hallo, {profile?.first_name || user?.email}!
+            {t.greeting(profile?.first_name || user?.email || "")}
           </h1>
-          <p className="text-muted-foreground">Willkommen in deinem Zentral Hack Dashboard</p>
+          <p className="text-muted-foreground">{t.welcomeSubtitle}</p>
         </motion.div>
 
         {/* Registration Status */}
@@ -283,7 +391,7 @@ export function DashboardContent() {
                 <Badge
                   variant={registration.status === "confirmed" ? "default" : "outline"}
                   className={registration.status === "confirmed" ? "bg-green-600" : ""}>
-                  {registration.status === "confirmed" ? "✓ Anmeldung bestätigt" : "Ausstehend"}
+                  {registration.status === "confirmed" ? t.registrationConfirmed : t.registrationPending}
                 </Badge>
               </CardContent>
             </Card>
@@ -292,9 +400,9 @@ export function DashboardContent() {
           <Card className="mb-8 border-amber-200 bg-amber-50">
             <CardContent className="pt-6">
               <p className="text-amber-800">
-                Du hast dich noch nicht für eine Kategorie registriert.{" "}
+                {t.notRegistered}{" "}
                 <Link href="/anmeldung" className="font-medium underline">
-                  Jetzt registrieren
+                  {t.registerNow}
                 </Link>
               </p>
             </CardContent>
@@ -307,22 +415,22 @@ export function DashboardContent() {
             className={`grid w-full ${showTeamTab || showChallengeTab ? "grid-cols-3" : "grid-cols-2"} lg:inline-grid lg:w-auto`}>
             <TabsTrigger value="profile" className="gap-2">
               <UserIcon className="h-4 w-4" />
-              Profil
+              {t.tabProfile}
             </TabsTrigger>
             <TabsTrigger value="documents" className="gap-2">
               <FileText className="h-4 w-4" />
-              Dokumente
+              {t.tabDocuments}
             </TabsTrigger>
             {showChallengeTab && (
               <TabsTrigger value="challenge" className="gap-2">
                 <FolderOpen className="h-4 w-4" />
-                Challenges
+                {t.tabChallenges}
               </TabsTrigger>
             )}
             {showTeamTab && (
               <TabsTrigger value="team" className="gap-2">
                 <Users className="h-4 w-4" />
-                Team
+                {t.tabTeam}
               </TabsTrigger>
             )}
           </TabsList>
@@ -331,48 +439,51 @@ export function DashboardContent() {
           <TabsContent value="profile">
             <Card>
               <CardHeader>
-                <CardTitle>Dein Profil</CardTitle>
-                <CardDescription>Deine Registrierungsdaten für den Zentral Hack</CardDescription>
+                <CardTitle>{t.profileTitle}</CardTitle>
+                <CardDescription>{t.profileSubtitle}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-muted-foreground text-sm">E-Mail</Label>
+                    <Label className="text-muted-foreground text-sm">{t.labelEmail}</Label>
                     <p className="font-medium">{user?.email}</p>
                   </div>
                   <div>
-                    <Label className="text-muted-foreground text-sm">Name</Label>
+                    <Label className="text-muted-foreground text-sm">{t.labelName}</Label>
                     <p className="font-medium">
                       {profile?.first_name} {profile?.last_name}
                     </p>
                   </div>
                   {profile?.university && (
                     <div>
-                      <Label className="text-muted-foreground text-sm">Hochschule</Label>
+                      <Label className="text-muted-foreground text-sm">{t.labelUniversity}</Label>
                       <p className="font-medium">{profile.university}</p>
                     </div>
                   )}
                   {profile?.study_program && (
                     <div>
-                      <Label className="text-muted-foreground text-sm">Studiengang</Label>
+                      <Label className="text-muted-foreground text-sm">{t.labelStudyProgram}</Label>
                       <p className="font-medium">{profile.study_program}</p>
                     </div>
                   )}
                   {profile?.semester && (
                     <div>
-                      <Label className="text-muted-foreground text-sm">Semester</Label>
-                      <p className="font-medium">{profile.semester}. Semester</p>
+                      <Label className="text-muted-foreground text-sm">{t.labelSemester}</Label>
+                      <p className="font-medium">
+                        {profile.semester}
+                        {t.semesterSuffix}
+                      </p>
                     </div>
                   )}
                   {profile?.linkedin_url && (
                     <div>
-                      <Label className="text-muted-foreground text-sm">LinkedIn</Label>
+                      <Label className="text-muted-foreground text-sm">{t.labelLinkedIn}</Label>
                       <a
                         href={profile.linkedin_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-1 font-medium text-[#530A5D] hover:underline">
-                        Profil ansehen
+                        {t.viewProfile}
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     </div>
@@ -385,15 +496,14 @@ export function DashboardContent() {
           {/* Documents Tab */}
           <TabsContent value="documents">
             <div className="space-y-6">
-              {/* Global Documents */}
               {globalDocuments.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <FolderOpen className="h-5 w-5 text-[#530A5D]" />
-                      Allgemeine Dokumente
+                      {t.globalDocsTitle}
                     </CardTitle>
-                    <CardDescription>Dokumente und Ressourcen für alle Teilnehmer</CardDescription>
+                    <CardDescription>{t.globalDocsSubtitle}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
@@ -422,12 +532,11 @@ export function DashboardContent() {
                 </Card>
               )}
 
-              {/* Category Documents */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Kategorie-Dokumente</CardTitle>
+                  <CardTitle>{t.categoryDocsTitle}</CardTitle>
                   <CardDescription>
-                    Dokumente und Ressourcen für {registration?.category?.name || "deine Kategorie"}
+                    {t.categoryDocsSubtitle(registration?.category?.name || t.yourCategory)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -456,15 +565,12 @@ export function DashboardContent() {
                     </div>
                   ) : (
                     <p className="text-muted-foreground py-8 text-center">
-                      {registration
-                        ? "Noch keine Dokumente verfügbar"
-                        : "Melde dich für eine Kategorie an, um Dokumente zu sehen"}
+                      {registration ? t.noDocsAvailable : t.registerForDocs}
                     </p>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Team Documents */}
               {team && <TeamFilesComponent teamId={team.id} />}
             </div>
           </TabsContent>
@@ -474,45 +580,39 @@ export function DashboardContent() {
             <TabsContent value="team">
               <Card>
                 <CardHeader>
-                  <CardTitle>Dein Team</CardTitle>
-                  <CardDescription>Informationen zu deinem Hackathon-Team</CardDescription>
+                  <CardTitle>{t.teamTitle}</CardTitle>
+                  <CardDescription>{t.teamSubtitle}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {team ? (
                     <div className="space-y-6">
                       <div>
-                        <Label className="text-muted-foreground text-sm">Team-Name</Label>
+                        <Label className="text-muted-foreground text-sm">{t.teamName}</Label>
                         <p className="text-lg font-medium">{team.name}</p>
                       </div>
                       {team.description && (
                         <div>
-                          <Label className="text-muted-foreground text-sm">Beschreibung</Label>
+                          <Label className="text-muted-foreground text-sm">{t.teamDescription}</Label>
                           <p>{team.description}</p>
                         </div>
                       )}
                       <div>
-                        <Label className="text-muted-foreground text-sm">Kategorie</Label>
+                        <Label className="text-muted-foreground text-sm">{t.teamCategory}</Label>
                         <p className="font-medium">{team.category.name}</p>
                       </div>
                       <div>
-                        <Label className="text-muted-foreground text-sm">Deine Rolle</Label>
+                        <Label className="text-muted-foreground text-sm">{t.teamRole}</Label>
                         <Badge variant="outline">
-                          {team.member_role === "leader" ? "Team-Leader" : "Mitglied"}
+                          {team.member_role === "leader" ? t.teamRoleLeader : t.teamRoleMember}
                         </Badge>
                       </div>
-
-                      {/* Team files & repos are shown in the documents tab */}
-                      <p className="text-muted-foreground text-sm">
-                        Team-Dokumente und GitHub-Repos findest du im Tab &quot;Dokumente&quot;
-                      </p>
+                      <p className="text-muted-foreground text-sm">{t.teamDocsHint}</p>
                     </div>
                   ) : (
                     <div className="py-8 text-center">
                       <Users className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-                      <p className="text-muted-foreground mb-2">Du bist noch keinem Team zugewiesen</p>
-                      <p className="text-muted-foreground text-sm">
-                        Teams werden während des Hackathons von den Admins erstellt
-                      </p>
+                      <p className="text-muted-foreground mb-2">{t.noTeam}</p>
+                      <p className="text-muted-foreground text-sm">{t.noTeamNote}</p>
                     </div>
                   )}
                 </CardContent>
@@ -527,11 +627,11 @@ export function DashboardContent() {
                 {isAdmin && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>Challenge verwalten</CardTitle>
+                      <CardTitle>{t.manageChallenge}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        <Label htmlFor="challenge-category-select">Kategorie</Label>
+                        <Label htmlFor="challenge-category-select">{t.selectCategory}</Label>
                         <Select
                           value={selectedChallengeCategoryId}
                           onValueChange={(value) => {
@@ -539,7 +639,7 @@ export function DashboardContent() {
                             void fetchAdminChallenge(value)
                           }}>
                           <SelectTrigger id="challenge-category-select">
-                            <SelectValue placeholder="Kategorie wählen" />
+                            <SelectValue placeholder={t.selectCategoryPlaceholder} />
                           </SelectTrigger>
                           <SelectContent>
                             {challengeCategories.map((category) => (
@@ -557,7 +657,7 @@ export function DashboardContent() {
                 {isAdmin && !selectedChallengeCategoryId ? (
                   <Card>
                     <CardContent className="pt-6">
-                      <p className="text-muted-foreground">Keine Kategorie verfügbar oder ausgewählt.</p>
+                      <p className="text-muted-foreground">{t.noCategorySelected}</p>
                     </CardContent>
                   </Card>
                 ) : loadingAdminChallenge ? (
@@ -571,9 +671,7 @@ export function DashboardContent() {
                     categoryId={challengeCategoryId}
                     initialChallenge={isAdmin ? adminChallenge : sponsorChallenge}
                     onSaved={(challenge) => {
-                      if (isAdmin) {
-                        setAdminChallenge(challenge)
-                      }
+                      if (isAdmin) setAdminChallenge(challenge)
                     }}
                   />
                 )}

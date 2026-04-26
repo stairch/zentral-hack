@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAuth } from "@/lib/auth-context"
+import { useLanguage } from "@/lib/language-context"
 import { Button } from "@/components/ui/button"
 import {
   LayoutDashboard,
@@ -17,29 +18,86 @@ import {
   Sparkles,
   MessageSquare,
   UserCog,
-  HelpCircle
+  HelpCircle,
+  CalendarDays,
+  BarChart3,
+  Image,
+  Trophy
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BrandMark } from "@/components/brand-mark"
 
-const navItems = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/registrations", label: "Anmeldungen", icon: Users },
-  { href: "/admin/users", label: "Benutzer", icon: UserCog },
-  { href: "/admin/teams", label: "Teams", icon: Users },
-  { href: "/admin/documents", label: "Dokumente", icon: FolderOpen },
-  { href: "/admin/categories", label: "Kategorien", icon: Sparkles },
-  { href: "/admin/faqs", label: "FAQs", icon: HelpCircle },
-  { href: "/admin/emails", label: "E-Mails & Kampagnen", icon: Mail },
-  { href: "/admin/newsletter", label: "Newsletter Abonnenten", icon: Mail },
-  { href: "/admin/sponsors", label: "Sponsoren", icon: MessageSquare }
-]
+const copy = {
+  de: {
+    dashboard: "Dashboard",
+    registrations: "Anmeldungen",
+    users: "Benutzer",
+    teams: "Teams",
+    documents: "Dokumente",
+    categories: "Kategorien",
+    challenges: "Challenges",
+    about: "About Stats",
+    schedule: "Zeitplan",
+    partnerLogos: "Partner-Logos",
+    faqs: "FAQs",
+    emails: "E-Mails & Kampagnen",
+    newsletter: "Newsletter",
+    sponsors: "Sponsoren",
+    adminPanel: "Admin Panel",
+    categoryAdmin: "Kategorien-Admin",
+    logout: "Abmelden",
+    home: "Zentral Hack Startseite"
+  },
+  en: {
+    dashboard: "Dashboard",
+    registrations: "Registrations",
+    users: "Users",
+    teams: "Teams",
+    documents: "Documents",
+    categories: "Categories",
+    challenges: "Challenges",
+    about: "About Stats",
+    schedule: "Schedule",
+    partnerLogos: "Partner Logos",
+    faqs: "FAQs",
+    emails: "Emails & Campaigns",
+    newsletter: "Newsletter",
+    sponsors: "Sponsors",
+    adminPanel: "Admin Panel",
+    categoryAdmin: "Category Admin",
+    logout: "Log Out",
+    home: "Zentral Hack Home"
+  }
+} as const
 
 export function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
+  const { language, setLanguage } = useLanguage()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const isAdmin = user?.role === "admin"
+  const text = copy[language]
+
+  const allNavItems = [
+    { href: "/admin", label: text.dashboard, icon: LayoutDashboard, adminOnly: false },
+    { href: "/admin/registrations", label: text.registrations, icon: Users, adminOnly: false },
+    { href: "/admin/users", label: text.users, icon: UserCog, adminOnly: true },
+    { href: "/admin/teams", label: text.teams, icon: Users, adminOnly: false },
+    { href: "/admin/documents", label: text.documents, icon: FolderOpen, adminOnly: false },
+    { href: "/admin/categories", label: text.categories, icon: Sparkles, adminOnly: false },
+    { href: "/admin/challenges", label: text.challenges, icon: Trophy, adminOnly: true },
+    { href: "/admin/about", label: text.about, icon: BarChart3, adminOnly: true },
+    { href: "/admin/schedule", label: text.schedule, icon: CalendarDays, adminOnly: true },
+    { href: "/admin/partner-logos", label: text.partnerLogos, icon: Image, adminOnly: true },
+    { href: "/admin/faqs", label: text.faqs, icon: HelpCircle, adminOnly: true },
+    { href: "/admin/emails", label: text.emails, icon: Mail, adminOnly: true },
+    { href: "/admin/newsletter", label: text.newsletter, icon: Mail, adminOnly: true },
+    { href: "/admin/sponsors", label: text.sponsors, icon: MessageSquare, adminOnly: true }
+  ]
+
+  const navItems = allNavItems.filter((item) => !item.adminOnly || isAdmin)
 
   const handleLogout = async () => {
     await logout()
@@ -51,14 +109,14 @@ export function AdminSidebar() {
     <>
       {/* Logo */}
       <div className="border-border border-b p-6">
-        <Link href="/" className="inline-block" aria-label="Zentral Hack Startseite">
+        <Link href="/" className="inline-block" aria-label={text.home}>
           <BrandMark className="w-32" imageClassName="drop-shadow-sm" priority />
         </Link>
-        <p className="text-muted-foreground mt-1 text-xs">Admin Panel</p>
+        <p className="text-muted-foreground mt-1 text-xs">{isAdmin ? text.adminPanel : text.categoryAdmin}</p>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-1 overflow-y-auto p-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href
           return (
@@ -69,7 +127,7 @@ export function AdminSidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-[#530A5D] text-white"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}>
               <item.icon className="h-5 w-5" />
@@ -80,13 +138,23 @@ export function AdminSidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-border border-t p-4">
+      <div className="border-border space-y-2 border-t p-4">
+        {/* Language toggle */}
+        <div className="flex items-center gap-2 px-1">
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as "de" | "en")}
+            className="border-border bg-background text-muted-foreground w-full cursor-pointer rounded-md border px-3 py-2 text-sm">
+            <option value="de">Deutsch</option>
+            <option value="en">English</option>
+          </select>
+        </div>
         <Button
           variant="ghost"
           className="text-muted-foreground hover:text-foreground w-full justify-start gap-3"
           onClick={handleLogout}>
           <LogOut className="h-5 w-5" />
-          Abmelden
+          {text.logout}
         </Button>
       </div>
     </>
@@ -101,7 +169,7 @@ export function AdminSidebar() {
 
       {/* Mobile Header */}
       <header className="bg-card border-border fixed top-0 right-0 left-0 z-40 flex items-center justify-between border-b px-4 py-3 lg:hidden">
-        <Link href="/" className="inline-block" aria-label="Zentral Hack Startseite">
+        <Link href="/" className="inline-block" aria-label={text.home}>
           <BrandMark className="w-28" imageClassName="drop-shadow-sm" priority />
         </Link>
         <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Mail, FolderOpen, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { useLanguage } from "@/lib/language-context"
 
 interface Stats {
   registrations: number
@@ -12,14 +13,57 @@ interface Stats {
   documents: number
 }
 
-const statConfig = [
-  { key: "registrations", label: "Anmeldungen", icon: Users, color: "#530A5D" },
-  { key: "newsletter", label: "Newsletter", icon: Mail, color: "#D5C2F7" },
-  { key: "teams", label: "Teams", icon: Users, color: "#E6FF17" },
-  { key: "documents", label: "Dokumente", icon: FolderOpen, color: "#530A5D" }
-]
+const copy = {
+  de: {
+    heading: "ADMIN DASHBOARD",
+    subtitle: "Übersicht über alle Anmeldungen und Aktivitäten",
+    registrations: "Anmeldungen",
+    newsletter: "Newsletter",
+    teams: "Teams",
+    documents: "Dokumente",
+    loadError: "Fehler beim Laden der Statistiken",
+    welcome: "Willkommen im Admin Dashboard",
+    welcomeDesc: "Verwalte alle Hackathon-Aktivitäten von hier aus",
+    navHint: "Nutze die Seitenleiste um zu den verschiedenen Admin-Funktionen zu navigieren:",
+    navRegistrations: "Anmeldungen",
+    navRegistrationsDesc: "Verwalte alle registrierten Teilnehmer",
+    navTeams: "Teams",
+    navTeamsDesc: "Erstelle und verwalte Teams für den Hackathon",
+    navCategories: "Kategorien",
+    navCategoriesDesc: "Passe Kategorie-Beschreibungen an",
+    navDocuments: "Dokumente",
+    navDocumentsDesc: "Lade Materialien für Kategorien hoch",
+    navEmails: "E-Mails",
+    navEmailsDesc: "Sende Newsletter und Kampagnen"
+  },
+  en: {
+    heading: "ADMIN DASHBOARD",
+    subtitle: "Overview of all registrations and activities",
+    registrations: "Registrations",
+    newsletter: "Newsletter",
+    teams: "Teams",
+    documents: "Documents",
+    loadError: "Failed to load statistics",
+    welcome: "Welcome to the Admin Dashboard",
+    welcomeDesc: "Manage all hackathon activities from here",
+    navHint: "Use the sidebar to navigate to the various admin functions:",
+    navRegistrations: "Registrations",
+    navRegistrationsDesc: "Manage all registered participants",
+    navTeams: "Teams",
+    navTeamsDesc: "Create and manage teams for the hackathon",
+    navCategories: "Categories",
+    navCategoriesDesc: "Customize category descriptions",
+    navDocuments: "Documents",
+    navDocumentsDesc: "Upload materials for categories",
+    navEmails: "Emails",
+    navEmailsDesc: "Send newsletters and campaigns"
+  }
+} as const
 
 export function AdminDashboard() {
+  const { language } = useLanguage()
+  const text = copy[language]
+
   const [stats, setStats] = useState<Stats>({
     registrations: 0,
     newsletter: 0,
@@ -28,28 +72,30 @@ export function AdminDashboard() {
   })
   const [loading, setLoading] = useState(true)
 
+  const statConfig = [
+    { key: "registrations", label: text.registrations, icon: Users, color: "#530A5D" },
+    { key: "newsletter", label: text.newsletter, icon: Mail, color: "#D5C2F7" },
+    { key: "teams", label: text.teams, icon: Users, color: "#E6FF17" },
+    { key: "documents", label: text.documents, icon: FolderOpen, color: "#530A5D" }
+  ]
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
         setLoading(true)
-        const res = await fetch("/api/admin/dashboard-stats", {
-          credentials: "include"
-        })
-
+        const res = await fetch("/api/admin/dashboard-stats", { credentials: "include" })
         if (res.ok) {
           const data = await res.json()
           setStats(data.data?.stats || stats)
         } else {
-          toast.error("Fehler beim Laden der Statistiken")
+          toast.error(text.loadError)
         }
-      } catch (error) {
-        console.error("Failed to fetch stats:", error)
-        toast.error("Fehler beim Laden der Statistiken")
+      } catch {
+        toast.error(text.loadError)
       } finally {
         setLoading(false)
       }
     }
-
     fetchStats()
   }, [])
 
@@ -64,10 +110,8 @@ export function AdminDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-foreground text-3xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
-          ADMIN DASHBOARD
-        </h1>
-        <p className="text-muted-foreground mt-2">Übersicht über alle Anmeldungen und Aktivitäten</p>
+        <h1 className="font-display text-foreground text-3xl font-bold">{text.heading}</h1>
+        <p className="text-muted-foreground mt-2">{text.subtitle}</p>
       </div>
 
       {/* Stats Grid */}
@@ -93,28 +137,26 @@ export function AdminDashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Willkommen im Admin Dashboard</CardTitle>
-          <CardDescription>Verwalte alle Hackathon-Aktivitäten von hier aus</CardDescription>
+          <CardTitle>{text.welcome}</CardTitle>
+          <CardDescription>{text.welcomeDesc}</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">
-            Nutze die Seitenleiste um zu den verschiedenen Admin-Funktionen zu navigieren:
-          </p>
+          <p className="text-muted-foreground">{text.navHint}</p>
           <ul className="text-muted-foreground mt-4 list-inside list-disc space-y-2">
             <li>
-              <strong>Anmeldungen</strong> - Verwalte alle registrierten Teilnehmer
+              <strong>{text.navRegistrations}</strong> – {text.navRegistrationsDesc}
             </li>
             <li>
-              <strong>Teams</strong> - Erstelle und verwalte Teams für den Hackathon
+              <strong>{text.navTeams}</strong> – {text.navTeamsDesc}
             </li>
             <li>
-              <strong>Kategorien</strong> - Passe Kategorie-Beschreibungen an
+              <strong>{text.navCategories}</strong> – {text.navCategoriesDesc}
             </li>
             <li>
-              <strong>Dokumente</strong> - Lade Materialien für Kategorien hoch
+              <strong>{text.navDocuments}</strong> – {text.navDocumentsDesc}
             </li>
             <li>
-              <strong>E-Mails</strong> - Sende Newsletter und Kampagnen
+              <strong>{text.navEmails}</strong> – {text.navEmailsDesc}
             </li>
           </ul>
         </CardContent>

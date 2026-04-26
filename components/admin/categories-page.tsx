@@ -42,6 +42,8 @@ interface Category {
   challenge_description?: string | null
   challenge_description_en?: string | null
   show_challenge_description?: boolean | null
+  prize?: string | null
+  target_group?: string | null
 }
 
 interface EditFormState {
@@ -56,6 +58,8 @@ interface EditFormState {
   challengeDescription: string
   challengeDescriptionEn: string
   showChallengeDescription: boolean
+  prize: string
+  targetGroup: string
 }
 
 export function AdminCategoriesPage() {
@@ -75,7 +79,9 @@ export function AdminCategoriesPage() {
     icon: "sparkles",
     challengeDescription: "",
     challengeDescriptionEn: "",
-    showChallengeDescription: false
+    showChallengeDescription: false,
+    prize: "",
+    targetGroup: ""
   })
   const [saved, setSaved] = useState(false)
 
@@ -107,6 +113,11 @@ export function AdminCategoriesPage() {
           previewHint: "Preview follows the currently selected admin language.",
           partnerPreviewLabel: "Partner",
           challengePreviewLabel: "Challenge",
+          prizeLabel: "Prize money (category-level)",
+          prizePlaceholder: "e.g. CHF 500",
+          prizeHint: "Shown publicly only for categories without individual challenges.",
+          targetGroupLabel: "Target audience",
+          targetGroupPlaceholder: "e.g. Students, professionals, ...",
           save: "Save",
           saving: "Saving...",
           saved: "Saved successfully",
@@ -145,6 +156,11 @@ export function AdminCategoriesPage() {
           previewHint: "Die Vorschau folgt der aktuell gewählten Admin-Sprache.",
           partnerPreviewLabel: "Partner",
           challengePreviewLabel: "Challenge",
+          prizeLabel: "Preisgeld (Kategorie-Ebene)",
+          prizePlaceholder: "z.B. CHF 500",
+          prizeHint: "Wird öffentlich nur für Kategorien ohne eigene Challenges angezeigt.",
+          targetGroupLabel: "Zielgruppe",
+          targetGroupPlaceholder: "z.B. Studierende, Berufstätige, ...",
           save: "Speichern",
           saving: "Wird gespeichert...",
           saved: "Erfolgreich gespeichert!",
@@ -224,7 +240,9 @@ export function AdminCategoriesPage() {
           icon: editForm.icon,
           challengeDescription: editForm.challengeDescription,
           challengeDescriptionEn: editForm.challengeDescriptionEn,
-          showChallengeDescription: editForm.showChallengeDescription
+          showChallengeDescription: editForm.showChallengeDescription,
+          prize: editForm.prize || null,
+          targetGroup: editForm.targetGroup || null
         })
       })
 
@@ -252,7 +270,9 @@ export function AdminCategoriesPage() {
                 icon: editForm.icon,
                 challenge_description: editForm.challengeDescription,
                 challenge_description_en: editForm.challengeDescriptionEn,
-                show_challenge_description: editForm.showChallengeDescription
+                show_challenge_description: editForm.showChallengeDescription,
+                prize: editForm.prize || null,
+                target_group: editForm.targetGroup || null
               }
             : category
         )
@@ -332,7 +352,9 @@ export function AdminCategoriesPage() {
                           icon: presentation.iconName,
                           challengeDescription: category.challenge_description || "",
                           challengeDescriptionEn: category.challenge_description_en || "",
-                          showChallengeDescription: Boolean(category.show_challenge_description)
+                          showChallengeDescription: Boolean(category.show_challenge_description),
+                          prize: category.prize || "",
+                          targetGroup: category.target_group || ""
                         })
                       } else {
                         setEditingId(null)
@@ -519,6 +541,28 @@ export function AdminCategoriesPage() {
                                   rows={5}
                                 />
                               </div>
+                            </div>
+                          </div>
+
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div>
+                              <Label htmlFor="prize">{text.prizeLabel}</Label>
+                              <Input
+                                id="prize"
+                                value={editForm.prize}
+                                onChange={(e) => updateEditForm("prize", e.target.value)}
+                                placeholder={text.prizePlaceholder}
+                              />
+                              <p className="text-muted-foreground mt-1 text-xs">{text.prizeHint}</p>
+                            </div>
+                            <div>
+                              <Label htmlFor="targetGroup">{text.targetGroupLabel}</Label>
+                              <Input
+                                id="targetGroup"
+                                value={editForm.targetGroup}
+                                onChange={(e) => updateEditForm("targetGroup", e.target.value)}
+                                placeholder={text.targetGroupPlaceholder}
+                              />
                             </div>
                           </div>
 

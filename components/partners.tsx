@@ -199,6 +199,7 @@ function TierCard({
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: "-80px" })
   const textColor = getSponsorContrastTextColor(tier.color)
+  const { language } = useLanguage()
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -220,7 +221,11 @@ function TierCard({
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
-      aria-label={`${tier.name} Sponsoring-Paket anfragen`}
+      aria-label={
+        language === "de"
+          ? `${tier.name} Sponsoring-Paket anfragen`
+          : `Request ${tier.name} sponsorship package`
+      }
       className="group relative flex min-h-28 cursor-pointer items-center justify-center rounded-2xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
       style={{
         backgroundColor: tier.color,
@@ -245,6 +250,7 @@ export function Partners() {
   const [selectedPackageSlug, setSelectedPackageSlug] = useState<string | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const [sponsors, setSponsors] = useState<Sponsor[]>([])
+  const [dbOrganisers, setDbOrganisers] = useState<typeof partners.organisers | null>(null)
   const [sponsorPackageItems, setSponsorPackageItems] = useState<SponsorPackage[]>(
     fallbackSponsorPackages
       .map((pkg) => ({
@@ -290,8 +296,36 @@ export function Partners() {
       }
     }
 
+    const fetchPartnerLogos = async () => {
+      try {
+        const res = await fetch("/api/partner-logos")
+        if (!res.ok) return
+        const json = await res.json()
+        const list = json.data?.logos as {
+          name: string
+          logo_url: string
+          website_url: string | null
+          logo_size: string
+        }[]
+        if (list?.length > 0) {
+          setDbOrganisers(
+            list.map((l) => ({
+              name: l.name,
+              logo: l.logo_url,
+              logoWidth: l.logo_size === "small" ? "w-20" : l.logo_size === "large" ? "w-36" : "w-28",
+              link: l.website_url ?? "#",
+              bgColor: "transparent"
+            }))
+          )
+        }
+      } catch {
+        // Keep hardcoded fallback
+      }
+    }
+
     void fetchSponsorPackages()
     void fetchSponsorContacts()
+    void fetchPartnerLogos()
   }, [])
 
   function mapSponsor(e: Sponsor) {
@@ -393,7 +427,7 @@ export function Partners() {
             <h3 className="font-display text-foreground mb-4 flex justify-center text-center text-lg font-bold">
               <div className="bg-primary w-fit rounded-md px-5 text-white">{text.organisers}</div>
             </h3>
-            <MarqueeRow items={partners.organisers} direction="left" speed={30} />
+            <MarqueeRow items={dbOrganisers ?? partners.organisers} direction="left" speed={30} />
             {/* Platin Sponsors Marquee */}
             {platinSponsors.length > 0 && (
               <>

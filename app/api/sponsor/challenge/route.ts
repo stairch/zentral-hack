@@ -32,7 +32,7 @@ async function loadChallengeRows(req: AuthenticatedRequest, categoryId: string) 
               company_name, branch, contact_name, contact_function,
               contact_email, contact_phone, website, logo_note,
               challenge_title, short_description, difficulty, team_size,
-              challenge_language, challenge_data, published_at, created_at, updated_at
+              challenge_language, prize, challenge_data, published_at, created_at, updated_at
        FROM sponsor_challenges
        WHERE category_id = $1
        ORDER BY updated_at DESC, created_at DESC`,
@@ -45,7 +45,7 @@ async function loadChallengeRows(req: AuthenticatedRequest, categoryId: string) 
             company_name, branch, contact_name, contact_function,
             contact_email, contact_phone, website, logo_note,
             challenge_title, short_description, difficulty, team_size,
-            challenge_language, challenge_data, published_at, created_at, updated_at
+            challenge_language, prize, challenge_data, published_at, created_at, updated_at
      FROM sponsor_challenges
      WHERE user_id = $1 AND category_id = $2
      ORDER BY updated_at DESC, created_at DESC`,
@@ -145,6 +145,7 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
 
     const status = body.status === "published" ? "published" : "draft"
     const challengeData = normalizeSponsorChallengeData(body.challengeData)
+    const prize = typeof body.prize === "string" ? body.prize.trim() || null : null
 
     if (!challengeData.challengeTitle.trim()) {
       return validationError("Challenge title is required")
@@ -173,14 +174,15 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
         challengeData.difficulty || null,
         challengeData.teamSize || null,
         challengeData.challengeLanguage || null,
-        JSON.stringify(challengeData)
+        JSON.stringify(challengeData),
+        prize
       ]
 
       if (challengeId) {
         const whereClause =
           req.user?.role === "admin"
-            ? "WHERE id = $18 AND category_id = $2"
-            : "WHERE id = $18 AND user_id = $1 AND category_id = $2"
+            ? "WHERE id = $19 AND category_id = $2"
+            : "WHERE id = $19 AND user_id = $1 AND category_id = $2"
 
         result = await query(
           `UPDATE sponsor_challenges
@@ -199,6 +201,7 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
                team_size = $15,
                challenge_language = $16,
                challenge_data = $17::jsonb,
+               prize = $18,
                published_at = CASE
                  WHEN $3 = 'published' AND sponsor_challenges.published_at IS NULL THEN NOW()
                  WHEN $3 = 'published' THEN sponsor_challenges.published_at
@@ -210,7 +213,7 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
                      company_name, branch, contact_name, contact_function,
                      contact_email, contact_phone, website, logo_note,
                      challenge_title, short_description, difficulty, team_size,
-                     challenge_language, challenge_data, published_at, created_at, updated_at`,
+                     challenge_language, prize, challenge_data, published_at, created_at, updated_at`,
           [...payload, challengeId]
         )
 
@@ -224,13 +227,13 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
              company_name, branch, contact_name, contact_function,
              contact_email, contact_phone, website, logo_note,
              challenge_title, short_description, difficulty, team_size,
-             challenge_language, challenge_data, published_at, updated_at
+             challenge_language, challenge_data, prize, published_at, updated_at
            ) VALUES (
              $1, $2, $3,
              $4, $5, $6, $7,
              $8, $9, $10, $11,
              $12, $13, $14, $15,
-             $16, $17::jsonb,
+             $16, $17::jsonb, $18,
              CASE WHEN $3 = 'published' THEN NOW() ELSE NULL END,
              NOW()
            )
@@ -238,7 +241,7 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
                      company_name, branch, contact_name, contact_function,
                      contact_email, contact_phone, website, logo_note,
                      challenge_title, short_description, difficulty, team_size,
-                     challenge_language, challenge_data, published_at, created_at, updated_at`,
+                     challenge_language, prize, challenge_data, published_at, created_at, updated_at`,
           payload
         )
       }

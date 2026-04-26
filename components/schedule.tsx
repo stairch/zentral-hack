@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { motion, useInView, AnimatePresence, useAnimate } from "framer-motion"
 import {
   Clock,
@@ -11,8 +11,27 @@ import {
   PartyPopper,
   Sun,
   Moon,
+  Star,
+  Zap,
+  Music,
+  Trophy,
   type LucideIcon
 } from "lucide-react"
+
+const iconMap: Record<string, LucideIcon> = {
+  clock: Clock,
+  coffee: Coffee,
+  utensils: Utensils,
+  presentation: Presentation,
+  code: Code,
+  "party-popper": PartyPopper,
+  sun: Sun,
+  moon: Moon,
+  star: Star,
+  zap: Zap,
+  music: Music,
+  trophy: Trophy
+}
 import { useLanguage } from "@/lib/language-context"
 
 const scheduleDay1 = [
@@ -124,7 +143,7 @@ function TimelineItem({
   isLeft,
   language
 }: {
-  item: (typeof scheduleDay1)[0]
+  item: ScheduleEntry
   index: number
   isLeft: boolean
   language: "de" | "en"
@@ -230,14 +249,52 @@ function DayButton({ day, activeDay, setActiveDay, icon: Icon, label }: DayButto
   )
 }
 
+type ScheduleEntry = {
+  time: string
+  event: { de: string; en: string }
+  icon: LucideIcon
+  description: { de: string; en: string }
+}
+
+function dbToEntry(item: {
+  time: string
+  icon: string
+  title_de: string
+  title_en: string
+  description_de: string
+  description_en: string
+}): ScheduleEntry {
+  return {
+    time: item.time,
+    icon: iconMap[item.icon] ?? Clock,
+    event: { de: item.title_de, en: item.title_en },
+    description: { de: item.description_de, en: item.description_en }
+  }
+}
+
 export function Schedule() {
   const [activeDay, setActiveDay] = useState<1 | 2>(1)
+  const [dbDay1, setDbDay1] = useState<ScheduleEntry[] | null>(null)
+  const [dbDay2, setDbDay2] = useState<ScheduleEntry[] | null>(null)
   const headerRef = useRef(null)
   const isHeaderInView = useInView(headerRef, { once: true })
   const { language } = useLanguage()
   const text = copy[language]
 
-  const schedule = activeDay === 1 ? scheduleDay1 : scheduleDay2
+  useEffect(() => {
+    fetch("/api/schedule")
+      .then((r) => r.json())
+      .then((d) => {
+        const items = d.data?.items ?? []
+        if (items.length > 0) {
+          setDbDay1(items.filter((i: { day: number }) => i.day === 1).map(dbToEntry))
+          setDbDay2(items.filter((i: { day: number }) => i.day === 2).map(dbToEntry))
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const schedule = activeDay === 1 ? (dbDay1 ?? scheduleDay1) : (dbDay2 ?? scheduleDay2)
 
   return (
     <section id="schedule" className="bg-background py-24">

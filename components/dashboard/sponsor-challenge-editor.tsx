@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2, Save, Send } from "lucide-react"
+import { Eye, Loader2, Save, Send, Trophy } from "lucide-react"
 import { toast } from "sonner"
 import {
   createEmptySponsorChallengeData,
@@ -77,6 +77,7 @@ export function SponsorChallengeEditor({
   onSaved
 }: SponsorChallengeEditorProps) {
   const [formData, setFormData] = useState<SponsorChallengeData>(() => createEmptySponsorChallengeData())
+  const [prize, setPrize] = useState("")
   const [status, setStatus] = useState<"draft" | "published">("draft")
   const [saving, setSaving] = useState(false)
   const [challengeList, setChallengeList] = useState<ChallengeListItem[]>([])
@@ -110,6 +111,7 @@ export function SponsorChallengeEditor({
 
       if (selected) {
         setStatus(selected.status)
+        setPrize(selected.prize || "")
         const normalized = normalizeSponsorChallengeData(selected.challenge_data)
         setFormData({
           ...normalized,
@@ -131,6 +133,7 @@ export function SponsorChallengeEditor({
         })
       } else {
         setStatus("draft")
+        setPrize("")
         setFormData(createEmptySponsorChallengeData())
       }
     } catch (error) {
@@ -159,6 +162,7 @@ export function SponsorChallengeEditor({
     }
 
     setStatus(initialChallenge.status)
+    setPrize(initialChallenge.prize || "")
     const normalized = normalizeSponsorChallengeData(initialChallenge.challenge_data)
 
     setFormData({
@@ -545,7 +549,8 @@ export function SponsorChallengeEditor({
           status: nextStatus,
           challengeId: selectedChallengeId || undefined,
           categoryId,
-          challengeData: formData
+          challengeData: formData,
+          prize: prize.trim() || null
         })
       })
 
@@ -557,6 +562,7 @@ export function SponsorChallengeEditor({
       const json = await response.json()
       const challenge = json.data?.challenge as SponsorChallengeRecord
       setStatus(challenge.status)
+      setPrize(challenge.prize || "")
       setSelectedChallengeId(challenge.id)
       setFormData(normalizeSponsorChallengeData(challenge.challenge_data))
 
@@ -654,6 +660,58 @@ export function SponsorChallengeEditor({
             </div>
           </div>
         </CardHeader>
+      </Card>
+
+      <Card className="border-[#530A5D]/40 bg-gradient-to-br from-[#530A5D]/5 to-[#530A5D]/10 shadow-sm">
+        <CardHeader className="border-b pb-4">
+          <CardTitle className="flex items-center gap-2 text-xl text-[#530A5D]">
+            <Eye className="h-5 w-5" />
+            Auf der Website sichtbar
+          </CardTitle>
+          <p className="text-muted-foreground text-sm">
+            Diese drei Felder werden direkt auf der Zentral Hack Website bei den Challenges angezeigt.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-6">
+          <div className="space-y-2">
+            <Label htmlFor="ws-challengeTitle" className="font-semibold">
+              Challenge-Titel <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="ws-challengeTitle"
+              value={formData.challengeTitle}
+              onChange={(e) => setFormData((prev) => ({ ...prev, challengeTitle: e.target.value }))}
+              placeholder="Kurzer, prägnanter Titel der Challenge"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="ws-shortDescription" className="font-semibold">
+              Kurzbeschreibung <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              id="ws-shortDescription"
+              value={formData.shortDescription}
+              onChange={(e) => setFormData((prev) => ({ ...prev, shortDescription: e.target.value }))}
+              placeholder="Max. 2–3 Sätze – wird auf der Website als Teaser angezeigt"
+              rows={3}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="ws-prize" className="flex items-center gap-1.5 font-semibold">
+              <Trophy className="h-4 w-4 text-[#530A5D]" />
+              Preisgeld / Preis
+            </Label>
+            <Input
+              id="ws-prize"
+              value={prize}
+              onChange={(e) => setPrize(e.target.value)}
+              placeholder="z.B. CHF 1'000 Gutschein, iPad, Internship-Angebot"
+            />
+            <p className="text-muted-foreground text-xs">
+              Wird als Preis-Highlight auf der Challenge-Karte angezeigt.
+            </p>
+          </div>
+        </CardContent>
       </Card>
 
       <SectionCard title="Unternehmen & Kontakt">

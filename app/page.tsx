@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { Navigation } from "@/components/navigation"
 import { Hero } from "@/components/hero"
 import { About } from "@/components/about"
@@ -14,7 +15,9 @@ export default function Home() {
       <Navigation />
       <Hero />
       <About />
-      <Categories />
+      <Suspense>
+        <Categories />
+      </Suspense>
       <Schedule />
       <Partners />
       <FAQ />

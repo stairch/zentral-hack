@@ -62,7 +62,7 @@ export default function ImpressumPage() {
           <div className="text-foreground space-y-8">
             <section>
               <h2 className="border-yellow border-b-2 pb-2 text-2xl font-bold">{copy.organizer}</h2>
-              <div className="bg-light-violet/10 mt-4 rounded-xl p-6">
+              <div className="mt-4 rounded-xl p-6">
                 <p className="text-lg font-semibold">
                   {language === "de"
                     ? "Hochschule Luzern – Informatik"

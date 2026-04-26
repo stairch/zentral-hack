@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Download, Loader2, Trash2 } from "lucide-react"
 import { toast } from "sonner"
+import { useLanguage } from "@/lib/language-context"
 
 interface Subscriber {
   email: string
@@ -13,37 +14,82 @@ interface Subscriber {
   created_at: string
 }
 
+const copy = {
+  de: {
+    heading: "NEWSLETTER ABONNENTEN",
+    subtitle: "Verwalte Weekly-Update Empfänger",
+    activeRecipients: "aktive Empfänger",
+    cardTitle: "Abonnenten",
+    selected: "ausgewählt",
+    all: "Alle",
+    cardDesc: "Wähle Empfänger aus und exportiere sie oder melde sie nur von Weekly Updates ab",
+    exportCsv: "CSV Exportieren",
+    unsubscribeWeekly: "Weekly abmelden",
+    selectAll: "Alle auswählen",
+    subscribedOn: "Abonniert am",
+    noSubscribers: "Keine Newsletter Abonnenten vorhanden",
+    loadError: "Fehler beim Laden der Abonnenten",
+    noEmailsExport: "Keine E-Mails zum Exportieren ausgewählt",
+    exported: "E-Mails exportiert",
+    noEmailsUnsubscribe: "Bitte wählen Sie E-Mails aus",
+    unsubscribeConfirm: "Möchten Sie",
+    unsubscribeConfirm2: "Abonnenten nur von Weekly Updates abmelden?",
+    unsubscribeSuccess: "Von Weekly Updates abgemeldet",
+    unsubscribeError: "Fehler beim Abmelden"
+  },
+  en: {
+    heading: "NEWSLETTER SUBSCRIBERS",
+    subtitle: "Manage weekly update recipients",
+    activeRecipients: "active recipients",
+    cardTitle: "Subscribers",
+    selected: "selected",
+    all: "All",
+    cardDesc: "Select recipients to export them or unsubscribe them from weekly updates",
+    exportCsv: "Export CSV",
+    unsubscribeWeekly: "Unsubscribe from weekly",
+    selectAll: "Select all",
+    subscribedOn: "Subscribed on",
+    noSubscribers: "No newsletter subscribers yet",
+    loadError: "Failed to load subscribers",
+    noEmailsExport: "No emails selected for export",
+    exported: "emails exported",
+    noEmailsUnsubscribe: "Please select emails first",
+    unsubscribeConfirm: "Do you want to unsubscribe",
+    unsubscribeConfirm2: "subscribers from weekly updates?",
+    unsubscribeSuccess: "Unsubscribed from weekly updates",
+    unsubscribeError: "Failed to unsubscribe"
+  }
+} as const
+
 export function NewsletterSubscribersPage() {
+  const { language } = useLanguage()
+  const text = copy[language]
+  const dateLocale = language === "en" ? "en-GB" : "de-CH"
+
   const [subscribers, setSubscribers] = useState<Subscriber[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set())
   const [allSelected, setAllSelected] = useState(false)
 
-  // Fetch subscribers
   useEffect(() => {
     const fetchSubscribers = async () => {
       try {
         setLoading(true)
-        const res = await fetch("/api/admin/email-subscribers", {
-          credentials: "include"
-        })
-
+        const res = await fetch("/api/admin/email-subscribers", { credentials: "include" })
         if (res.ok) {
           const data = await res.json()
           setSubscribers(data.data?.subscribers || [])
         }
       } catch (error) {
         console.error("Failed to fetch subscribers:", error)
-        toast.error("Fehler beim Laden der Abonnenten")
+        toast.error(text.loadError)
       } finally {
         setLoading(false)
       }
     }
-
     fetchSubscribers()
   }, [])
 
-  // Toggle email selection
   const toggleEmail = (email: string) => {
     const newSelected = new Set(selectedEmails)
     if (newSelected.has(email)) {
@@ -54,7 +100,6 @@ export function NewsletterSubscribersPage() {
     setSelectedEmails(newSelected)
   }
 
-  // Toggle all
   const toggleAll = () => {
     if (allSelected) {
       setSelectedEmails(new Set())
@@ -65,62 +110,50 @@ export function NewsletterSubscribersPage() {
     }
   }
 
-  // Export CSV
   const handleExport = () => {
     const emailsToExport =
       selectedEmails.size > 0 ? Array.from(selectedEmails) : subscribers.map((s) => s.email)
-
     if (emailsToExport.length === 0) {
-      toast.error("Keine E-Mails zum Exportieren ausgewählt")
+      toast.error(text.noEmailsExport)
       return
     }
-
-    // Create CSV content
     const csvContent = ["email", ...emailsToExport].join("\n")
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
     const link = document.createElement("a")
     const url = URL.createObjectURL(blob)
-
     link.setAttribute("href", url)
     link.setAttribute("download", `newsletter-subscribers-${new Date().toISOString().split("T")[0]}.csv`)
     link.style.visibility = "hidden"
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-
-    toast.success(`${emailsToExport.length} E-Mails exportiert`)
+    toast.success(`${emailsToExport.length} ${text.exported}`)
   }
 
-  // Bulk unsubscribe
   const handleBulkUnsubscribe = async () => {
     if (selectedEmails.size === 0) {
-      toast.error("Bitte wählen Sie E-Mails aus")
+      toast.error(text.noEmailsUnsubscribe)
       return
     }
-
-    if (!confirm(`Möchten Sie ${selectedEmails.size} Abonnenten nur von Weekly Updates abmelden?`)) return
-
+    if (!confirm(`${text.unsubscribeConfirm} ${selectedEmails.size} ${text.unsubscribeConfirm2}`)) return
     try {
       const res = await fetch("/api/admin/newsletter-unsubscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          emails: Array.from(selectedEmails)
-        })
+        body: JSON.stringify({ emails: Array.from(selectedEmails) })
       })
-
       if (res.ok) {
         setSubscribers(subscribers.filter((s) => !selectedEmails.has(s.email)))
         setSelectedEmails(new Set())
         setAllSelected(false)
-        toast.success("Von Weekly Updates abgemeldet")
+        toast.success(text.unsubscribeSuccess)
       } else {
-        toast.error("Fehler beim Abmelden")
+        toast.error(text.unsubscribeError)
       }
     } catch (error) {
       console.error("Unsubscribe error:", error)
-      toast.error("Fehler beim Abmelden")
+      toast.error(text.unsubscribeError)
     }
   }
 
@@ -135,11 +168,9 @@ export function NewsletterSubscribersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-foreground text-3xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
-          NEWSLETTER ABONNENTEN
-        </h1>
+        <h1 className="font-display text-foreground text-3xl font-bold">{text.heading}</h1>
         <p className="text-muted-foreground mt-2">
-          Verwalte Weekly-Update Empfänger - {subscribers.length} aktive Empfänger
+          {text.subtitle} – {subscribers.length} {text.activeRecipients}
         </p>
       </div>
 
@@ -148,21 +179,20 @@ export function NewsletterSubscribersPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>
-                Abonnenten ({selectedEmails.size > 0 ? `${selectedEmails.size} ausgewählt` : "Alle"})
+                {text.cardTitle} (
+                {selectedEmails.size > 0 ? `${selectedEmails.size} ${text.selected}` : text.all})
               </CardTitle>
-              <CardDescription>
-                Wähle Empfänger aus und exportiere sie oder melde sie nur von Weekly Updates ab
-              </CardDescription>
+              <CardDescription>{text.cardDesc}</CardDescription>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handleExport}>
                 <Download className="mr-2 h-4 w-4" />
-                CSV Exportieren
+                {text.exportCsv}
               </Button>
               {selectedEmails.size > 0 && (
                 <Button variant="destructive" size="sm" onClick={handleBulkUnsubscribe}>
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Weekly abmelden
+                  {text.unsubscribeWeekly}
                 </Button>
               )}
             </div>
@@ -171,13 +201,12 @@ export function NewsletterSubscribersPage() {
         <CardContent>
           {subscribers.length > 0 ? (
             <div className="space-y-2">
-              {/* Select All */}
               <div className="bg-muted flex items-center gap-3 rounded p-3">
                 <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
-                <span className="text-sm font-medium">Alle auswählen ({subscribers.length})</span>
+                <span className="text-sm font-medium">
+                  {text.selectAll} ({subscribers.length})
+                </span>
               </div>
-
-              {/* Subscriber List */}
               <div className="max-h-96 space-y-1 overflow-y-auto">
                 {subscribers.map((sub) => (
                   <div
@@ -190,7 +219,7 @@ export function NewsletterSubscribersPage() {
                     <div className="flex-1">
                       <p className="text-sm font-medium">{sub.email}</p>
                       <p className="text-muted-foreground text-xs">
-                        Abonniert am {new Date(sub.created_at).toLocaleDateString("de-CH")}
+                        {text.subscribedOn} {new Date(sub.created_at).toLocaleDateString(dateLocale)}
                       </p>
                     </div>
                   </div>
@@ -198,7 +227,7 @@ export function NewsletterSubscribersPage() {
               </div>
             </div>
           ) : (
-            <p className="text-muted-foreground py-8 text-center">Keine Newsletter Abonnenten vorhanden</p>
+            <p className="text-muted-foreground py-8 text-center">{text.noSubscribers}</p>
           )}
         </CardContent>
       </Card>

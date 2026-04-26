@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Users, Plus, Loader2, ArrowLeft, UserPlus, Trash2, Crown } from "lucide-react"
 import { toast } from "sonner"
+import { useLanguage } from "@/lib/language-context"
 
 interface Team {
   id: string
@@ -45,7 +46,114 @@ interface Category {
   name: string
 }
 
+const copy = {
+  de: {
+    heading: "TEAMS",
+    subtitle: "Verwalte alle Teams und deren Mitglieder",
+    newTeam: "Neues Team",
+    newTeamDialog: "Neues Team erstellen",
+    newTeamDesc: "Erstelle ein neues Team für eine Kategorie",
+    teamName: "Team-Name",
+    teamNamePlaceholder: "z.B. Team Alpha",
+    category: "Kategorie",
+    categoryPlaceholder: "Wähle eine Kategorie",
+    description: "Beschreibung (optional)",
+    descPlaceholder: "Teambeschreibung...",
+    createTeam: "Team erstellen",
+    noTeams: 'Noch keine Teams erstellt. Klicke auf "Neues Team", um zu starten.',
+    back: "Zurück",
+    members: "Mitglieder",
+    addMember: "Mitglied hinzufügen",
+    addMemberDialog: "Mitglied hinzufügen",
+    addMemberDesc: "Wähle einen registrierten Teilnehmer dieser Kategorie aus",
+    participant: "Teilnehmer",
+    participantPlaceholder: "Teilnehmer wählen...",
+    loadingParticipants: "Lade Teilnehmer...",
+    noParticipants: "Keine verfügbaren Teilnehmer für diese Kategorie.",
+    role: "Rolle",
+    roleMember: "Mitglied",
+    roleLeader: "Team Leader",
+    add: "Hinzufügen",
+    teamMembers: "Teammitglieder",
+    noMembersYet: 'Noch keine Mitglieder. Klicke auf "Mitglied hinzufügen", um zu starten.',
+    colName: "Name",
+    colEmail: "E-Mail",
+    colRole: "Rolle",
+    colActions: "Aktionen",
+    manage: "Team verwalten",
+    created: "Erstellt:",
+    loadError: "Fehler beim Laden der Daten",
+    validationError: "Team-Name und Kategorie erforderlich",
+    createSuccess: "Team erstellt",
+    createError: "Fehler beim Erstellen",
+    deleteConfirm: "Team wirklich löschen? Alle Mitglieder werden entfernt.",
+    deleteSuccess: "Team gelöscht",
+    deleteError: "Fehler beim Löschen",
+    membersLoadError: "Fehler beim Laden der Mitglieder",
+    availableLoadError: "Fehler beim Laden der verfügbaren Benutzer",
+    addMemberSuccess: "Mitglied hinzugefügt",
+    addMemberError: "Fehler beim Hinzufügen",
+    removeMemberConfirm: "Mitglied wirklich entfernen?",
+    removeMemberSuccess: "Mitglied entfernt",
+    removeMemberError: "Fehler beim Entfernen"
+  },
+  en: {
+    heading: "TEAMS",
+    subtitle: "Manage all teams and their members",
+    newTeam: "New Team",
+    newTeamDialog: "Create new team",
+    newTeamDesc: "Create a new team for a category",
+    teamName: "Team name",
+    teamNamePlaceholder: "e.g. Team Alpha",
+    category: "Category",
+    categoryPlaceholder: "Select a category",
+    description: "Description (optional)",
+    descPlaceholder: "Team description...",
+    createTeam: "Create team",
+    noTeams: 'No teams created yet. Click "New Team" to get started.',
+    back: "Back",
+    members: "members",
+    addMember: "Add Member",
+    addMemberDialog: "Add member",
+    addMemberDesc: "Select a registered participant from this category",
+    participant: "Participant",
+    participantPlaceholder: "Select participant...",
+    loadingParticipants: "Loading participants...",
+    noParticipants: "No available participants for this category.",
+    role: "Role",
+    roleMember: "Member",
+    roleLeader: "Team Leader",
+    add: "Add",
+    teamMembers: "Team members",
+    noMembersYet: 'No members yet. Click "Add Member" to get started.',
+    colName: "Name",
+    colEmail: "Email",
+    colRole: "Role",
+    colActions: "Actions",
+    manage: "Manage team",
+    created: "Created:",
+    loadError: "Failed to load data",
+    validationError: "Team name and category are required",
+    createSuccess: "Team created",
+    createError: "Failed to create",
+    deleteConfirm: "Really delete team? All members will be removed.",
+    deleteSuccess: "Team deleted",
+    deleteError: "Failed to delete",
+    membersLoadError: "Failed to load members",
+    availableLoadError: "Failed to load available users",
+    addMemberSuccess: "Member added",
+    addMemberError: "Failed to add",
+    removeMemberConfirm: "Really remove member?",
+    removeMemberSuccess: "Member removed",
+    removeMemberError: "Failed to remove"
+  }
+} as const
+
 export function TeamsAdminPage() {
+  const { language } = useLanguage()
+  const text = copy[language]
+  const dateLocale = language === "en" ? "en-GB" : "de-CH"
+
   const [teams, setTeams] = useState<Team[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -53,7 +161,6 @@ export function TeamsAdminPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [newTeam, setNewTeam] = useState({ name: "", description: "", categoryId: "" })
 
-  // Team detail view
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
   const [members, setMembers] = useState<TeamMember[]>([])
   const [loadingMembers, setLoadingMembers] = useState(false)
@@ -77,7 +184,6 @@ export function TeamsAdminPage() {
         fetch("/api/categories", { credentials: "include" }),
         fetch("/api/admin/teams", { credentials: "include" })
       ])
-
       if (catRes.ok) {
         const catData = await catRes.json()
         setCategories(catData.data?.categories || [])
@@ -88,7 +194,7 @@ export function TeamsAdminPage() {
       }
     } catch (error) {
       console.error("Failed to fetch data:", error)
-      toast.error("Fehler beim Laden der Daten")
+      toast.error(text.loadError)
     } finally {
       setLoading(false)
     }
@@ -96,10 +202,9 @@ export function TeamsAdminPage() {
 
   const handleCreateTeam = async () => {
     if (!newTeam.name || !newTeam.categoryId) {
-      toast.error("Team-Name und Kategorie erforderlich")
+      toast.error(text.validationError)
       return
     }
-
     try {
       setIsCreating(true)
       const res = await fetch("/api/admin/teams", {
@@ -112,27 +217,24 @@ export function TeamsAdminPage() {
           categoryId: newTeam.categoryId
         })
       })
-
       if (!res.ok) {
         const error = await res.json()
-        throw new Error(error.error || "Fehler beim Erstellen des Teams")
+        throw new Error(error.error || text.createError)
       }
-
       const data = await res.json()
       setTeams([data.data.team, ...teams])
       setNewTeam({ name: "", description: "", categoryId: "" })
       setDialogOpen(false)
-      toast.success("Team erstellt")
+      toast.success(text.createSuccess)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Fehler beim Erstellen")
+      toast.error(error instanceof Error ? error.message : text.createError)
     } finally {
       setIsCreating(false)
     }
   }
 
   const handleDeleteTeam = async (teamId: string) => {
-    if (!confirm("Team wirklich löschen? Alle Mitglieder werden entfernt.")) return
-
+    if (!confirm(text.deleteConfirm)) return
     try {
       const res = await fetch(`/api/admin/teams?id=${teamId}`, {
         method: "DELETE",
@@ -141,10 +243,10 @@ export function TeamsAdminPage() {
       if (res.ok) {
         setTeams(teams.filter((t) => t.id !== teamId))
         if (selectedTeam?.id === teamId) setSelectedTeam(null)
-        toast.success("Team gelöscht")
+        toast.success(text.deleteSuccess)
       }
     } catch {
-      toast.error("Fehler beim Löschen")
+      toast.error(text.deleteError)
     }
   }
 
@@ -152,15 +254,13 @@ export function TeamsAdminPage() {
     setSelectedTeam(team)
     setLoadingMembers(true)
     try {
-      const res = await fetch(`/api/admin/teams/members?teamId=${team.id}`, {
-        credentials: "include"
-      })
+      const res = await fetch(`/api/admin/teams/members?teamId=${team.id}`, { credentials: "include" })
       if (res.ok) {
         const data = await res.json()
         setMembers(data.data?.members || [])
       }
     } catch {
-      toast.error("Fehler beim Laden der Mitglieder")
+      toast.error(text.membersLoadError)
     } finally {
       setLoadingMembers(false)
     }
@@ -177,7 +277,7 @@ export function TeamsAdminPage() {
         setAvailableUsers(data.data?.users || [])
       }
     } catch {
-      toast.error("Fehler beim Laden der verfügbaren Benutzer")
+      toast.error(text.availableLoadError)
     } finally {
       setLoadingAvailable(false)
     }
@@ -187,32 +287,21 @@ export function TeamsAdminPage() {
     setSelectedUserId("")
     setNewMemberRole("member")
     setAddMemberOpen(true)
-    if (selectedTeam) {
-      fetchAvailableUsers(selectedTeam.category_id)
-    }
+    if (selectedTeam) fetchAvailableUsers(selectedTeam.category_id)
   }
 
   const handleAddMember = async () => {
     if (!selectedUserId || !selectedTeam) return
-
     setAddingMember(true)
     try {
       const res = await fetch("/api/admin/teams/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          teamId: selectedTeam.id,
-          userId: selectedUserId,
-          role: newMemberRole
-        })
+        body: JSON.stringify({ teamId: selectedTeam.id, userId: selectedUserId, role: newMemberRole })
       })
-
       const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error || "Fehler beim Hinzufügen")
-      }
-
+      if (!res.ok) throw new Error(data.error || text.addMemberError)
       setMembers([...members, data.data.member])
       setAvailableUsers(availableUsers.filter((u) => u.id !== selectedUserId))
       setTeams(
@@ -223,17 +312,16 @@ export function TeamsAdminPage() {
       setSelectedUserId("")
       setNewMemberRole("member")
       setAddMemberOpen(false)
-      toast.success("Mitglied hinzugefügt")
+      toast.success(text.addMemberSuccess)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Fehler beim Hinzufügen")
+      toast.error(error instanceof Error ? error.message : text.addMemberError)
     } finally {
       setAddingMember(false)
     }
   }
 
   const handleRemoveMember = async (memberId: string) => {
-    if (!selectedTeam || !confirm("Mitglied wirklich entfernen?")) return
-
+    if (!selectedTeam || !confirm(text.removeMemberConfirm)) return
     try {
       const res = await fetch(`/api/admin/teams/members?memberId=${memberId}&teamId=${selectedTeam.id}`, {
         method: "DELETE",
@@ -248,10 +336,10 @@ export function TeamsAdminPage() {
               : t
           )
         )
-        toast.success("Mitglied entfernt")
+        toast.success(text.removeMemberSuccess)
       }
     } catch {
-      toast.error("Fehler beim Entfernen")
+      toast.error(text.removeMemberError)
     }
   }
 
@@ -261,40 +349,36 @@ export function TeamsAdminPage() {
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" onClick={() => setSelectedTeam(null)}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Zurück
+            <ArrowLeft className="mr-2 h-4 w-4" /> {text.back}
           </Button>
           <div className="flex-1">
-            <h1 className="text-foreground text-3xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
-              {selectedTeam.name}
-            </h1>
+            <h1 className="font-display text-foreground text-3xl font-bold">{selectedTeam.name}</h1>
             <p className="text-muted-foreground">
-              {selectedTeam.category_name} • {members.length} Mitglieder
+              {selectedTeam.category_name} • {members.length} {text.members}
             </p>
           </div>
           <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
             <DialogTrigger asChild>
               <Button className="bg-violet hover:bg-violet/90 gap-2" onClick={openAddMemberDialog}>
-                <UserPlus className="h-4 w-4" /> Mitglied hinzufügen
+                <UserPlus className="h-4 w-4" /> {text.addMember}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Mitglied hinzufügen</DialogTitle>
-                <DialogDescription>
-                  Wähle einen registrierten Teilnehmer dieser Kategorie aus
-                </DialogDescription>
+                <DialogTitle>{text.addMemberDialog}</DialogTitle>
+                <DialogDescription>{text.addMemberDesc}</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label>Teilnehmer</Label>
+                  <Label>{text.participant}</Label>
                   {loadingAvailable ? (
                     <div className="text-muted-foreground flex items-center gap-2 py-2">
-                      <Loader2 className="h-4 w-4 animate-spin" /> Lade Teilnehmer...
+                      <Loader2 className="h-4 w-4 animate-spin" /> {text.loadingParticipants}
                     </div>
                   ) : availableUsers.length > 0 ? (
                     <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Teilnehmer wählen..." />
+                        <SelectValue placeholder={text.participantPlaceholder} />
                       </SelectTrigger>
                       <SelectContent>
                         {availableUsers.map((u) => (
@@ -305,20 +389,18 @@ export function TeamsAdminPage() {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="text-muted-foreground py-2 text-sm">
-                      Keine verfügbaren Teilnehmer für diese Kategorie.
-                    </p>
+                    <p className="text-muted-foreground py-2 text-sm">{text.noParticipants}</p>
                   )}
                 </div>
                 <div>
-                  <Label htmlFor="member-role">Rolle</Label>
+                  <Label htmlFor="member-role">{text.role}</Label>
                   <Select value={newMemberRole} onValueChange={setNewMemberRole}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="member">Mitglied</SelectItem>
-                      <SelectItem value="leader">Team Leader</SelectItem>
+                      <SelectItem value="member">{text.roleMember}</SelectItem>
+                      <SelectItem value="leader">{text.roleLeader}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -326,7 +408,7 @@ export function TeamsAdminPage() {
                   onClick={handleAddMember}
                   disabled={addingMember || !selectedUserId}
                   className="bg-violet hover:bg-violet/90 w-full">
-                  {addingMember ? <Loader2 className="h-4 w-4 animate-spin" /> : "Hinzufügen"}
+                  {addingMember ? <Loader2 className="h-4 w-4 animate-spin" /> : text.add}
                 </Button>
               </div>
             </DialogContent>
@@ -343,8 +425,10 @@ export function TeamsAdminPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Teammitglieder</CardTitle>
-            <CardDescription>{members.length} Mitglieder</CardDescription>
+            <CardTitle>{text.teamMembers}</CardTitle>
+            <CardDescription>
+              {members.length} {text.members}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {loadingMembers ? (
@@ -355,10 +439,10 @@ export function TeamsAdminPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>E-Mail</TableHead>
-                    <TableHead>Rolle</TableHead>
-                    <TableHead className="text-right">Aktionen</TableHead>
+                    <TableHead>{text.colName}</TableHead>
+                    <TableHead>{text.colEmail}</TableHead>
+                    <TableHead>{text.colRole}</TableHead>
+                    <TableHead className="text-right">{text.colActions}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -374,7 +458,7 @@ export function TeamsAdminPage() {
                             <Crown className="h-3 w-3" /> Leader
                           </Badge>
                         ) : (
-                          <Badge variant="outline">Mitglied</Badge>
+                          <Badge variant="outline">{text.roleMember}</Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -391,9 +475,7 @@ export function TeamsAdminPage() {
                 </TableBody>
               </Table>
             ) : (
-              <p className="text-muted-foreground py-8 text-center">
-                Noch keine Mitglieder. Klicke auf &quot;Mitglied hinzufügen&quot;, um zu starten.
-              </p>
+              <p className="text-muted-foreground py-8 text-center">{text.noMembersYet}</p>
             )}
           </CardContent>
         </Card>
@@ -406,41 +488,39 @@ export function TeamsAdminPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-foreground text-3xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
-            TEAMS
-          </h1>
-          <p className="text-muted-foreground mt-2">Verwalte alle Teams und deren Mitglieder</p>
+          <h1 className="font-display text-foreground text-3xl font-bold">{text.heading}</h1>
+          <p className="text-muted-foreground mt-2">{text.subtitle}</p>
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-violet hover:bg-violet/90 gap-2">
               <Plus className="h-4 w-4" />
-              Neues Team
+              {text.newTeam}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Neues Team erstellen</DialogTitle>
-              <DialogDescription>Erstelle ein neues Team für eine Kategorie</DialogDescription>
+              <DialogTitle>{text.newTeamDialog}</DialogTitle>
+              <DialogDescription>{text.newTeamDesc}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="team-name">Team-Name</Label>
+                <Label htmlFor="team-name">{text.teamName}</Label>
                 <Input
                   id="team-name"
                   value={newTeam.name}
                   onChange={(e) => setNewTeam({ ...newTeam, name: e.target.value })}
-                  placeholder="z.B. Team Alpha"
+                  placeholder={text.teamNamePlaceholder}
                 />
               </div>
               <div>
-                <Label htmlFor="category">Kategorie</Label>
+                <Label htmlFor="category">{text.category}</Label>
                 <Select
                   value={newTeam.categoryId}
                   onValueChange={(val) => setNewTeam({ ...newTeam, categoryId: val })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Wähle eine Kategorie" />
+                    <SelectValue placeholder={text.categoryPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
@@ -452,12 +532,12 @@ export function TeamsAdminPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="description">Beschreibung (optional)</Label>
+                <Label htmlFor="description">{text.description}</Label>
                 <Textarea
                   id="description"
                   value={newTeam.description}
                   onChange={(e) => setNewTeam({ ...newTeam, description: e.target.value })}
-                  placeholder="Teambeschreibung..."
+                  placeholder={text.descPlaceholder}
                   rows={3}
                 />
               </div>
@@ -465,7 +545,7 @@ export function TeamsAdminPage() {
                 onClick={handleCreateTeam}
                 disabled={isCreating}
                 className="bg-violet hover:bg-violet/90 w-full">
-                {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Team erstellen"}
+                {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : text.createTeam}
               </Button>
             </div>
           </DialogContent>
@@ -486,18 +566,20 @@ export function TeamsAdminPage() {
                     <CardTitle>{team.name}</CardTitle>
                     <CardDescription>{team.category_name}</CardDescription>
                   </div>
-                  <Badge variant="outline">{team.member_count || 0} Mitglieder</Badge>
+                  <Badge variant="outline">
+                    {team.member_count || 0} {text.members}
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {team.description && <p className="text-muted-foreground text-sm">{team.description}</p>}
                 <div className="text-muted-foreground flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4" />
-                  Erstellt: {new Date(team.created_at).toLocaleDateString("de-CH")}
+                  {text.created} {new Date(team.created_at).toLocaleDateString(dateLocale)}
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" className="flex-1" onClick={() => openTeamDetail(team)}>
-                    Team verwalten
+                    {text.manage}
                   </Button>
                   <Button
                     variant="ghost"
@@ -517,9 +599,7 @@ export function TeamsAdminPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Users className="text-muted-foreground mb-4 h-12 w-12" />
-            <p className="text-muted-foreground text-center">
-              Noch keine Teams erstellt. Klicke auf &quot;Neues Team&quot;, um zu starten.
-            </p>
+            <p className="text-muted-foreground text-center">{text.noTeams}</p>
           </CardContent>
         </Card>
       )}

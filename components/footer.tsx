@@ -48,14 +48,22 @@ const copy = {
       "Ein Hackathon für die Zentralschweiz. Verbindung von Bildung, Wirtschaft und Community für Innovation und Nachwuchsförderung.",
     event: "EVENT",
     legal: "RECHTLICHES",
-    rights: "© 2026 Zentral Hack. Alle Rechte vorbehalten."
+    rights: "© 2026 Zentral Hack. Alle Rechte vorbehalten.",
+    madeWith: "Erstellt mit",
+    by: "von",
+    and: "und",
+    at: "bei"
   },
   en: {
     description:
       "A hackathon for Central Switzerland. Connecting education, business, and community for innovation and young talent.",
     event: "EVENT",
     legal: "LEGAL",
-    rights: "© 2026 Zentral Hack. All rights reserved."
+    rights: "© 2026 Zentral Hack. All rights reserved.",
+    madeWith: "Made with",
+    by: "by",
+    and: "and",
+    at: "at"
   }
 } as const
 
@@ -133,7 +141,7 @@ export function Footer() {
           <p className="text-muted-foreground text-sm">{text.rights}</p>
           <div className="text-muted-foreground flex items-center gap-1 text-xs">
             <div>
-              Made with <span className="text-red-500">♥</span> by
+              {text.madeWith} <span className="text-red-500">♥</span> {text.by}
             </div>
             <div className="flex items-center gap-1">
               <a
@@ -142,14 +150,14 @@ export function Footer() {
                 className="bg-muted-foreground hover:bg-accent px-0.5 text-black transition-colors duration-300">
                 Ahmad
               </a>
-              <span>and</span>
+              <span>{text.and}</span>
               <a
                 href="https://www.linkedin.com/in/andrin-schaller/"
                 target="_blank"
                 className="bg-muted-foreground hover:bg-accent px-0.5 text-black transition-colors duration-300">
                 Andrin
               </a>
-              <span>at</span>
+              <span>{text.at}</span>
               <a
                 href="https://stair.ch"
                 target="_blank"

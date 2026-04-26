@@ -27,6 +27,7 @@ export async function GET() {
                       'title', challenge_title,
                       'short_description', short_description,
                       'challenge_data', challenge_data,
+                      'prize', prize,
                       'difficulty', difficulty,
                       'team_size', team_size,
                       'challenge_language', challenge_language,

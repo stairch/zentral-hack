@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { FileText, Upload, Loader2, Check, Trash2 } from "lucide-react"
 import { toast } from "sonner"
+import { useLanguage } from "@/lib/language-context"
 
 interface Document {
   id: string
@@ -32,7 +33,65 @@ interface Category {
   name: string
 }
 
+const copy = {
+  de: {
+    heading: "DOKUMENTE",
+    subtitle: "Kategorie-Dokumente verwalten",
+    upload: "Dokument hochladen",
+    dialogTitle: "Dokument hochladen",
+    dialogDesc: "Lade ein Dokument für eine Kategorie hoch",
+    successMsg: "Erfolgreich hochgeladen!",
+    docName: "Dokumentname",
+    docNamePlaceholder: "z.B. Challenge Briefing",
+    category: "Kategorie",
+    categoryPlaceholder: "Wähle eine Kategorie",
+    file: "Datei",
+    uploading: "Wird hochgeladen...",
+    uploadButton: "Hochladen",
+    allDocs: "Alle Dokumente",
+    docCount: "Dokumente insgesamt",
+    noDocs: "Noch keine Dokumente hochgeladen",
+    download: "Download",
+    loadError: "Fehler beim Laden der Daten",
+    validationError: "Datei und Kategorie erforderlich",
+    uploadError: "Fehler beim Upload",
+    uploadSuccess: "Dokument hochgeladen",
+    deleteConfirm: "Möchtest du dieses Dokument wirklich löschen?",
+    deleteError: "Fehler beim Löschen",
+    deleteSuccess: "Dokument gelöscht"
+  },
+  en: {
+    heading: "DOCUMENTS",
+    subtitle: "Manage category documents",
+    upload: "Upload Document",
+    dialogTitle: "Upload Document",
+    dialogDesc: "Upload a document for a category",
+    successMsg: "Successfully uploaded!",
+    docName: "Document name",
+    docNamePlaceholder: "e.g. Challenge Briefing",
+    category: "Category",
+    categoryPlaceholder: "Select a category",
+    file: "File",
+    uploading: "Uploading...",
+    uploadButton: "Upload",
+    allDocs: "All Documents",
+    docCount: "documents total",
+    noDocs: "No documents uploaded yet",
+    download: "Download",
+    loadError: "Failed to load data",
+    validationError: "File and category are required",
+    uploadError: "Upload failed",
+    uploadSuccess: "Document uploaded",
+    deleteConfirm: "Do you really want to delete this document?",
+    deleteError: "Failed to delete",
+    deleteSuccess: "Document deleted"
+  }
+} as const
+
 export function DocumentsManagementPage() {
+  const { language } = useLanguage()
+  const text = copy[language]
+
   const [documents, setDocuments] = useState<Document[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -43,7 +102,6 @@ export function DocumentsManagementPage() {
   const [categoryId, setCategoryId] = useState<string>("")
   const [docName, setDocName] = useState<string>("")
 
-  // Fetch documents and categories
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -52,94 +110,77 @@ export function DocumentsManagementPage() {
           fetch("/api/admin/documents", { credentials: "include" }),
           fetch("/api/categories", { credentials: "include" })
         ])
-
         if (docsRes.ok) {
           const docsData = await docsRes.json()
           setDocuments(docsData.data?.documents || [])
         }
-
         if (catsRes.ok) {
           const catsData = await catsRes.json()
           setCategories(catsData.data?.categories || [])
         }
       } catch (error) {
         console.error("Failed to fetch data:", error)
-        toast.error("Fehler beim Laden der Daten")
+        toast.error(text.loadError)
       } finally {
         setLoading(false)
       }
     }
-
     fetchData()
   }, [])
 
-  // Handle file upload
   const handleUpload = async () => {
     if (!file || !categoryId) {
-      toast.error("Datei und Kategorie erforderlich")
+      toast.error(text.validationError)
       return
     }
-
     try {
       setUploading(true)
       const formData = new FormData()
       formData.append("file", file)
       formData.append("categoryId", categoryId)
-      if (docName.trim()) {
-        formData.append("name", docName.trim())
-      }
+      if (docName.trim()) formData.append("name", docName.trim())
 
       const res = await fetch("/api/admin/documents", {
         method: "POST",
         credentials: "include",
         body: formData
       })
-
       if (!res.ok) {
         const error = await res.json()
-        throw new Error(error.error || "Fehler beim Upload")
+        throw new Error(error.error || text.uploadError)
       }
-
       const data = await res.json()
       setDocuments([...documents, data.data?.document])
       setUploaded(true)
-      toast.success("Dokument hochgeladen")
-
+      toast.success(text.uploadSuccess)
       setFile(null)
       setCategoryId("")
       setDocName("")
-
       setTimeout(() => {
         setUploaded(false)
         setDialogOpen(false)
       }, 2000)
     } catch (error) {
       console.error("Upload failed:", error)
-      toast.error(error instanceof Error ? error.message : "Fehler beim Upload")
+      toast.error(error instanceof Error ? error.message : text.uploadError)
     } finally {
       setUploading(false)
     }
   }
 
-  // Handle delete
   const handleDelete = async (docId: string) => {
-    if (!confirm("Möchtest du dieses Dokument wirklich löschen?")) return
-
+    if (!confirm(text.deleteConfirm)) return
     try {
       const res = await fetch(`/api/admin/documents?id=${docId}`, {
         method: "DELETE",
         credentials: "include"
       })
-
-      if (!res.ok) {
-        throw new Error("Fehler beim Löschen")
-      }
-
+      if (!res.ok) throw new Error(text.deleteError)
       setDocuments(documents.filter((d) => d.id !== docId))
-      toast.success("Dokument gelöscht")
+      toast.success(text.deleteSuccess)
     } catch (error) {
       console.error("Delete failed:", error)
-      toast.error(error instanceof Error ? error.message : "Fehler beim Löschen")
+      toast.error(error instanceof Error ? error.message : text.deleteError)
     }
   }
 
@@ -155,46 +196,43 @@ export function DocumentsManagementPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-foreground text-3xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
-            DOKUMENTE
-          </h1>
-          <p className="text-muted-foreground mt-2">Kategorie-Dokumente verwalten</p>
+          <h1 className="font-display text-foreground text-3xl font-bold">{text.heading}</h1>
+          <p className="text-muted-foreground mt-2">{text.subtitle}</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-violet hover:bg-violet/90 gap-2">
               <Upload className="h-4 w-4" />
-              Dokument hochladen
+              {text.upload}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Dokument hochladen</DialogTitle>
-              <DialogDescription>Lade ein Dokument für eine Kategorie hoch</DialogDescription>
+              <DialogTitle>{text.dialogTitle}</DialogTitle>
+              <DialogDescription>{text.dialogDesc}</DialogDescription>
             </DialogHeader>
 
             {uploaded ? (
               <div className="flex flex-col items-center justify-center py-8">
                 <Check className="mb-4 h-12 w-12 text-green-500" />
-                <p>Erfolgreich hochgeladen!</p>
+                <p>{text.successMsg}</p>
               </div>
             ) : (
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="doc-name">Dokumentname</Label>
+                  <Label htmlFor="doc-name">{text.docName}</Label>
                   <Input
                     id="doc-name"
                     value={docName}
                     onChange={(e) => setDocName(e.target.value)}
-                    placeholder="z.B. Challenge Briefing"
+                    placeholder={text.docNamePlaceholder}
                   />
                 </div>
-
                 <div>
-                  <Label htmlFor="category">Kategorie</Label>
+                  <Label htmlFor="category">{text.category}</Label>
                   <Select value={categoryId} onValueChange={setCategoryId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Wähle eine Kategorie" />
+                      <SelectValue placeholder={text.categoryPlaceholder} />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((cat) => (
@@ -205,9 +243,8 @@ export function DocumentsManagementPage() {
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div>
-                  <Label htmlFor="file">Datei</Label>
+                  <Label htmlFor="file">{text.file}</Label>
                   <Input
                     id="file"
                     type="file"
@@ -217,7 +254,6 @@ export function DocumentsManagementPage() {
                   />
                   {file && <p className="text-muted-foreground mt-2 text-sm">📎 {file.name}</p>}
                 </div>
-
                 <Button
                   onClick={handleUpload}
                   disabled={uploading || !file || !categoryId}
@@ -225,12 +261,12 @@ export function DocumentsManagementPage() {
                   {uploading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Wird hochgeladen...
+                      {text.uploading}
                     </>
                   ) : (
                     <>
                       <Upload className="mr-2 h-4 w-4" />
-                      Hochladen
+                      {text.uploadButton}
                     </>
                   )}
                 </Button>
@@ -242,8 +278,10 @@ export function DocumentsManagementPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Alle Dokumente</CardTitle>
-          <CardDescription>{documents?.length || 0} Dokumente insgesamt</CardDescription>
+          <CardTitle>{text.allDocs}</CardTitle>
+          <CardDescription>
+            {documents?.length || 0} {text.docCount}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {documents && documents.length > 0 ? (
@@ -264,7 +302,7 @@ export function DocumentsManagementPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" onClick={() => window.open(doc.file_path, "_blank")}>
-                      Download
+                      {text.download}
                     </Button>
                     <Button
                       variant="ghost"
@@ -278,7 +316,7 @@ export function DocumentsManagementPage() {
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground py-8 text-center">Noch keine Dokumente hochgeladen</p>
+            <p className="text-muted-foreground py-8 text-center">{text.noDocs}</p>
           )}
         </CardContent>
       </Card>
