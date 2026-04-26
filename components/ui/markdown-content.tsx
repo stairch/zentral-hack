@@ -28,7 +28,7 @@ export default function MarkdownContent({ children, toReplace }: MarkdownContent
     <div className="md-content">
       <Markdown
         rehypePlugins={[rehypeRaw]}
-        urlTransform={(url) => (url.startsWith("tel:") ? url : defaultUrlTransform(url))}
+        urlTransform={(url: string) => (url.startsWith("tel:") ? url : defaultUrlTransform(url))}
         components={{
           a(props: any) {
             return (

@@ -70,74 +70,8 @@ export default function ImpressumPage() {
     <main className="relative">
       <Navigation />
       <div className="bg-background min-h-screen pt-24 pb-16">
-        <div className="container mx-auto max-w-3xl px-4">
-          <h1 className="font-display text-violet mb-8 text-4xl font-bold md:text-5xl">{copy.title}</h1>
-
-          <div className="text-foreground space-y-8">
-            <section>
-              <h2 className="border-yellow border-b-2 pb-2 text-2xl font-bold">{copy.organizer}</h2>
-              <div className="mt-4 rounded-xl p-6">
-                <p className="text-lg font-semibold">
-                  {language === "de"
-                    ? "Hochschule Luzern – Informatik"
-                    : "Lucerne School of Computer Science and Information Technology"}
-                </p>
-                <p>Suurstoffi 1</p>
-                <p>6343 Rotkreuz</p>
-                <p>{language === "de" ? "Schweiz" : "Switzerland"}</p>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="border-yellow border-b-2 pb-2 text-2xl font-bold">{copy.contact}</h2>
-              <div className="mt-4 space-y-2">
-                <p>
-                  <span className="font-semibold">{copy.phone}:</span>{" "}
-                  <a href="tel:+41417576811" className="text-violet hover:underline">
-                    +41 41 757 68 11
-                  </a>
-                </p>
-                <p>
-                  <span className="font-semibold">{copy.email}:</span>{" "}
-                  <a href={`mailto:${Emails.contactHSLU}`} className="text-violet hover:underline">
-                    {Emails.contactHSLU}
-                  </a>
-                </p>
-                <p>
-                  <span className="font-semibold">{copy.website}:</span>{" "}
-                  <a
-                    href="https://www.hslu.ch/future-talents"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-violet hover:underline">
-                    hslu.ch/future-talents
-                  </a>
-                </p>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="border-yellow border-b-2 pb-2 text-2xl font-bold">{copy.representative}</h2>
-              <p className="mt-4">{copy.representativeText}</p>
-            </section>
-
-            <section>
-              <h2 className="border-yellow border-b-2 pb-2 text-2xl font-bold">{copy.disclaimer}</h2>
-              <p className="mt-4">{copy.disclaimerText}</p>
-            </section>
-
-            <section>
-              <h2 className="border-yellow border-b-2 pb-2 text-2xl font-bold">{copy.links}</h2>
-              <p className="mt-4">{copy.linksText}</p>
-            </section>
-
-            <section>
-              <h2 className="border-yellow border-b-2 pb-2 text-2xl font-bold">{copy.copyright}</h2>
-              <p className="mt-4">{copy.copyrightText}</p>
-            </section>
-          </div>
-      <div className="bg-background min-h-screen pt-48 pb-28">
         <div className="container mx-auto max-w-5xl px-4">
+          <h1 className="font-display text-violet mb-8 text-4xl font-bold md:text-5xl">{copy.mainTitle}</h1>
           <MarkdownContent toReplace={copy}>{MdLegalNotice}</MarkdownContent>
         </div>
       </div>
