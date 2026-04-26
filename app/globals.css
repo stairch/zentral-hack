@@ -163,3 +163,77 @@
     @apply font-display font-bold uppercase;
   }
 }
+
+/* Markdown content */
+
+.md-content h1 {
+  @apply text-primary pb-6 text-4xl font-bold sm:text-5xl;
+}
+
+.md-content h2 {
+  @apply pt-5 pb-3 text-3xl font-semibold;
+}
+
+.md-content h3 {
+  @apply pt-5 pb-3 text-2xl font-semibold;
+}
+
+.md-content p {
+  @apply text-muted-foreground text-lg;
+}
+
+.md-content ul {
+  @apply text-muted-foreground my-3 ml-3 list-inside list-disc text-lg;
+}
+
+.md-content .spacer {
+  @apply h-3 sm:h-4;
+}
+
+.md-content .spacer-lg {
+  @apply h-15;
+}
+
+.md-content strong {
+  @apply font-semibold;
+}
+
+.content-numbered {
+  counter-reset: h2 h3-top;
+}
+
+.content-numbered h2 {
+  counter-reset: h3;
+}
+
+.content-numbered h3 {
+  counter-reset: h4;
+}
+
+.content-numbered h1 ~ h3 {
+  counter-reset: h4;
+}
+
+.content-numbered h2:before {
+  @apply mr-3 sm:mr-5;
+  counter-increment: h2;
+  content: counter(h2) ". ";
+}
+
+.content-numbered h3:before {
+  @apply mr-1 sm:mr-5;
+  counter-increment: h3;
+  content: counter(h2) "." counter(h3) ". ";
+}
+
+.content-numbered h1 ~ h3:not(h1 ~ h2 ~ h3):before {
+  @apply mr-3 sm:mr-5;
+  counter-increment: h2;
+  content: counter(h2) ". ";
+}
+
+.content-numbered h4:before {
+  @apply mr-2 sm:mr-4;
+  counter-increment: h4;
+  content: counter(h2) "." counter(h3) "." counter(h4) ". ";
+}
