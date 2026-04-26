@@ -3,108 +3,52 @@
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { useLanguage } from "@/lib/language-context"
+import MarkdownContent from "@/components/ui/markdown-content"
+import MdPrivacy from "./privacy.md"
 
 export default function DatenschutzPage() {
   const { language } = useLanguage()
   const text = {
     de: {
-      title: "DATENSCHUTZ",
-      sections: [
-        [
-          "1. Verantwortliche Stelle",
-          "Verantwortlich für die Datenbearbeitung auf dieser Website: Hochschule Luzern, Werftestrasse 4, 6002 Luzern, Schweiz, info@hslu.ch"
-        ],
-        [
-          "2. Erhebung und Verwendung von Daten",
-          "Wir erheben personenbezogene Daten nur, soweit dies zur Bereitstellung der Plattform und zur Durchführung des Events erforderlich ist."
-        ],
-        [
-          "3. Zweck der Datenbearbeitung",
-          "Daten werden für Registrierung, Teilnahme, Kommunikation, Verpflegung und (optional) Newsletter genutzt."
-        ],
-        [
-          "4. Datensicherheit",
-          "Wir schützen Ihre Daten mit technischen und organisatorischen Massnahmen wie HTTPS/TLS, sicherer Passwortspeicherung und 2FA."
-        ],
-        ["5. Cookies", "Diese Website verwendet nur technisch notwendige Cookies für die Authentifizierung."],
-        [
-          "6. Weitergabe an Dritte",
-          "Daten werden grundsätzlich nicht an Dritte weitergegeben, ausser wenn dies für das Event nötig ist oder gesetzlich verlangt wird."
-        ],
-        [
-          "7. Ihre Rechte",
-          "Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Widerspruch. Kontakt: info@hslu.ch"
-        ],
-        [
-          "8. Aufbewahrungsdauer",
-          "Daten werden gelöscht, sobald der Zweck entfällt, spätestens 12 Monate nach Eventende sofern keine Aufbewahrungspflicht besteht."
-        ],
-        [
-          "9. Änderungen",
-          "Diese Datenschutzerklärung kann angepasst werden. Massgeblich ist die auf der Website publizierte Version."
-        ]
-      ],
-      updated: "Stand: April 2026"
+      mainTitle: "Datenschutzerklärung",
+      introductionText: `Die vorliegende Datenschutzerklärung klärt Sie über die Art, den Umfang und den Zweck 
+      der Erhebung und Verwendung personenbezogener Daten auf dieser Webseite zentralhack.ch (im Folgenden "Webseite") 
+      auf und gibt über die Ihnen zustehenden Rechte Auskunft. Diese Rechte richten sich nach den anwendbaren 
+      Datenschutzgesetzen.`,
+      responsibilityTitle: "Verantwortliche Instanz",
+      responsibilityText:
+        "Verantwortlich für die Datenbearbeitung auf dieser Webseite und Ansprechpartner für Datenschutzanliegen ist:",
+      responsibilityCompany: "Hochschule Luzern – Informatik",
+      responsibilityEmail: "E-Mail",
+      responsibilityPhone: "Telefon",
+      responsibilityWebsite: "Webseite",
+      dataCollectionTitle: "Datenerfassung",
+      logFilesTitle: "Logfiles",
+      logFilesText1: `Diese Webseite wird von Vercel Inc. (440 N Barranca Ave #4133, Covina, CA 91723, USA) 
+      ("Vercel", "Host Provider") auf einem Server in der EU gehostet.`,
+      logFilesText2: `Zur Optimierung und Aufrechterhaltung dieser Webseite werden technische Fehler protokolliert, 
+      die beim Aufrufen dieser Webseite allenfalls auftreten. Ferner werden bei der Nutzung dieser Webseite automatisch 
+      Informationen erhoben, die der Browser Ihres Endgeräts an den Host Provider übermittelt. Dies sind insbesondere:`,
+      logFilesText3:
+        "- IP-Adresse und Betriebssystem Ihres Endgeräts - Browsertyp, Version, Sprache\n- Datum und Uhrzeit der Serveranfrage\n- aufgerufene Datei\n- die Webseite, von der aus der Zugriff erfolgte (Referrer URL)\n- der Status-Code (z. B. 404)\n- das verwendete Übertragungsprotokoll (z. B. HTTP/2)",
+      logFilesText4: `Diese Daten werden vom Host Provider erhoben und gespeichert, um Prozesse und Abläufe insbesondere in 
+      Zusammenhang mit der Nutzung dieser Webseite sowie die Sicherheit und Stabilität des Systems optimieren zu können.`,
+      logFilesText5:
+        "Weitere Informationen finden Sie in der Datenschutzerklärung von Vercel unter [vercel.com/legal/privacy-policy](https://vercel.com/legal/privacy-policy).",
+      logFilesText6:
+        "Sofern die DSGVO anwendbar ist, ist Grundlage für diese Datenbearbeitung Art. 6 Abs. 1 lit. f DSGVO."
     },
-    en: {
-      title: "PRIVACY",
-      sections: [
-        [
-          "1. Data Controller",
-          "Responsible for data processing on this website: Lucerne University of Applied Sciences and Arts, Werftestrasse 4, 6002 Lucerne, Switzerland, info@hslu.ch"
-        ],
-        [
-          "2. Data Collection and Use",
-          "We collect personal data only as needed to provide the platform and run the event."
-        ],
-        [
-          "3. Purpose of Processing",
-          "Data is used for registration, participation, communication, catering needs, and optional newsletter updates."
-        ],
-        [
-          "4. Data Security",
-          "We protect your data through technical and organizational safeguards such as HTTPS/TLS, secure password storage, and 2FA."
-        ],
-        ["5. Cookies", "This website only uses technically required cookies for authentication."],
-        [
-          "6. Sharing with Third Parties",
-          "Data is generally not shared with third parties unless required for event operations or legal obligations."
-        ],
-        [
-          "7. Your Rights",
-          "You have rights to access, rectification, deletion, and objection. Contact: info@hslu.ch"
-        ],
-        [
-          "8. Retention",
-          "Data is deleted once no longer needed, at the latest 12 months after the event unless legal retention applies."
-        ],
-        [
-          "9. Changes",
-          "This privacy notice may be updated at any time. The current published version applies."
-        ]
-      ],
-      updated: "Version: April 2026"
-    }
-  } as const
+    en: {}
+  }
 
   const copy = text[language]
 
   return (
     <main className="relative">
       <Navigation />
-      <div className="bg-background min-h-screen pt-24 pb-16">
-        <div className="container mx-auto max-w-3xl px-4">
-          <h1 className="font-display text-violet mb-8 text-4xl font-bold md:text-5xl">{copy.title}</h1>
-
-          <div className="text-foreground space-y-8">
-            {copy.sections.map(([title, textBody]) => (
-              <section key={title}>
-                <h2 className="border-yellow border-b-2 pb-2 text-2xl font-bold">{title}</h2>
-                <p className="mt-4">{textBody}</p>
-              </section>
-            ))}
-            <p className="text-muted-foreground mt-4 text-sm">{copy.updated}</p>
-          </div>
+      <div className="bg-background min-h-screen pt-48 pb-28">
+        <div className="content-privacy container mx-auto max-w-5xl px-4">
+          <MarkdownContent toReplace={copy}>{MdPrivacy}</MarkdownContent>
         </div>
       </div>
       <Footer />
