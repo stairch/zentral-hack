@@ -70,7 +70,7 @@ export default function ImpressumPage() {
     <main className="relative">
       <Navigation />
       <div className="bg-background min-h-screen pt-48 pb-28">
-        <div className="container mx-auto max-w-3xl px-4">
+        <div className="container mx-auto max-w-5xl px-4">
           <MarkdownContent toReplace={copy}>{MdLegalNotice}</MarkdownContent>
         </div>
       </div>

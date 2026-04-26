@@ -13,6 +13,8 @@ Schweiz
 **{{responsibilityPhone}}:** [{{phone-contact-hslu}}]({{phone-url-contact-hslu}}) \
 **{{responsibilityWebsite}}:** [{{website-contact-hslu}}]({{url-contact-hslu}})
 
+<div className="spacer-lg"></div>
+
 ### {{disclaimerTitle}}
 
 {{disclaimerText1}}
@@ -21,9 +23,13 @@ Schweiz
 
 {{disclaimerText2}}
 
+<div className="spacer-lg"></div>
+
 ### {{disclaimerContentAndLinksTitle}}
 
 {{disclaimerContentAndLinksText}}
+
+<div className="spacer-lg"></div>
 
 ### {{copyrightTitle}}
 
