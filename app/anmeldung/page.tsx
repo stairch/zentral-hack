@@ -1,11 +1,12 @@
 "use client"
 
+import { Suspense } from "react"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
-import { RegistrationForm } from "@/components/registration-form-new"
+import { RegistrationForm } from "@/components/registration-form"
 import { useLanguage } from "@/lib/language-context"
 
-export default function AnmeldungPage() {
+function AnmeldungContent() {
   const { language } = useLanguage()
   const text = {
     de: {
@@ -36,7 +37,9 @@ export default function AnmeldungPage() {
           </div>
 
           <div className="bg-card border-border rounded-2xl border p-8 shadow-lg md:p-12">
-            <RegistrationForm />
+            <Suspense fallback={<div>Loading...</div>}>
+              <RegistrationForm />
+            </Suspense>
           </div>
         </div>
       </section>
@@ -44,4 +47,8 @@ export default function AnmeldungPage() {
       <Footer />
     </main>
   )
+}
+
+export default function AnmeldungPage() {
+  return <AnmeldungContent />
 }
