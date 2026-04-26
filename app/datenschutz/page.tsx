@@ -47,7 +47,7 @@ export default function DatenschutzPage() {
     <main className="relative">
       <Navigation />
       <div className="bg-background min-h-screen pt-48 pb-28">
-        <div className="content-privacy container mx-auto max-w-5xl px-4">
+        <div className="content-numbered container mx-auto max-w-5xl px-4">
           <MarkdownContent toReplace={copy}>{MdPrivacy}</MarkdownContent>
         </div>
       </div>

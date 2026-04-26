@@ -198,31 +198,41 @@
   @apply font-semibold;
 }
 
-.content-privacy {
-  counter-reset: h2;
+.content-numbered {
+  counter-reset: h2 h3-top;
 }
 
-.content-privacy h2 {
+.content-numbered h2 {
   counter-reset: h3;
 }
 
-.content-privacy h3 {
+.content-numbered h3 {
   counter-reset: h4;
 }
 
-.content-privacy h2:before {
+.content-numbered h1 ~ h3 {
+  counter-reset: h4;
+}
+
+.content-numbered h2:before {
   @apply mr-3 sm:mr-5;
   counter-increment: h2;
   content: counter(h2) ". ";
 }
 
-.content-privacy h3:before {
+.content-numbered h3:before {
   @apply mr-1 sm:mr-5;
   counter-increment: h3;
   content: counter(h2) "." counter(h3) ". ";
 }
 
-.content-privacy h4:before {
+.content-numbered h1 ~ h3:not(h1 ~ h2 ~ h3):before {
+  @apply mr-3 sm:mr-5;
+  counter-increment: h2;
+  content: counter(h2) ". ";
+}
+
+.content-numbered h4:before {
   @apply mr-2 sm:mr-4;
   counter-increment: h4;
   content: counter(h2) "." counter(h3) "." counter(h4) ". ";
