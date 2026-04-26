@@ -32,7 +32,7 @@ export default function MarkdownContent({ children, toReplace }: MarkdownContent
         components={{
           a(props: any) {
             return (
-              <a href={props.href} className="text-primary hover:underline">
+              <a href={props.href} target="_blank" className="text-primary hover:underline">
                 {props.children}
               </a>
             )
