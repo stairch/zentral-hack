@@ -302,6 +302,7 @@ export function Partners() {
         if (!res.ok) return
         const json = await res.json()
         const list = json.data?.logos as {
+          id: string
           name: string
           logo_url: string
           website_url: string | null
@@ -311,7 +312,7 @@ export function Partners() {
           setDbOrganisers(
             list.map((l) => ({
               name: l.name,
-              logo: l.logo_url,
+              logo: `/api/logo?id=${l.id}`,
               logoWidth: l.logo_size === "small" ? "w-20" : l.logo_size === "large" ? "w-36" : "w-28",
               link: l.website_url ?? "#",
               bgColor: "transparent"

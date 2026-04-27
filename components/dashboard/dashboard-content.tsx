@@ -521,7 +521,7 @@ export function DashboardContent() {
                             </div>
                           </div>
                           <a
-                            href={`/api/download-file?fileId=${doc.id}`}
+                            href={`/api/download-file?fileId=${doc.id}&type=document`}
                             className="hover:bg-muted rounded-lg p-2 transition-colors">
                             <Download className="text-muted-foreground h-5 w-5" />
                           </a>
@@ -556,7 +556,7 @@ export function DashboardContent() {
                             </div>
                           </div>
                           <a
-                            href={`/api/download-file?fileId=${doc.id}`}
+                            href={`/api/download-file?fileId=${doc.id}&type=document`}
                             className="hover:bg-muted rounded-lg p-2 transition-colors">
                             <Download className="text-muted-foreground h-5 w-5" />
                           </a>

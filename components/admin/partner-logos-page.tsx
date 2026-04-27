@@ -117,6 +117,7 @@ export function AdminPartnerLogosPage() {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -140,6 +141,7 @@ export function AdminPartnerLogosPage() {
   const openNew = () => {
     const maxOrder = Math.max(0, ...logos.map((l) => l.sort_order))
     setEditingLogo(null)
+    setPreviewUrl(null)
     setForm({
       name: "",
       logo_url: "",
@@ -153,6 +155,7 @@ export function AdminPartnerLogosPage() {
 
   const openEdit = (logo: PartnerLogo) => {
     setEditingLogo(logo)
+    setPreviewUrl(`/api/logo?id=${logo.id}`)
     setForm({
       name: logo.name,
       logo_url: logo.logo_url,
@@ -165,6 +168,9 @@ export function AdminPartnerLogosPage() {
   }
 
   const handleUpload = async (file: File) => {
+    // Show client-side preview immediately while uploading
+    const localPreview = URL.createObjectURL(file)
+    setPreviewUrl(localPreview)
     try {
       setUploading(true)
       const fd = new FormData()
@@ -178,6 +184,8 @@ export function AdminPartnerLogosPage() {
       setForm((f) => ({ ...f, logo_url: data.url }))
       toast.success(text.uploadSuccess)
     } catch (error) {
+      setPreviewUrl(null)
+      URL.revokeObjectURL(localPreview)
       toast.error(error instanceof Error ? error.message : text.uploadError)
     } finally {
       setUploading(false)
@@ -308,7 +316,7 @@ export function AdminPartnerLogosPage() {
               </div>
               <div className="flex h-14 w-24 shrink-0 items-center justify-center rounded-lg border bg-white p-2">
                 <img
-                  src={logo.logo_url}
+                  src={`/api/logo?id=${logo.id}`}
                   alt={logo.name}
                   className="h-auto max-h-10 max-w-full object-contain"
                 />
@@ -360,10 +368,10 @@ export function AdminPartnerLogosPage() {
             <div>
               <Label>{text.logo}</Label>
               <div className="space-y-2">
-                {form.logo_url && (
+                {previewUrl && (
                   <div className="flex h-16 w-full items-center justify-center rounded-lg border bg-white p-2">
                     <img
-                      src={form.logo_url}
+                      src={previewUrl}
                       alt={text.preview}
                       className="h-auto max-h-12 max-w-full object-contain"
                     />

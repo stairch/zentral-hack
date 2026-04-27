@@ -1,10 +1,8 @@
+import { put, del } from "@vercel/blob"
 import { query } from "@/lib/db"
 import { withCategoryPartnerAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
-import { writeFile, mkdir, unlink } from "fs/promises"
-import { join } from "path"
-import { existsSync } from "fs"
-import { validateFileUpload, generateSecureFilename, validateCategoryFilePath } from "@/lib/file-upload"
+import { validateFileUpload, generateSecureFilename } from "@/lib/file-upload"
 
 async function handleGet(req: AuthenticatedRequest) {
   try {
@@ -44,52 +42,31 @@ async function handlePost(req: AuthenticatedRequest) {
   try {
     const formData = await req.formData()
     const file = formData.get("file") as File
-    const categoryId = formData.get("categoryId") as string
+    const categoryId = (formData.get("categoryId") as string) || null
     const name = formData.get("name") as string
+    const description = (formData.get("description") as string) || null
 
-    if (!file || !categoryId) {
-      return validationError("File and category required")
-    }
+    if (!file) return validationError("File required")
 
-    // Use provided name or fall back to original filename
     const docName = name || file.name.replace(/\.[^/.]+$/, "")
 
-    // Verify user can upload to this category
     if (req.user?.role === "category_partner" && req.user.categoryId !== categoryId) {
       return validationError("Cannot upload to other categories")
     }
 
-    // Validate file upload
     const validation = validateFileUpload({ name: file.name, size: file.size, type: file.type }, "document")
+    if (!validation.valid) return validationError(validation.error!)
 
-    if (!validation.valid) {
-      return validationError(validation.error!)
-    }
+    const secureFilename = generateSecureFilename(file.name)
+    const blobPath = categoryId
+      ? `documents/categories/${categoryId}/${secureFilename}`
+      : `documents/global/${secureFilename}`
 
-    // Create category-specific upload directory
-    const uploadDir = join(process.cwd(), "public", "uploads", "categories", categoryId)
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true })
-    }
+    const blob = await put(blobPath, file, { access: "private" })
 
-    // Generate secure filename
-    const secureFileName = generateSecureFilename(file.name)
-    const filePath = join(uploadDir, secureFileName)
-    const relativePath = `/uploads/categories/${categoryId}/${secureFileName}`
-
-    // Validate path to prevent directory traversal
-    if (!validateCategoryFilePath(categoryId, filePath)) {
-      return validationError("Invalid file path")
-    }
-
-    // Write file
-    const bytes = await file.arrayBuffer()
-    await writeFile(filePath, Buffer.from(bytes))
-
-    // Save to database
     const result = await query(
-      "INSERT INTO category_documents (name, file_path, file_size, category_id, uploaded_by) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, file_path, file_size, created_at",
-      [docName, relativePath, file.size, categoryId, req.user?.userId ?? null]
+      "INSERT INTO category_documents (name, description, file_path, file_size, category_id, uploaded_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, description, file_path, file_size, created_at",
+      [docName, description, blob.url, file.size, categoryId, req.user?.userId ?? null]
     )
 
     return successResponse({ document: result.rows[0] }, 201)
@@ -104,33 +81,25 @@ async function handleDelete(req: AuthenticatedRequest) {
     const { searchParams } = new URL(req.url)
     const docId = searchParams.get("id") || searchParams.get("docId")
 
-    if (!docId) {
-      return validationError("Document ID required")
-    }
+    if (!docId) return validationError("Document ID required")
 
-    // Get document info
     const result = await query("SELECT file_path, category_id FROM category_documents WHERE id = $1", [docId])
 
-    if (result.rows.length === 0) {
-      return validationError("Document not found")
-    }
+    if (result.rows.length === 0) return validationError("Document not found")
 
-    // Category partners can only delete from their category
     if (req.user?.role === "category_partner" && req.user.categoryId !== result.rows[0].category_id) {
       return validationError("Cannot delete documents from other categories")
     }
 
-    const filePath = result.rows[0].file_path
-
-    // Delete file from disk
+    const blobUrl = result.rows[0].file_path
     try {
-      const fullPath = join(process.cwd(), "public", filePath)
-      await unlink(fullPath)
+      if (blobUrl?.startsWith("https://")) {
+        await del(blobUrl)
+      }
     } catch (e) {
-      console.warn("File deletion failed, continuing with DB deletion:", e)
+      console.warn("[Documents] Blob deletion failed, continuing:", e)
     }
 
-    // Delete from database
     await query("DELETE FROM category_documents WHERE id = $1", [docId])
 
     return successResponse({ message: "Document deleted successfully" })
