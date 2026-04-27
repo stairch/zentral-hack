@@ -131,6 +131,5 @@ export async function GET() {
    - [prod-hack-zentral](https://vercel.com/stairs-projects/prod-hack-zentral)
    - [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)
 
-
 > [!WARNING]
 > `defaultValue` must be set for every flag. This prevents a runtime error if a flag is missing or not configured correctly in Vercel.

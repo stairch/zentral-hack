@@ -24,3 +24,9 @@ export const adminNewsletterFlag: Flag<boolean> = flag({
   adapter: vercelAdapter(),
   defaultValue: false
 })
+
+export const adminTeamsFlag: Flag<boolean> = flag({
+  key: "admin-teams",
+  adapter: vercelAdapter(),
+  defaultValue: false
+})

@@ -1,10 +1,11 @@
 import AdminSidebarInner from "./admin-sidebar-inner"
-import { adminDocumentsFlag, adminEmailsFlag, adminNewsletterFlag } from "@/lib/flags"
+import { adminDocumentsFlag, adminEmailsFlag, adminNewsletterFlag, adminTeamsFlag } from "@/lib/flags"
 
 const adminFeatureFlags = [
   { id: "documents", featureFlag: adminDocumentsFlag },
   { id: "emails", featureFlag: adminEmailsFlag },
-  { id: "newsletter", featureFlag: adminNewsletterFlag }
+  { id: "newsletter", featureFlag: adminNewsletterFlag },
+  { id: "teams", featureFlag: adminTeamsFlag }
 ]
 
 export default async function AdminSidebar() {

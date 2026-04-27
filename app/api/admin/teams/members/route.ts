@@ -1,9 +1,15 @@
 import { query } from "@/lib/db"
 import { withCategoryPartnerAuth, AuthenticatedRequest } from "@/lib/middleware"
-import { successResponse, validationError, serverError } from "@/lib/api"
+import { successResponse, validationError, serverError, errorResponse } from "@/lib/api"
+import { adminTeamsFlag } from "@/lib/flags"
 
 async function handleGet(req: AuthenticatedRequest) {
   try {
+    const showTeams = await adminTeamsFlag()
+    if (!showTeams) {
+      return errorResponse("Not found", 404)
+    }
+
     const { searchParams } = new URL(req.url)
     const teamId = searchParams.get("teamId")
     const availableForCategory = searchParams.get("availableForCategory")
@@ -59,6 +65,11 @@ async function handleGet(req: AuthenticatedRequest) {
 
 async function handlePost(req: AuthenticatedRequest) {
   try {
+    const showTeams = await adminTeamsFlag()
+    if (!showTeams) {
+      return errorResponse("Not found", 404)
+    }
+
     const body = await req.json()
     const { teamId, userId: directUserId, userEmail, role } = body
 
@@ -126,6 +137,11 @@ async function handlePost(req: AuthenticatedRequest) {
 
 async function handleDelete(req: AuthenticatedRequest) {
   try {
+    const showTeams = await adminTeamsFlag()
+    if (!showTeams) {
+      return errorResponse("Not found", 404)
+    }
+
     const { searchParams } = new URL(req.url)
     const memberId = searchParams.get("memberId")
     const teamId = searchParams.get("teamId")

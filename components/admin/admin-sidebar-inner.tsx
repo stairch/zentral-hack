@@ -23,7 +23,7 @@ import {
   BarChart3,
   Image,
   Trophy,
-  Hourglass
+  Lock
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BrandMark } from "@/components/brand-mark"
@@ -158,7 +158,7 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
               {!item.isReleased && (
                 <div
                   className={`border px-1.5 py-0.5 ${isActive ? "border-white text-white" : "text-muted-foreground border-neutral-200 bg-neutral-50"} flex items-center gap-1 rounded-sm text-xs`}>
-                  <Hourglass className="h-3 w-3 stroke-[2.5px]" />
+                  <Lock className="h-3 w-3 stroke-[2.5px]" />
                 </div>
               )}
             </Link>
