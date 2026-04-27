@@ -139,8 +139,7 @@ export function SponsorshipContent() {
           <motion.h1
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-foreground mb-4 text-4xl font-bold md:text-5xl"
-            style={{ fontFamily: "var(--font-display)" }}>
+            className="text-foreground font-display mb-4 text-4xl font-bold md:text-5xl">
             SPONSORING
           </motion.h1>
           <motion.p
@@ -160,8 +159,7 @@ export function SponsorshipContent() {
           <motion.h2
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            className="mb-12 text-center text-3xl font-bold"
-            style={{ fontFamily: "var(--font-display)" }}>
+            className="font-display mb-12 text-center text-3xl font-bold">
             UNSERE SPONSORING PAKETE
           </motion.h2>
 

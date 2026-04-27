@@ -119,9 +119,7 @@ export function SponsorshipPage() {
           <span className="inline-flex rounded-full border border-[#530A5D]/20 bg-[#530A5D]/10 px-4 py-1 text-xs font-semibold tracking-[0.14em] text-[#530A5D] uppercase">
             Partnerschaften
           </span>
-          <h1 className="text-5xl font-bold text-[#1f1022]" style={{ fontFamily: "var(--font-display)" }}>
-            SPONSORSHIP PACKAGES
-          </h1>
+          <h1 className="font-display text-5xl font-bold text-[#1f1022]">SPONSORSHIP PACKAGES</h1>
           <p className="mx-auto max-w-2xl text-xl text-[#4f4760]">
             Werde ein Teil des Zentral Hack 2026 und unterstütze Innovation
           </p>

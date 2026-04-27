@@ -80,18 +80,14 @@ export default function NewsletterUnsubscribePage() {
     <main className="min-h-screen bg-[#f3f1f8] px-4 py-10">
       <div className="mx-auto max-w-xl overflow-hidden rounded-2xl border border-[#ece7f5] bg-white shadow-sm">
         <div className="bg-[#530A5D] px-6 py-5 text-white">
-          <p
-            className="text-xl font-extrabold tracking-[0.08em]"
-            style={{ fontFamily: "var(--font-display)" }}>
+          <p className="font-display text-xl font-extrabold tracking-[0.08em]">
             ZENTRAL <span className="text-[#E6FF17]">HACK</span>
           </p>
         </div>
 
         <div className="space-y-4 px-6 py-6">
           <div className="flex items-end justify-between gap-3">
-            <h1 className="text-2xl font-bold text-[#530A5D]" style={{ fontFamily: "var(--font-display)" }}>
-              {text.title}
-            </h1>
+            <h1 className="font-display text-2xl font-bold text-[#530A5D]">{text.title}</h1>
             <div className="w-40">
               <label htmlFor="language" className="text-muted-foreground mb-1 block text-xs font-medium">
                 {text.languageLabel}

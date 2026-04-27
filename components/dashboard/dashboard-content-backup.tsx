@@ -27,9 +27,7 @@ export function DashboardContent() {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div>
-        <h1 className="text-foreground text-3xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
-          WILLKOMMEN ZURÜCK
-        </h1>
+        <h1 className="text-foreground font-display text-3xl font-bold">WILLKOMMEN ZURÜCK</h1>
         <p className="text-muted-foreground mt-2">Schön, dich wiederzusehen, {user?.email}</p>
       </div>
 

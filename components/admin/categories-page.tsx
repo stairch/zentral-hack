@@ -308,9 +308,7 @@ export function AdminCategoriesPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-foreground text-3xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
-          {text.heading}
-        </h1>
+        <h1 className="text-foreground font-display text-3xl font-bold">{text.heading}</h1>
         <p className="text-muted-foreground mt-2">{text.subtitle}</p>
       </div>
 

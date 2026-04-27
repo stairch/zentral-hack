@@ -130,9 +130,7 @@ export default function RegistrationsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-foreground text-3xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
-          ANMELDUNGEN
-        </h1>
+        <h1 className="text-foreground font-display text-3xl font-bold">ANMELDUNGEN</h1>
         <p className="text-muted-foreground mt-2">Alle Registrierungen für den Zentral Hack 2026</p>
       </div>
 

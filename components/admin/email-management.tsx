@@ -471,9 +471,7 @@ export function EmailManagementPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-foreground text-3xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
-          E-MAIL VERWALTUNG
-        </h1>
+        <h1 className="text-foreground font-display text-3xl font-bold">E-MAIL VERWALTUNG</h1>
         <p className="text-muted-foreground mt-2">Newsletter-Abonnenten und E-Mail-Kampagnen verwalten</p>
       </div>
 

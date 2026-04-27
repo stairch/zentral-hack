@@ -804,9 +804,7 @@ export function AdminSponsorsPage() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-foreground text-3xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
-            {text.pageTitle}
-          </h1>
+          <h1 className="text-foreground font-display text-3xl font-bold">{text.pageTitle}</h1>
           <p className="text-muted-foreground mt-2">{text.pageDescription}</p>
         </div>
       </div>

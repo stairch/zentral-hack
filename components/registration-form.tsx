@@ -811,11 +811,7 @@ export function RegistrationForm() {
                 <Lock className="h-8 w-8 text-[#530A5D]" />
               </div>
             </div>
-            <h1
-              className="text-foreground mb-2 text-2xl font-bold"
-              style={{ fontFamily: "var(--font-display)" }}>
-              {t.auth2fa}
-            </h1>
+            <h1 className="text-foreground font-display mb-2 text-2xl font-bold">{t.auth2fa}</h1>
             <p className="text-muted-foreground text-sm">
               {language === "de" ? (
                 <>

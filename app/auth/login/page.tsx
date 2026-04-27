@@ -128,11 +128,7 @@ export default function LoginPage() {
           {!show2FA ? (
             <>
               <div className="mb-8 text-center">
-                <h1
-                  className="text-foreground mb-2 text-2xl font-bold"
-                  style={{ fontFamily: "var(--font-display)" }}>
-                  {t.title}
-                </h1>
+                <h1 className="text-foreground font-display mb-2 text-2xl font-bold">{t.title}</h1>
                 <p className="text-muted-foreground">{t.subtitle}</p>
               </div>
 
@@ -195,11 +191,7 @@ export default function LoginPage() {
                     <Lock className="h-8 w-8 text-[#530A5D]" />
                   </div>
                 </div>
-                <h1
-                  className="text-foreground mb-2 text-2xl font-bold"
-                  style={{ fontFamily: "var(--font-display)" }}>
-                  {t.twoFaTitle}
-                </h1>
+                <h1 className="text-foreground mb-2 text-2xl font-bold">{t.twoFaTitle}</h1>
                 <p className="text-muted-foreground text-sm">
                   {t.codeSentTo} <strong>{email}</strong>
                   {t.codeSentSuffix ? ` ${t.codeSentSuffix}` : ""}
