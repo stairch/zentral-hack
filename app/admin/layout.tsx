@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
 import { verifyJWT } from "@/lib/auth"
-import { AdminSidebar } from "@/components/admin/admin-sidebar"
+import AdminSidebar from "@/components/admin/admin-sidebar"
 
 export const metadata = {
   title: "Admin | Zentral Hack 2026",

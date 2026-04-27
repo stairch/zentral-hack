@@ -3,7 +3,7 @@
   "version": "1.0.0-beta.3",
   "private": true,
   "scripts": {
-    "dev": "rm -r .next; next dev --webpack",
+    "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
     "format": "prettier --write --list-different .",
@@ -13,6 +13,7 @@
     "release": "node scripts/release.mjs"
   },
   "dependencies": {
+    "@flags-sdk/vercel": "^1.3.0",
     "@radix-ui/react-accordion": "1.2.12",
     "@radix-ui/react-checkbox": "1.3.3",
     "@radix-ui/react-dialog": "1.1.15",
@@ -32,6 +33,7 @@
     "clsx": "^2.1.1",
     "cookie": "^0.6.0",
     "dotenv": "^17.4.2",
+    "flags": "^4.0.6",
     "framer-motion": "^11.15.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.566.0",

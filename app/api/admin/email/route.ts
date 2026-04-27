@@ -1,12 +1,18 @@
 import { query } from "@/lib/db"
 import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { sendCampaignEmail, sendEmail } from "@/lib/email"
-import { successResponse, validationError, serverError } from "@/lib/api"
+import { successResponse, validationError, serverError, errorResponse } from "@/lib/api"
 import { renderEmailTemplate } from "@/lib/email-templates"
 import { getNewsletterColumnSupport, getWeeklyEligibleFilter } from "@/lib/newsletter-db"
+import { adminEmailsFlag } from "@/lib/flags"
 
 async function handler(req: AuthenticatedRequest) {
   try {
+    const showEmails = await adminEmailsFlag()
+    if (!showEmails) {
+      return errorResponse("Not found", 404)
+    }
+
     if (req.method === "POST") {
       const body = await req.json()
       const {

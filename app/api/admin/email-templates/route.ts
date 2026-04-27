@@ -1,9 +1,15 @@
 import { query } from "@/lib/db"
 import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
-import { successResponse, serverError, validationError } from "@/lib/api"
+import { successResponse, serverError, validationError, errorResponse } from "@/lib/api"
+import { adminEmailsFlag } from "@/lib/flags"
 
 async function handleGet(_req: AuthenticatedRequest) {
   try {
+    const showEmails = await adminEmailsFlag()
+    if (!showEmails) {
+      return errorResponse("Not found", 404)
+    }
+
     const result = await query(
       `SELECT id, name, description, base_template_id, subject, content,
               cta_text, cta_url, footer_note, created_at, updated_at
@@ -19,6 +25,11 @@ async function handleGet(_req: AuthenticatedRequest) {
 
 async function handlePost(req: AuthenticatedRequest) {
   try {
+    const showEmails = await adminEmailsFlag()
+    if (!showEmails) {
+      return errorResponse("Not found", 404)
+    }
+
     const body = await req.json()
     const { name, description, baseTemplateId, subject, content, ctaText, ctaUrl, footerNote } = body
 
@@ -51,6 +62,11 @@ async function handlePost(req: AuthenticatedRequest) {
 
 async function handlePut(req: AuthenticatedRequest) {
   try {
+    const showEmails = await adminEmailsFlag()
+    if (!showEmails) {
+      return errorResponse("Not found", 404)
+    }
+
     const body = await req.json()
     const { id, name, description, baseTemplateId, subject, content, ctaText, ctaUrl, footerNote } = body
 
@@ -89,6 +105,11 @@ async function handlePut(req: AuthenticatedRequest) {
 
 async function handleDelete(req: AuthenticatedRequest) {
   try {
+    const showEmails = await adminEmailsFlag()
+    if (!showEmails) {
+      return errorResponse("Not found", 404)
+    }
+
     const url = new URL(req.url)
     const id = url.searchParams.get("id")
     if (!id) return validationError("Template ID is required")
