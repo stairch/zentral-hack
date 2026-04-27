@@ -250,7 +250,7 @@ export function Categories() {
           animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}>
           <motion.span
-            className="bg-light-violet/30 text-violet mb-4 inline-block rounded-full px-4 py-2 text-sm font-medium"
+            className="bg-secondary/30 text-primary mb-4 inline-block rounded-full px-4 py-2 text-sm font-medium"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={isHeaderInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}>

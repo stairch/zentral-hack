@@ -175,9 +175,9 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mb-4 flex flex-col items-center gap-8 sm:gap-10">
-          <div className="bg-light-violet/30 border-light-violet inline-flex items-center gap-2 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2">
-            <Calendar className="text-violet h-4 w-4" />
-            <span className="text-violet text-sm font-medium">{text.date}</span>
+          <div className="bg-secondary/30 text-primary border-secondary inline-flex items-center gap-2 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2">
+            <Calendar className="h-4 w-4" />
+            <span className="text-sm font-medium">{text.date}</span>
           </div>
 
           <motion.h1
