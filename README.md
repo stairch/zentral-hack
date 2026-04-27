@@ -67,6 +67,8 @@ This is used to showcase and test new features in a production-like environment 
 
 This project uses [Vercel Flags](https://vercel.com/docs/flags) with the Vercel adapter.
 
+See [Project Overview](#project-overview) which Vercel Flags Environment to use.
+
 ### How it works
 
 Flags are defined centrally in `lib/flags.ts`:
