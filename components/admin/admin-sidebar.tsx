@@ -22,8 +22,10 @@ import {
   CalendarDays,
   BarChart3,
   Image,
-  Trophy
+  Trophy,
+  ShieldCheck
 } from "lucide-react"
+import { DEFAULT_CATEGORY_PARTNER_PERMISSIONS } from "@/lib/admin-permissions"
 import { cn } from "@/lib/utils"
 import { BrandMark } from "@/components/brand-mark"
 
@@ -43,6 +45,7 @@ const copy = {
     emails: "E-Mails & Kampagnen",
     newsletter: "Newsletter",
     sponsors: "Sponsoren",
+    roles: "Rollen",
     adminPanel: "Admin Panel",
     categoryAdmin: "Kategorien-Admin",
     logout: "Abmelden",
@@ -63,6 +66,7 @@ const copy = {
     emails: "Emails & Campaigns",
     newsletter: "Newsletter",
     sponsors: "Sponsors",
+    roles: "Roles",
     adminPanel: "Admin Panel",
     categoryAdmin: "Category Admin",
     logout: "Log Out",
@@ -80,24 +84,87 @@ export function AdminSidebar() {
   const isAdmin = user?.role === "admin"
   const text = copy[language]
 
+  // permissionKey: the string in admin_roles.permissions that unlocks this item for custom-role users
   const allNavItems = [
-    { href: "/admin", label: text.dashboard, icon: LayoutDashboard, adminOnly: false },
-    { href: "/admin/registrations", label: text.registrations, icon: Users, adminOnly: false },
-    { href: "/admin/users", label: text.users, icon: UserCog, adminOnly: true },
-    { href: "/admin/teams", label: text.teams, icon: Users, adminOnly: false },
-    { href: "/admin/documents", label: text.documents, icon: FolderOpen, adminOnly: false },
-    { href: "/admin/categories", label: text.categories, icon: Sparkles, adminOnly: false },
-    { href: "/admin/challenges", label: text.challenges, icon: Trophy, adminOnly: true },
-    { href: "/admin/about", label: text.about, icon: BarChart3, adminOnly: true },
-    { href: "/admin/schedule", label: text.schedule, icon: CalendarDays, adminOnly: true },
-    { href: "/admin/partner-logos", label: text.partnerLogos, icon: Image, adminOnly: true },
-    { href: "/admin/faqs", label: text.faqs, icon: HelpCircle, adminOnly: true },
-    { href: "/admin/emails", label: text.emails, icon: Mail, adminOnly: true },
-    { href: "/admin/newsletter", label: text.newsletter, icon: Mail, adminOnly: true },
-    { href: "/admin/sponsors", label: text.sponsors, icon: MessageSquare, adminOnly: true }
+    { href: "/admin", label: text.dashboard, icon: LayoutDashboard, permissionKey: null, adminOnly: false },
+    {
+      href: "/admin/registrations",
+      label: text.registrations,
+      icon: Users,
+      permissionKey: "registrations",
+      adminOnly: false
+    },
+    { href: "/admin/users", label: text.users, icon: UserCog, permissionKey: "users", adminOnly: false },
+    { href: "/admin/teams", label: text.teams, icon: Users, permissionKey: "teams", adminOnly: false },
+    {
+      href: "/admin/documents",
+      label: text.documents,
+      icon: FolderOpen,
+      permissionKey: "documents",
+      adminOnly: false
+    },
+    {
+      href: "/admin/categories",
+      label: text.categories,
+      icon: Sparkles,
+      permissionKey: "categories",
+      adminOnly: false
+    },
+    {
+      href: "/admin/challenges",
+      label: text.challenges,
+      icon: Trophy,
+      permissionKey: "challenges",
+      adminOnly: true
+    },
+    { href: "/admin/about", label: text.about, icon: BarChart3, permissionKey: "about", adminOnly: true },
+    {
+      href: "/admin/schedule",
+      label: text.schedule,
+      icon: CalendarDays,
+      permissionKey: "schedule",
+      adminOnly: true
+    },
+    {
+      href: "/admin/partner-logos",
+      label: text.partnerLogos,
+      icon: Image,
+      permissionKey: "partner-logos",
+      adminOnly: true
+    },
+    { href: "/admin/faqs", label: text.faqs, icon: HelpCircle, permissionKey: "faqs", adminOnly: true },
+    { href: "/admin/emails", label: text.emails, icon: Mail, permissionKey: "emails", adminOnly: true },
+    {
+      href: "/admin/newsletter",
+      label: text.newsletter,
+      icon: Mail,
+      permissionKey: "newsletter",
+      adminOnly: true
+    },
+    {
+      href: "/admin/sponsors",
+      label: text.sponsors,
+      icon: MessageSquare,
+      permissionKey: "sponsors",
+      adminOnly: true
+    },
+    { href: "/admin/roles", label: text.roles, icon: ShieldCheck, permissionKey: null, adminOnly: true }
   ]
 
-  const navItems = allNavItems.filter((item) => !item.adminOnly || isAdmin)
+  const navItems = allNavItems.filter((item) => {
+    if (isAdmin) return true
+    // Custom-role user: sidebar driven entirely by their permissions array
+    if (user?.permissions) {
+      if (item.permissionKey === null) return true // dashboard always visible
+      return user.permissions.includes(item.permissionKey)
+    }
+    // Legacy category_partner without custom role: use DEFAULT_CATEGORY_PARTNER_PERMISSIONS
+    if (user?.role === "category_partner") {
+      if (item.permissionKey === null) return true
+      return DEFAULT_CATEGORY_PARTNER_PERMISSIONS.includes(item.permissionKey)
+    }
+    return !item.adminOnly
+  })
 
   const handleLogout = async () => {
     await logout()
