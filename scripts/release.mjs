@@ -3,11 +3,12 @@
 /**
  * Automates the release process for this package:
  *   1. Prompts for a new version and validates it against the current one
- *   2. Writes the new version to package.json
- *   3. Temporarily switches the local git user.email and remote URL with PAT to the release account
- *   4. Commits and pushes the version bump
- *   5. Creates an annotated git tag and pushes it
- *   6. Restores the previous local git user.email
+ *   2. Checks if flags in lib/flags.ts are available in production Vercel project
+ *   3. Writes the new version to package.json
+ *   4. Temporarily switches the local git user.email and remote URL with PAT to the release account
+ *   5. Commits and pushes the version bump
+ *   6. Creates an annotated git tag and pushes it
+ *   7. Restores the previous local git user.email
  */
 
 import { execSync } from "child_process"
@@ -100,13 +101,14 @@ function extractFlagKeys() {
 }
 
 async function fetchVercelFlags() {
+  console.log("   ⚙️  Fetching flags from Vercel API...")
   const res = await fetch(
     `https://api.vercel.com/v1/projects/${VERCEL_PROD_PROJECT_ID}/feature-flags/flags`,
     { headers: { Authorization: `Bearer ${VERCEL_TOKEN}`, "Content-Type": "application/json" } }
   )
 
   if (!res.ok) {
-    console.error(`❌ Vercel API error: ${res.status} ${res.statusText}`)
+    console.error(`   ❌ Vercel API error: ${res.status} ${res.statusText}`)
     process.exit(1)
   }
 
@@ -117,13 +119,17 @@ async function fetchVercelFlags() {
 async function checkFlagsOnProd(newVersion) {
   if (!isStableRelease(newVersion)) return
 
-  console.log("\nChecking flags on production project...")
+  console.log("\n🚩 Checking feature flags on production project...")
 
   const localKeys = extractFlagKeys()
   if (localKeys.length === 0) {
-    console.log("  No flags found in lib/flags.ts, skipping.")
+    console.log("   ⚠️  No flags found in lib/flags.ts, skipping.")
     return
   }
+
+  console.log(
+    `   ✅ Found ${localKeys.length} flag(s) in lib/flags.ts: ${localKeys.map((k) => `"${k}"`).join(", ")}`
+  )
 
   const remoteKeys = await fetchVercelFlags()
   if (remoteKeys === null) return
@@ -131,34 +137,34 @@ async function checkFlagsOnProd(newVersion) {
   const missing = localKeys.filter((k) => !remoteKeys.includes(k))
 
   if (missing.length > 0) {
-    console.error("\n❌ The following flags are missing in the production Vercel project:")
-    missing.forEach((k) => console.error(`    - ${k}`))
-    console.error("\nAdd them in the Vercel Dashboard on production Vercel project before releasing.\n")
+    console.error("\n   ❌ The following flags are missing in the production Vercel project:")
+    missing.forEach((k) => console.error(`      - ${k}`))
+    console.error("\n   👉 Add them in the Vercel Dashboard on production Vercel project before releasing.\n")
     process.exit(1)
   }
 
-  console.log(`✅ All ${localKeys.length} flags found on production project.`)
+  console.log(`   ✅ All ${localKeys.length} flags found on production project.`)
 }
 
 async function main() {
   if (!RELEASE_TOKEN) {
-    console.error("Error: RELEASE_TOKEN is not set. Add it to your .env file.")
+    console.error("❌ Error: RELEASE_TOKEN is not set. Add it to your .env file.")
     process.exit(1)
   }
   if (!VERCEL_TOKEN) {
-    console.error("Error: VERCEL_TOKEN is not set. Add it to your .env file.")
+    console.error("❌ Error: VERCEL_TOKEN is not set. Add it to your .env file.")
     process.exit(1)
   }
   if (!VERCEL_PROD_PROJECT_ID) {
-    console.error("Error: VERCEL_PROD_PROJECT_ID is not set. Add it to your .env file.")
+    console.error("❌ Error: VERCEL_PROD_PROJECT_ID is not set. Add it to your .env file.")
     process.exit(1)
   }
 
   const pkg = JSON.parse(readFileSync("package.json", "utf-8"))
   const currentVersion = pkg.version
 
-  console.log(`\nCurrent version: v${currentVersion}`)
-  console.log("Format must follow Semantic Versioning (https://semver.org)\n")
+  console.log(`\n📦 Current version: v${currentVersion}`)
+  console.log("📐 Format must follow Semantic Versioning (https://semver.org)\n")
 
   let newVersion
   while (true) {
@@ -171,9 +177,9 @@ async function main() {
     console.log(`  ❌ ${error}\n`)
   }
 
-  const confirmed = await ask(`v${currentVersion} → v${newVersion} — proceed? [y/N]: `)
+  const confirmed = await ask(`\n🚀 v${currentVersion} ➡️  v${newVersion} — proceed? [y/N]: `)
   if (confirmed.toLowerCase() !== "y") {
-    console.log("Aborted.")
+    console.log("❌ Aborted.")
     process.exit(0)
   }
 
@@ -182,7 +188,7 @@ async function main() {
 
   pkg.version = newVersion
   writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
-  console.log(`✅ Version bumped: ${currentVersion} ➡️ ${newVersion}`)
+  console.log(`✅ Version bumped: ${currentVersion} ➡️  ${newVersion}`)
 
   let previousEmail
   try {
@@ -214,10 +220,10 @@ async function main() {
 
     if (previousEmail) {
       run(`git config --local user.email "${previousEmail}"`)
-      console.log(`✅ Local git email setting restored (previous: ${previousEmail})`)
+      console.log(`✅ Local git email restored (previous: ${previousEmail})`)
     } else {
       run("git config --local --unset user.email")
-      console.log(`✅ Local git email setting restored (previous: none)`)
+      console.log(`✅ Local git email restored (previous: none)`)
     }
   }
 
@@ -225,6 +231,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("Error:", err.message)
+  console.error("❌ Error:", err.message)
   process.exit(1)
 })
