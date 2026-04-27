@@ -38,6 +38,7 @@ export interface CategoryRecord {
   show_challenge_description?: boolean | null
   prize?: string | null
   target_group?: string | null
+  target_group_en?: string | null
   challenge_title?: string | null
   challenge_title_en?: string | null
   challenge_short_description?: string | null
@@ -258,6 +259,9 @@ export function getCategoryPresentationByLanguage(category: CategoryRecord, lang
     challengeData: category.challenge_data || null,
     challenges: publishedChallenges,
     prize: category.prize || null,
-    targetGroup: category.target_group || null
+    targetGroup:
+      language === "en"
+        ? category.target_group_en || category.target_group || null
+        : category.target_group || null
   }
 }

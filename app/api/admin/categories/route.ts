@@ -36,7 +36,8 @@ async function putHandler(req: AuthenticatedRequest) {
       challengeDescriptionEn,
       showChallengeDescription,
       prize,
-      targetGroup
+      targetGroup,
+      targetGroupEn
     } = await req.json()
 
     if (!id) {
@@ -164,6 +165,14 @@ async function putHandler(req: AuthenticatedRequest) {
     if (availableColumns.has("target_group") && (typeof targetGroup === "string" || targetGroup === null)) {
       values.push(typeof targetGroup === "string" ? targetGroup.trim() || null : null)
       fieldAssignments.push(`target_group = $${values.length}`)
+    }
+
+    if (
+      availableColumns.has("target_group_en") &&
+      (typeof targetGroupEn === "string" || targetGroupEn === null)
+    ) {
+      values.push(typeof targetGroupEn === "string" ? targetGroupEn.trim() || null : null)
+      fieldAssignments.push(`target_group_en = $${values.length}`)
     }
 
     if (fieldAssignments.length === 0) {

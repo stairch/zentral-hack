@@ -44,6 +44,7 @@ interface Category {
   show_challenge_description?: boolean | null
   prize?: string | null
   target_group?: string | null
+  target_group_en?: string | null
 }
 
 interface EditFormState {
@@ -60,6 +61,7 @@ interface EditFormState {
   showChallengeDescription: boolean
   prize: string
   targetGroup: string
+  targetGroupEn: string
 }
 
 export function AdminCategoriesPage() {
@@ -81,7 +83,8 @@ export function AdminCategoriesPage() {
     challengeDescriptionEn: "",
     showChallengeDescription: false,
     prize: "",
-    targetGroup: ""
+    targetGroup: "",
+    targetGroupEn: ""
   })
   const [saved, setSaved] = useState(false)
 
@@ -118,6 +121,7 @@ export function AdminCategoriesPage() {
           prizeHint: "Shown publicly only for categories without individual challenges.",
           targetGroupLabel: "Target audience",
           targetGroupPlaceholder: "e.g. Students, professionals, ...",
+          targetGroupPlaceholderEn: "e.g. Students, professionals, ...",
           save: "Save",
           saving: "Saving...",
           saved: "Saved successfully",
@@ -161,6 +165,7 @@ export function AdminCategoriesPage() {
           prizeHint: "Wird öffentlich nur für Kategorien ohne eigene Challenges angezeigt.",
           targetGroupLabel: "Zielgruppe",
           targetGroupPlaceholder: "z.B. Studierende, Berufstätige, ...",
+          targetGroupPlaceholderEn: "e.g. Students, professionals, ...",
           save: "Speichern",
           saving: "Wird gespeichert...",
           saved: "Erfolgreich gespeichert!",
@@ -242,7 +247,8 @@ export function AdminCategoriesPage() {
           challengeDescriptionEn: editForm.challengeDescriptionEn,
           showChallengeDescription: editForm.showChallengeDescription,
           prize: editForm.prize || null,
-          targetGroup: editForm.targetGroup || null
+          targetGroup: editForm.targetGroup || null,
+          targetGroupEn: editForm.targetGroupEn || null
         })
       })
 
@@ -272,7 +278,8 @@ export function AdminCategoriesPage() {
                 challenge_description_en: editForm.challengeDescriptionEn,
                 show_challenge_description: editForm.showChallengeDescription,
                 prize: editForm.prize || null,
-                target_group: editForm.targetGroup || null
+                target_group: editForm.targetGroup || null,
+                target_group_en: editForm.targetGroupEn || null
               }
             : category
         )
@@ -354,7 +361,8 @@ export function AdminCategoriesPage() {
                           challengeDescriptionEn: category.challenge_description_en || "",
                           showChallengeDescription: Boolean(category.show_challenge_description),
                           prize: category.prize || "",
-                          targetGroup: category.target_group || ""
+                          targetGroup: category.target_group || "",
+                          targetGroupEn: category.target_group_en || ""
                         })
                       } else {
                         setEditingId(null)
@@ -555,13 +563,27 @@ export function AdminCategoriesPage() {
                               />
                               <p className="text-muted-foreground mt-1 text-xs">{text.prizeHint}</p>
                             </div>
+                            <div />
                             <div>
-                              <Label htmlFor="targetGroup">{text.targetGroupLabel}</Label>
+                              <Label htmlFor="targetGroup">
+                                {text.targetGroupLabel} ({text.germanSection})
+                              </Label>
                               <Input
                                 id="targetGroup"
                                 value={editForm.targetGroup}
                                 onChange={(e) => updateEditForm("targetGroup", e.target.value)}
                                 placeholder={text.targetGroupPlaceholder}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="targetGroupEn">
+                                {text.targetGroupLabel} ({text.englishSection})
+                              </Label>
+                              <Input
+                                id="targetGroupEn"
+                                value={editForm.targetGroupEn}
+                                onChange={(e) => updateEditForm("targetGroupEn", e.target.value)}
+                                placeholder={text.targetGroupPlaceholderEn}
                               />
                             </div>
                           </div>
