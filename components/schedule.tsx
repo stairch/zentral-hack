@@ -34,90 +34,6 @@ const iconMap: Record<string, LucideIcon> = {
 }
 import { useLanguage } from "@/lib/language-context"
 
-const scheduleDay1 = [
-  {
-    time: "17:00",
-    event: { de: "Check-in", en: "Check-in" },
-    icon: Clock,
-    description: { de: "Empfang und Registrierung", en: "Welcome and registration" }
-  },
-  {
-    time: "18:00",
-    event: { de: "Begrüssung", en: "Welcome" },
-    icon: Presentation,
-    description: { de: "Willkommen zum Zentral Hack", en: "Welcome to Zentral Hack" }
-  },
-  {
-    time: "18:30",
-    event: { de: "Challenge Pitches", en: "Challenge Pitches" },
-    icon: Presentation,
-    description: { de: "Vorstellung der Challenges", en: "Introduction to all challenges" }
-  },
-  {
-    time: "19:00",
-    event: { de: "Teambildung & Apéro", en: "Team Matching & Apéro" },
-    icon: Coffee,
-    description: { de: "Finde dein Team bei Sponsoren-Apéro", en: "Find your team during the sponsor apéro" }
-  },
-  {
-    time: "19:30",
-    event: { de: "Start des Hacks", en: "Hack Starts" },
-    icon: Code,
-    description: { de: "Los geht's!", en: "Let's go!" }
-  },
-  {
-    time: "20:00",
-    event: { de: "Dinner Buffet", en: "Dinner Buffet" },
-    icon: Utensils,
-    description: { de: "Stärkung für die Nacht", en: "Fuel up for the night" }
-  },
-  {
-    time: "23:00",
-    event: { de: "Night Special", en: "Night Special" },
-    icon: PartyPopper,
-    description: { de: "Überraschung!", en: "Surprise!" }
-  }
-]
-
-const scheduleDay2 = [
-  {
-    time: "08:00",
-    event: { de: "Frühstücksbuffet", en: "Breakfast Buffet" },
-    icon: Coffee,
-    description: { de: "Energie für den Tag", en: "Energy for the day" }
-  },
-  {
-    time: "10:00",
-    event: { de: "Referate & Speeches", en: "Talks & Speeches" },
-    icon: Presentation,
-    description: { de: "Inspirierende Vorträge", en: "Inspiring talks" }
-  },
-  {
-    time: "12:00",
-    event: { de: "Lunchbuffet", en: "Lunch Buffet" },
-    icon: Utensils,
-    description: { de: "Mittagspause", en: "Lunch break" }
-  },
-  {
-    time: "16:00",
-    event: { de: "Nachmittagssnack", en: "Afternoon Snack" },
-    icon: Coffee,
-    description: { de: "Letzte Energie", en: "Final energy boost" }
-  },
-  {
-    time: "19:00",
-    event: { de: "Abschlusspräsentationen", en: "Final Presentations" },
-    icon: Presentation,
-    description: { de: "Zeigt was ihr geschafft habt", en: "Show what you have built" }
-  },
-  {
-    time: "22:00",
-    event: { de: "Ende & Preisverleihung", en: "Closing & Awards" },
-    icon: PartyPopper,
-    description: { de: "Feier mit uns!", en: "Celebrate with us!" }
-  }
-]
-
 const copy = {
   de: {
     badge: "ZEITPLAN",
@@ -294,7 +210,7 @@ export function Schedule() {
       .catch(() => {})
   }, [])
 
-  const schedule = activeDay === 1 ? (dbDay1 ?? scheduleDay1) : (dbDay2 ?? scheduleDay2)
+  const schedule = activeDay === 1 ? (dbDay1 ?? []) : (dbDay2 ?? [])
 
   return (
     <section id="schedule" className="bg-background py-24">
