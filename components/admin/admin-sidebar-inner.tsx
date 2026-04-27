@@ -23,10 +23,12 @@ import {
   BarChart3,
   Image,
   Trophy,
-  Lock
+  Lock,
+  ShieldCheck
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BrandMark } from "@/components/brand-mark"
+import { DEFAULT_CATEGORY_PARTNER_PERMISSIONS } from "@/lib/admin-permissions"
 
 const copy = {
   de: {
@@ -44,6 +46,7 @@ const copy = {
     emails: "E-Mails & Kampagnen",
     newsletter: "Newsletter",
     sponsors: "Sponsoren",
+    roles: "Rollen",
     adminPanel: "Admin Panel",
     categoryAdmin: "Kategorien-Admin",
     logout: "Abmelden",
@@ -64,6 +67,7 @@ const copy = {
     emails: "Emails & Campaigns",
     newsletter: "Newsletter",
     sponsors: "Sponsors",
+    roles: "Roles",
     adminPanel: "Admin Panel",
     categoryAdmin: "Category Admin",
     logout: "Log Out",
@@ -85,40 +89,150 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
   const isAdmin = user?.role === "admin"
   const text = copy[language]
 
+  // permissionKey: matches admin_roles.permissions entries to gate visibility for custom-role users
   const allNavItems = [
-    { id: "root", href: "/admin", label: text.dashboard, icon: LayoutDashboard, adminOnly: false },
+    {
+      id: "root",
+      href: "/admin",
+      label: text.dashboard,
+      icon: LayoutDashboard,
+      permissionKey: null,
+      adminOnly: false
+    },
     {
       id: "registrations",
       href: "/admin/registrations",
       label: text.registrations,
       icon: Users,
+      permissionKey: "registrations",
       adminOnly: false
     },
-    { id: "users", href: "/admin/users", label: text.users, icon: UserCog, adminOnly: true },
-    { id: "teams", href: "/admin/teams", label: text.teams, icon: Users, adminOnly: false },
-    { id: "documents", href: "/admin/documents", label: text.documents, icon: FolderOpen, adminOnly: false },
-    { id: "categories", href: "/admin/categories", label: text.categories, icon: Sparkles, adminOnly: false },
-    { id: "challenges", href: "/admin/challenges", label: text.challenges, icon: Trophy, adminOnly: true },
-    { id: "about", href: "/admin/about", label: text.about, icon: BarChart3, adminOnly: true },
-    { id: "schedule", href: "/admin/schedule", label: text.schedule, icon: CalendarDays, adminOnly: true },
+    {
+      id: "users",
+      href: "/admin/users",
+      label: text.users,
+      icon: UserCog,
+      permissionKey: "users",
+      adminOnly: false
+    },
+    {
+      id: "teams",
+      href: "/admin/teams",
+      label: text.teams,
+      icon: Users,
+      permissionKey: "teams",
+      adminOnly: false
+    },
+    {
+      id: "documents",
+      href: "/admin/documents",
+      label: text.documents,
+      icon: FolderOpen,
+      permissionKey: "documents",
+      adminOnly: false
+    },
+    {
+      id: "categories",
+      href: "/admin/categories",
+      label: text.categories,
+      icon: Sparkles,
+      permissionKey: "categories",
+      adminOnly: false
+    },
+    {
+      id: "challenges",
+      href: "/admin/challenges",
+      label: text.challenges,
+      icon: Trophy,
+      permissionKey: "challenges",
+      adminOnly: true
+    },
+    {
+      id: "about",
+      href: "/admin/about",
+      label: text.about,
+      icon: BarChart3,
+      permissionKey: "about",
+      adminOnly: true
+    },
+    {
+      id: "schedule",
+      href: "/admin/schedule",
+      label: text.schedule,
+      icon: CalendarDays,
+      permissionKey: "schedule",
+      adminOnly: true
+    },
     {
       id: "partner-logos",
       href: "/admin/partner-logos",
       label: text.partnerLogos,
       icon: Image,
+      permissionKey: "partner-logos",
       adminOnly: true
     },
-    { id: "faqs", href: "/admin/faqs", label: text.faqs, icon: HelpCircle, adminOnly: true },
-    { id: "emails", href: "/admin/emails", label: text.emails, icon: Mail, adminOnly: true },
-    { id: "newsletter", href: "/admin/newsletter", label: text.newsletter, icon: Mail, adminOnly: true },
-    { id: "sponsors", href: "/admin/sponsors", label: text.sponsors, icon: MessageSquare, adminOnly: true }
+    {
+      id: "faqs",
+      href: "/admin/faqs",
+      label: text.faqs,
+      icon: HelpCircle,
+      permissionKey: "faqs",
+      adminOnly: true
+    },
+    {
+      id: "emails",
+      href: "/admin/emails",
+      label: text.emails,
+      icon: Mail,
+      permissionKey: "emails",
+      adminOnly: true
+    },
+    {
+      id: "newsletter",
+      href: "/admin/newsletter",
+      label: text.newsletter,
+      icon: Mail,
+      permissionKey: "newsletter",
+      adminOnly: true
+    },
+    {
+      id: "sponsors",
+      href: "/admin/sponsors",
+      label: text.sponsors,
+      icon: MessageSquare,
+      permissionKey: "sponsors",
+      adminOnly: true
+    },
+    {
+      id: "roles",
+      href: "/admin/roles",
+      label: text.roles,
+      icon: ShieldCheck,
+      permissionKey: null,
+      adminOnly: true
+    }
   ]
 
+  // Merge feature-flag release state into nav items
   const merged = allNavItems.map((navItem) => {
     const match = releasedItems.find((link) => link.id === navItem.id)
     return match ? { ...navItem, ...match } : { ...navItem, isReleased: true }
   })
-  const navItems = merged.filter((item) => !item.adminOnly || isAdmin)
+
+  const navItems = merged.filter((item) => {
+    if (isAdmin) return true
+    // Custom-role user: sidebar driven entirely by their permissions array
+    if (user?.permissions) {
+      if (item.permissionKey === null) return true // dashboard + admin-only items without a key never shown
+      return user.permissions.includes(item.permissionKey)
+    }
+    // Legacy category_partner without custom role: use default permission set
+    if (user?.role === "category_partner") {
+      if (item.permissionKey === null) return !item.adminOnly
+      return DEFAULT_CATEGORY_PARTNER_PERMISSIONS.includes(item.permissionKey)
+    }
+    return !item.adminOnly
+  })
 
   const handleLogout = async () => {
     await logout()
@@ -188,6 +302,7 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       </div>
     </>
   )
+
   return (
     <>
       {/* Desktop Sidebar */}
