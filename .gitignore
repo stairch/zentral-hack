@@ -42,3 +42,4 @@ next-env.d.ts
 
 # Uploads (user-generated files)
 public/uploads/
+.env*.local
