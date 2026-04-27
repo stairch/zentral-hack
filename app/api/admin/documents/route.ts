@@ -1,13 +1,19 @@
 import { query } from "@/lib/db"
 import { withCategoryPartnerAuth, AuthenticatedRequest } from "@/lib/middleware"
-import { successResponse, validationError, serverError } from "@/lib/api"
+import { successResponse, validationError, serverError, errorResponse } from "@/lib/api"
 import { writeFile, mkdir, unlink } from "fs/promises"
 import { join } from "path"
 import { existsSync } from "fs"
 import { validateFileUpload, generateSecureFilename, validateCategoryFilePath } from "@/lib/file-upload"
+import { adminDocumentsFlag } from "@/lib/flags"
 
 async function handleGet(req: AuthenticatedRequest) {
   try {
+    const showDocuments = await adminDocumentsFlag()
+    if (!showDocuments) {
+      return errorResponse("Not found", 404)
+    }
+
     const { searchParams } = new URL(req.url)
     const categoryId = searchParams.get("categoryId")
 

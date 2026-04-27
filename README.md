@@ -1,3 +1,11 @@
+## Project Overview
+
+| Type                                 | URL                                                           | Vercel Project                                                            | Environment    | Vercel Deployment Type | [Vercel Flags](#feature-flags) |
+| ------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------- | ---------------------- | ------------------------------ |
+| [Production](#production-deployment) | [zentralhack.ch](https://zentralhack.ch)                      | [prod-hack-zentral](https://vercel.com/stairs-projects/prod-hack-zentral) | Production     | Production (live)      | Production                     |
+| [Demo](#demo-deployment)             | [project-7ly5q.vercel.app](https://project-7ly5q.vercel.app/) | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development ⚠️ | Production (live) ⚠️   | Production                     |
+| Development                          | localhost                                                     | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development    | -                      | Development                    |
+
 ## Release Process
 
 The [release script](/scripts/release.mjs) automates versioning, tagging, and pushing to the repository.
@@ -41,13 +49,6 @@ The script will prompt for a new version number and validate it. Versions must f
 
 A deployment is created automatically whenever a tag is created that follows [Semantic Versioning](https://semver.org).
 
-| Deployment | URL                                                           | Vercel Project                                                            | Environment    | Vercel Deployment Type |
-| ---------- | ------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------- | ---------------------- |
-| Production | [zentralhack.ch](https://zentralhack.ch)                      | [prod-hack-zentral](https://vercel.com/stairs-projects/prod-hack-zentral) | Production     | Production (live)      |
-| Demo       | [project-7ly5q.vercel.app](https://project-7ly5q.vercel.app/) | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development ⚠️ | Production (live) ⚠️   |
-
-###### For more information, see below
-
 <br/>
 
 ### Production Deployment
@@ -59,3 +60,84 @@ This is the publicly accessible live website used by end-users.
 
 Every tag that is a pre-release (e.g. `1.0.0-alpha.1`, `1.2.0-beta.5`) automatically creates a Vercel production deployment on the [**development Vercel project**](https://vercel.com/stairs-projects/dev-hack-zentral).
 This is used to showcase and test new features in a production-like environment before they are released to production.
+
+---
+
+## Feature Flags
+
+This project uses [Vercel Flags](https://vercel.com/docs/flags) with the Vercel adapter.
+
+### How it works
+
+Flags are defined centrally in `lib/flags.ts`:
+
+```ts
+import { flag } from "flags/next"
+import { vercelAdapter } from "@flags-sdk/vercel"
+
+// example
+export const adminDocumentsFlag = flag({
+  key: "admin-documentss",
+  adapter: vercelAdapter(),
+  defaultValue: false
+})
+```
+
+> [!WARNING]
+> `defaultValue` must be set for every flag. This prevents a runtime error if a flag is missing or not configured correctly in Vercel.
+
+#### Usage in a component
+
+```tsx
+import { adminDocumentsFlag } from "@/lib/flags"
+
+export async function AdminDocumentsGate() {
+  const showDocuments = await adminDocumentsFlag()
+
+  if (!showDocuments) {
+    return <p>Feature is currently disabled.</p>
+  }
+
+  return <DocumentsManagementPage />
+}
+```
+
+#### Usage in a route
+
+```ts
+import { NextResponse } from "next/server"
+import { adminDocumentsFlag } from "@/lib/flags"
+
+export async function GET() {
+  const showDocuments = await adminDocumentsFlag()
+
+  if (!showDocuments) {
+    return NextResponse.json({ error: "Feature disabled" }, { status: 404 })
+  }
+
+  // ...
+}
+```
+
+### How to add a new flag
+
+1. Add a new flag in `lib/flags.ts` with (minimum):
+   - unique `key`
+   - `adapter: vercelAdapter()`
+   - explicit `defaultValue`
+2. Create the same flag key in **both Vercel projects**:
+   - [prod-hack-zentral](https://vercel.com/stairs-projects/prod-hack-zentral)
+   - [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)
+
+**Example**
+
+```ts
+export const newsletterV2Flag = flag({
+  key: "newsletter-v2",
+  adapter: vercelAdapter(),
+  defaultValue: false
+})
+```
+
+> [!WARNING]
+> `defaultValue` must be set for every flag. This prevents a runtime error if a flag is missing or not configured correctly in Vercel.
