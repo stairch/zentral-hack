@@ -125,19 +125,10 @@ export async function GET() {
    - unique `key`
    - `adapter: vercelAdapter()`
    - explicit `defaultValue`
-2. Create the same flag key in **both Vercel projects**:
+2. Create the same flag key in **both Vercel projects** via Vercel project > `Flags` on Sidebar:
    - [prod-hack-zentral](https://vercel.com/stairs-projects/prod-hack-zentral)
    - [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)
 
-**Example**
-
-```ts
-export const newsletterV2Flag = flag({
-  key: "newsletter-v2",
-  adapter: vercelAdapter(),
-  defaultValue: false
-})
-```
 
 > [!WARNING]
 > `defaultValue` must be set for every flag. This prevents a runtime error if a flag is missing or not configured correctly in Vercel.
