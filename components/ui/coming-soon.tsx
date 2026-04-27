@@ -3,7 +3,7 @@
 import { Hourglass } from "lucide-react"
 import { useLanguage } from "@/lib/language-context"
 
-export default function ComingSoon({}) {
+export default function ComingSoon() {
   const { language } = useLanguage()
   const text = {
     de: {

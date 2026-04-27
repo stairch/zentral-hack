@@ -1,7 +1,11 @@
 import AdminSidebarInner from "./admin-sidebar-inner"
-import { adminDocumentsFlag } from "@/lib/flags"
+import { adminDocumentsFlag, adminEmailsFlag, adminNewsletterFlag } from "@/lib/flags"
 
-const adminFeatureFlags = [{ id: "documents", featureFlag: adminDocumentsFlag }]
+const adminFeatureFlags = [
+  { id: "documents", featureFlag: adminDocumentsFlag },
+  { id: "emails", featureFlag: adminEmailsFlag },
+  { id: "newsletter", featureFlag: adminNewsletterFlag }
+]
 
 export default async function AdminSidebar() {
   const items = await Promise.all(

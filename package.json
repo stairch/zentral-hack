@@ -3,7 +3,7 @@
   "version": "1.0.0-beta.3",
   "private": true,
   "scripts": {
-    "dev": "rm -r .next; next dev --webpack",
+    "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
     "format": "prettier --write --list-different .",

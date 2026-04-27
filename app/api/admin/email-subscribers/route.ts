@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
-import { successResponse, serverError } from "@/lib/api"
+import { successResponse, serverError, errorResponse } from "@/lib/api"
 import { verifyJWT } from "@/lib/auth"
 import { getNewsletterColumnSupport, getWeeklyEligibleFilter } from "@/lib/newsletter-db"
+import { adminEmailsFlag, adminNewsletterFlag } from "@/lib/flags"
 
 /**
  * GET /api/admin/email-subscribers
@@ -10,6 +11,12 @@ import { getNewsletterColumnSupport, getWeeklyEligibleFilter } from "@/lib/newsl
  */
 export async function GET(request: NextRequest) {
   try {
+    const showEmails = await adminEmailsFlag()
+    const showNewsletter = await adminNewsletterFlag()
+    if (!showEmails && !showNewsletter) {
+      return errorResponse("Not found", 404)
+    }
+
     const token = request.cookies.get("token")?.value
     if (!token) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
