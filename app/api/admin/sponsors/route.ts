@@ -1,6 +1,7 @@
 import { query } from "@/lib/db"
 import { successResponse, serverError, validationError } from "@/lib/api"
 import { withAdminAuth, type AuthenticatedRequest } from "@/lib/middleware"
+import { normalizeHexColor } from "@/lib/helpers"
 
 type SponsorPackageRow = {
   id: string
@@ -10,13 +11,6 @@ type SponsorPackageRow = {
   benefits: string[] | null
   display_order: number
   created_at: string
-}
-
-function normalizeHexColor(value?: string | null): string {
-  const trimmed = (value || "").trim().toUpperCase()
-  if (!trimmed) return "#530A5D"
-  if (/^#[0-9A-F]{6}$/.test(trimmed)) return trimmed
-  return "#530A5D"
 }
 
 function normalizeBenefits(value: unknown): string[] {

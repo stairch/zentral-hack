@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,8 +9,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { X, CheckCircle2, Loader2, Check } from "lucide-react"
 import { toast } from "sonner"
-import { getSponsorPackageBySlug, sponsorPackages } from "@/lib/sponsorship-packages"
 import { useLanguage } from "@/lib/language-context"
+import { type SponsorPackageLocale } from "@/lib/sponsorship-packages"
 
 interface FormData {
   companyName: string
@@ -24,10 +24,16 @@ interface FormData {
 interface SponsorshipModalProps {
   isOpen: boolean
   onClose: () => void
-  selectedPackageSlug?: string | null
+  allPackages: SponsorPackageLocale[]
+  selectedPackage?: SponsorPackageLocale | null
 }
 
-export function SponsorshipModal({ isOpen, onClose, selectedPackageSlug }: SponsorshipModalProps) {
+export function SponsorshipModal({
+  isOpen,
+  onClose,
+  allPackages,
+  selectedPackage: initialPackage
+}: SponsorshipModalProps) {
   const [formData, setFormData] = useState<FormData>({
     companyName: "",
     contactName: "",
@@ -36,41 +42,28 @@ export function SponsorshipModal({ isOpen, onClose, selectedPackageSlug }: Spons
     interestedIn: "",
     message: ""
   })
+  const [activePackage, setActivePackage] = useState<SponsorPackageLocale | null>(null)
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const { language } = useLanguage()
 
   useEffect(() => {
-    if (!isOpen) {
-      return
-    }
-
+    if (!isOpen) return
+    const pkg = initialPackage ?? allPackages[0] ?? null
+    setActivePackage(pkg)
     setFormData((current) => ({
       ...current,
-      interestedIn: selectedPackageSlug || current.interestedIn || sponsorPackages[0].slug
+      interestedIn: pkg?.id ?? current.interestedIn
     }))
-  }, [isOpen, selectedPackageSlug])
-
-  const selectedPackage = useMemo(
-    () =>
-      getSponsorPackageBySlug(formData.interestedIn) ||
-      getSponsorPackageBySlug(selectedPackageSlug) ||
-      sponsorPackages[0],
-    [formData.interestedIn, selectedPackageSlug]
-  )
+  }, [isOpen, initialPackage])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
+    setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSelectChange = (value: string) => {
-    setFormData({
-      ...formData,
-      interestedIn: value
-    })
+  const handleSelectPackage = (pkg: SponsorPackageLocale) => {
+    setActivePackage(pkg)
+    setFormData((current) => ({ ...current, interestedIn: pkg.id }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -158,28 +151,28 @@ export function SponsorshipModal({ isOpen, onClose, selectedPackageSlug }: Spons
                       <div
                         className="rounded-xl border p-5"
                         style={{
-                          backgroundColor: `${selectedPackage.color}12`,
-                          borderColor: `${selectedPackage.color}66`
+                          backgroundColor: `${activePackage?.color}12`,
+                          borderColor: `${activePackage?.color}66`
                         }}>
                         <p
                           className="mb-3 text-xs font-semibold tracking-[0.2em] uppercase"
-                          style={{ color: selectedPackage.color }}>
-                          {selectedPackage.name[language]}
+                          style={{ color: activePackage?.color }}>
+                          {activePackage?.name}
                         </p>
                         <h3 className="mb-2 text-xl font-semibold hyphens-auto" lang={language}>
-                          {selectedPackage.shortDescription[language]}
+                          HIER SHORT DESCRIPTION (TO REMOVE)
                         </h3>
                         <p className="text-muted-foreground mb-5 text-sm leading-relaxed">
-                          {selectedPackage.description[language]}
+                          {activePackage?.description}
                         </p>
                         <div className="space-y-2">
-                          {selectedPackage.benefits.map((benefit) => (
-                            <div key={benefit[language]} className="flex items-start gap-2 text-sm">
+                          {activePackage?.benefits.map((benefit) => (
+                            <div key={benefit} className="flex items-start gap-2 text-sm">
                               <Check
                                 className="mt-0.5 h-4 w-4 flex-shrink-0"
-                                style={{ color: selectedPackage.color }}
+                                style={{ color: activePackage?.color }}
                               />
-                              <span>{benefit[language]}</span>
+                              <span>{benefit}</span>
                             </div>
                           ))}
                         </div>
@@ -188,22 +181,22 @@ export function SponsorshipModal({ isOpen, onClose, selectedPackageSlug }: Spons
                       <div className="space-y-3">
                         <Label className="text-sm">Paket wechseln</Label>
                         <div className="grid gap-2">
-                          {sponsorPackages.map((pkg) => (
+                          {allPackages.map((pkg) => (
                             <button
-                              key={pkg.slug}
+                              key={pkg.id}
                               type="button"
-                              onClick={() => handleSelectChange(pkg.slug)}
+                              onClick={() => handleSelectPackage(pkg)}
                               className="cursor-pointer rounded-lg border px-4 py-3 text-left transition-all"
                               style={{
-                                borderColor: selectedPackage.slug === pkg.slug ? pkg.color : "#e5e7eb",
+                                borderColor: activePackage?.id === pkg.id ? pkg.color : "#e5e7eb",
                                 backgroundColor:
-                                  selectedPackage.slug === pkg.slug ? `${pkg.color}12` : "transparent"
+                                  activePackage?.id === pkg.id ? `${pkg.color}12` : "transparent"
                               }}>
                               <p className="font-semibold" style={{ color: pkg.color }}>
-                                {pkg.name[language]}
+                                {pkg.name}
                               </p>
                               <p className="text-muted-foreground mt-1 text-xs">
-                                {pkg.shortDescription[language]}
+                                HIER SHORT DESCRIPTION (TO REMOVE)
                               </p>
                             </button>
                           ))}
@@ -274,7 +267,7 @@ export function SponsorshipModal({ isOpen, onClose, selectedPackageSlug }: Spons
 
                       <div className="space-y-2">
                         <Label className="text-sm">Interessiert an</Label>
-                        <Input value={selectedPackage.name[language]} readOnly />
+                        <Input value={activePackage?.name ?? ""} readOnly />
                       </div>
 
                       <div className="space-y-2">

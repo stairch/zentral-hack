@@ -10,6 +10,7 @@ import {
   Sparkles,
   type LucideIcon
 } from "lucide-react"
+import { normalizeHexColor } from "./helpers"
 
 export type CategoryIconName =
   | "sparkles"
@@ -140,25 +141,8 @@ const iconAliases: Record<string, CategoryIconName> = {
   bot: "brain"
 }
 
-function isHexColor(value: string): boolean {
-  return /^#[0-9a-fA-F]{6}$/.test(value)
-}
-
-export function normalizeHexColor(value?: string | null, fallback = "#530A5D"): string {
-  if (!value) {
-    return fallback
-  }
-
-  const trimmed = value.trim()
-  if (isHexColor(trimmed)) {
-    return trimmed.toUpperCase()
-  }
-
-  return fallback
-}
-
 export function getReadableTextColor(backgroundHex: string): "#111111" | "#FFFFFF" {
-  const normalized = normalizeHexColor(backgroundHex, "#530A5D")
+  const normalized = normalizeHexColor(backgroundHex)
   const red = Number.parseInt(normalized.slice(1, 3), 16)
   const green = Number.parseInt(normalized.slice(3, 5), 16)
   const blue = Number.parseInt(normalized.slice(5, 7), 16)
@@ -168,7 +152,7 @@ export function getReadableTextColor(backgroundHex: string): "#111111" | "#FFFFF
 }
 
 export function hexToRgba(hex: string, alpha: number): string {
-  const normalized = normalizeHexColor(hex, "#530A5D")
+  const normalized = normalizeHexColor(hex)
   const red = Number.parseInt(normalized.slice(1, 3), 16)
   const green = Number.parseInt(normalized.slice(3, 5), 16)
   const blue = Number.parseInt(normalized.slice(5, 7), 16)
@@ -206,7 +190,7 @@ export function getCategoryPresentation(category: CategoryRecord) {
 
 export function getCategoryPresentationByLanguage(category: CategoryRecord, language: "de" | "en") {
   const fallback = getCategoryFallback(category.slug)
-  const color = normalizeHexColor(category.color, fallback.color)
+  const color = normalizeHexColor(category.color || "")
   const iconName = resolveCategoryIconName(category.icon, category.slug)
 
   const localizedTitle =

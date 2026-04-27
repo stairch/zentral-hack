@@ -3,21 +3,10 @@
 import { useRef, useState, useEffect } from "react"
 import { motion, useInView } from "framer-motion"
 import { SponsorshipModal } from "./sponsorship-modal"
-import { sponsorPackages as fallbackSponsorPackages } from "@/lib/sponsorship-packages"
 import { useLanguage } from "@/lib/language-context"
 import { Emails } from "@/lib/constants"
-import { getSponsorContrastTextColor } from "@/lib/sponsorship-packages"
-
-interface SponsorPackage {
-  id: string
-  slug: string
-  name: string
-  description: string
-  shortDescription: string
-  color: string
-  benefits: string[]
-  display_order: number
-}
+import { getSponsorContrastTextColor, getSponsorPackageByLanguage } from "@/lib/sponsorship-packages"
+import { type SponsorPackage } from "@/lib/sponsorship-packages"
 
 interface Sponsor {
   id: string
@@ -226,7 +215,7 @@ function TierCard({
           ? `${tier.name} Sponsoring-Paket anfragen`
           : `Request ${tier.name} sponsorship package`
       }
-      className="group relative flex min-h-28 cursor-pointer items-center justify-center rounded-2xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
+      className="group relative flex min-h-28 w-56 cursor-pointer items-center justify-center rounded-2xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
       style={{
         backgroundColor: tier.color,
         borderColor: tier.color,
@@ -247,24 +236,11 @@ export function Partners() {
   const headerRef = useRef(null)
   const isHeaderInView = useInView(headerRef, { once: true })
   const [sponsorshipModalOpen, setSponsorshipModalOpen] = useState(false)
-  const [selectedPackageSlug, setSelectedPackageSlug] = useState<string | null>(null)
+  const [selectedPackage, setSelectedPackage] = useState<SponsorPackage | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const [sponsors, setSponsors] = useState<Sponsor[]>([])
   const [dbOrganisers, setDbOrganisers] = useState<typeof partners.organisers | null>(null)
-  const [sponsorPackageItems, setSponsorPackageItems] = useState<SponsorPackage[]>(
-    fallbackSponsorPackages
-      .map((pkg) => ({
-        id: pkg.id,
-        slug: pkg.slug,
-        name: pkg.name.de,
-        description: pkg.description.de,
-        shortDescription: pkg.shortDescription.de,
-        color: pkg.color,
-        benefits: pkg.benefits.map((benefit) => benefit.de),
-        display_order: pkg.display_order
-      }))
-      .sort((a, b) => a.display_order - b.display_order)
-  )
+  const [sponsorPackageItems, setSponsorPackageItems] = useState<SponsorPackage[]>([])
   const { language } = useLanguage()
 
   useEffect(() => {
@@ -292,7 +268,7 @@ export function Partners() {
           setSponsors(list)
         }
       } catch {
-        // Keep fallback data (empty list)
+        // Keep fallback data
       }
     }
 
@@ -348,23 +324,12 @@ export function Partners() {
     }
   }
 
-  const platinSponsors = sponsors
-    .filter((e) => e.tier === "platin" && e.status === "published" && e.logo_url)
-    .map((e) => mapSponsor(e))
-  const goldSponsors = sponsors
-    .filter((e) => e.tier === "gold" && e.status === "published" && e.logo_url)
-    .map((e) => mapSponsor(e))
-  const silverSponsors = sponsors
-    .filter((e) => e.tier === "silber" && e.status === "published" && e.logo_url)
-    .map((e) => mapSponsor(e))
-  const bronzeSponsors = sponsors
-    .filter((e) => e.tier === "bronze" && e.status === "published" && e.logo_url)
-    .map((e) => mapSponsor(e))
-
-  const platinColor = sponsorPackageItems.filter((e) => e.slug === "platin")[0].color
-  const goldColor = sponsorPackageItems.filter((e) => e.slug === "gold")[0].color
-  const silverColor = sponsorPackageItems.filter((e) => e.slug === "silber")[0].color
-  const bronzeColor = sponsorPackageItems.filter((e) => e.slug === "bronze")[0].color
+  const sponsorsByPackage = sponsorPackageItems.map((pkg) => ({
+    package: pkg,
+    sponsors: sponsors
+      .filter((s) => s.tier === pkg.id && s.status === "published" && s.logo_url)
+      .map(mapSponsor)
+  }))
 
   const copy = {
     de: {
@@ -373,10 +338,6 @@ export function Partners() {
       headingAccent: "STÄRKER",
       description: "Unterstützt von führenden Unternehmen und Institutionen der Zentralschweiz.",
       organisers: "CO-ORGANISATOREN",
-      platinSponsors: "PLATIN SPONSOREN",
-      goldSponsors: "GOLD SPONSOREN",
-      silverSponsors: "SILBER SPONSOREN",
-      bronzeSponsors: "BRONZE SPONSOREN",
       tierListsTitle: "Werden Sie ein Sponsor",
       ctaQuestion: "Noch unsicher welches Paket passt?",
       ctaAction: "Kontakt aufnehmen"
@@ -387,10 +348,6 @@ export function Partners() {
       headingAccent: "TOGETHER",
       description: "Supported by leading companies and institutions in Central Switzerland.",
       organisers: "CO-ORGANIZERS",
-      platinSponsors: "PLATIN SPONSORS",
-      goldSponsors: "GOLD SPONSORS",
-      silverSponsors: "SILVER SPONSORS",
-      bronzeSponsors: "BRONZE SPONSORS",
       tierListsTitle: "Become a sponsor",
       ctaQuestion: "Not sure which package fits?",
       ctaAction: "Get in touch"
@@ -429,58 +386,30 @@ export function Partners() {
               <div className="bg-primary w-fit rounded-md px-5 text-white">{text.organisers}</div>
             </h3>
             <MarqueeRow items={dbOrganisers ?? partners.organisers} direction="left" speed={30} />
-            {/* Platin Sponsors Marquee */}
-            {platinSponsors.length > 0 && (
-              <>
-                <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
-                  <div
-                    className="w-fit rounded-md px-5"
-                    style={{ background: platinColor, color: getSponsorContrastTextColor(platinColor) }}>
-                    {text.platinSponsors}
+
+            {/* Dynamische Sponsor-Sektionen pro Package */}
+            {sponsorsByPackage
+              .filter(({ sponsors }) => sponsors.length > 0)
+              .map(({ package: pkg, sponsors }, i) => {
+                const label =
+                  language === "en" ? (pkg.name_en || pkg.name).toUpperCase() : pkg.name.toUpperCase()
+                const direction = i % 2 === 0 ? "right" : "left"
+                return (
+                  <div key={pkg.id}>
+                    <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
+                      <div
+                        className="w-fit rounded-md px-5"
+                        style={{
+                          background: pkg.color,
+                          color: getSponsorContrastTextColor(pkg.color)
+                        }}>
+                        {label} SPONSOREN
+                      </div>
+                    </h3>
+                    <MarqueeRow items={sponsors} direction={direction} speed={20} />
                   </div>
-                </h3>
-                <MarqueeRow items={platinSponsors} direction="right" speed={20} />
-              </>
-            )}
-            {/* Gold Sponsors Marquee */}
-            {goldSponsors.length > 0 && (
-              <>
-                <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
-                  <div
-                    className="w-fit rounded-md px-5"
-                    style={{ background: goldColor, color: getSponsorContrastTextColor(goldColor) }}>
-                    {text.goldSponsors}
-                  </div>
-                </h3>
-                <MarqueeRow items={goldSponsors} direction="left" speed={20} />
-              </>
-            )}
-            {/* Silver Sponsors Marquee */}
-            {silverSponsors.length > 0 && (
-              <>
-                <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
-                  <div
-                    className="w-fit rounded-md px-5"
-                    style={{ background: silverColor, color: getSponsorContrastTextColor(silverColor) }}>
-                    {text.silverSponsors}
-                  </div>
-                </h3>
-                <MarqueeRow items={silverSponsors} direction="right" speed={20} />
-              </>
-            )}
-            {/* Bronze Sponsors Marquee */}
-            {bronzeSponsors.length > 0 && (
-              <>
-                <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
-                  <div
-                    className="w-fit rounded-md px-5"
-                    style={{ background: bronzeColor, color: getSponsorContrastTextColor(bronzeColor) }}>
-                    {text.bronzeSponsors}
-                  </div>
-                </h3>
-                <MarqueeRow items={bronzeSponsors} direction="left" speed={20} />
-              </>
-            )}
+                )
+              })}
           </div>
 
           {/* Sponsor Tiers */}
@@ -488,22 +417,22 @@ export function Partners() {
             <p className="text-muted-foreground mb-5 text-center font-medium tracking-widest uppercase">
               {text.tierListsTitle}
             </p>
-            <div
-              className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-              onMouseLeave={() => setHoveredIndex(null)}>
-              {sponsorPackageItems.map((tier, index) => (
-                <TierCard
-                  key={tier.slug}
-                  tier={tier}
-                  index={index}
-                  isSpotlit={hoveredIndex === null || hoveredIndex === index}
-                  onHover={() => setHoveredIndex(index)}
-                  onOpen={() => {
-                    setSelectedPackageSlug(tier.slug)
-                    setSponsorshipModalOpen(true)
-                  }}
-                />
-              ))}
+            <div className="flex w-full justify-center">
+              <div className="flex flex-wrap justify-center gap-3" onMouseLeave={() => setHoveredIndex(null)}>
+                {sponsorPackageItems.map((tier, index) => (
+                  <TierCard
+                    key={tier.id}
+                    tier={tier}
+                    index={index}
+                    isSpotlit={hoveredIndex === null || hoveredIndex === index}
+                    onHover={() => setHoveredIndex(index)}
+                    onOpen={() => {
+                      setSelectedPackage(tier)
+                      setSponsorshipModalOpen(true)
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 
@@ -532,7 +461,8 @@ export function Partners() {
       <SponsorshipModal
         isOpen={sponsorshipModalOpen}
         onClose={() => setSponsorshipModalOpen(false)}
-        selectedPackageSlug={selectedPackageSlug}
+        selectedPackage={selectedPackage ? getSponsorPackageByLanguage(selectedPackage, language) : null}
+        allPackages={sponsorPackageItems}
       />
     </>
   )

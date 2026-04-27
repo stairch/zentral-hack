@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS sponsor_contacts (
   contact_name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL,
   phone VARCHAR(20),
-  interested_in VARCHAR(50),
+  interested_in UUID REFERENCES sponsor_packages(id) ON DELETE SET NULL,
   message TEXT,
   status VARCHAR(20) DEFAULT 'new',
   created_at TIMESTAMP DEFAULT NOW(),

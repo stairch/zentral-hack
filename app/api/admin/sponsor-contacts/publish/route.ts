@@ -17,7 +17,6 @@ async function handlePost(req: AuthenticatedRequest) {
     if (!tier) return validationError("Sponsor tier required")
 
     const ALLOWED_LOGO_SIZES = ["small", "medium", "large"]
-    const ALLOWED_TIERS = ["platin", "gold", "silber", "bronze"]
 
     const fields: string[] = []
     const values: (string | number | boolean)[] = []
@@ -52,9 +51,6 @@ async function handlePost(req: AuthenticatedRequest) {
     values.push(logoSize)
     idx++
 
-    if (!ALLOWED_TIERS.includes(tier)) {
-      return validationError(`Invalid tier. Allowed: ${ALLOWED_TIERS.join(", ")}`)
-    }
     fields.push("tier = $" + idx)
     values.push(tier)
     idx++

@@ -23,10 +23,10 @@ import {
   categoryIconOptions,
   getCategoryPresentation,
   getCategoryPresentationByLanguage,
-  hexToRgba,
-  normalizeHexColor
+  hexToRgba
 } from "@/lib/category-config"
 import { useLanguage } from "@/lib/language-context"
+import { normalizeHexColor } from "@/lib/helpers"
 
 interface Category {
   id: string

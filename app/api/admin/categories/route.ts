@@ -2,7 +2,8 @@ import { query } from "@/lib/db"
 import { withCategoryPartnerAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { buildCategorySelectClause, getAvailableCategoryColumns } from "@/lib/category-db"
-import { categoryIconMap, normalizeHexColor } from "@/lib/category-config"
+import { categoryIconMap } from "@/lib/category-config"
+import { normalizeHexColor } from "@/lib/helpers"
 
 export async function GET() {
   try {

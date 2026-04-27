@@ -1,27 +1,7 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
 import { successResponse } from "@/lib/api"
-import {
-  getSponsorPackageBySlug,
-  normalizeSponsorInterest,
-  sponsorPackages
-} from "@/lib/sponsorship-packages"
 import { sendEmail } from "@/lib/email"
-
-function toText(value: unknown): string {
-  if (typeof value === "string") return value
-  if (value && typeof value === "object") {
-    const candidate = value as { de?: unknown; en?: unknown }
-    if (typeof candidate.de === "string") return candidate.de
-    if (typeof candidate.en === "string") return candidate.en
-  }
-  return ""
-}
-
-function toTextArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return []
-  return value.map((item) => toText(item)).filter(Boolean)
-}
 
 export async function GET() {
   try {
@@ -40,22 +20,16 @@ export async function GET() {
 
     if (result.rows.length > 0) {
       const packages = result.rows.map((row) => {
-        const fallbackPackage = getSponsorPackageBySlug(row.slug) || getSponsorPackageBySlug(row.name)
-
         return {
           id: row.id,
           slug: row.slug,
-          name: row.name || toText(fallbackPackage?.name) || "Paket",
-          description: row.description || toText(fallbackPackage?.description) || "",
-          shortDescription:
-            toText(fallbackPackage?.shortDescription) ||
-            row.description ||
-            "Sponsoring-Paket für den Zentral Hack",
-          color: row.color || fallbackPackage?.color || "#530A5D",
-          benefits:
-            Array.isArray(row.benefits) && row.benefits.length > 0
-              ? row.benefits
-              : toTextArray(fallbackPackage?.benefits),
+          name: row.name || "Paket",
+          name_en: row.name_en || "Package",
+          description: row.description || "",
+          description_en: row.description || "",
+          color: row.color || "",
+          benefits: Array.isArray(row.benefits) && row.benefits.length > 0 ? row.benefits : [],
+          benefits_en: Array.isArray(row.benefits_en) && row.benefits_en.length > 0 ? row.benefits_en : [],
           display_order: row.display_order
         }
       })
@@ -65,26 +39,12 @@ export async function GET() {
   } catch (error) {
     console.error("Sponsor package fetch error:", error)
   }
-
-  return successResponse({
-    packages: sponsorPackages.map((pkg) => ({
-      id: pkg.id,
-      slug: pkg.slug,
-      name: pkg.name.de,
-      description: pkg.description.de,
-      shortDescription: pkg.shortDescription.de,
-      color: pkg.color,
-      benefits: pkg.benefits.map((benefit) => benefit.de),
-      display_order: pkg.display_order
-    }))
-  })
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { companyName, contactName, email, phone, message, interestLevel, interestedIn } = body
-    const normalizedInterest = normalizeSponsorInterest(interestedIn || interestLevel)
+    const { companyName, contactName, email, phone, message, interestedIn } = body
 
     if (!companyName || !contactName || !email) {
       return NextResponse.json(
@@ -96,7 +56,7 @@ export async function POST(request: Request) {
     await query(
       `INSERT INTO sponsor_contacts (company_name, contact_name, email, phone, message, interested_in, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'new')`,
-      [companyName, contactName, email, phone || null, message || null, normalizedInterest]
+      [companyName, contactName, email, phone || null, message || null, interestedIn]
     )
 
     const emails: string[] = ["sponsoring@zentralhack.ch"]
