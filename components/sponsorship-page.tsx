@@ -9,15 +9,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Check, Loader2, Mail } from "lucide-react"
 import { toast } from "sonner"
-
-interface SponsorPackage {
-  id: string
-  name: string
-  description: string
-  color: string
-  benefits: string[]
-  display_order: number
-}
+import { useLanguage } from "@/lib/language-context"
+import {
+  getSponsorPackageByLanguage,
+  getSponsorPackagePriceLabel,
+  type SponsorPackage
+} from "@/lib/sponsorship-packages"
 
 export function SponsorshipPage() {
   const [packages, setPackages] = useState<SponsorPackage[]>([])
@@ -34,20 +31,21 @@ export function SponsorshipPage() {
     interestedIn: "",
     message: ""
   })
+  const { language } = useLanguage()
 
-  // Fetch packages
   useEffect(() => {
     const fetchPackages = async () => {
       try {
         setLoading(true)
         const res = await fetch("/api/sponsor-contact")
-        if (res.ok) {
-          const data = await res.json()
-          const nextPackages = data.data?.packages || []
-          setPackages(nextPackages)
-          if (nextPackages.length > 0) {
-            setActivePackageId(nextPackages[0].id)
-          }
+        if (!res.ok) return
+
+        const data = await res.json()
+        const nextPackages = (data.data?.packages || []) as SponsorPackage[]
+        setPackages(nextPackages)
+
+        if (nextPackages.length > 0) {
+          setActivePackageId(nextPackages[0].id)
         }
       } catch (error) {
         console.error("Failed to fetch packages:", error)
@@ -57,10 +55,9 @@ export function SponsorshipPage() {
       }
     }
 
-    fetchPackages()
+    void fetchPackages()
   }, [])
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -110,11 +107,11 @@ export function SponsorshipPage() {
   }
 
   const activePackage = packages.find((pkg) => pkg.id === activePackageId) || null
+  const localizedActivePackage = activePackage ? getSponsorPackageByLanguage(activePackage, language) : null
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#f7f4fb] via-white to-[#f4f0fa] px-4 py-12">
+    <div className="min-h-screen bg-linear-to-b from-[#f7f4fb] via-white to-[#f4f0fa] px-4 py-12">
       <div className="mx-auto max-w-6xl space-y-12">
-        {/* Header */}
         <div className="space-y-4 text-center">
           <span className="inline-flex rounded-full border border-[#530A5D]/20 bg-[#530A5D]/10 px-4 py-1 text-xs font-semibold tracking-[0.14em] text-[#530A5D] uppercase">
             Partnerschaften
@@ -125,56 +122,77 @@ export function SponsorshipPage() {
           </p>
         </div>
 
-        {/* Packages Grid */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {packages.map((pkg) => (
-            <Card
-              key={pkg.id}
-              className={`group cursor-pointer overflow-hidden border-0 bg-white/95 shadow-[0_10px_30px_rgba(83,10,93,0.08)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(83,10,93,0.14)] ${
-                activePackageId === pkg.id
-                  ? "ring-2 ring-[#530A5D] ring-offset-2"
-                  : "ring-1 ring-[#530A5D]/10"
-              }`}
-              onClick={() => {
-                setActivePackageId(pkg.id)
-              }}>
-              <div className="h-3" style={{ backgroundColor: pkg.color }} />
-              <CardHeader className="items-center py-10 text-center">
-                <CardTitle className="text-3xl" style={{ color: pkg.color }}>
-                  {pkg.name}
-                </CardTitle>
-              </CardHeader>
-            </Card>
-          ))}
+          {packages.map((pkg) => {
+            const localizedPackage = getSponsorPackageByLanguage(pkg, language)
+            const packageColor = localizedPackage.color || "#530A5D"
+            const priceLabel = getSponsorPackagePriceLabel(localizedPackage, language)
+
+            return (
+              <Card
+                key={pkg.id}
+                className={`group cursor-pointer overflow-hidden border-0 bg-white/95 shadow-[0_10px_30px_rgba(83,10,93,0.08)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(83,10,93,0.14)] ${
+                  activePackageId === pkg.id
+                    ? "ring-2 ring-[#530A5D] ring-offset-2"
+                    : "ring-1 ring-[#530A5D]/10"
+                }`}
+                onClick={() => {
+                  setActivePackageId(pkg.id)
+                }}>
+                <div className="h-3" style={{ backgroundColor: packageColor }} />
+                <CardHeader className="items-center py-10 text-center">
+                  <CardTitle className="text-3xl" style={{ color: packageColor }}>
+                    {localizedPackage.name}
+                  </CardTitle>
+                  {localizedPackage.short_description && (
+                    <CardDescription className="mt-2 text-sm text-[#5a536b]">
+                      {localizedPackage.short_description}
+                    </CardDescription>
+                  )}
+                  {priceLabel && <p className="mt-2 text-xs font-medium text-[#530A5D]">{priceLabel}</p>}
+                </CardHeader>
+              </Card>
+            )
+          })}
         </div>
 
-        {activePackage ? (
+        {localizedActivePackage ? (
           <Card className="border border-[#530A5D]/15 bg-white/95 shadow-[0_14px_34px_rgba(83,10,93,0.12)]">
-            <div className="h-2" style={{ backgroundColor: activePackage.color }} />
+            <div className="h-2" style={{ backgroundColor: localizedActivePackage.color || "#530A5D" }} />
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <CardTitle className="text-2xl" style={{ color: activePackage.color }}>
-                    {activePackage.name}
+                  <CardTitle
+                    className="text-2xl"
+                    style={{ color: localizedActivePackage.color || "#530A5D" }}>
+                    {localizedActivePackage.name}
                   </CardTitle>
                   <CardDescription className="mt-1 text-sm leading-relaxed text-[#5a536b]">
-                    {activePackage.description}
+                    {localizedActivePackage.short_description || localizedActivePackage.description}
                   </CardDescription>
+                  {getSponsorPackagePriceLabel(localizedActivePackage, language) && (
+                    <p className="mt-2 text-sm font-medium text-[#530A5D]">
+                      {getSponsorPackagePriceLabel(localizedActivePackage, language)}
+                    </p>
+                  )}
                 </div>
                 <Button
                   className="bg-[#530A5D] text-white hover:bg-[#3f0847]"
-                  onClick={() => setSelectedPackage(activePackage.name.toLowerCase())}>
+                  onClick={() => setSelectedPackage(localizedActivePackage.id)}>
                   Dieses Paket anfragen
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               <ul className="grid gap-2 md:grid-cols-2">
-                {activePackage.benefits.map((benefit, idx) => (
+                {localizedActivePackage.benefits.map((benefit, idx) => (
                   <li
                     key={idx}
                     className="flex items-start gap-2 rounded-md border border-[#530A5D]/10 bg-[#530A5D]/5 p-2">
-                    <Check className="mt-0.5 h-4 w-4 flex-shrink-0" style={{ color: activePackage.color }} />
+                    <Check
+                      className="mt-0.5 h-4 w-4 shrink-0"
+                      style={{ color: localizedActivePackage.color }}
+                    />
                     <span className="text-sm text-[#4f4760]">{benefit}</span>
                   </li>
                 ))}
@@ -183,7 +201,6 @@ export function SponsorshipPage() {
           </Card>
         ) : null}
 
-        {/* Contact Form */}
         <Card className="mx-auto max-w-2xl border-0 bg-white/95 shadow-[0_14px_34px_rgba(83,10,93,0.12)]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -257,11 +274,20 @@ export function SponsorshipPage() {
                       <SelectValue placeholder="Wählen Sie ein Paket" />
                     </SelectTrigger>
                     <SelectContent>
-                      {packages.map((pkg) => (
-                        <SelectItem key={pkg.id} value={pkg.name.toLowerCase()}>
-                          {pkg.name} - {pkg.description}
-                        </SelectItem>
-                      ))}
+                      {packages.map((pkg) => {
+                        const localizedPackage = getSponsorPackageByLanguage(pkg, language)
+                        const priceLabel = getSponsorPackagePriceLabel(localizedPackage, language)
+
+                        return (
+                          <SelectItem key={pkg.id} value={pkg.id}>
+                            {localizedPackage.name}
+                            {localizedPackage.short_description
+                              ? ` - ${localizedPackage.short_description}`
+                              : ""}
+                            {priceLabel ? ` • ${priceLabel}` : ""}
+                          </SelectItem>
+                        )
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
@@ -298,8 +324,7 @@ export function SponsorshipPage() {
           </CardContent>
         </Card>
 
-        {/* Info Section */}
-        <Card className="border border-[#530A5D]/15 bg-gradient-to-r from-[#530A5D]/10 to-[#e6ff17]/20">
+        <Card className="to-yellow/20 border border-[#530A5D]/15 bg-linear-to-r from-[#530A5D]/10">
           <CardHeader>
             <CardTitle>Warum Zentral Hack sponsern?</CardTitle>
           </CardHeader>

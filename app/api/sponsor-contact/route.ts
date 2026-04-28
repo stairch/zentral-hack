@@ -1,27 +1,7 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
 import { successResponse } from "@/lib/api"
-import {
-  getSponsorPackageBySlug,
-  normalizeSponsorInterest,
-  sponsorPackages
-} from "@/lib/sponsorship-packages"
 import { sendEmail } from "@/lib/email"
-
-function toText(value: unknown): string {
-  if (typeof value === "string") return value
-  if (value && typeof value === "object") {
-    const candidate = value as { de?: unknown; en?: unknown }
-    if (typeof candidate.de === "string") return candidate.de
-    if (typeof candidate.en === "string") return candidate.en
-  }
-  return ""
-}
-
-function toTextArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return []
-  return value.map((item) => toText(item)).filter(Boolean)
-}
 
 export async function GET() {
   try {
@@ -30,9 +10,16 @@ export async function GET() {
          COALESCE(id::text, LOWER(name)) AS id,
          LOWER(name) AS slug,
          name,
+         name_en,
+         short_description,
+         short_description_en,
          COALESCE(description, '') AS description,
+         COALESCE(description_en, '') AS description_en,
          color,
          benefits,
+         benefits_en,
+         price,
+         price_status,
          display_order
        FROM sponsor_packages
        ORDER BY display_order ASC`
@@ -40,22 +27,20 @@ export async function GET() {
 
     if (result.rows.length > 0) {
       const packages = result.rows.map((row) => {
-        const fallbackPackage = getSponsorPackageBySlug(row.slug) || getSponsorPackageBySlug(row.name)
-
         return {
           id: row.id,
           slug: row.slug,
-          name: row.name || toText(fallbackPackage?.name) || "Paket",
-          description: row.description || toText(fallbackPackage?.description) || "",
-          shortDescription:
-            toText(fallbackPackage?.shortDescription) ||
-            row.description ||
-            "Sponsoring-Paket für den Zentral Hack",
-          color: row.color || fallbackPackage?.color || "#530A5D",
-          benefits:
-            Array.isArray(row.benefits) && row.benefits.length > 0
-              ? row.benefits
-              : toTextArray(fallbackPackage?.benefits),
+          name: row.name || "Paket",
+          name_en: row.name_en || row.name,
+          short_description: row.short_description || row.description || "",
+          short_description_en: row.short_description_en || row.description_en || row.description || "",
+          description: row.description || "",
+          description_en: row.description_en || row.description || "",
+          color: row.color || "",
+          benefits: Array.isArray(row.benefits) && row.benefits.length > 0 ? row.benefits : [],
+          benefits_en: Array.isArray(row.benefits_en) && row.benefits_en.length > 0 ? row.benefits_en : [],
+          price: typeof row.price === "number" ? row.price : null,
+          price_status: row.price_status || "hidden",
           display_order: row.display_order
         }
       })
@@ -65,27 +50,12 @@ export async function GET() {
   } catch (error) {
     console.error("Sponsor package fetch error:", error)
   }
-
-  return successResponse({
-    packages: sponsorPackages.map((pkg) => ({
-      id: pkg.id,
-      slug: pkg.slug,
-      name: pkg.name.de,
-      description: pkg.description.de,
-      shortDescription: pkg.shortDescription.de,
-      color: pkg.color,
-      benefits: pkg.benefits.map((benefit) => benefit.de),
-      display_order: pkg.display_order
-    }))
-  })
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { companyName, contactName, email, phone, message, interestLevel, interestedIn } = body
-    const normalizedInterest = normalizeSponsorInterest(interestedIn || interestLevel)
-    let interestedPackageId: string | null = null
+    const { companyName, contactName, email, phone, message, interestedIn } = body
 
     if (!companyName || !contactName || !email) {
       return NextResponse.json(
@@ -94,29 +64,15 @@ export async function POST(request: Request) {
       )
     }
 
-    if (normalizedInterest) {
-      const packageResult = await query(
-        `SELECT id::text
-         FROM sponsor_packages
-         WHERE LOWER(name) = $1 OR id::text = $1
-         ORDER BY display_order ASC
-         LIMIT 1`,
-        [normalizedInterest]
-      )
-
-      if (packageResult.rows.length > 0) {
-        interestedPackageId = packageResult.rows[0].id
-      }
-    }
-
     await query(
       `INSERT INTO sponsor_contacts (company_name, contact_name, email, phone, message, interested_in, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'new')`,
-      [companyName, contactName, email, phone || null, message || null, interestedPackageId]
+      [companyName, contactName, email, phone || null, message || null, interestedIn]
     )
 
-    const emails: string[] = ["sponsoring@zentralhack.ch"]
+    const emails: string[] = []
     if (process.env.NODE_ENV === "production") {
+      emails.push("sponsoring@zentralhack.ch")
       try {
         const result = await query(`SELECT u.id, u.email FROM users u WHERE u.role = 'admin'`)
         result.rows?.forEach((element) => {
@@ -126,7 +82,7 @@ export async function POST(request: Request) {
         console.error("[Admin Sponsor Contact Admins] GET Error:", error)
       }
     } else {
-      if (process.env.TEST_EMAIL && !emails.includes(process.env.TEST_EMAIL)) {
+      if (process.env.TEST_EMAIL) {
         emails.push(process.env.TEST_EMAIL)
       }
     }

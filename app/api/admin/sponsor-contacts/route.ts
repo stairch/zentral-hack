@@ -6,24 +6,22 @@ async function handleGet() {
   try {
     const result = await query(
       `SELECT
-         sc.id,
-         sc.company_name,
-         sc.contact_name,
-         sc.email,
-         sc.phone,
-         COALESCE(LOWER(sp_interest.name), NULL) AS interested_in,
-         sc.message,
-         sc.status,
-         sc.created_at,
-         sc.logo_url,
-         sc.website_url,
-         sc.logo_size,
-         COALESCE(LOWER(sp_tier.name), NULL) AS tier,
-         sc.logo_bg_color
-       FROM sponsor_contacts sc
-       LEFT JOIN sponsor_packages sp_interest ON sp_interest.id::text = sc.interested_in::text
-       LEFT JOIN sponsor_packages sp_tier ON sp_tier.id::text = sc.tier::text
-       ORDER BY sc.created_at ASC`
+         id,
+         company_name,
+         contact_name,
+         email,
+         phone,
+         interested_in,
+         message,
+         status,
+         created_at,
+         logo_url,
+         website_url,
+         logo_size,
+         tier,
+         logo_bg_color
+       FROM sponsor_contacts
+       ORDER BY created_at ASC`
     )
 
     if (result.rows.length > 0) {
