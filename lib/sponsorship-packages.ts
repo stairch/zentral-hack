@@ -30,10 +30,6 @@ export type SponsorPackageLocale = {
   price_status: SponsorPackagePriceStatus
 }
 
-// export function normalizeSponsorInterest(value?: string | null) {
-//   return getSponsorPackageBySlug(value)?.slug || value?.trim().toLowerCase() || null
-// }
-
 export function getSponsorContrastTextColor(hexColor: string): string {
   const hex = (hexColor || "#530A5D").replace("#", "")
   if (!/^[0-9A-Fa-f]{6}$/.test(hex)) {

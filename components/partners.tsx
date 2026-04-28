@@ -391,8 +391,6 @@ export function Partners() {
               <div className="bg-primary w-fit rounded-md px-5 text-white">{text.organisers}</div>
             </h3>
             <MarqueeRow items={dbOrganisers ?? partners.organisers} direction="left" speed={30} />
-
-            {/* Dynamische Sponsor-Sektionen pro Package */}
             {sponsorsByPackage
               .filter(({ sponsors }) => sponsors.length > 0)
               .map(({ package: pkg, sponsors }, i) => {
