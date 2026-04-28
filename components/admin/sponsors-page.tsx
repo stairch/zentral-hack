@@ -36,13 +36,25 @@ import { toast } from "sonner"
 import { isValidUrl } from "@/lib/helpers"
 import { motion } from "framer-motion"
 import { useLanguage } from "@/lib/language-context"
+import {
+  getSponsorPackageByLanguage,
+  getSponsorPackagePriceLabel,
+  type SponsorPackagePriceStatus
+} from "@/lib/sponsorship-packages"
 
 type SponsorPackage = {
   id: string
   name: string
+  name_en: string | null
+  short_description: string | null
+  short_description_en: string | null
   description: string | null
+  description_en: string | null
   color: string | null
   benefits: string[] | null
+  benefits_en: string[] | null
+  price: number | null
+  price_status: SponsorPackagePriceStatus
   display_order: number
   created_at: string
 }
@@ -60,25 +72,39 @@ type SponsorContact = {
   logo_url: string | null
   website_url: string | null
   logo_size: "small" | "medium" | "large" | null
-  tier: "platin" | "gold" | "silber" | "bronze" | null
+  tier: string | null
   logo_bg_color: string | null
 }
 
 interface EditForm {
   id?: string
   name: string
+  nameEn: string
+  shortDescription: string
+  shortDescriptionEn: string
   displayOrder: string
   color: string
   description: string
+  descriptionEn: string
   benefitsText: string
+  benefitsEnText: string
+  price: string
+  priceStatus: SponsorPackagePriceStatus
 }
 
 const emptyForm: EditForm = {
   name: "",
+  nameEn: "",
+  shortDescription: "",
+  shortDescriptionEn: "",
   displayOrder: "",
   color: "#530A5D",
   description: "",
-  benefitsText: ""
+  descriptionEn: "",
+  benefitsText: "",
+  benefitsEnText: "",
+  price: "",
+  priceStatus: "hidden"
 }
 
 const STATUS_ORDER = ["new", "contacted", "confirmed", "published", "rejected"]
@@ -88,7 +114,7 @@ interface PublishFormData {
   websiteUrl: string
   logoBgColor: string | null
   logoSize: "small" | "medium" | "large"
-  tier: "platin" | "gold" | "silber" | "bronze"
+  tier: string
 }
 
 const STATUS_CLASSES = {
@@ -107,6 +133,9 @@ const copy = {
     packagesDescription: "Alle Felder inklusive Farbe, Reihenfolge und Benefits sind editierbar.",
     newPackageButton: "Neues Paket",
     packageCardColorLabel: "Farbe",
+    packageCardPriceLabel: "Preis",
+    packageCardPriceHidden: "Ausgeblendet",
+    packageCardPriceOnRequest: "Preis auf Anfrage",
     packageCardNoDescription: "Keine Beschreibung",
     packageCardMoreBenefits: (count: number) => `+ ${count} weitere`,
     packageCardEditButton: "Bearbeiten",
@@ -139,11 +168,24 @@ const copy = {
       editTitle: "Sponsorpaket bearbeiten",
       description: "Alle Inhalte werden direkt auf der Sponsoring-Seite übernommen.",
       nameLabel: "Name",
+      nameEnLabel: "Name EN",
       namePlaceholder: "z.B. Gold",
+      shortDescriptionLabel: "Kurzbeschreibung",
+      shortDescriptionEnLabel: "Kurzbeschreibung EN",
       displayOrderLabel: "Display-Order",
       colorLabel: "Farbe (Hex)",
       descriptionLabel: "Beschreibung",
+      descriptionEnLabel: "Beschreibung EN",
       benefitsLabel: "Benefits (eine Zeile pro Benefit)",
+      benefitsEnLabel: "Benefits EN (eine Zeile pro Benefit)",
+      priceLabel: "Preis",
+      priceStatusLabel: "Preisstatus",
+      pricePlaceholder: "z.B. 2500",
+      priceStatusOptions: {
+        hidden: "Ausgeblendet",
+        show: "Anzeigen",
+        on_request: "Preis auf Anfrage"
+      },
       cancelButton: "Abbrechen",
       saveButton: "Speichern",
       saveButtonLoading: "Speichern"
@@ -156,7 +198,7 @@ const copy = {
       backgroundColorLabel: "Hintergrundfarbe",
       resetButton: "Zurücksetzen",
       logoSizeLabel: "Logo-Grösse",
-      tierLabel: "Tier",
+      packageLabel: "Sponsorpaket",
       previewLabel: "Vorschau",
       cancelButton: "Abbrechen",
       publishButton: "Veröffentlichen",
@@ -173,6 +215,7 @@ const copy = {
       fetchContacts: "Fehler beim Laden der Sponsor-Anfragen",
       packageSaveNameRequired: "Name ist erforderlich",
       packageSaveDisplayOrderRequired: "Display-Order ist erforderlich",
+      packageSavePriceRequired: "Preis ist erforderlich, wenn der Status auf Anzeigen steht",
       packageSaveFailed: "Fehler beim Speichern",
       packageDeleteFailed: "Fehler beim Löschen",
       sponsorUpdateFailed: "Fehler beim Aktualisieren der Sponsor-Anfrage",
@@ -190,12 +233,6 @@ const copy = {
         small: "Klein",
         medium: "Mittel",
         large: "Gross"
-      },
-      tier: {
-        platin: "Platin",
-        gold: "Gold",
-        silber: "Silber",
-        bronze: "Bronze"
       }
     }
   },
@@ -206,6 +243,9 @@ const copy = {
     packagesDescription: "All fields including color, order, and benefits are editable.",
     newPackageButton: "New package",
     packageCardColorLabel: "Color",
+    packageCardPriceLabel: "Price",
+    packageCardPriceHidden: "Hidden",
+    packageCardPriceOnRequest: "Price on request",
     packageCardNoDescription: "No description",
     packageCardMoreBenefits: (count: number) => `+ ${count} more`,
     packageCardEditButton: "Edit",
@@ -238,11 +278,24 @@ const copy = {
       editTitle: "Edit sponsor package",
       description: "All content is applied directly to the sponsorship page.",
       nameLabel: "Name",
+      nameEnLabel: "Name EN",
       namePlaceholder: "e.g. Gold",
+      shortDescriptionLabel: "Short description",
+      shortDescriptionEnLabel: "Short description EN",
       displayOrderLabel: "Display order",
       colorLabel: "Color (hex)",
       descriptionLabel: "Description",
+      descriptionEnLabel: "Description EN",
       benefitsLabel: "Benefits (one line per benefit)",
+      benefitsEnLabel: "Benefits EN (one line per benefit)",
+      priceLabel: "Price",
+      priceStatusLabel: "Price status",
+      pricePlaceholder: "e.g. 2500",
+      priceStatusOptions: {
+        hidden: "Hidden",
+        show: "Show",
+        on_request: "Price on request"
+      },
       cancelButton: "Cancel",
       saveButton: "Save",
       saveButtonLoading: "Save"
@@ -255,7 +308,7 @@ const copy = {
       backgroundColorLabel: "Background color",
       resetButton: "Reset",
       logoSizeLabel: "Logo size",
-      tierLabel: "Tier",
+      packageLabel: "Sponsor package",
       previewLabel: "Preview",
       cancelButton: "Cancel",
       publishButton: "Publish",
@@ -272,6 +325,7 @@ const copy = {
       fetchContacts: "Error while loading sponsor inquiries",
       packageSaveNameRequired: "Name is required",
       packageSaveDisplayOrderRequired: "Display order is required",
+      packageSavePriceRequired: "Price is required when the status is set to show",
       packageSaveFailed: "Error while saving",
       packageDeleteFailed: "Error while deleting",
       sponsorUpdateFailed: "Error while updating sponsor inquiry",
@@ -289,12 +343,6 @@ const copy = {
         small: "Small",
         medium: "Medium",
         large: "Large"
-      },
-      tier: {
-        platin: "Platinum",
-        gold: "Gold",
-        silber: "Silver",
-        bronze: "Bronze"
       }
     }
   }
@@ -384,9 +432,11 @@ function PreviewMarqueeRow({
 
 function PublishDialog({
   contact,
+  packages,
   onPublish
 }: {
   contact: SponsorContact
+  packages: SponsorPackage[]
   onPublish: (id: string, data: PublishFormData) => Promise<void>
 }) {
   const [open, setOpen] = useState(false)
@@ -397,10 +447,19 @@ function PublishDialog({
     websiteUrl: "",
     logoBgColor: null,
     logoSize: "medium",
-    tier: contact.interested_in as PublishFormData["tier"]
+    tier: contact.interested_in || ""
   })
   const { language } = useLanguage()
   const text = copy[language]
+  const localizedPackages = useMemo(
+    () =>
+      packages.map((pkg) => ({
+        raw: pkg,
+        localized: getSponsorPackageByLanguage(pkg, language),
+        priceLabel: getSponsorPackagePriceLabel(getSponsorPackageByLanguage(pkg, language), language)
+      })),
+    [language, packages]
+  )
 
   useEffect(() => {
     if (open) {
@@ -409,7 +468,7 @@ function PublishDialog({
         websiteUrl: contact.website_url || "",
         logoBgColor: contact.logo_bg_color || null,
         logoSize: contact.logo_size || "medium",
-        tier: contact.tier || (contact.interested_in as PublishFormData["tier"])
+        tier: contact.tier || contact.interested_in || ""
       })
     } else {
       setErrors({})
@@ -512,7 +571,7 @@ function PublishDialog({
               </div>
             </div>
 
-            {/* Logo Size + Tier */}
+            {/* Logo Size + Package */}
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <Label>{text.publishDialog.logoSizeLabel}</Label>
@@ -535,17 +594,17 @@ function PublishDialog({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <Label>{text.publishDialog.tierLabel}</Label>
-                <Select
-                  value={form.tier}
-                  onValueChange={(v) => setForm((f) => ({ ...f, tier: v as PublishFormData["tier"] }))}>
+                <Label>{text.publishDialog.packageLabel}</Label>
+                <Select value={form.tier} onValueChange={(v) => setForm((f) => ({ ...f, tier: v }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(text.publishLabels.tier).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>
-                        {v}
+                    {localizedPackages.map(({ raw, localized, priceLabel }) => (
+                      <SelectItem key={raw.id} value={raw.id}>
+                        {localized.name}
+                        {localized.short_description ? ` - ${localized.short_description}` : ""}
+                        {priceLabel ? ` • ${priceLabel}` : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -597,6 +656,7 @@ export function AdminSponsorsPage() {
     () => [...packages].sort((a, b) => a.display_order - b.display_order),
     [packages]
   )
+  const packageById = useMemo(() => new Map(sortedPackages.map((pkg) => [pkg.id, pkg])), [sortedPackages])
 
   useEffect(() => {
     if (!isReady || hasDataFetched.current) return
@@ -605,6 +665,12 @@ export function AdminSponsorsPage() {
   }, [isReady])
 
   const text = copy[language]
+
+  const getLocalizedPackageById = (packageId: string | null | undefined) => {
+    if (!packageId) return null
+    const pkg = packageById.get(packageId)
+    return pkg ? getSponsorPackageByLanguage(pkg, language) : null
+  }
 
   async function fetchData() {
     setLoading(true)
@@ -659,10 +725,17 @@ export function AdminSponsorsPage() {
     setForm({
       id: pkg.id,
       name: pkg.name,
+      nameEn: pkg.name_en || "",
+      shortDescription: pkg.short_description || "",
+      shortDescriptionEn: pkg.short_description_en || "",
       displayOrder: String(pkg.display_order),
       color: pkg.color || "#530A5D",
       description: pkg.description || "",
-      benefitsText: (pkg.benefits || []).join("\n")
+      descriptionEn: pkg.description_en || "",
+      benefitsText: (pkg.benefits || []).join("\n"),
+      benefitsEnText: (pkg.benefits_en || []).join("\n"),
+      price: pkg.price === null ? "" : String(pkg.price),
+      priceStatus: pkg.price_status
     })
     setOpen(true)
   }
@@ -670,6 +743,7 @@ export function AdminSponsorsPage() {
   async function savePackage() {
     const name = form.name.trim()
     const displayOrder = Number(form.displayOrder)
+    const parsedPrice = form.price.trim() ? Number(form.price) : null
 
     if (!name) {
       toast.error(text.errors.packageSaveNameRequired)
@@ -681,18 +755,38 @@ export function AdminSponsorsPage() {
       return
     }
 
+    if (form.priceStatus === "show" && parsedPrice === null) {
+      toast.error(text.errors.packageSavePriceRequired)
+      return
+    }
+
+    if (parsedPrice !== null && !Number.isFinite(parsedPrice)) {
+      toast.error(text.errors.packageSavePriceRequired)
+      return
+    }
+
     try {
       setSaving(true)
       const payload = {
         id: form.id,
         name,
+        nameEn: form.nameEn.trim(),
+        shortDescription: form.shortDescription.trim(),
+        shortDescriptionEn: form.shortDescriptionEn.trim(),
         displayOrder,
         color: form.color,
         description: form.description,
+        descriptionEn: form.descriptionEn,
         benefits: form.benefitsText
           .split(/\r?\n/)
           .map((item) => item.trim())
-          .filter(Boolean)
+          .filter(Boolean),
+        benefitsEn: form.benefitsEnText
+          .split(/\r?\n/)
+          .map((item) => item.trim())
+          .filter(Boolean),
+        price: parsedPrice,
+        priceStatus: form.priceStatus
       }
 
       const res = await fetch("/api/admin/sponsors", {
@@ -809,6 +903,7 @@ export function AdminSponsorsPage() {
         </div>
       </div>
 
+      {/* Sponsor packages */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -827,48 +922,63 @@ export function AdminSponsorsPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {sortedPackages.map((pkg) => (
-              <Card key={pkg.id} className="overflow-hidden border">
-                <div className="h-2" style={{ backgroundColor: pkg.color || "#530A5D" }} />
-                <CardHeader>
-                  <div className="flex items-center justify-between gap-2">
-                    <CardTitle>{pkg.name}</CardTitle>
-                    <Badge variant="outline">#{pkg.display_order}</Badge>
-                  </div>
-                  <CardDescription>{pkg.description || text.packageCardNoDescription}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="rounded-md border p-2 text-xs">
-                    {text.packageCardColorLabel}: {pkg.color || "#530A5D"}
-                  </div>
-                  <div className="text-muted-foreground space-y-1 text-xs">
-                    {(pkg.benefits || []).slice(0, 3).map((benefit, index) => (
-                      <p key={`${pkg.id}-${index}`}>- {benefit}</p>
-                    ))}
-                    {(pkg.benefits || []).length > 3 && (
-                      <p>{text.packageCardMoreBenefits((pkg.benefits || []).length - 3)}</p>
+            {sortedPackages.map((pkg) => {
+              const localizedPkg = getSponsorPackageByLanguage(pkg, language)
+              return (
+                <Card key={localizedPkg.id} className="overflow-hidden border">
+                  <div className="h-2" style={{ backgroundColor: pkg.color || "#530A5D" }} />
+                  <CardHeader>
+                    <div className="flex items-center justify-between gap-2">
+                      <CardTitle>{localizedPkg.name}</CardTitle>
+                      <Badge variant="outline">#{localizedPkg.display_order}</Badge>
+                    </div>
+                    {localizedPkg.short_description && (
+                      <p className="text-muted-foreground text-xs">{localizedPkg.short_description}</p>
                     )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => openEditDialog(pkg)}>
-                      <Edit2 className="mr-1 h-3 w-3" />
-                      {text.packageCardEditButton}
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => void removePackage(pkg.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    <CardDescription>
+                      {localizedPkg.description || text.packageCardNoDescription}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex h-full flex-col justify-between space-y-3">
+                    <div className="space-y-3">
+                      <div className="rounded-md border p-2 text-xs">
+                        {text.packageCardColorLabel}: {localizedPkg.color || "#530A5D"}
+                      </div>
+                      <div className="rounded-md border p-2 text-xs">
+                        {text.packageCardPriceLabel}:{" "}
+                        {getSponsorPackagePriceLabel(localizedPkg, language) || text.packageCardPriceHidden}
+                      </div>
+                      <div className="text-muted-foreground space-y-1 text-xs">
+                        {(localizedPkg.benefits || []).slice(0, 3).map((benefit, index) => (
+                          <p key={`${localizedPkg.id}-${index}`}>- {benefit}</p>
+                        ))}
+                        {(localizedPkg.benefits || []).length > 3 && (
+                          <p>{text.packageCardMoreBenefits((localizedPkg.benefits || []).length - 3)}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => openEditDialog(pkg)}>
+                        <Edit2 className="mr-1 h-3 w-3" />
+                        {text.packageCardEditButton}
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => void removePackage(pkg.id)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         </CardContent>
       </Card>
 
+      {/* Sponsoring inquiries */}
       <div className="space-y-8">
         <Card>
           <CardHeader>
@@ -904,16 +1014,20 @@ export function AdminSponsorsPage() {
                             className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${statusClasses}`}>
                             {statusLabel}
                           </div>
-                          {contact.status === "published" && (
-                            <div
-                              className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium capitalize`}
-                              style={{
-                                background: `color-mix(in srgb, ${sortedPackages.filter((e) => e.name.toLowerCase() === contact.tier)[0]?.color || ""} 50%, white)`,
-                                color: `color-mix(in srgb, ${sortedPackages.filter((e) => e.name.toLowerCase() === contact.tier)[0]?.color || ""} 50%, black)`
-                              }}>
-                              {contact.tier ? text.publishLabels.tier[contact.tier] : contact.tier}
-                            </div>
-                          )}
+                          {contact.status === "published" &&
+                            (() => {
+                              const localizedPublishedPackage = getLocalizedPackageById(contact.tier)
+                              return (
+                                <div
+                                  className="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+                                  style={{
+                                    background: `color-mix(in srgb, ${localizedPublishedPackage?.color || "#530A5D"} 50%, white)`,
+                                    color: `color-mix(in srgb, ${localizedPublishedPackage?.color || "#530A5D"} 50%, black)`
+                                  }}>
+                                  {localizedPublishedPackage?.name || contact.tier}
+                                </div>
+                              )
+                            })()}
                         </div>
                       </div>
 
@@ -945,11 +1059,8 @@ export function AdminSponsorsPage() {
                             <p>
                               {text.requestLabels.interestedIn}:{" "}
                               <span>
-                                {contact.interested_in
-                                  ? text.publishLabels.tier[
-                                      contact.interested_in as keyof typeof text.publishLabels.tier
-                                    ]
-                                  : contact.interested_in}
+                                {getLocalizedPackageById(contact.interested_in)?.name ||
+                                  contact.interested_in}
                               </span>
                             </p>
                           </div>
@@ -966,11 +1077,14 @@ export function AdminSponsorsPage() {
                       {/* Footer: date + actions */}
                       <div className="border-border flex items-center justify-between border-t pt-2">
                         <span className="text-muted-foreground/60 text-xs">
-                          {new Date(contact.created_at).toLocaleDateString("de-CH", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric"
-                          })}
+                          {new Date(contact.created_at).toLocaleDateString(
+                            language === "en" ? "en-CH" : "de-CH",
+                            {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric"
+                            }
+                          )}
                         </span>
                         <div className="flex items-center gap-2">
                           {/* Status updaten */}
@@ -1002,7 +1116,11 @@ export function AdminSponsorsPage() {
                               {text.requestActions.revertButton}
                             </Button>
                           ) : (
-                            <PublishDialog contact={contact} onPublish={handleContactPublish} />
+                            <PublishDialog
+                              contact={contact}
+                              packages={sortedPackages}
+                              onPublish={handleContactPublish}
+                            />
                           )}
                         </div>
                       </div>
@@ -1015,6 +1133,7 @@ export function AdminSponsorsPage() {
         </Card>
       </div>
 
+      {/* Package edit dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <span className="hidden" />
@@ -1027,7 +1146,7 @@ export function AdminSponsorsPage() {
             <DialogDescription>{text.packageDialog.description}</DialogDescription>
           </DialogHeader>
 
-          <div className="md:grid-cols- grid gap-4">
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="pkg-name">{text.packageDialog.nameLabel}</Label>
               <Input
@@ -1036,6 +1155,64 @@ export function AdminSponsorsPage() {
                 onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder={text.packageDialog.namePlaceholder}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pkg-name-en">{text.packageDialog.nameEnLabel}</Label>
+              <Input
+                id="pkg-name-en"
+                value={form.nameEn}
+                onChange={(e) => setForm((prev) => ({ ...prev, nameEn: e.target.value }))}
+                placeholder="e.g. Gold"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="pkg-short-description">{text.packageDialog.shortDescriptionLabel}</Label>
+              <Input
+                id="pkg-short-description"
+                value={form.shortDescription}
+                onChange={(e) => setForm((prev) => ({ ...prev, shortDescription: e.target.value }))}
+                placeholder="Kurz und prägnant"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="pkg-short-description-en">{text.packageDialog.shortDescriptionEnLabel}</Label>
+              <Input
+                id="pkg-short-description-en"
+                value={form.shortDescriptionEn}
+                onChange={(e) => setForm((prev) => ({ ...prev, shortDescriptionEn: e.target.value }))}
+                placeholder="Short and concise"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pkg-price">{text.packageDialog.priceLabel}</Label>
+              <Input
+                id="pkg-price"
+                type="number"
+                min="0"
+                step="1"
+                value={form.price}
+                placeholder={text.packageDialog.pricePlaceholder}
+                onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pkg-price-status">{text.packageDialog.priceStatusLabel}</Label>
+              <Select
+                value={form.priceStatus}
+                onValueChange={(v) =>
+                  setForm((prev) => ({ ...prev, priceStatus: v as SponsorPackagePriceStatus }))
+                }>
+                <SelectTrigger id="pkg-price-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(text.packageDialog.priceStatusOptions).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>
+                      {v}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="pkg-order">{text.packageDialog.displayOrderLabel}</Label>
@@ -1065,12 +1242,30 @@ export function AdminSponsorsPage() {
               />
             </div>
             <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="pkg-description-en">{text.packageDialog.descriptionEnLabel}</Label>
+              <Textarea
+                id="pkg-description-en"
+                rows={3}
+                value={form.descriptionEn}
+                onChange={(e) => setForm((prev) => ({ ...prev, descriptionEn: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="pkg-benefits">{text.packageDialog.benefitsLabel}</Label>
               <Textarea
                 id="pkg-benefits"
-                rows={8}
+                rows={6}
                 value={form.benefitsText}
                 onChange={(e) => setForm((prev) => ({ ...prev, benefitsText: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="pkg-benefits-en">{text.packageDialog.benefitsEnLabel}</Label>
+              <Textarea
+                id="pkg-benefits-en"
+                rows={6}
+                value={form.benefitsEnText}
+                onChange={(e) => setForm((prev) => ({ ...prev, benefitsEnText: e.target.value }))}
               />
             </div>
           </div>

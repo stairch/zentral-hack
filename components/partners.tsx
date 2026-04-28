@@ -187,8 +187,10 @@ function TierCard({
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: "-80px" })
-  const textColor = getSponsorContrastTextColor(tier.color)
   const { language } = useLanguage()
+  const localizedTier = getSponsorPackageByLanguage(tier, language)
+  const tierColor = localizedTier.color || "#530A5D"
+  const textColor = getSponsorContrastTextColor(tierColor)
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -212,13 +214,13 @@ function TierCard({
       tabIndex={0}
       aria-label={
         language === "de"
-          ? `${tier.name} Sponsoring-Paket anfragen`
-          : `Request ${tier.name} sponsorship package`
+          ? `${localizedTier.name} Sponsoring-Paket anfragen`
+          : `Request ${localizedTier.name} sponsorship package`
       }
       className="group relative flex min-h-28 w-56 cursor-pointer items-center justify-center rounded-2xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
       style={{
-        backgroundColor: tier.color,
-        borderColor: tier.color,
+        backgroundColor: tierColor,
+        borderColor: tierColor,
         color: textColor
       }}>
       <div className="flex items-center gap-2.5">
@@ -226,7 +228,7 @@ function TierCard({
           className="block h-2.5 w-2.5 shrink-0 rounded-full"
           style={{ backgroundColor: textColor, opacity: 0.85 }}
         />
-        <span className="font-display text-2xl font-semibold tracking-wide">{tier.name}</span>
+        <span className="font-display text-2xl font-semibold tracking-wide">{localizedTier.name}</span>
       </div>
     </motion.div>
   )
@@ -391,8 +393,8 @@ export function Partners() {
             {sponsorsByPackage
               .filter(({ sponsors }) => sponsors.length > 0)
               .map(({ package: pkg, sponsors }, i) => {
-                const label =
-                  language === "en" ? (pkg.name_en || pkg.name).toUpperCase() : pkg.name.toUpperCase()
+                const localizedPkg = getSponsorPackageByLanguage(pkg, language)
+                const label = localizedPkg.name.toUpperCase()
                 const direction = i % 2 === 0 ? "right" : "left"
                 return (
                   <div key={pkg.id}>
@@ -400,8 +402,8 @@ export function Partners() {
                       <div
                         className="w-fit rounded-md px-5"
                         style={{
-                          background: pkg.color,
-                          color: getSponsorContrastTextColor(pkg.color)
+                          background: localizedPkg.color,
+                          color: getSponsorContrastTextColor(localizedPkg.color)
                         }}>
                         {label} SPONSOREN
                       </div>
@@ -461,7 +463,7 @@ export function Partners() {
       <SponsorshipModal
         isOpen={sponsorshipModalOpen}
         onClose={() => setSponsorshipModalOpen(false)}
-        selectedPackage={selectedPackage ? getSponsorPackageByLanguage(selectedPackage, language) : null}
+        selectedPackage={selectedPackage}
         allPackages={sponsorPackageItems}
       />
     </>

@@ -10,9 +10,16 @@ export async function GET() {
          COALESCE(id::text, LOWER(name)) AS id,
          LOWER(name) AS slug,
          name,
+         name_en,
+         short_description,
+         short_description_en,
          COALESCE(description, '') AS description,
+         COALESCE(description_en, '') AS description_en,
          color,
          benefits,
+         benefits_en,
+         price,
+         price_status,
          display_order
        FROM sponsor_packages
        ORDER BY display_order ASC`
@@ -24,12 +31,16 @@ export async function GET() {
           id: row.id,
           slug: row.slug,
           name: row.name || "Paket",
-          name_en: row.name_en || "Package",
+          name_en: row.name_en || row.name,
+          short_description: row.short_description || row.description || "",
+          short_description_en: row.short_description_en || row.description_en || row.description || "",
           description: row.description || "",
-          description_en: row.description || "",
+          description_en: row.description_en || row.description || "",
           color: row.color || "",
           benefits: Array.isArray(row.benefits) && row.benefits.length > 0 ? row.benefits : [],
           benefits_en: Array.isArray(row.benefits_en) && row.benefits_en.length > 0 ? row.benefits_en : [],
+          price: typeof row.price === "number" ? row.price : null,
+          price_status: row.price_status || "hidden",
           display_order: row.display_order
         }
       })
@@ -59,8 +70,9 @@ export async function POST(request: Request) {
       [companyName, contactName, email, phone || null, message || null, interestedIn]
     )
 
-    const emails: string[] = ["sponsoring@zentralhack.ch"]
+    const emails: string[] = []
     if (process.env.NODE_ENV === "production") {
+      emails.push("sponsoring@zentralhack.ch")
       try {
         const result = await query(`SELECT u.id, u.email FROM users u WHERE u.role = 'admin'`)
         result.rows?.forEach((element) => {
@@ -70,7 +82,7 @@ export async function POST(request: Request) {
         console.error("[Admin Sponsor Contact Admins] GET Error:", error)
       }
     } else {
-      if (process.env.TEST_EMAIL && !emails.includes(process.env.TEST_EMAIL)) {
+      if (process.env.TEST_EMAIL) {
         emails.push(process.env.TEST_EMAIL)
       }
     }
