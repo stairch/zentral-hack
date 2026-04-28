@@ -699,7 +699,7 @@ function PublishDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {localizedPackages.map(({ raw, localized, priceLabel }) => (
+                    {localizedPackages.map(({ raw, localized }) => (
                       <SelectItem key={raw.id} value={raw.id}>
                         {localized.name}
                       </SelectItem>
