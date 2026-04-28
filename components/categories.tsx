@@ -128,10 +128,57 @@ export function Categories() {
   const [selectedCategory, setSelectedCategory] = useState<DisplayCategory | null>(null)
   const [selectedChallengeId, setSelectedChallengeId] = useState<string>("")
   const [isChallengeBrowserOpen, setIsChallengeBrowserOpen] = useState(false)
-  const { language } = useLanguage()
+  const [mounted, setMounted] = useState(false)
+  const { language, isReady } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
   const initializedFromUrl = useRef(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("/api/categories")
+        if (!res.ok) return
+
+        const data = await res.json()
+        const dbCategories: CategoryRecord[] = data.data?.categories || []
+
+        const orderedSlugs = Array.from(
+          new Set([...categoryDisplayOrder, ...dbCategories.map((category) => category.slug)])
+        )
+
+        const merged = orderedSlugs.map((slug) => {
+          const dbCategory = dbCategories.find((category) => category.slug === slug)
+          return getCategoryPresentationByLanguage(dbCategory || { slug }, language)
+        })
+
+        setDisplayCategories(merged)
+      } catch {
+        setDisplayCategories(
+          categoryDisplayOrder.map((slug) => getCategoryPresentationByLanguage({ slug }, language))
+        )
+      }
+    }
+
+    if (!isReady) return
+    fetchCategories()
+  }, [isReady, language])
+
+  useEffect(() => {
+    if (initializedFromUrl.current || displayCategories.length === 0) return
+    initializedFromUrl.current = true
+    const slug = searchParams.get("category")
+    if (!slug) return
+    const cat = displayCategories.find((c) => c.slug === slug)
+    if (cat) {
+      setSelectedCategory(cat)
+      setSelectedChallengeId(cat.challenges?.[0]?.id || "")
+    }
+  }, [displayCategories, searchParams])
 
   const copy = {
     de: {
@@ -174,48 +221,7 @@ export function Categories() {
     }
   } as const
 
-  const text = copy[language]
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch("/api/categories")
-        if (!res.ok) return
-
-        const data = await res.json()
-        const dbCategories: CategoryRecord[] = data.data?.categories || []
-
-        const orderedSlugs = Array.from(
-          new Set([...categoryDisplayOrder, ...dbCategories.map((category) => category.slug)])
-        )
-
-        const merged = orderedSlugs.map((slug) => {
-          const dbCategory = dbCategories.find((category) => category.slug === slug)
-          return getCategoryPresentationByLanguage(dbCategory || { slug }, language)
-        })
-
-        setDisplayCategories(merged)
-      } catch {
-        setDisplayCategories(
-          categoryDisplayOrder.map((slug) => getCategoryPresentationByLanguage({ slug }, language))
-        )
-      }
-    }
-
-    fetchCategories()
-  }, [language])
-
-  useEffect(() => {
-    if (initializedFromUrl.current || displayCategories.length === 0) return
-    initializedFromUrl.current = true
-    const slug = searchParams.get("category")
-    if (!slug) return
-    const cat = displayCategories.find((c) => c.slug === slug)
-    if (cat) {
-      setSelectedCategory(cat)
-      setSelectedChallengeId(cat.challenges?.[0]?.id || "")
-    }
-  }, [displayCategories, searchParams])
+  const text = mounted ? copy[language] : copy["de"]
 
   const closeDialog = () => {
     setSelectedCategory(null)

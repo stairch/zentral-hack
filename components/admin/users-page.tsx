@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Search, UserCog, Shield, Users, Loader2, Trash2, AlertTriangle } from "lucide-react"
+import { Search, UserCog, Shield, Users, Loader2, Trash2, AlertTriangle, UserPlus } from "lucide-react"
 import { toast } from "sonner"
 import { useAuth } from "@/lib/auth-context"
 import { useLanguage } from "@/lib/language-context"
@@ -22,12 +22,21 @@ interface User {
   role: "user" | "category_partner" | "sponsor" | "admin"
   is_active: boolean
   category_name: string | null
+  admin_role_id: string | null
+  admin_role_name: string | null
   created_at: string
 }
 
 interface Category {
   id: string
   name: string
+}
+
+interface AdminRole {
+  id: string
+  name: string
+  category_id: string | null
+  category_name: string | null
 }
 
 const copy = {
@@ -75,7 +84,18 @@ const copy = {
     roleUpdated: "Rolle aktualisiert",
     roleUpdateError: "Fehler beim Aktualisieren",
     deleteSuccess: "wurde gelöscht",
-    deleteError: "Fehler beim Löschen"
+    deleteError: "Fehler beim Löschen",
+    createUser: "Benutzer erstellen",
+    createUserDesc: "Neuen Benutzer-Account anlegen und Rolle zuweisen.",
+    firstName: "Vorname",
+    lastName: "Nachname",
+    email: "E-Mail",
+    password: "Passwort",
+    passwordHint: "Mindestens 8 Zeichen. Der Benutzer sollte das Passwort nach dem ersten Login ändern.",
+    role: "Rolle",
+    create: "Erstellen",
+    createSuccess: "Benutzer wurde erstellt",
+    createError: "Fehler beim Erstellen"
   },
   en: {
     heading: "User Management",
@@ -120,7 +140,18 @@ const copy = {
     roleUpdated: "Role updated",
     roleUpdateError: "Failed to update",
     deleteSuccess: "was deleted",
-    deleteError: "Failed to delete"
+    deleteError: "Failed to delete",
+    createUser: "Create User",
+    createUserDesc: "Create a new user account and assign a role.",
+    firstName: "First name",
+    lastName: "Last name",
+    email: "Email",
+    password: "Password",
+    passwordHint: "At least 8 characters. The user should change the password after their first login.",
+    role: "Role",
+    create: "Create",
+    createSuccess: "User created",
+    createError: "Failed to create user"
   }
 } as const
 
@@ -131,6 +162,7 @@ export function UsersAdminPage() {
 
   const [users, setUsers] = useState<User[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [adminRoles, setAdminRoles] = useState<AdminRole[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
@@ -143,10 +175,23 @@ export function UsersAdminPage() {
     userName: string
   } | null>(null)
   const [selectedCategoryId, setSelectedCategoryId] = useState("")
+  const [selectedAdminRoleId, setSelectedAdminRoleId] = useState("")
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; email: string; name: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [createForm, setCreateForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    role: "user",
+    categoryId: "",
+    adminRoleId: ""
+  })
 
   const isAdmin = currentUser?.role === "admin"
 
@@ -163,9 +208,10 @@ export function UsersAdminPage() {
 
   async function fetchData() {
     try {
-      const [usersRes, catsRes] = await Promise.all([
+      const [usersRes, catsRes, rolesRes] = await Promise.all([
         fetch("/api/admin/users", { credentials: "include" }),
-        fetch("/api/categories", { credentials: "include" })
+        fetch("/api/categories", { credentials: "include" }),
+        fetch("/api/admin/roles", { credentials: "include" })
       ])
       if (usersRes.ok) {
         const json = await usersRes.json()
@@ -174,6 +220,10 @@ export function UsersAdminPage() {
       if (catsRes.ok) {
         const json = await catsRes.json()
         setCategories(json.data?.categories || [])
+      }
+      if (rolesRes.ok) {
+        const json = await rolesRes.json()
+        setAdminRoles(json.data?.roles || [])
       }
     } catch (err) {
       console.error("Failed to fetch data:", err)
@@ -188,36 +238,60 @@ export function UsersAdminPage() {
     if (newRole === "category_partner" || newRole === "sponsor") {
       setPendingRoleChange({ userId, newRole, userName: `${user.first_name} ${user.last_name}` })
       setSelectedCategoryId("")
+      setSelectedAdminRoleId("")
       setRoleDialogOpen(true)
     } else {
-      updateRole(userId, newRole, null)
+      updateRole(userId, newRole, null, null)
     }
   }
 
   async function confirmCategoryPartner() {
-    if (!pendingRoleChange || !selectedCategoryId) {
+    if (!pendingRoleChange) return
+    const isCategoryPartner = pendingRoleChange.newRole === "category_partner"
+
+    if (isCategoryPartner && selectedAdminRoleId) {
+      // Assign via custom role — category resolved server-side
+      await updateRole(pendingRoleChange.userId, pendingRoleChange.newRole, null, selectedAdminRoleId)
+    } else if (selectedCategoryId) {
+      await updateRole(pendingRoleChange.userId, pendingRoleChange.newRole, selectedCategoryId, null)
+    } else {
       toast.error(text.categoryRequired)
       return
     }
-    await updateRole(pendingRoleChange.userId, pendingRoleChange.newRole, selectedCategoryId)
     setRoleDialogOpen(false)
     setPendingRoleChange(null)
   }
 
-  async function updateRole(userId: string, newRole: string, categoryId: string | null) {
+  async function updateRole(
+    userId: string,
+    newRole: string,
+    categoryId: string | null,
+    adminRoleId: string | null
+  ) {
     setUpdatingUser(userId)
     try {
       const res = await fetch("/api/admin/users", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ userId, role: newRole, categoryId })
+        body: JSON.stringify({ userId, role: newRole, categoryId, adminRoleId })
       })
       if (res.ok) {
-        const catName = categoryId ? categories.find((c) => c.id === categoryId)?.name || null : null
+        const role = adminRoleId ? adminRoles.find((r) => r.id === adminRoleId) : null
+        const catName =
+          role?.category_name ||
+          (categoryId ? categories.find((c) => c.id === categoryId)?.name || null : null)
         setUsers((prev) =>
           prev.map((u) =>
-            u.id === userId ? { ...u, role: newRole as User["role"], category_name: catName } : u
+            u.id === userId
+              ? {
+                  ...u,
+                  role: newRole as User["role"],
+                  category_name: catName,
+                  admin_role_id: adminRoleId,
+                  admin_role_name: role?.name || null
+                }
+              : u
           )
         )
         toast.success(text.roleUpdated)
@@ -267,6 +341,58 @@ export function UsersAdminPage() {
     }
   }
 
+  async function createUser() {
+    if (!createForm.email || !createForm.password || !createForm.firstName || !createForm.lastName) {
+      toast.error(text.categoryRequired)
+      return
+    }
+    const needsAssignment = createForm.role === "category_partner" || createForm.role === "sponsor"
+    const hasAssignment = createForm.adminRoleId || createForm.categoryId
+    if (needsAssignment && !hasAssignment) {
+      toast.error(text.categoryRequired)
+      return
+    }
+    setCreating(true)
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          email: createForm.email,
+          firstName: createForm.firstName,
+          lastName: createForm.lastName,
+          password: createForm.password,
+          role: createForm.role,
+          categoryId: createForm.categoryId || null,
+          adminRoleId: createForm.adminRoleId || null
+        })
+      })
+      if (res.ok) {
+        const json = await res.json()
+        setUsers((prev) => [json.data.user, ...prev])
+        toast.success(text.createSuccess)
+        setCreateDialogOpen(false)
+        setCreateForm({
+          firstName: "",
+          lastName: "",
+          email: "",
+          password: "",
+          role: "user",
+          categoryId: "",
+          adminRoleId: ""
+        })
+      } else {
+        const err = await res.json()
+        toast.error(err.error || text.createError)
+      }
+    } catch {
+      toast.error(text.createError)
+    } finally {
+      setCreating(false)
+    }
+  }
+
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
       !search ||
@@ -296,9 +422,17 @@ export function UsersAdminPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">{text.heading}</h1>
-        <p className="text-muted-foreground">{isAdmin ? text.subtitleAdmin : text.subtitlePartner}</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">{text.heading}</h1>
+          <p className="text-muted-foreground">{isAdmin ? text.subtitleAdmin : text.subtitlePartner}</p>
+        </div>
+        {isAdmin && (
+          <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+            <UserPlus className="h-4 w-4" />
+            {text.createUser}
+          </Button>
+        )}
       </div>
 
       {/* Stats */}
@@ -417,7 +551,15 @@ export function UsersAdminPage() {
                       <TableCell>
                         <Badge className={badge.className}>{badge.label}</Badge>
                       </TableCell>
-                      <TableCell className="text-sm">{user.category_name || "-"}</TableCell>
+                      <TableCell className="text-sm">
+                        {user.admin_role_name ? (
+                          <span className="font-medium text-violet-700">{user.admin_role_name}</span>
+                        ) : user.category_name ? (
+                          user.category_name
+                        ) : (
+                          "-"
+                        )}
+                      </TableCell>
                       <TableCell>
                         {user.is_active ? (
                           <Badge variant="outline" className="bg-green-100 text-green-700">
@@ -471,6 +613,133 @@ export function UsersAdminPage() {
         </CardContent>
       </Card>
 
+      {/* Create user dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{text.createUser}</DialogTitle>
+            <DialogDescription>{text.createUserDesc}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{text.firstName}</Label>
+                <Input
+                  value={createForm.firstName}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, firstName: e.target.value }))}
+                  placeholder="Max"
+                />
+              </div>
+              <div>
+                <Label>{text.lastName}</Label>
+                <Input
+                  value={createForm.lastName}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, lastName: e.target.value }))}
+                  placeholder="Mustermann"
+                />
+              </div>
+            </div>
+            <div>
+              <Label>{text.email}</Label>
+              <Input
+                type="email"
+                value={createForm.email}
+                onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
+                placeholder="max@example.com"
+              />
+            </div>
+            <div>
+              <Label>{text.password}</Label>
+              <Input
+                type="password"
+                value={createForm.password}
+                onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
+                placeholder="••••••••"
+              />
+              <p className="text-muted-foreground mt-1 text-xs">{text.passwordHint}</p>
+            </div>
+            <div>
+              <Label>{text.role}</Label>
+              <Select
+                value={createForm.role}
+                onValueChange={(val) =>
+                  setCreateForm((f) => ({ ...f, role: val, categoryId: "", adminRoleId: "" }))
+                }>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">{text.roleUser}</SelectItem>
+                  <SelectItem value="category_partner">{text.roleCategoryAdmin}</SelectItem>
+                  <SelectItem value="sponsor">{text.roleSponsor}</SelectItem>
+                  <SelectItem value="admin">{text.roleSuperAdmin}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {createForm.role === "category_partner" && adminRoles.length > 0 && (
+              <div>
+                <Label>{language === "de" ? "Admin-Rolle" : "Admin role"}</Label>
+                <Select
+                  value={createForm.adminRoleId || "__none__"}
+                  onValueChange={(val) =>
+                    setCreateForm((f) => ({
+                      ...f,
+                      adminRoleId: val === "__none__" ? "" : val,
+                      categoryId: ""
+                    }))
+                  }>
+                  <SelectTrigger>
+                    <SelectValue placeholder={language === "de" ? "Rolle wählen..." : "Select role..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">{language === "de" ? "Keine Rolle" : "No role"}</SelectItem>
+                    {adminRoles.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
+                        {r.category_name ? ` (${r.category_name})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {(createForm.role === "sponsor" ||
+              (createForm.role === "category_partner" && !createForm.adminRoleId)) && (
+              <div>
+                <Label>{text.category}</Label>
+                <Select
+                  value={createForm.categoryId}
+                  onValueChange={(val) => setCreateForm((f) => ({ ...f, categoryId: val }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={text.categoryPlaceholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setCreateDialogOpen(false)} disabled={creating}>
+                {text.cancel}
+              </Button>
+              <Button onClick={createUser} disabled={creating}>
+                {creating ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <UserPlus className="mr-2 h-4 w-4" />
+                )}
+                {text.create}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Category assignment dialog */}
       <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
         <DialogContent
@@ -486,28 +755,54 @@ export function UsersAdminPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label>{text.category}</Label>
-              <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={text.categoryPlaceholder} />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {pendingRoleChange?.newRole === "category_partner" && adminRoles.length > 0 && (
+              <div>
+                <Label>{language === "de" ? "Admin-Rolle (empfohlen)" : "Admin role (recommended)"}</Label>
+                <Select
+                  value={selectedAdminRoleId || "__none__"}
+                  onValueChange={(v) => {
+                    setSelectedAdminRoleId(v === "__none__" ? "" : v)
+                    if (v !== "__none__") setSelectedCategoryId("")
+                  }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={language === "de" ? "Rolle wählen..." : "Select role..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">{language === "de" ? "Keine Rolle" : "No role"}</SelectItem>
+                    {adminRoles.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
+                        {r.category_name ? ` (${r.category_name})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {!selectedAdminRoleId && (
+              <div>
+                <Label>{text.category}</Label>
+                <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={text.categoryPlaceholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setRoleDialogOpen(false)}>
                 {text.cancel}
               </Button>
               <Button
                 onClick={confirmCategoryPartner}
-                disabled={!selectedCategoryId || updatingUser !== null}
+                disabled={(!selectedCategoryId && !selectedAdminRoleId) || updatingUser !== null}
                 className="bg-primary hover:bg-primary/90">
                 {updatingUser ? <Loader2 className="h-4 w-4 animate-spin" /> : text.assign}
               </Button>

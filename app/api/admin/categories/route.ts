@@ -21,6 +21,78 @@ export async function GET() {
   }
 }
 
+async function postHandler(req: AuthenticatedRequest) {
+  try {
+    if (req.user?.role !== "admin") return validationError("Only admins can create categories")
+
+    const { name, nameEn, slug, description, descriptionEn, partnerName, partnerNameEn, color, icon } =
+      await req.json()
+
+    if (!name?.trim()) return validationError("German category name required")
+    if (!slug?.trim()) return validationError("Slug required")
+
+    const slugNormalized = slug
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+
+    const existing = await query("SELECT id FROM categories WHERE slug = $1", [slugNormalized])
+    if (existing.rows.length > 0) return validationError("A category with this slug already exists")
+
+    const availableColumns = await getAvailableCategoryColumns()
+
+    const columns = ["name", "slug", "description", "is_active"]
+    const values: Array<string | boolean | null> = [
+      name.trim(),
+      slugNormalized,
+      description?.trim() || null,
+      true
+    ]
+
+    if (availableColumns.has("name_en")) {
+      columns.push("name_en")
+      values.push(nameEn?.trim() || null)
+    }
+    if (availableColumns.has("description_en")) {
+      columns.push("description_en")
+      values.push(descriptionEn?.trim() || null)
+    }
+    if (availableColumns.has("partner_name")) {
+      columns.push("partner_name")
+      values.push(partnerName?.trim() || null)
+    }
+    if (availableColumns.has("partner_name_en")) {
+      columns.push("partner_name_en")
+      values.push(partnerNameEn?.trim() || null)
+    }
+    if (availableColumns.has("color")) {
+      columns.push("color")
+      values.push(normalizeHexColor(color))
+    }
+    if (availableColumns.has("icon") && icon) {
+      columns.push("icon")
+      values.push(icon)
+    }
+
+    const placeholders = values.map((_, i) => `$${i + 1}`).join(", ")
+
+    const result = await query(
+      `INSERT INTO categories (${columns.join(", ")})
+       VALUES (${placeholders})
+       RETURNING ${buildCategorySelectClause(availableColumns)}`,
+      values
+    )
+
+    return successResponse({ category: result.rows[0] })
+  } catch (error) {
+    console.error("Category create error:", error)
+    return serverError("Kategorie konnte nicht erstellt werden")
+  }
+}
+
+export const POST = withCategoryPartnerAuth(postHandler)
+
 async function putHandler(req: AuthenticatedRequest) {
   try {
     const {

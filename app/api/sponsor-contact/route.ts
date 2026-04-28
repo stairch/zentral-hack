@@ -64,6 +64,21 @@ export async function POST(request: Request) {
       )
     }
 
+    if (normalizedInterest) {
+      const packageResult = await query(
+        `SELECT id::text
+         FROM sponsor_packages
+         WHERE LOWER(name) = $1 OR id::text = $1
+         ORDER BY display_order ASC
+         LIMIT 1`,
+        [normalizedInterest]
+      )
+
+      if (packageResult.rows.length > 0) {
+        interestedPackageId = packageResult.rows[0].id
+      }
+    }
+
     await query(
       `INSERT INTO sponsor_contacts (company_name, contact_name, email, phone, message, interested_in, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'new')`,

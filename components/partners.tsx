@@ -319,7 +319,10 @@ export function Partners() {
 
     return {
       name: e.company_name,
-      logo: e.logo_url as string,
+      logo:
+        e.logo_url && e.logo_url.startsWith("https://")
+          ? `/api/sponsor-logo?id=${e.id}`
+          : (e.logo_url as string),
       logoWidth,
       bgColor: e.logo_bg_color === null ? "transparent" : e.logo_bg_color,
       link: e.website_url

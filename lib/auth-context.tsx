@@ -8,6 +8,10 @@ export interface User {
   role: "user" | "category_partner" | "sponsor" | "admin"
   firstName?: string
   lastName?: string
+  categoryId?: string | null
+  adminRoleId?: string | null
+  adminRoleName?: string | null
+  permissions?: string[] | null
 }
 
 interface AuthContextType {

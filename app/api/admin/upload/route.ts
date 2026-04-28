@@ -19,7 +19,7 @@ async function handlePost(req: AuthenticatedRequest) {
       return validationError("File size must be under 5MB")
     }
 
-    const blob = await put(file.name, file, { access: "private" })
+    const blob = await put(file.name, file, { access: "private", allowOverwrite: true })
 
     return NextResponse.json({ url: blob.url }, { status: 200 })
   } catch (error) {

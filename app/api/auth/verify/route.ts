@@ -31,9 +31,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 })
     }
 
-    // Fetch user details from database
+    // Fetch user details and their custom role permissions
     const result = await query(
-      "SELECT id, email, first_name, last_name, role, category_id FROM users WHERE id = $1",
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.role,
+              COALESCE(ar.category_id, u.category_id) AS category_id,
+              u.admin_role_id,
+              ar.name AS admin_role_name,
+              ar.permissions AS role_permissions
+       FROM users u
+       LEFT JOIN admin_roles ar ON u.admin_role_id = ar.id
+       WHERE u.id = $1`,
       [payload.userId]
     )
 
@@ -47,6 +54,8 @@ export async function GET(request: NextRequest) {
     const user = result.rows[0]
     console.log("[Verify] Returning user:", user.email)
 
+    const permissions: string[] | null = Array.isArray(user.role_permissions) ? user.role_permissions : null
+
     return successResponse({
       user: {
         id: user.id,
@@ -54,7 +63,10 @@ export async function GET(request: NextRequest) {
         firstName: user.first_name,
         lastName: user.last_name,
         role: user.role,
-        categoryId: user.category_id || null
+        categoryId: user.category_id || null,
+        adminRoleId: user.admin_role_id || null,
+        adminRoleName: user.admin_role_name || null,
+        permissions
       },
       token
     })

@@ -24,6 +24,7 @@ import {
   MessageSquare,
   Plus,
   Trash2,
+  Upload,
   Globe,
   Building2,
   User,
@@ -194,6 +195,9 @@ const copy = {
       title: "Sponsor veröffentlichen",
       description: (companyName: string) => `${companyName} auf der Landing Page publizieren`,
       logoUrlLabel: "Logo URL *",
+      logoUploadButton: "Logo hochladen",
+      logoUploadLoading: "Upload...",
+      logoUploadHint: "PNG, JPG, WEBP oder SVG (max. 5 MB)",
       websiteUrlLabel: "Website",
       backgroundColorLabel: "Hintergrundfarbe",
       resetButton: "Zurücksetzen",
@@ -219,14 +223,16 @@ const copy = {
       packageSaveFailed: "Fehler beim Speichern",
       packageDeleteFailed: "Fehler beim Löschen",
       sponsorUpdateFailed: "Fehler beim Aktualisieren der Sponsor-Anfrage",
-      sponsorPublishFailed: "Fehler beim Veröffentlichen des Sponsors"
+      sponsorPublishFailed: "Fehler beim Veröffentlichen des Sponsors",
+      logoUploadFailed: "Logo-Upload fehlgeschlagen"
     },
     success: {
       packageSavedCreate: "Sponsorpaket erstellt",
       packageSavedUpdate: "Sponsorpaket aktualisiert",
       packageDeleted: "Sponsorpaket gelöscht",
       sponsorSavedUpdate: "Sponsor-Anfrage aktualisiert",
-      sponsorPublish: "Sponsor veröffentlicht"
+      sponsorPublish: "Sponsor veröffentlicht",
+      logoUploadSuccess: "Logo hochgeladen"
     },
     publishLabels: {
       logoSize: {
@@ -304,6 +310,9 @@ const copy = {
       title: "Publish sponsor",
       description: (companyName: string) => `Publish ${companyName} on the landing page`,
       logoUrlLabel: "Logo URL *",
+      logoUploadButton: "Upload logo",
+      logoUploadLoading: "Uploading...",
+      logoUploadHint: "PNG, JPG, WEBP or SVG (max. 5 MB)",
       websiteUrlLabel: "Website",
       backgroundColorLabel: "Background color",
       resetButton: "Reset",
@@ -329,14 +338,16 @@ const copy = {
       packageSaveFailed: "Error while saving",
       packageDeleteFailed: "Error while deleting",
       sponsorUpdateFailed: "Error while updating sponsor inquiry",
-      sponsorPublishFailed: "Error while publishing sponsor"
+      sponsorPublishFailed: "Error while publishing sponsor",
+      logoUploadFailed: "Logo upload failed"
     },
     success: {
       packageSavedCreate: "Sponsor package created",
       packageSavedUpdate: "Sponsor package updated",
       packageDeleted: "Sponsor package deleted",
       sponsorSavedUpdate: "Sponsor contact updated",
-      sponsorPublish: "Sponsor contact published"
+      sponsorPublish: "Sponsor contact published",
+      logoUploadSuccess: "Logo uploaded"
     },
     publishLabels: {
       logoSize: {
@@ -441,7 +452,10 @@ function PublishDialog({
 }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null)
   const [errors, setErrors] = useState<Partial<Record<keyof PublishFormData, string>>>({})
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [form, setForm] = useState<PublishFormData>({
     logoUrl: "",
     websiteUrl: "",
@@ -470,10 +484,63 @@ function PublishDialog({
         logoSize: contact.logo_size || "medium",
         tier: contact.tier || contact.interested_in || ""
       })
+      setLocalPreviewUrl(null)
     } else {
       setErrors({})
     }
   }, [open])
+
+  useEffect(() => {
+    return () => {
+      if (localPreviewUrl) {
+        URL.revokeObjectURL(localPreviewUrl)
+      }
+    }
+  }, [localPreviewUrl])
+
+  const handleLogoUpload = async (file: File) => {
+    const nextLocalPreview = URL.createObjectURL(file)
+
+    setLocalPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return nextLocalPreview
+    })
+
+    try {
+      setUploadingLogo(true)
+      const fd = new FormData()
+      fd.append("file", file)
+
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        credentials: "include",
+        body: fd
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || text.errors.logoUploadFailed)
+      }
+
+      const data = await res.json()
+      setForm((prev) => ({ ...prev, logoUrl: data.url }))
+      if (errors.logoUrl) {
+        setErrors((prev) => ({ ...prev, logoUrl: undefined }))
+      }
+      toast.success(text.success.logoUploadSuccess)
+    } catch (err) {
+      setLocalPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev)
+        return null
+      })
+      toast.error(err instanceof Error ? err.message : text.errors.logoUploadFailed)
+    } finally {
+      setUploadingLogo(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    }
+  }
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof PublishFormData, string>> = {}
@@ -524,16 +591,48 @@ function PublishDialog({
             {/* Logo URL */}
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="logoUrl">{text.publishDialog.logoUrlLabel}</Label>
-              <Input
-                id="logoUrl"
-                placeholder="https://example.com/logo.png"
-                value={form.logoUrl}
-                className={errors.logoUrl ? "border-destructive" : ""}
-                onChange={(e) => {
-                  setForm((f) => ({ ...f, logoUrl: e.target.value }))
-                  if (errors.logoUrl) setErrors((err) => ({ ...err, logoUrl: undefined }))
-                }}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="logoUrl"
+                  placeholder="https://example.com/logo.png"
+                  value={form.logoUrl}
+                  className={errors.logoUrl ? "border-destructive" : ""}
+                  onChange={(e) => {
+                    setForm((f) => ({ ...f, logoUrl: e.target.value }))
+                    if (errors.logoUrl) setErrors((err) => ({ ...err, logoUrl: undefined }))
+                  }}
+                />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      void handleLogoUpload(file)
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={uploadingLogo}
+                  className="shrink-0"
+                  onClick={() => fileInputRef.current?.click()}>
+                  {uploadingLogo ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  <span className="ml-2 hidden sm:inline">
+                    {uploadingLogo
+                      ? text.publishDialog.logoUploadLoading
+                      : text.publishDialog.logoUploadButton}
+                  </span>
+                </Button>
+              </div>
+              <p className="text-muted-foreground text-xs">{text.publishDialog.logoUploadHint}</p>
               {errors.logoUrl && <p className="text-destructive text-xs">{errors.logoUrl}</p>}
             </div>
 
@@ -617,7 +716,12 @@ function PublishDialog({
                 <Label className="text-muted-foreground text-xs">{text.publishDialog.previewLabel}</Label>
                 <div className="rounded-lg border">
                   <PreviewMarqueeRow
-                    currentLogo={form.logoUrl}
+                    currentLogo={
+                      localPreviewUrl ||
+                      (form.logoUrl === contact.logo_url && form.logoUrl.startsWith("https://")
+                        ? `/api/sponsor-logo?id=${contact.id}`
+                        : form.logoUrl)
+                    }
                     currentBgColor={form.logoBgColor}
                     currentLogoSize={form.logoSize}
                     currentWebsite={form.websiteUrl}
