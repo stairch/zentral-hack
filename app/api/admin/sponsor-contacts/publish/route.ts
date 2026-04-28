@@ -16,6 +16,8 @@ async function handlePost(req: AuthenticatedRequest) {
     if (!tier) return validationError("Sponsor tier required")
 
     const ALLOWED_LOGO_SIZES = ["small", "medium", "large"]
+    const ALLOWED_TIERS = ["platin", "gold", "silber", "bronze"]
+    const normalizedTier = String(tier).trim().toLowerCase()
 
     const fields: string[] = []
     const values: (string | number | boolean)[] = []
@@ -50,8 +52,25 @@ async function handlePost(req: AuthenticatedRequest) {
     values.push(logoSize)
     idx++
 
+    if (!ALLOWED_TIERS.includes(normalizedTier)) {
+      return validationError(`Invalid tier. Allowed: ${ALLOWED_TIERS.join(", ")}`)
+    }
+
+    const tierResult = await query(
+      `SELECT id::text
+       FROM sponsor_packages
+       WHERE LOWER(name) = $1 OR id::text = $1
+       ORDER BY display_order ASC
+       LIMIT 1`,
+      [normalizedTier]
+    )
+
+    if (tierResult.rows.length === 0) {
+      return validationError(`Invalid tier. Allowed: ${ALLOWED_TIERS.join(", ")}`)
+    }
+
     fields.push("tier = $" + idx)
-    values.push(tier)
+    values.push(tierResult.rows[0].id)
     idx++
 
     fields.push("status = 'published'")
@@ -59,7 +78,30 @@ async function handlePost(req: AuthenticatedRequest) {
     values.push(id)
 
     const result = await query(
-      `UPDATE sponsor_contacts SET ${fields.join(", ")} WHERE id = $${idx} RETURNING *`,
+      `WITH updated AS (
+         UPDATE sponsor_contacts
+         SET ${fields.join(", ")}
+         WHERE id = $${idx}
+         RETURNING *
+       )
+       SELECT
+         u.id,
+         u.company_name,
+         u.contact_name,
+         u.email,
+         u.phone,
+         COALESCE(LOWER(sp_interest.name), NULL) AS interested_in,
+         u.message,
+         u.status,
+         u.created_at,
+         u.logo_url,
+         u.website_url,
+         u.logo_size,
+         COALESCE(LOWER(sp_tier.name), NULL) AS tier,
+         u.logo_bg_color
+       FROM updated u
+       LEFT JOIN sponsor_packages sp_interest ON sp_interest.id::text = u.interested_in::text
+       LEFT JOIN sponsor_packages sp_tier ON sp_tier.id::text = u.tier::text`,
       values
     )
 

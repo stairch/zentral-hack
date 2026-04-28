@@ -55,7 +55,9 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { companyName, contactName, email, phone, message, interestedIn } = body
+    const { companyName, contactName, email, phone, message, interestLevel, interestedIn } = body
+    const normalizedInterest = normalizeSponsorInterest(interestedIn || interestLevel)
+    let interestedPackageId: string | null = null
 
     if (!companyName || !contactName || !email) {
       return NextResponse.json(
@@ -82,7 +84,7 @@ export async function POST(request: Request) {
     await query(
       `INSERT INTO sponsor_contacts (company_name, contact_name, email, phone, message, interested_in, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'new')`,
-      [companyName, contactName, email, phone || null, message || null, interestedIn]
+      [companyName, contactName, email, phone || null, message || null, interestedPackageId]
     )
 
     const emails: string[] = []
