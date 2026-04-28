@@ -702,8 +702,6 @@ function PublishDialog({
                     {localizedPackages.map(({ raw, localized, priceLabel }) => (
                       <SelectItem key={raw.id} value={raw.id}>
                         {localized.name}
-                        {localized.short_description ? ` - ${localized.short_description}` : ""}
-                        {priceLabel ? ` • ${priceLabel}` : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
