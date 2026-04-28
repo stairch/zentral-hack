@@ -109,92 +109,92 @@ export function AdminCategoriesPage() {
   const text =
     language === "en"
       ? {
-        heading: "CATEGORIES",
-        subtitle: "Manage hackathon categories and challenges",
-        editTitle: "Edit category",
-        editDescription:
-          "Update title, partner, icon, color, and the category and challenge description for",
-        germanSection: "German",
-        englishSection: "English",
-        titleLabel: "Title",
-        titlePlaceholder: "Category title",
-        partnerLabel: "Partner",
-        partnerPlaceholder: "Partner name",
-        iconLabel: "Icon",
-        iconPlaceholder: "Choose icon",
-        colorLabel: "Color",
-        descriptionLabel: "Description",
-        descriptionPlaceholder: "Describe this category and its challenge context...",
-        challengeToggleLabel: "Show challenge description",
-        challengeToggleHint:
-          "If enabled, a challenge description is shown in the public category detail view.",
-        challengeDescriptionLabel: "Challenge description",
-        challengeDescriptionPlaceholder: "Concrete challenge statement, goals, and constraints...",
-        previewLabel: "Preview",
-        previewHint: "Preview follows the currently selected admin language.",
-        partnerPreviewLabel: "Partner",
-        challengePreviewLabel: "Challenge",
-        prizeLabel: "Prize money (category-level)",
-        prizePlaceholder: "e.g. CHF 500",
-        prizeHint: "Shown publicly only for categories without individual challenges.",
-        targetGroupLabel: "Target audience",
-        targetGroupPlaceholder: "e.g. Students, professionals, ...",
-        targetGroupPlaceholderEn: "e.g. Students, professionals, ...",
-        save: "Save",
-        saving: "Saving...",
-        saved: "Saved successfully",
-        required: "All German and English category fields are required",
-        challengeRequired:
-          "If challenge description is enabled, both German and English texts are required",
-        loadError: "Failed to load categories",
-        saveSuccess: "Category updated",
-        saveError: "Failed to save",
-        noCategories: "No categories found"
-      }
+          heading: "CATEGORIES",
+          subtitle: "Manage hackathon categories and challenges",
+          editTitle: "Edit category",
+          editDescription:
+            "Update title, partner, icon, color, and the category and challenge description for",
+          germanSection: "German",
+          englishSection: "English",
+          titleLabel: "Title",
+          titlePlaceholder: "Category title",
+          partnerLabel: "Partner",
+          partnerPlaceholder: "Partner name",
+          iconLabel: "Icon",
+          iconPlaceholder: "Choose icon",
+          colorLabel: "Color",
+          descriptionLabel: "Description",
+          descriptionPlaceholder: "Describe this category and its challenge context...",
+          challengeToggleLabel: "Show challenge description",
+          challengeToggleHint:
+            "If enabled, a challenge description is shown in the public category detail view.",
+          challengeDescriptionLabel: "Challenge description",
+          challengeDescriptionPlaceholder: "Concrete challenge statement, goals, and constraints...",
+          previewLabel: "Preview",
+          previewHint: "Preview follows the currently selected admin language.",
+          partnerPreviewLabel: "Partner",
+          challengePreviewLabel: "Challenge",
+          prizeLabel: "Prize money (category-level)",
+          prizePlaceholder: "e.g. CHF 500",
+          prizeHint: "Shown publicly only for categories without individual challenges.",
+          targetGroupLabel: "Target audience",
+          targetGroupPlaceholder: "e.g. Students, professionals, ...",
+          targetGroupPlaceholderEn: "e.g. Students, professionals, ...",
+          save: "Save",
+          saving: "Saving...",
+          saved: "Saved successfully",
+          required: "All German and English category fields are required",
+          challengeRequired:
+            "If challenge description is enabled, both German and English texts are required",
+          loadError: "Failed to load categories",
+          saveSuccess: "Category updated",
+          saveError: "Failed to save",
+          noCategories: "No categories found"
+        }
       : {
-        heading: "KATEGORIEN",
-        subtitle: "Hackathon-Kategorien und Challenges verwalten",
-        editTitle: "Kategorie bearbeiten",
-        editDescription:
-          "Aktualisiere Titel, Partner, Icon, Farbe sowie Kategorie- und Challenge-Beschrieb für",
-        germanSection: "Deutsch",
-        englishSection: "Englisch",
-        titleLabel: "Titel",
-        titlePlaceholder: "Name der Kategorie",
-        partnerLabel: "Partner",
-        partnerPlaceholder: "Partnername",
-        iconLabel: "Icon",
-        iconPlaceholder: "Icon wählen",
-        colorLabel: "Farbe",
-        descriptionLabel: "Beschreibung",
-        descriptionPlaceholder: "Beschreibe diese Kategorie und ihre Herausforderungen...",
-        challengeToggleLabel: "Challenge-Beschrieb anzeigen",
-        challengeToggleHint:
-          "Wenn aktiv, wird auf der öffentlichen Kategorie-Detailansicht zusätzlich ein Challenge-Beschrieb angezeigt.",
-        challengeDescriptionLabel: "Challenge-Beschrieb",
-        challengeDescriptionPlaceholder:
-          "Konkrete Aufgabenstellung, Ziele und Rahmenbedingungen der Challenge...",
-        previewLabel: "Vorschau",
-        previewHint: "Die Vorschau folgt der aktuell gewählten Admin-Sprache.",
-        partnerPreviewLabel: "Partner",
-        challengePreviewLabel: "Challenge",
-        prizeLabel: "Preisgeld (Kategorie-Ebene)",
-        prizePlaceholder: "z.B. CHF 500",
-        prizeHint: "Wird öffentlich nur für Kategorien ohne eigene Challenges angezeigt.",
-        targetGroupLabel: "Zielgruppe",
-        targetGroupPlaceholder: "z.B. Studierende, Berufstätige, ...",
-        targetGroupPlaceholderEn: "e.g. Students, professionals, ...",
-        save: "Speichern",
-        saving: "Wird gespeichert...",
-        saved: "Erfolgreich gespeichert!",
-        required: "Alle deutschen und englischen Kategorie-Felder sind erforderlich",
-        challengeRequired:
-          "Wenn der Challenge-Beschrieb aktiviert ist, sind deutsche und englische Texte erforderlich",
-        loadError: "Fehler beim Laden der Kategorien",
-        saveSuccess: "Kategorie aktualisiert",
-        saveError: "Fehler beim Speichern",
-        noCategories: "Keine Kategorien gefunden"
-      }
+          heading: "KATEGORIEN",
+          subtitle: "Hackathon-Kategorien und Challenges verwalten",
+          editTitle: "Kategorie bearbeiten",
+          editDescription:
+            "Aktualisiere Titel, Partner, Icon, Farbe sowie Kategorie- und Challenge-Beschrieb für",
+          germanSection: "Deutsch",
+          englishSection: "Englisch",
+          titleLabel: "Titel",
+          titlePlaceholder: "Name der Kategorie",
+          partnerLabel: "Partner",
+          partnerPlaceholder: "Partnername",
+          iconLabel: "Icon",
+          iconPlaceholder: "Icon wählen",
+          colorLabel: "Farbe",
+          descriptionLabel: "Beschreibung",
+          descriptionPlaceholder: "Beschreibe diese Kategorie und ihre Herausforderungen...",
+          challengeToggleLabel: "Challenge-Beschrieb anzeigen",
+          challengeToggleHint:
+            "Wenn aktiv, wird auf der öffentlichen Kategorie-Detailansicht zusätzlich ein Challenge-Beschrieb angezeigt.",
+          challengeDescriptionLabel: "Challenge-Beschrieb",
+          challengeDescriptionPlaceholder:
+            "Konkrete Aufgabenstellung, Ziele und Rahmenbedingungen der Challenge...",
+          previewLabel: "Vorschau",
+          previewHint: "Die Vorschau folgt der aktuell gewählten Admin-Sprache.",
+          partnerPreviewLabel: "Partner",
+          challengePreviewLabel: "Challenge",
+          prizeLabel: "Preisgeld (Kategorie-Ebene)",
+          prizePlaceholder: "z.B. CHF 500",
+          prizeHint: "Wird öffentlich nur für Kategorien ohne eigene Challenges angezeigt.",
+          targetGroupLabel: "Zielgruppe",
+          targetGroupPlaceholder: "z.B. Studierende, Berufstätige, ...",
+          targetGroupPlaceholderEn: "e.g. Students, professionals, ...",
+          save: "Speichern",
+          saving: "Wird gespeichert...",
+          saved: "Erfolgreich gespeichert!",
+          required: "Alle deutschen und englischen Kategorie-Felder sind erforderlich",
+          challengeRequired:
+            "Wenn der Challenge-Beschrieb aktiviert ist, sind deutsche und englische Texte erforderlich",
+          loadError: "Fehler beim Laden der Kategorien",
+          saveSuccess: "Kategorie aktualisiert",
+          saveError: "Fehler beim Speichern",
+          noCategories: "Keine Kategorien gefunden"
+        }
 
   // Fetch categories
   useEffect(() => {
@@ -283,22 +283,22 @@ export function AdminCategoriesPage() {
         categories.map((category) =>
           category.id === categoryId
             ? {
-              ...category,
-              name: editForm.name,
-              name_en: editForm.nameEn,
-              description: editForm.description,
-              description_en: editForm.descriptionEn,
-              partner_name: editForm.partnerName,
-              partner_name_en: editForm.partnerNameEn,
-              color: normalizeHexColor(editForm.color),
-              icon: editForm.icon,
-              challenge_description: editForm.challengeDescription,
-              challenge_description_en: editForm.challengeDescriptionEn,
-              show_challenge_description: editForm.showChallengeDescription,
-              prize: editForm.prize || null,
-              target_group: editForm.targetGroup || null,
-              target_group_en: editForm.targetGroupEn || null
-            }
+                ...category,
+                name: editForm.name,
+                name_en: editForm.nameEn,
+                description: editForm.description,
+                description_en: editForm.descriptionEn,
+                partner_name: editForm.partnerName,
+                partner_name_en: editForm.partnerNameEn,
+                color: normalizeHexColor(editForm.color),
+                icon: editForm.icon,
+                challenge_description: editForm.challengeDescription,
+                challenge_description_en: editForm.challengeDescriptionEn,
+                show_challenge_description: editForm.showChallengeDescription,
+                prize: editForm.prize || null,
+                target_group: editForm.targetGroup || null,
+                target_group_en: editForm.targetGroupEn || null
+              }
             : category
         )
       )
@@ -770,7 +770,7 @@ export function AdminCategoriesPage() {
                     {getCategoryPresentationByLanguage(category, language).description}
                   </p>
                   {getCategoryPresentationByLanguage(category, language).showChallengeDescription &&
-                    getCategoryPresentationByLanguage(category, language).challengeDescription ? (
+                  getCategoryPresentationByLanguage(category, language).challengeDescription ? (
                     <p className="text-muted-foreground mt-2 line-clamp-3 text-sm">
                       {text.challengePreviewLabel}:{" "}
                       {getCategoryPresentationByLanguage(category, language).challengeDescription}
