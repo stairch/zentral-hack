@@ -6,7 +6,6 @@ import { isValidHex, isValidUrl } from "@/lib/helpers"
 async function handlePost(req: AuthenticatedRequest) {
   try {
     const body = await req.json()
-    console.log(body)
     const { id, logoUrl, websiteUrl, logoBgColor, logoSize, tier } = body
 
     if (!id) return validationError("Sponsor ID required")
