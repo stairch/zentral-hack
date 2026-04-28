@@ -3,7 +3,8 @@ import { query } from "@/lib/db"
 import { successResponse, serverError } from "@/lib/api"
 import { verifyJWT } from "@/lib/auth"
 import { buildCategorySelectClause, getAvailableCategoryColumns } from "@/lib/category-db"
-import { categoryIconMap, normalizeHexColor } from "@/lib/category-config"
+import { categoryIconMap } from "@/lib/category-config"
+import { normalizeHexColor } from "@/lib/helpers"
 
 /**
  * PUT /api/categories/[id]
