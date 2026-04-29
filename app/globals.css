@@ -155,6 +155,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
   }
   /* CD: Übertitel/Untertitel → Usual Bold, Versalien */
   h1,
