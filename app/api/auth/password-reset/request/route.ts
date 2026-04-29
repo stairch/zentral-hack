@@ -22,6 +22,8 @@ export async function POST(request: NextRequest) {
     const email = parsed.data
     const result = await query("SELECT id FROM users WHERE email = $1 AND is_active = true", [email])
 
+    let challengeToken: string | null = null
+
     if (result.rows.length > 0) {
       const challenge = await createAccountActionChallenge({
         userId: result.rows[0].id,
@@ -29,6 +31,8 @@ export async function POST(request: NextRequest) {
         payload: {},
         expiresInMinutes: 15
       })
+
+      challengeToken = challenge.token
 
       await sendEmail({
         to: email,
@@ -44,7 +48,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    return successResponse({ message: "If the email exists, a reset code will be sent." })
+    return successResponse({ message: "If the email exists, a reset code will be sent.", challengeToken })
   } catch (error) {
     console.error("[Password Reset Request] Error:", error)
     return serverError("Failed to create password reset challenge")

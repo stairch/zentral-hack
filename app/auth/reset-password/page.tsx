@@ -81,7 +81,11 @@ export default function ResetPasswordPage() {
 
   const confirmReset = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (!challengeToken || !code || !newPassword || !confirmPassword) return
+    if (!challengeToken) {
+      toast.error(t.error)
+      return
+    }
+    if (!code || !newPassword || !confirmPassword) return
     setLoading(true)
     try {
       const res = await fetch("/api/auth/password-reset/confirm", {
