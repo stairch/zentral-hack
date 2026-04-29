@@ -213,7 +213,7 @@ export function Schedule() {
   const schedule = activeDay === 1 ? (dbDay1 ?? []) : (dbDay2 ?? [])
 
   return (
-    <section id="schedule" className="bg-background py-24">
+    <section id="schedule" className="bg-background overflow-x-hidden py-24">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <motion.div
