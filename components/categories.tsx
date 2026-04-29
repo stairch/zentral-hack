@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion, useInView, useMotionValue, useSpring } from "framer-motion"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Trophy } from "lucide-react"
 import {
@@ -296,6 +297,9 @@ export function Categories() {
         )}
 
         <Dialog open={Boolean(selectedCategory)} onOpenChange={(open) => !open && closeDialog()}>
+          <VisuallyHidden>
+            <DialogTitle>{selectedCategory?.title ?? "Dialog"}</DialogTitle>
+          </VisuallyHidden>
           <DialogContent className="h-[82vh] w-[92vw] max-w-none min-w-[360px] overflow-hidden border-0 p-0 sm:h-[86vh] sm:max-w-2xl sm:min-w-[600px]">
             {selectedCategory ? (
               <div className="relative h-full min-h-0 bg-gradient-to-br from-[#530A5D] via-[#6F177A] to-[#E6FF17] p-[1px]">
