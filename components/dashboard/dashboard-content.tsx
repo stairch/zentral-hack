@@ -18,7 +18,8 @@ import {
   Users,
   Download,
   ExternalLink,
-  FolderOpen
+  FolderOpen,
+  Lock
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -27,6 +28,7 @@ import { BrandMark } from "@/components/brand-mark"
 import { SponsorChallengeEditor } from "@/components/dashboard/sponsor-challenge-editor"
 import { AccountSettings } from "@/components/dashboard/account-settings"
 import { type SponsorChallengeRecord } from "@/lib/sponsor-challenge"
+import ComingSoon from "../ui/coming-soon"
 
 interface DashboardData {
   profile: {
@@ -98,8 +100,12 @@ interface CategoryOption {
   slug: string
 }
 
-export function DashboardContent() {
-  const { user, logout } = useAuth()
+interface DashboardContentProps {
+  showChallenges: boolean
+}
+
+export function DashboardContent({ showChallenges }: DashboardContentProps) {
+  const { user, logout, isLoading: isAuthLoading } = useAuth()
   const { language, setLanguage } = useLanguage()
   const router = useRouter()
   const [data, setData] = useState<DashboardData | null>(null)
@@ -109,6 +115,22 @@ export function DashboardContent() {
   const [selectedChallengeCategoryId, setSelectedChallengeCategoryId] = useState("")
   const [adminChallenge, setAdminChallenge] = useState<SponsorChallengeRecord | null>(null)
   const [loadingAdminChallenge, setLoadingAdminChallenge] = useState(false)
+
+  useEffect(() => {
+    if (isAuthLoading) return
+    if (!user) {
+      console.log("[Dashboard] No user found, redirecting to login")
+      router.push("/auth/login")
+    } else {
+      fetchDashboardData()
+    }
+  }, [user, isAuthLoading, router])
+
+  useEffect(() => {
+    if (user?.role === "admin") {
+      void initializeAdminChallengeEditor()
+    }
+  }, [user?.role, data?.profile?.category_id])
 
   const t = {
     de: {
@@ -208,16 +230,6 @@ export function DashboardContent() {
       homeAriaLabel: "Zentral Hack Home"
     }
   }[language]
-
-  useEffect(() => {
-    fetchDashboardData()
-  }, [])
-
-  useEffect(() => {
-    if (user?.role === "admin") {
-      void initializeAdminChallengeEditor()
-    }
-  }, [user?.role, data?.profile?.category_id])
 
   async function fetchDashboardData() {
     try {
@@ -429,6 +441,12 @@ export function DashboardContent() {
               <TabsTrigger value="challenge" className="gap-2">
                 <FolderOpen className="h-4 w-4" />
                 {t.tabChallenges}
+                {!showChallenges && (
+                  <div
+                    className={`text-muted-foreground flex items-center gap-1 rounded-sm border border-neutral-200 bg-neutral-50 px-1.5 py-0.5 text-xs`}>
+                    <Lock className="h-3 w-3" />
+                  </div>
+                )}
               </TabsTrigger>
             )}
             {showTeamTab && (
@@ -635,59 +653,63 @@ export function DashboardContent() {
           {/* Challenge Tab */}
           {showChallengeTab && (
             <TabsContent value="challenge">
-              <div className="space-y-4">
-                {isAdmin && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>{t.manageChallenge}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <Label htmlFor="challenge-category-select">{t.selectCategory}</Label>
-                        <Select
-                          value={selectedChallengeCategoryId}
-                          onValueChange={(value) => {
-                            setSelectedChallengeCategoryId(value)
-                            void fetchAdminChallenge(value)
-                          }}>
-                          <SelectTrigger id="challenge-category-select">
-                            <SelectValue placeholder={t.selectCategoryPlaceholder} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {challengeCategories.map((category) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+              {showChallenges ? (
+                <div className="space-y-4">
+                  {isAdmin && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>{t.manageChallenge}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <Label htmlFor="challenge-category-select">{t.selectCategory}</Label>
+                          <Select
+                            value={selectedChallengeCategoryId}
+                            onValueChange={(value) => {
+                              setSelectedChallengeCategoryId(value)
+                              void fetchAdminChallenge(value)
+                            }}>
+                            <SelectTrigger id="challenge-category-select">
+                              <SelectValue placeholder={t.selectCategoryPlaceholder} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {challengeCategories.map((category) => (
+                                <SelectItem key={category.id} value={category.id}>
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
 
-                {isAdmin && !selectedChallengeCategoryId ? (
-                  <Card>
-                    <CardContent className="pt-6">
-                      <p className="text-muted-foreground">{t.noCategorySelected}</p>
-                    </CardContent>
-                  </Card>
-                ) : loadingAdminChallenge ? (
-                  <div className="flex min-h-[160px] items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-[#530A5D]" />
-                  </div>
-                ) : (
-                  <SponsorChallengeEditor
-                    categoryName={challengeCategoryName}
-                    categorySlug={challengeCategorySlug}
-                    categoryId={challengeCategoryId}
-                    initialChallenge={isAdmin ? adminChallenge : sponsorChallenge}
-                    onSaved={(challenge) => {
-                      if (isAdmin) setAdminChallenge(challenge)
-                    }}
-                  />
-                )}
-              </div>
+                  {isAdmin && !selectedChallengeCategoryId ? (
+                    <Card>
+                      <CardContent className="pt-6">
+                        <p className="text-muted-foreground">{t.noCategorySelected}</p>
+                      </CardContent>
+                    </Card>
+                  ) : loadingAdminChallenge ? (
+                    <div className="flex min-h-[160px] items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin text-[#530A5D]" />
+                    </div>
+                  ) : (
+                    <SponsorChallengeEditor
+                      categoryName={challengeCategoryName}
+                      categorySlug={challengeCategorySlug}
+                      categoryId={challengeCategoryId}
+                      initialChallenge={isAdmin ? adminChallenge : sponsorChallenge}
+                      onSaved={(challenge) => {
+                        if (isAdmin) setAdminChallenge(challenge)
+                      }}
+                    />
+                  )}
+                </div>
+              ) : (
+                <ComingSoon />
+              )}
             </TabsContent>
           )}
         </Tabs>
