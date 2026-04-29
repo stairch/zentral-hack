@@ -2,13 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
 import { verifyJWT } from "@/lib/auth"
 
-/**
- * GET /api/download-file?fileId=X
- * GET /api/download-file?fileId=X&type=document
- *
- * Auth proxy: fetches file from Vercel Blob server-side so the Blob URL
- * is never exposed to the client.
- */
 export async function GET(request: NextRequest) {
   try {
     const token = request.cookies.get("token")?.value
@@ -18,6 +11,11 @@ export async function GET(request: NextRequest) {
 
     const payload = verifyJWT(token)
     if (!payload) {
+      return new NextResponse(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
+    }
+
+    const activeUser = await query("SELECT is_active FROM users WHERE id = $1", [payload.userId])
+    if (activeUser.rows.length === 0 || !activeUser.rows[0].is_active) {
       return new NextResponse(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
     }
 
@@ -45,8 +43,6 @@ export async function GET(request: NextRequest) {
 
       const doc = result.rows[0]
 
-      // Category docs require registration in that category, admin, or category_partner.
-      // Global docs (category_id IS NULL) are accessible to any authenticated user.
       if (doc.category_id && payload.role !== "admin" && payload.role !== "category_partner") {
         const regCheck = await query("SELECT id FROM registrations WHERE user_id = $1 AND category_id = $2", [
           payload.userId,
@@ -97,7 +93,6 @@ export async function GET(request: NextRequest) {
       return new NextResponse(JSON.stringify({ error: "File not found" }), { status: 404 })
     }
 
-    // Old files stored on the local filesystem (before Blob migration) are no longer accessible
     if (!blobUrl.startsWith("https://")) {
       return new NextResponse(JSON.stringify({ error: "File is no longer available. Please re-upload." }), {
         status: 410

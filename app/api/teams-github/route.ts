@@ -21,6 +21,11 @@ export async function POST(request: NextRequest) {
     const payload = verifyJWT(token)
     if (!payload) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
 
+    const activeUser = await query("SELECT is_active FROM users WHERE id = $1", [payload.userId])
+    if (activeUser.rows.length === 0 || !activeUser.rows[0].is_active) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
+    }
+
     const teamId = request.nextUrl.searchParams.get("teamId")
     if (!teamId) return new Response(JSON.stringify({ error: "teamId parameter required" }), { status: 400 })
 
@@ -94,6 +99,11 @@ export async function DELETE(request: NextRequest) {
 
     const payload = verifyJWT(token)
     if (!payload) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
+
+    const activeUser = await query("SELECT is_active FROM users WHERE id = $1", [payload.userId])
+    if (activeUser.rows.length === 0 || !activeUser.rows[0].is_active) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
+    }
 
     const teamId = request.nextUrl.searchParams.get("teamId")
     const repoId = request.nextUrl.searchParams.get("repoId")

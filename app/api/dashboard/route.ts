@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
     const profileResult = await query(
       `SELECT u.id, u.email, u.first_name, u.last_name, u.role,
               u.category_id, c.slug as category_slug,
+              u.is_active,
               p.university, p.study_program, p.semester, p.linkedin_url
        FROM users u
        LEFT JOIN profiles p ON u.id = p.user_id
@@ -30,6 +31,10 @@ export async function GET(req: NextRequest) {
       [userId]
     )
     const profile = profileResult.rows[0] || null
+
+    if (profile && !profile.is_active) {
+      return NextResponse.json({ error: "Inactive user" }, { status: 401 })
+    }
 
     // Fetch registration with category
     const regResult = await query(

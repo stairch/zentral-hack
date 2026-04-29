@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation"
 import { TeamFilesComponent } from "@/components/team-files"
 import { BrandMark } from "@/components/brand-mark"
 import { SponsorChallengeEditor } from "@/components/dashboard/sponsor-challenge-editor"
+import { AccountSettings } from "@/components/dashboard/account-settings"
 import { type SponsorChallengeRecord } from "@/lib/sponsor-challenge"
 
 interface DashboardData {
@@ -330,6 +331,9 @@ export function DashboardContent() {
   const challengeCategoryId = isAdmin
     ? selectedChallengeCategoryId
     : registration?.category?.id || profile?.category_id || undefined
+  const dashboardCategoryId = registration?.category?.id || profile?.category_id || null
+  const dashboardCategoryName =
+    registration?.category?.name || profile?.category_slug?.replace(/-/g, " ") || null
 
   return (
     <main className="bg-background min-h-screen">
@@ -437,60 +441,68 @@ export function DashboardContent() {
 
           {/* Profile Tab */}
           <TabsContent value="profile">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t.profileTitle}</CardTitle>
-                <CardDescription>{t.profileSubtitle}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-muted-foreground text-sm">{t.labelEmail}</Label>
-                    <p className="font-medium">{user?.email}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground text-sm">{t.labelName}</Label>
-                    <p className="font-medium">
-                      {profile?.first_name} {profile?.last_name}
-                    </p>
-                  </div>
-                  {profile?.university && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t.profileTitle}</CardTitle>
+                  <CardDescription>{t.profileSubtitle}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-muted-foreground text-sm">{t.labelUniversity}</Label>
-                      <p className="font-medium">{profile.university}</p>
+                      <Label className="text-muted-foreground text-sm">{t.labelEmail}</Label>
+                      <p className="font-medium">{user?.email}</p>
                     </div>
-                  )}
-                  {profile?.study_program && (
                     <div>
-                      <Label className="text-muted-foreground text-sm">{t.labelStudyProgram}</Label>
-                      <p className="font-medium">{profile.study_program}</p>
-                    </div>
-                  )}
-                  {profile?.semester && (
-                    <div>
-                      <Label className="text-muted-foreground text-sm">{t.labelSemester}</Label>
+                      <Label className="text-muted-foreground text-sm">{t.labelName}</Label>
                       <p className="font-medium">
-                        {profile.semester}
-                        {t.semesterSuffix}
+                        {profile?.first_name} {profile?.last_name}
                       </p>
                     </div>
-                  )}
-                  {profile?.linkedin_url && (
-                    <div>
-                      <Label className="text-muted-foreground text-sm">{t.labelLinkedIn}</Label>
-                      <a
-                        href={profile.linkedin_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 font-medium text-[#530A5D] hover:underline">
-                        {t.viewProfile}
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                    {profile?.university && (
+                      <div>
+                        <Label className="text-muted-foreground text-sm">{t.labelUniversity}</Label>
+                        <p className="font-medium">{profile.university}</p>
+                      </div>
+                    )}
+                    {profile?.study_program && (
+                      <div>
+                        <Label className="text-muted-foreground text-sm">{t.labelStudyProgram}</Label>
+                        <p className="font-medium">{profile.study_program}</p>
+                      </div>
+                    )}
+                    {profile?.semester && (
+                      <div>
+                        <Label className="text-muted-foreground text-sm">{t.labelSemester}</Label>
+                        <p className="font-medium">
+                          {profile.semester}
+                          {t.semesterSuffix}
+                        </p>
+                      </div>
+                    )}
+                    {profile?.linkedin_url && (
+                      <div>
+                        <Label className="text-muted-foreground text-sm">{t.labelLinkedIn}</Label>
+                        <a
+                          href={profile.linkedin_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 font-medium text-[#530A5D] hover:underline">
+                          {t.viewProfile}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <AccountSettings
+                currentCategoryId={dashboardCategoryId}
+                currentCategoryName={dashboardCategoryName}
+                onUpdated={fetchDashboardData}
+              />
+            </div>
           </TabsContent>
 
           {/* Documents Tab */}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyJWT, JWTPayload } from "./auth"
+import { query } from "./db"
 
 export interface AuthenticatedRequest extends NextRequest {
   user?: JWTPayload
@@ -28,7 +29,25 @@ export function withAuth(handler: (req: AuthenticatedRequest) => Promise<NextRes
       return NextResponse.json({ success: false, error: "Invalid or expired token" }, { status: 401 })
     }
 
-    ;(req as AuthenticatedRequest).user = payload
+    const userResult = await query(
+      `SELECT u.id, u.email, u.role, u.category_id, u.admin_role_id, u.is_active
+       FROM users u
+       WHERE u.id = $1`,
+      [payload.userId]
+    )
+
+    if (userResult.rows.length === 0 || !userResult.rows[0].is_active) {
+      return NextResponse.json({ success: false, error: "Inactive or missing account" }, { status: 401 })
+    }
+
+    const user = userResult.rows[0]
+    ;(req as AuthenticatedRequest).user = {
+      ...payload,
+      email: user.email,
+      role: user.role,
+      categoryId: user.category_id || undefined,
+      adminRoleId: user.admin_role_id || undefined
+    }
     return handler(req as AuthenticatedRequest)
   }
 }

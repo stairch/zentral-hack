@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
     const result = await query(
       `SELECT u.id, u.email, u.first_name, u.last_name, u.role,
               COALESCE(ar.category_id, u.category_id) AS category_id,
+              u.is_active,
               u.admin_role_id,
               ar.name AS admin_role_name,
               ar.permissions AS role_permissions
@@ -52,6 +53,9 @@ export async function GET(request: NextRequest) {
     }
 
     const user = result.rows[0]
+    if (!user.is_active) {
+      return NextResponse.json({ error: "Inactive user" }, { status: 401 })
+    }
     console.log("[Verify] Returning user:", user.email)
 
     const permissions: string[] | null = Array.isArray(user.role_permissions) ? user.role_permissions : null

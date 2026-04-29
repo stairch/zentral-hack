@@ -21,6 +21,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string, firstName: string, lastName: string) => Promise<void>
   verify2FA: (email: string, code: string) => Promise<void>
+  refreshAuth: () => Promise<void>
   logout: () => void
 }
 
@@ -160,6 +161,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(data.data.token)
   }
 
+  const refreshAuth = async () => {
+    try {
+      const res = await fetch("/api/auth/verify", {
+        method: "GET",
+        credentials: "include",
+        headers: { "Cache-Control": "no-cache" }
+      })
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          setUser(null)
+          setToken(null)
+        }
+        return
+      }
+
+      const data = await res.json()
+      if (data.data?.user) {
+        setUser(data.data.user)
+        setToken(data.data.token || token || "authenticated")
+      }
+    } catch (error) {
+      console.error("Failed to refresh auth state:", error)
+    }
+  }
+
   const logout = async () => {
     try {
       await fetch("/api/auth/logout", {
@@ -175,7 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, signup, verify2FA, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, signup, verify2FA, refreshAuth, logout }}>
       {children}
     </AuthContext.Provider>
   )

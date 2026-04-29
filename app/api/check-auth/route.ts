@@ -15,11 +15,16 @@ export async function GET(request: NextRequest) {
     const payload = verifyJWT(token)
     if (!payload) return NextResponse.json({ error: "Invalid token" }, { status: 401 })
 
-    const result = await query("SELECT id, email, first_name, last_name, role FROM users WHERE id = $1", [
-      payload.userId
-    ])
+    const result = await query(
+      "SELECT id, email, first_name, last_name, role, is_active FROM users WHERE id = $1",
+      [payload.userId]
+    )
 
     if (result.rows.length === 0) return NextResponse.json({ error: "User not found" }, { status: 401 })
+
+    if (!result.rows[0].is_active) {
+      return NextResponse.json({ error: "Inactive user" }, { status: 401 })
+    }
 
     const user = result.rows[0]
     return successResponse({

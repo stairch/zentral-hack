@@ -10,6 +10,7 @@ export interface JWTPayload {
   role: "user" | "category_partner" | "admin"
   twoFaVerified?: boolean
   categoryId?: string
+  adminRoleId?: string
 }
 
 export function generateJWT(payload: JWTPayload): string {

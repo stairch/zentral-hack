@@ -35,6 +35,7 @@ export default function LoginPage() {
       noAccount: "Noch kein Konto?",
       registerNow: "Jetzt registrieren",
       twoFaTitle: "2-FAKTOR AUTH",
+      forgotPassword: "Passwort vergessen?",
       codeSentTo: "Code wurde an",
       codeSentSuffix: "gesendet",
       verificationCode: "Verifizierungscode",
@@ -59,6 +60,7 @@ export default function LoginPage() {
       noAccount: "Don't have an account?",
       registerNow: "Register now",
       twoFaTitle: "2-FACTOR AUTH",
+      forgotPassword: "Forgot password?",
       codeSentTo: "Code was sent to",
       codeSentSuffix: "",
       verificationCode: "Verification code",
@@ -180,6 +182,10 @@ export default function LoginPage() {
                 {t.noAccount}{" "}
                 <Link href="/anmeldung" className="font-medium text-[#530A5D] hover:underline">
                   {t.registerNow}
+                </Link>
+                <br />
+                <Link href="/auth/reset-password" className="font-medium text-[#530A5D] hover:underline">
+                  {t.forgotPassword}
                 </Link>
               </p>
             </>
