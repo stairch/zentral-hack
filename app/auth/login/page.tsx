@@ -240,7 +240,8 @@ export default function LoginPage() {
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault()
                     setShow2FA(false)
                     setCode2FA("")
                     setError(null)
