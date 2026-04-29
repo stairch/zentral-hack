@@ -25,8 +25,18 @@ async function postHandler(req: AuthenticatedRequest) {
   try {
     if (req.user?.role !== "admin") return validationError("Only admins can create categories")
 
-    const { name, nameEn, slug, description, descriptionEn, partnerName, partnerNameEn, color, icon } =
-      await req.json()
+    const {
+      name,
+      nameEn,
+      slug,
+      description,
+      descriptionEn,
+      partnerName,
+      partnerNameEn,
+      color,
+      textColor,
+      icon
+    } = await req.json()
 
     if (!name?.trim()) return validationError("German category name required")
     if (!slug?.trim()) return validationError("Slug required")
@@ -70,6 +80,10 @@ async function postHandler(req: AuthenticatedRequest) {
       columns.push("color")
       values.push(normalizeHexColor(color))
     }
+    if (availableColumns.has("text_color")) {
+      columns.push("text_color")
+      values.push(textColor || null)
+    }
     if (availableColumns.has("icon") && icon) {
       columns.push("icon")
       values.push(icon)
@@ -104,6 +118,7 @@ async function putHandler(req: AuthenticatedRequest) {
       partnerName,
       partnerNameEn,
       color,
+      textColor,
       icon,
       challengeDescription,
       challengeDescriptionEn,
@@ -196,6 +211,11 @@ async function putHandler(req: AuthenticatedRequest) {
     if (availableColumns.has("color") && typeof color === "string") {
       values.push(normalizeHexColor(color))
       fieldAssignments.push(`color = $${values.length}`)
+    }
+
+    if (availableColumns.has("text_color") && (typeof textColor === "string" || textColor === null)) {
+      values.push(typeof textColor === "string" && textColor.trim() ? textColor.trim() : null)
+      fieldAssignments.push(`text_color = $${values.length}`)
     }
 
     if (availableColumns.has("icon") && typeof icon === "string") {

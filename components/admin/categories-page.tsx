@@ -56,6 +56,7 @@ interface EditFormState {
   partnerName: string
   partnerNameEn: string
   color: string
+  textColor: string | null
   icon: string
   challengeDescription: string
   challengeDescriptionEn: string
@@ -82,6 +83,7 @@ export function AdminCategoriesPage() {
     partnerName: "",
     partnerNameEn: "",
     color: "#530A5D",
+    textColor: null,
     icon: "sparkles",
     challengeDescription: "",
     challengeDescriptionEn: "",
@@ -123,6 +125,10 @@ export function AdminCategoriesPage() {
           iconLabel: "Icon",
           iconPlaceholder: "Choose icon",
           colorLabel: "Color",
+          textColorLabel: "Text color",
+          textColorAuto: "Auto",
+          textColorDark: "Dark",
+          textColorLight: "Light",
           descriptionLabel: "Description",
           descriptionPlaceholder: "Describe this category and its challenge context...",
           challengeToggleLabel: "Show challenge description",
@@ -166,6 +172,10 @@ export function AdminCategoriesPage() {
           iconLabel: "Icon",
           iconPlaceholder: "Icon wählen",
           colorLabel: "Farbe",
+          textColorLabel: "Schriftfarbe",
+          textColorAuto: "Auto",
+          textColorDark: "Dunkel",
+          textColorLight: "Hell",
           descriptionLabel: "Beschreibung",
           descriptionPlaceholder: "Beschreibe diese Kategorie und ihre Herausforderungen...",
           challengeToggleLabel: "Challenge-Beschrieb anzeigen",
@@ -219,7 +229,7 @@ export function AdminCategoriesPage() {
     fetchCategories()
   }, [])
 
-  const updateEditForm = (field: keyof EditFormState, value: string) => {
+  const updateEditForm = (field: keyof EditFormState, value: string | boolean | null) => {
     setEditForm((current) => ({ ...current, [field]: value }))
   }
 
@@ -260,6 +270,7 @@ export function AdminCategoriesPage() {
           partnerName: editForm.partnerName,
           partnerNameEn: editForm.partnerNameEn,
           color: normalizeHexColor(editForm.color),
+          textColor: editForm.textColor || null,
           icon: editForm.icon,
           challengeDescription: editForm.challengeDescription,
           challengeDescriptionEn: editForm.challengeDescriptionEn,
@@ -439,6 +450,7 @@ export function AdminCategoriesPage() {
                               partnerName: category.partner_name || "",
                               partnerNameEn: category.partner_name_en || "",
                               color: presentation.color,
+                              textColor: (category as { text_color?: string | null }).text_color || null,
                               icon: presentation.iconName,
                               challengeDescription: category.challenge_description || "",
                               challengeDescriptionEn: category.challenge_description_en || "",
@@ -582,6 +594,28 @@ export function AdminCategoriesPage() {
                                       onChange={(e) => updateEditForm("color", e.target.value)}
                                       placeholder="#530A5D"
                                     />
+                                  </div>
+                                </div>
+                                <div>
+                                  <Label>{text.textColorLabel}</Label>
+                                  <div className="mt-1 flex gap-2">
+                                    {[
+                                      { value: null, label: text.textColorAuto },
+                                      { value: "#111111", label: text.textColorDark },
+                                      { value: "#FFFFFF", label: text.textColorLight }
+                                    ].map((opt) => (
+                                      <button
+                                        key={opt.label}
+                                        type="button"
+                                        onClick={() => updateEditForm("textColor", opt.value)}
+                                        className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
+                                          editForm.textColor === opt.value
+                                            ? "border-primary bg-primary text-primary-foreground"
+                                            : "border-border hover:bg-muted"
+                                        }`}>
+                                        {opt.label}
+                                      </button>
+                                    ))}
                                   </div>
                                 </div>
                               </div>
