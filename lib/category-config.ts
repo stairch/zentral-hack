@@ -33,7 +33,6 @@ export interface CategoryRecord {
   partner_name?: string | null
   partner_name_en?: string | null
   color?: string | null
-  text_color?: string | null
   icon?: string | null
   challenge_description?: string | null
   challenge_description_en?: string | null
@@ -152,22 +151,6 @@ export function getReadableTextColor(backgroundHex: string): "#111111" | "#FFFFF
   return brightness > 155 ? "#111111" : "#FFFFFF"
 }
 
-export function getReadableAccentColor(hex: string): string {
-  const normalized = normalizeHexColor(hex)
-  let r = Number.parseInt(normalized.slice(1, 3), 16)
-  let g = Number.parseInt(normalized.slice(3, 5), 16)
-  let b = Number.parseInt(normalized.slice(5, 7), 16)
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000
-
-  if (brightness <= 80) return normalized
-
-  const factor = 80 / brightness
-  r = Math.round(r * factor)
-  g = Math.round(g * factor)
-  b = Math.round(b * factor)
-  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`
-}
-
 export function hexToRgba(hex: string, alpha: number): string {
   const normalized = normalizeHexColor(hex)
   const red = Number.parseInt(normalized.slice(1, 3), 16)
@@ -251,8 +234,7 @@ export function getCategoryPresentationByLanguage(category: CategoryRecord, lang
     description: localizedDescription,
     partnerName: localizedPartnerName,
     color,
-    textColor: category.text_color || getReadableTextColor(color),
-    accentColor: getReadableAccentColor(color),
+    textColor: getReadableTextColor(color),
     icon: categoryIconMap[iconName],
     iconName,
     challengeDescription: localizedChallengeDescription,

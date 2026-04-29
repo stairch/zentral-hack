@@ -23,7 +23,6 @@ interface DisplayCategory {
   icon: React.ComponentType<{ className?: string }>
   color: string
   textColor: string
-  accentColor: string
   partnerName: string
   challengeDescription: string
   challengeStatus: string | null
@@ -317,7 +316,7 @@ export function Categories() {
                           className="mb-4 inline-block rounded-full px-3 py-1 text-[11px] font-bold tracking-widest uppercase"
                           style={{
                             backgroundColor: selectedCategory.color + "18",
-                            color: selectedCategory.accentColor
+                            color: selectedCategory.color
                           }}>
                           {text.challengeOverview}
                         </span>
@@ -362,12 +361,12 @@ export function Categories() {
                               <div
                                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
                                 style={{ backgroundColor: selectedCategory.color + "20" }}>
-                                <Trophy className="h-4 w-4" style={{ color: selectedCategory.accentColor }} />
+                                <Trophy className="h-4 w-4" style={{ color: selectedCategory.color }} />
                               </div>
                               <div>
                                 <p
                                   className="mb-0.5 text-[11px] font-bold tracking-widest uppercase"
-                                  style={{ color: selectedCategory.accentColor }}>
+                                  style={{ color: selectedCategory.color }}>
                                   {text.prize}
                                 </p>
                                 <p className="text-foreground text-lg font-bold">{selectedCategory.prize}</p>
@@ -405,7 +404,7 @@ export function Categories() {
                                 </div>
                                 <ArrowRight
                                   className="text-muted-foreground ml-3 h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1"
-                                  style={{ color: selectedCategory.accentColor }}
+                                  style={{ color: selectedCategory.color }}
                                 />
                               </button>
                             ))}
@@ -453,7 +452,7 @@ export function Categories() {
                         <div>
                           <p
                             className="text-[11px] font-bold tracking-widest uppercase"
-                            style={{ color: selectedCategory.accentColor }}>
+                            style={{ color: selectedCategory.color }}>
                             {selectedCategory.title}
                           </p>
                         </div>
@@ -558,15 +557,12 @@ export function Categories() {
                                   <div
                                     className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
                                     style={{ backgroundColor: selectedCategory.color + "20" }}>
-                                    <Trophy
-                                      className="h-5 w-5"
-                                      style={{ color: selectedCategory.accentColor }}
-                                    />
+                                    <Trophy className="h-5 w-5" style={{ color: selectedCategory.color }} />
                                   </div>
                                   <div>
                                     <p
                                       className="mb-0.5 text-[11px] font-bold tracking-widest uppercase"
-                                      style={{ color: selectedCategory.accentColor }}>
+                                      style={{ color: selectedCategory.color }}>
                                       {text.prize}
                                     </p>
                                     <p className="text-foreground text-xl font-bold">{prizeText}</p>

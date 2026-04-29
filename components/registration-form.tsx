@@ -22,7 +22,6 @@ interface DisplayCategory {
   description: string
   color: string
   textColor: string
-  accentColor: string
   icon: React.ComponentType<{ className?: string }>
   partnerName: string
 }
@@ -206,7 +205,6 @@ export function RegistrationForm() {
               description: p.description,
               color: p.color,
               textColor: p.textColor,
-              accentColor: p.accentColor,
               icon: p.icon,
               partnerName: p.partnerName
             }
@@ -501,10 +499,10 @@ export function RegistrationForm() {
                       backgroundColor: selectedCategory.color + "22",
                       borderLeft: `3px solid ${selectedCategory.color}`
                     }}>
-                    <span style={{ color: selectedCategory.accentColor }}>
+                    <span style={{ color: selectedCategory.color }}>
                       <selectedCategory.icon className="h-5 w-5 shrink-0" />
                     </span>
-                    <span className="text-sm font-semibold" style={{ color: selectedCategory.accentColor }}>
+                    <span className="text-sm font-semibold" style={{ color: selectedCategory.color }}>
                       {selectedCategory.name}
                     </span>
                   </div>
@@ -559,10 +557,10 @@ export function RegistrationForm() {
                       backgroundColor: selectedCategory.color + "22",
                       borderLeft: `3px solid ${selectedCategory.color}`
                     }}>
-                    <span style={{ color: selectedCategory.accentColor }}>
+                    <span style={{ color: selectedCategory.color }}>
                       <selectedCategory.icon className="h-5 w-5 shrink-0" />
                     </span>
-                    <span className="text-sm font-semibold" style={{ color: selectedCategory.accentColor }}>
+                    <span className="text-sm font-semibold" style={{ color: selectedCategory.color }}>
                       {selectedCategory.name}
                     </span>
                   </div>
@@ -655,10 +653,10 @@ export function RegistrationForm() {
                       backgroundColor: selectedCategory.color + "22",
                       borderLeft: `3px solid ${selectedCategory.color}`
                     }}>
-                    <span style={{ color: selectedCategory.accentColor }}>
+                    <span style={{ color: selectedCategory.color }}>
                       <selectedCategory.icon className="h-5 w-5 shrink-0" />
                     </span>
-                    <span className="text-sm font-semibold" style={{ color: selectedCategory.accentColor }}>
+                    <span className="text-sm font-semibold" style={{ color: selectedCategory.color }}>
                       {selectedCategory.name}
                     </span>
                   </div>
