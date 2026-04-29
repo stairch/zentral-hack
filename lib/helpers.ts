@@ -23,3 +23,21 @@ export function normalizeHexColor(value: string): string {
   const trimmed = value.trim()
   return trimmed.toUpperCase()
 }
+
+export function isDarkContrastForegroundColor(hexColor: string): boolean {
+  const hex = hexColor.replace("#", "")
+  if (!/^[0-9A-Fa-f]{6}$/.test(hex)) {
+    return false
+  }
+
+  const r = Number.parseInt(hex.slice(0, 2), 16)
+  const g = Number.parseInt(hex.slice(2, 4), 16)
+  const b = Number.parseInt(hex.slice(4, 6), 16)
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000
+
+  return brightness > 165 ? true : false
+}
+
+export function getContrastForegroundColor(hexColor: string): string {
+  return isDarkContrastForegroundColor(hexColor) ? "#1A1A1A" : "#FFFFFF"
+}

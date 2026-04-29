@@ -13,6 +13,7 @@ import {
   type CategoryRecord
 } from "@/lib/category-config"
 import { useLanguage } from "@/lib/language-context"
+import { getContrastForegroundColor, isDarkContrastForegroundColor } from "@/lib/helpers"
 
 interface DisplayCategory {
   id?: string
@@ -301,121 +302,127 @@ export function Categories() {
           </VisuallyHidden>
           <DialogContent className="h-[82vh] w-[92vw] max-w-none min-w-[360px] overflow-hidden border-0 p-0 sm:h-[86vh] sm:max-w-2xl sm:min-w-[600px]">
             {selectedCategory ? (
-              <div className="relative h-full min-h-0 bg-gradient-to-br from-[#530A5D] via-[#6F177A] to-[#E6FF17] p-[1px]">
-                <div className="bg-background relative flex h-full min-h-0 flex-col overflow-hidden rounded-[2px]">
+              <div className="relative h-full min-h-0">
+                <div className="bg-background relative flex h-full min-h-0 flex-col overflow-hidden">
                   {!isChallengeBrowserOpen ? (
                     /* ── OVERVIEW ── */
-                    <>
-                      {/* Colored top accent */}
-                      <div className="h-1 w-full shrink-0" style={{ background: selectedCategory.color }} />
-
+                    <div className="flex h-full min-h-0 flex-col">
                       {/* Scrollable body */}
-                      <div className="flex-1 overflow-y-auto overscroll-contain px-6 pt-6 pb-4 md:px-8">
-                        {/* Badge */}
-                        <span
-                          className="mb-4 inline-block rounded-full px-3 py-1 text-[11px] font-bold tracking-widest uppercase"
-                          style={{
-                            backgroundColor: selectedCategory.color + "18",
-                            color: selectedCategory.color
-                          }}>
-                          {text.challengeOverview}
-                        </span>
+                      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                        <div
+                          className="flex-1 px-6 pt-6 pb-4 md:px-8"
+                          style={{ backgroundColor: selectedCategory.color }}>
+                          {/* Badge */}
+                          <span
+                            className="mb-4 inline-block rounded-full px-3 py-1 text-[11px] font-bold tracking-widest uppercase"
+                            style={{
+                              backgroundColor: `color-mix(in srgb, ${selectedCategory.color} 100%, ${isDarkContrastForegroundColor(selectedCategory.color) ? "black" : "white"} 10%)`,
+                              color: getContrastForegroundColor(selectedCategory.color)
+                            }}>
+                            {text.challengeOverview}
+                          </span>
+                          {/* Title */}
+                          <h2
+                            className="font-display mb-3 text-3xl leading-tight font-bold md:text-4xl"
+                            style={{ color: getContrastForegroundColor(selectedCategory.color) }}>
+                            {selectedCategory.title}
+                          </h2>
+                        </div>
+                        <div className="flex-2 px-6 pt-6 pb-4 md:px-8">
+                          {/* Description */}
+                          <p className="text-muted-foreground mb-6 text-base leading-relaxed">
+                            {selectedCategory.description}
+                          </p>
 
-                        {/* Title */}
-                        <h2 className="font-display mb-3 text-3xl leading-tight font-bold md:text-4xl">
-                          {selectedCategory.title}
-                        </h2>
-
-                        {/* Description */}
-                        <p className="text-muted-foreground mb-6 text-base leading-relaxed">
-                          {selectedCategory.description}
-                        </p>
-
-                        {/* Partner + Target group */}
-                        <div className="mb-6 flex flex-wrap gap-x-6 gap-y-2">
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-                              {text.partner}
-                            </span>
-                            <span className="text-sm font-medium">{selectedCategory.partnerName}</span>
-                          </div>
-                          {selectedCategory.targetGroup && (
+                          {/* Partner + Target group */}
+                          <div className="mb-6 flex flex-col gap-y-2">
                             <div className="flex items-baseline gap-2">
                               <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-                                {text.targetGroup}
+                                {text.partner}
                               </span>
-                              <span className="text-sm font-medium">{selectedCategory.targetGroup}</span>
+                              <span className="text-sm font-medium">{selectedCategory.partnerName}</span>
+                            </div>
+                            {selectedCategory.targetGroup && (
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                                  {text.targetGroup}
+                                </span>
+                                <span className="text-sm font-medium">{selectedCategory.targetGroup}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Category-level prize (only when no individual challenges) */}
+                          {availableChallenges.length === 0 && selectedCategory.prize && (
+                            <div
+                              className="mb-5 rounded-2xl border border-neutral-200 p-4"
+                              style={{
+                                backgroundColor: selectedCategory.color + "14"
+                              }}>
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                                  style={{ backgroundColor: selectedCategory.color }}>
+                                  <Trophy
+                                    className="h-4 w-4"
+                                    style={{
+                                      color: `color-mix(in srgb, ${selectedCategory.color} 40%, ${isDarkContrastForegroundColor(selectedCategory.color) ? "black" : "white"} 100%)`
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                                    {text.prize}
+                                  </p>
+                                  <p className="text-foreground text-lg font-bold">
+                                    {selectedCategory.prize}
+                                  </p>
+                                </div>
+                              </div>
                             </div>
                           )}
-                        </div>
 
-                        {/* Category-level prize (only when no individual challenges) */}
-                        {availableChallenges.length === 0 && selectedCategory.prize && (
-                          <div
-                            className="mb-5 rounded-2xl border p-4"
-                            style={{
-                              backgroundColor: selectedCategory.color + "0d",
-                              borderColor: selectedCategory.color + "40"
-                            }}>
-                            <div className="flex items-center gap-3">
-                              <div
-                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-                                style={{ backgroundColor: selectedCategory.color + "20" }}>
-                                <Trophy className="h-4 w-4" style={{ color: selectedCategory.color }} />
-                              </div>
-                              <div>
-                                <p
-                                  className="mb-0.5 text-[11px] font-bold tracking-widest uppercase"
-                                  style={{ color: selectedCategory.color }}>
-                                  {text.prize}
-                                </p>
-                                <p className="text-foreground text-lg font-bold">{selectedCategory.prize}</p>
-                              </div>
+                          {/* Divider */}
+                          <div className="border-border mb-5 border-t" />
+
+                          {/* Challenge list or empty state */}
+                          {availableChallenges.length > 0 ? (
+                            <div className="space-y-2">
+                              <p className="text-muted-foreground mb-3 text-xs font-semibold tracking-wider uppercase">
+                                {text.challengesAvailable(availableChallenges.length)}
+                              </p>
+                              {availableChallenges.map((challenge) => (
+                                <button
+                                  key={challenge.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedChallengeId(challenge.id)
+                                    setIsChallengeBrowserOpen(true)
+                                  }}
+                                  className="border-border hover:border-opacity-60 group hover:bg-muted/40 flex w-full items-center justify-between rounded-xl border bg-transparent px-4 py-3.5 text-left transition-all"
+                                  style={{ ["--hover-border" as string]: selectedCategory.color }}>
+                                  <div className="min-w-0">
+                                    <p className="truncate font-semibold">{challenge.title}</p>
+                                    {challenge.short_description && (
+                                      <p className="text-muted-foreground mt-0.5 line-clamp-1 text-sm">
+                                        {challenge.short_description}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <ArrowRight
+                                    className="text-muted-foreground ml-3 h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1"
+                                    style={{ color: getContrastForegroundColor(selectedCategory.color) }}
+                                  />
+                                </button>
+                              ))}
                             </div>
-                          </div>
-                        )}
-
-                        {/* Divider */}
-                        <div className="border-border mb-5 border-t" />
-
-                        {/* Challenge list or empty state */}
-                        {availableChallenges.length > 0 ? (
-                          <div className="space-y-2">
-                            <p className="text-muted-foreground mb-3 text-xs font-semibold tracking-wider uppercase">
-                              {text.challengesAvailable(availableChallenges.length)}
+                          ) : (
+                            <p className="text-muted-foreground rounded-xl border border-dashed px-4 py-5 text-sm">
+                              {text.noChallengeAvailable}
                             </p>
-                            {availableChallenges.map((challenge) => (
-                              <button
-                                key={challenge.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedChallengeId(challenge.id)
-                                  setIsChallengeBrowserOpen(true)
-                                }}
-                                className="border-border hover:border-opacity-60 group hover:bg-muted/40 flex w-full items-center justify-between rounded-xl border bg-transparent px-4 py-3.5 text-left transition-all"
-                                style={{ ["--hover-border" as string]: selectedCategory.color }}>
-                                <div className="min-w-0">
-                                  <p className="truncate font-semibold">{challenge.title}</p>
-                                  {challenge.short_description && (
-                                    <p className="text-muted-foreground mt-0.5 line-clamp-1 text-sm">
-                                      {challenge.short_description}
-                                    </p>
-                                  )}
-                                </div>
-                                <ArrowRight
-                                  className="text-muted-foreground ml-3 h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1"
-                                  style={{ color: selectedCategory.color }}
-                                />
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-muted-foreground rounded-xl border border-dashed px-4 py-5 text-sm">
-                            {text.noChallengeAvailable}
-                          </p>
-                        )}
+                          )}
+                        </div>
                       </div>
-
                       {/* Footer buttons */}
                       <div className="border-border shrink-0 border-t px-6 py-4 md:px-8">
                         <div className="flex gap-3">
@@ -443,7 +450,7 @@ export function Categories() {
                           </Button>
                         </div>
                       </div>
-                    </>
+                    </div>
                   ) : (
                     /* ── CHALLENGE BROWSER ── */
                     <>
@@ -452,7 +459,7 @@ export function Categories() {
                         <div>
                           <p
                             className="text-[11px] font-bold tracking-widest uppercase"
-                            style={{ color: selectedCategory.color }}>
+                            style={{ color: getContrastForegroundColor(selectedCategory.color) }}>
                             {selectedCategory.title}
                           </p>
                         </div>
@@ -557,12 +564,15 @@ export function Categories() {
                                   <div
                                     className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
                                     style={{ backgroundColor: selectedCategory.color + "20" }}>
-                                    <Trophy className="h-5 w-5" style={{ color: selectedCategory.color }} />
+                                    <Trophy
+                                      className="h-5 w-5"
+                                      style={{ color: getContrastForegroundColor(selectedCategory.color) }}
+                                    />
                                   </div>
                                   <div>
                                     <p
                                       className="mb-0.5 text-[11px] font-bold tracking-widest uppercase"
-                                      style={{ color: selectedCategory.color }}>
+                                      style={{ color: getContrastForegroundColor(selectedCategory.color) }}>
                                       {text.prize}
                                     </p>
                                     <p className="text-foreground text-xl font-bold">{prizeText}</p>

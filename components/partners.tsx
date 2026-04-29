@@ -5,7 +5,8 @@ import { motion, useInView } from "framer-motion"
 import { SponsorshipModal } from "./sponsorship-modal"
 import { useLanguage } from "@/lib/language-context"
 import { Emails } from "@/lib/constants"
-import { getSponsorContrastTextColor, getSponsorPackageByLanguage } from "@/lib/sponsorship-packages"
+import { getSponsorPackageByLanguage } from "@/lib/sponsorship-packages"
+import { getContrastForegroundColor } from "@/lib/helpers"
 import { type SponsorPackage } from "@/lib/sponsorship-packages"
 
 interface Sponsor {
@@ -190,7 +191,7 @@ function TierCard({
   const { language } = useLanguage()
   const localizedTier = getSponsorPackageByLanguage(tier, language)
   const tierColor = localizedTier.color || "#530A5D"
-  const textColor = getSponsorContrastTextColor(tierColor)
+  const textColor = getContrastForegroundColor(tierColor)
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -404,7 +405,7 @@ export function Partners() {
                         className="w-fit rounded-md px-5"
                         style={{
                           background: localizedPkg.color,
-                          color: getSponsorContrastTextColor(localizedPkg.color)
+                          color: getContrastForegroundColor(localizedPkg.color)
                         }}>
                         {label} SPONSOREN
                       </div>

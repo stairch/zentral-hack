@@ -30,20 +30,6 @@ export type SponsorPackageLocale = {
   price_status: SponsorPackagePriceStatus
 }
 
-export function getSponsorContrastTextColor(hexColor: string): string {
-  const hex = (hexColor || "#530A5D").replace("#", "")
-  if (!/^[0-9A-Fa-f]{6}$/.test(hex)) {
-    return "#FFFFFF"
-  }
-
-  const r = Number.parseInt(hex.slice(0, 2), 16)
-  const g = Number.parseInt(hex.slice(2, 4), 16)
-  const b = Number.parseInt(hex.slice(4, 6), 16)
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000
-
-  return brightness > 165 ? "#1A1A1A" : "#FFFFFF"
-}
-
 export function formatSponsorPackagePrice(price: number, language: "de" | "en"): string {
   return new Intl.NumberFormat(language === "en" ? "en-CH" : "de-CH", {
     style: "currency",
