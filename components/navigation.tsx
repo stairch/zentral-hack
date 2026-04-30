@@ -59,6 +59,11 @@ export function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  // deactivate scroll when menu open
+  useEffect(() => {
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : ""
+  }, [isMobileMenuOpen])
+
   return (
     <>
       <motion.header

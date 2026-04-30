@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -85,6 +85,11 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
   const { logout, user } = useAuth()
   const { language, setLanguage } = useLanguage()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // deactivate scroll when menu open
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : ""
+  }, [mobileMenuOpen])
 
   const isAdmin = user?.role === "admin"
   const text = copy[language]
