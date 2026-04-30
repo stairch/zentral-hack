@@ -259,12 +259,12 @@ export function AdminRolesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">{text.heading}</h1>
           <p className="text-muted-foreground">{text.subtitle}</p>
         </div>
-        <Button onClick={openCreate} className="gap-2">
+        <Button onClick={openCreate} className="w-full shrink-0 gap-2 sm:w-auto">
           <Plus className="h-4 w-4" />
           {text.newRole}
         </Button>

@@ -381,13 +381,13 @@ export function AdminCategoriesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-foreground font-display text-3xl font-bold">{text.heading}</h1>
           <p className="text-muted-foreground mt-2">{text.subtitle}</p>
         </div>
         {isAdmin && (
-          <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+          <Button onClick={() => setCreateDialogOpen(true)} className="w-full shrink-0 gap-2 sm:w-auto">
             <Plus className="h-4 w-4" />
             {language === "en" ? "New Category" : "Neue Kategorie"}
           </Button>

@@ -249,7 +249,7 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
             <BrandMark className="w-32" imageClassName="drop-shadow-sm" priority />
           </Link>
           <button
-            className="text-muted-foreground hover:text-foreground -mr-1 -mt-1 p-1 lg:hidden"
+            className="text-muted-foreground hover:text-foreground -mt-1 -mr-1 p-1 lg:hidden"
             onClick={() => setMobileMenuOpen(false)}
             aria-label="Close menu">
             <X className="h-5 w-5" />

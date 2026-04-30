@@ -422,13 +422,13 @@ export function UsersAdminPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">{text.heading}</h1>
           <p className="text-muted-foreground">{isAdmin ? text.subtitleAdmin : text.subtitlePartner}</p>
         </div>
         {isAdmin && (
-          <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+          <Button onClick={() => setCreateDialogOpen(true)} className="w-full shrink-0 gap-2 sm:w-auto">
             <UserPlus className="h-4 w-4" />
             {text.createUser}
           </Button>
