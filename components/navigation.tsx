@@ -11,18 +11,18 @@ import { BrandMark } from "@/components/brand-mark"
 
 const navItems = {
   de: [
-    { label: "Über uns", href: "#about" },
-    { label: "Kategorien", href: "#categories" },
-    { label: "Zeitplan", href: "#schedule" },
-    { label: "Partner", href: "#partners" },
-    { label: "FAQ", href: "#faq" }
+    { label: "Über uns", href: "/#about" },
+    { label: "Kategorien", href: "/#categories" },
+    { label: "Zeitplan", href: "/#schedule" },
+    { label: "Partner", href: "/#partners" },
+    { label: "FAQ", href: "/#faq" }
   ],
   en: [
-    { label: "About", href: "#about" },
-    { label: "Categories", href: "#categories" },
-    { label: "Schedule", href: "#schedule" },
-    { label: "Partners", href: "#partners" },
-    { label: "FAQ", href: "#faq" }
+    { label: "About", href: "/#about" },
+    { label: "Categories", href: "/#categories" },
+    { label: "Schedule", href: "/#schedule" },
+    { label: "Partners", href: "/#partners" },
+    { label: "FAQ", href: "/#faq" }
   ]
 }
 

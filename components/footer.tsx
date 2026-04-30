@@ -10,16 +10,16 @@ import { BrandMark } from "@/components/brand-mark"
 const footerLinks = {
   event: {
     de: [
-      { label: "Über uns", href: "#about" },
-      { label: "Kategorien", href: "#categories" },
-      { label: "Zeitplan", href: "#schedule" },
-      { label: "FAQ", href: "#faq" }
+      { label: "Über uns", href: "/#about" },
+      { label: "Kategorien", href: "/#categories" },
+      { label: "Zeitplan", href: "/#schedule" },
+      { label: "FAQ", href: "/#faq" }
     ],
     en: [
-      { label: "About", href: "#about" },
-      { label: "Categories", href: "#categories" },
-      { label: "Schedule", href: "#schedule" },
-      { label: "FAQ", href: "#faq" }
+      { label: "About", href: "/#about" },
+      { label: "Categories", href: "/#categories" },
+      { label: "Schedule", href: "/#schedule" },
+      { label: "FAQ", href: "/#faq" }
     ]
   },
   legal: {
