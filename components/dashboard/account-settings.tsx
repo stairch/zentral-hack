@@ -344,7 +344,7 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
           <p className="mt-1 font-medium">{categoryLabel}</p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
           <Card className="border-border/60">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -556,7 +556,7 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
             </CardContent>
           </Card>
 
-          <Card className="border-destructive/20 bg-destructive/5 lg:col-span-2">
+          <Card className="border-destructive/20 bg-destructive/5 md:col-span-2">
             <CardHeader>
               <CardTitle className="text-destructive flex items-center gap-2 text-lg">
                 <Trash2 className="h-4 w-4" />

@@ -355,11 +355,12 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
           <Link href="/" className="inline-block" aria-label={t.homeAriaLabel}>
             <BrandMark className="w-32 sm:w-36" imageClassName="drop-shadow-sm" priority />
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {(user?.role === "admin" || user?.role === "category_partner") && (
               <Link href="/admin">
-                <Button variant="outline" size="sm">
-                  {t.adminPanel}
+                <Button variant="outline" size="sm" className="gap-2">
+                  <ExternalLink className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t.adminPanel}</span>
                 </Button>
               </Link>
             )}
@@ -367,14 +368,14 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
               <SelectTrigger className="w-20 text-sm">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent align="end">
                 <SelectItem value="de">DE</SelectItem>
                 <SelectItem value="en">EN</SelectItem>
               </SelectContent>
             </Select>
             <Button variant="outline" onClick={handleLogout} disabled={loggingOut} className="gap-2">
               {loggingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
-              {t.logout}
+              <span className="hidden sm:inline">{t.logout}</span>
             </Button>
           </div>
         </div>
@@ -383,7 +384,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       <div className="container mx-auto px-4 py-8">
         {/* Welcome */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="text-foreground mb-2 text-3xl font-bold">
+          <h1 className="text-foreground mb-2 text-2xl font-bold sm:text-3xl">
             {t.greeting(profile?.first_name || user?.email || "")}
           </h1>
           <p className="text-muted-foreground">{t.welcomeSubtitle}</p>
@@ -428,22 +429,21 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
         {/* Main Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList
-            className={`grid w-full ${showTeamTab || showChallengeTab ? "grid-cols-3" : "grid-cols-2"} lg:inline-grid lg:w-auto`}>
+            className={`grid w-full ${showTeamTab || showChallengeTab ? "grid-cols-3" : "grid-cols-2"} sm:inline-grid sm:w-auto`}>
             <TabsTrigger value="profile" className="gap-2">
-              <UserIcon className="h-4 w-4" />
-              {t.tabProfile}
+              <UserIcon className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">{t.tabProfile}</span>
             </TabsTrigger>
             <TabsTrigger value="documents" className="gap-2">
-              <FileText className="h-4 w-4" />
-              {t.tabDocuments}
+              <FileText className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">{t.tabDocuments}</span>
             </TabsTrigger>
             {showChallengeTab && (
-              <TabsTrigger value="challenge" className="gap-2">
-                <FolderOpen className="h-4 w-4" />
-                {t.tabChallenges}
+              <TabsTrigger value="challenge" className="gap-1.5">
+                <FolderOpen className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">{t.tabChallenges}</span>
                 {!showChallenges && (
-                  <div
-                    className={`text-muted-foreground flex items-center gap-1 rounded-sm border border-neutral-200 bg-neutral-50 px-1.5 py-0.5 text-xs`}>
+                  <div className="text-muted-foreground flex items-center gap-1 rounded-sm border border-neutral-200 bg-neutral-50 px-1.5 py-0.5 text-xs">
                     <Lock className="h-3 w-3" />
                   </div>
                 )}
@@ -451,8 +451,8 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
             )}
             {showTeamTab && (
               <TabsTrigger value="team" className="gap-2">
-                <Users className="h-4 w-4" />
-                {t.tabTeam}
+                <Users className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">{t.tabTeam}</span>
               </TabsTrigger>
             )}
           </TabsList>
@@ -466,7 +466,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                   <CardDescription>{t.profileSubtitle}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <Label className="text-muted-foreground text-sm">{t.labelEmail}</Label>
                       <p className="font-medium">{user?.email}</p>
@@ -541,12 +541,12 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                         <div
                           key={doc.id}
                           className="border-border hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <FileText className="h-5 w-5 text-[#530A5D]" />
-                            <div>
-                              <p className="font-medium">{doc.name}</p>
+                          <div className="flex min-w-0 items-center gap-3">
+                            <FileText className="h-5 w-5 shrink-0 text-[#530A5D]" />
+                            <div className="min-w-0">
+                              <p className="truncate font-medium">{doc.name}</p>
                               {doc.description && (
-                                <p className="text-muted-foreground text-sm">{doc.description}</p>
+                                <p className="text-muted-foreground truncate text-sm">{doc.description}</p>
                               )}
                             </div>
                           </div>
@@ -576,12 +576,12 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                         <div
                           key={doc.id}
                           className="border-border hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <FileText className="h-5 w-5 text-[#530A5D]" />
-                            <div>
-                              <p className="font-medium">{doc.name}</p>
+                          <div className="flex min-w-0 items-center gap-3">
+                            <FileText className="h-5 w-5 shrink-0 text-[#530A5D]" />
+                            <div className="min-w-0">
+                              <p className="truncate font-medium">{doc.name}</p>
                               {doc.description && (
-                                <p className="text-muted-foreground text-sm">{doc.description}</p>
+                                <p className="text-muted-foreground truncate text-sm">{doc.description}</p>
                               )}
                             </div>
                           </div>
