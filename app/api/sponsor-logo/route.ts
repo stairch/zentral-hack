@@ -32,18 +32,16 @@ export async function GET(request: NextRequest) {
     }
 
     const contentType = blobResponse.headers.get("content-type") || "image/png"
-    const contentLength = blobResponse.headers.get("content-length")
+    const buffer = await blobResponse.arrayBuffer()
 
-    const headers = new Headers({
-      "Content-Type": contentType,
-      "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800"
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        "Content-Type": contentType,
+        "Content-Length": String(buffer.byteLength),
+        "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800"
+      }
     })
-
-    if (contentLength) {
-      headers.set("Content-Length", contentLength)
-    }
-
-    return new NextResponse(blobResponse.body, { status: 200, headers })
   } catch (error) {
     console.error("[Sponsor logo proxy] Error:", error)
     return new NextResponse(null, { status: 500 })

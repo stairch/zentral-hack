@@ -18,15 +18,16 @@ async function handleGet(req: AuthenticatedRequest) {
     }
 
     const contentType = blobResponse.headers.get("content-type") || "image/png"
-    const contentLength = blobResponse.headers.get("content-length")
+    const buffer = await blobResponse.arrayBuffer()
 
-    const headers = new Headers({
-      "Content-Type": contentType,
-      "Cache-Control": "private, max-age=300"
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        "Content-Type": contentType,
+        "Content-Length": String(buffer.byteLength),
+        "Cache-Control": "private, max-age=300"
+      }
     })
-    if (contentLength) headers.set("Content-Length", contentLength)
-
-    return new NextResponse(blobResponse.body, { status: 200, headers })
   } catch (error) {
     console.error("[Blob preview proxy] Error:", error)
     return new NextResponse(null, { status: 500 })
