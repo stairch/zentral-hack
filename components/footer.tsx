@@ -36,7 +36,7 @@ const footerLinks = {
   },
   social: [
     { icon: Instagram, href: "https://www.instagram.com/zentralhack/", label: "Instagram" },
-    { icon: Mail, href: Emails.infoZentralHack, label: "E-Mail" }
+    { icon: Mail, href: `mailto:${Emails.infoZentralHack}`, label: "E-Mail" }
   ]
 }
 
