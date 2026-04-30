@@ -168,7 +168,6 @@ export function AdminPartnerLogosPage() {
   }
 
   const handleUpload = async (file: File) => {
-    // Show client-side preview immediately while uploading
     const localPreview = URL.createObjectURL(file)
     setPreviewUrl(localPreview)
     try {

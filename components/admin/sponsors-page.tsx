@@ -716,8 +716,8 @@ function PublishDialog({
                   <PreviewMarqueeRow
                     currentLogo={
                       localPreviewUrl ||
-                      (form.logoUrl === contact.logo_url && form.logoUrl.startsWith("https://")
-                        ? `/api/sponsor-logo?id=${contact.id}`
+                      (form.logoUrl.startsWith("https://")
+                        ? `/api/admin/blob-preview?url=${encodeURIComponent(form.logoUrl)}`
                         : form.logoUrl)
                     }
                     currentBgColor={form.logoBgColor}
