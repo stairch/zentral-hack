@@ -264,12 +264,12 @@ export function AdminSchedulePage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-3xl font-bold">{text.heading}</h1>
           <p className="text-muted-foreground mt-2">{text.subtitle}</p>
         </div>
-        <Button onClick={() => openNew()}>
+        <Button onClick={() => openNew()} className="w-full shrink-0 sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           {text.newEntry}
         </Button>
@@ -293,12 +293,12 @@ export function AdminSchedulePage() {
       {/* Timeline preview */}
       <div className="space-y-3">
         {dayItems.length === 0 && <p className="text-muted-foreground py-8 text-center">{text.noEntries}</p>}
-        {dayItems.map((item, index) => {
-          const isLeft = index % 2 === 0
-          return (
-            <Card key={item.id} className="overflow-hidden">
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className="flex shrink-0 flex-col gap-1">
+        {dayItems.map((item, index) => (
+          <Card key={item.id} className="overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                {/* Sort controls */}
+                <div className="flex shrink-0 flex-col gap-0.5">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -317,23 +317,23 @@ export function AdminSchedulePage() {
                   </Button>
                 </div>
 
+                {/* Time badge */}
                 <div className="bg-primary/10 text-primary shrink-0 rounded-full px-3 py-1 text-sm font-bold">
                   {item.time}
                 </div>
 
+                {/* Title + description */}
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold">{language === "en" ? item.title_en : item.title_de}</p>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="truncate font-semibold">
+                    {language === "en" ? item.title_en : item.title_de}
+                  </p>
+                  <p className="text-muted-foreground truncate text-sm">
                     {language === "en" ? item.description_en : item.description_de}
                   </p>
                 </div>
 
-                <div
-                  className={`text-muted-foreground shrink-0 rounded border px-2 py-1 text-xs ${isLeft ? "border-blue-200 text-blue-600" : "border-orange-200 text-orange-600"}`}>
-                  {isLeft ? text.left : text.right}
-                </div>
-
-                <div className="flex shrink-0 gap-1">
+                {/* Actions — hidden on mobile, shown on sm+ */}
+                <div className="hidden shrink-0 gap-1 sm:flex">
                   <Button variant="ghost" size="icon" onClick={() => openNew(item.sort_order)}>
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -348,10 +348,27 @@ export function AdminSchedulePage() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          )
-        })}
+              </div>
+
+              {/* Mobile action row */}
+              <div className="mt-3 flex justify-end gap-1 sm:hidden">
+                <Button variant="ghost" size="icon" onClick={() => openNew(item.sort_order)}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => openEdit(item)}>
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive"
+                  onClick={() => setDeleteId(item.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Edit / Create Dialog */}
@@ -361,7 +378,7 @@ export function AdminSchedulePage() {
             <DialogTitle>{editingItem ? text.editEntry : text.newEntryDialog}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
                 <Label>{text.day}</Label>
                 <Select
