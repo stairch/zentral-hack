@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Github, Linkedin, Instagram, Mail } from "lucide-react"
+import { Instagram, Mail } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { Emails } from "@/lib/constants"
@@ -35,9 +35,7 @@ const footerLinks = {
     ]
   },
   social: [
-    { icon: Instagram, href: "#", label: "Instagram" },
-    { icon: Linkedin, href: "#", label: "LinkedIn" },
-    { icon: Github, href: "#", label: "GitHub" },
+    { icon: Instagram, href: "https://www.instagram.com/zentralhack/", label: "Instagram" },
     { icon: Mail, href: Emails.infoZentralHack, label: "E-Mail" }
   ]
 }
