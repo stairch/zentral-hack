@@ -244,9 +244,17 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
     <>
       {/* Logo */}
       <div className="border-border border-b p-6">
-        <Link href="/" className="inline-block" aria-label={text.home}>
-          <BrandMark className="w-32" imageClassName="drop-shadow-sm" priority />
-        </Link>
+        <div className="flex items-start justify-between">
+          <Link href="/" className="inline-block" aria-label={text.home}>
+            <BrandMark className="w-32" imageClassName="drop-shadow-sm" priority />
+          </Link>
+          <button
+            className="text-muted-foreground hover:text-foreground -mr-1 -mt-1 p-1 lg:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-label="Close menu">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
         <p className="text-muted-foreground mt-1 text-xs">{isAdmin ? text.adminPanel : text.categoryAdmin}</p>
       </div>
 
@@ -327,7 +335,7 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+            className="fixed inset-0 z-50 bg-black/50 lg:hidden"
             onClick={() => setMobileMenuOpen(false)}>
             <motion.aside
               initial={{ x: -280 }}
