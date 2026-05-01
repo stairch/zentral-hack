@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
@@ -40,9 +39,6 @@ interface Category {
   partner_name_en?: string | null
   color?: string | null
   icon?: string | null
-  challenge_description?: string | null
-  challenge_description_en?: string | null
-  show_challenge_description?: boolean | null
   prize?: string | null
   target_group?: string | null
   target_group_en?: string | null
@@ -57,9 +53,6 @@ interface EditFormState {
   partnerNameEn: string
   color: string
   icon: string
-  challengeDescription: string
-  challengeDescriptionEn: string
-  showChallengeDescription: boolean
   prize: string
   targetGroup: string
   targetGroupEn: string
@@ -83,9 +76,6 @@ export function AdminCategoriesPage() {
     partnerNameEn: "",
     color: "#530A5D",
     icon: "sparkles",
-    challengeDescription: "",
-    challengeDescriptionEn: "",
-    showChallengeDescription: false,
     prize: "",
     targetGroup: "",
     targetGroupEn: ""
@@ -237,14 +227,6 @@ export function AdminCategoriesPage() {
       return
     }
 
-    if (
-      editForm.showChallengeDescription &&
-      (!editForm.challengeDescription.trim() || !editForm.challengeDescriptionEn.trim())
-    ) {
-      toast.error(text.challengeRequired)
-      return
-    }
-
     try {
       setSaving(true)
       const res = await fetch(`/api/admin/categories`, {
@@ -261,9 +243,6 @@ export function AdminCategoriesPage() {
           partnerNameEn: editForm.partnerNameEn,
           color: normalizeHexColor(editForm.color),
           icon: editForm.icon,
-          challengeDescription: editForm.challengeDescription,
-          challengeDescriptionEn: editForm.challengeDescriptionEn,
-          showChallengeDescription: editForm.showChallengeDescription,
           prize: editForm.prize || null,
           targetGroup: editForm.targetGroup || null,
           targetGroupEn: editForm.targetGroupEn || null
@@ -292,9 +271,6 @@ export function AdminCategoriesPage() {
                 partner_name_en: editForm.partnerNameEn,
                 color: normalizeHexColor(editForm.color),
                 icon: editForm.icon,
-                challenge_description: editForm.challengeDescription,
-                challenge_description_en: editForm.challengeDescriptionEn,
-                show_challenge_description: editForm.showChallengeDescription,
                 prize: editForm.prize || null,
                 target_group: editForm.targetGroup || null,
                 target_group_en: editForm.targetGroupEn || null
@@ -440,9 +416,6 @@ export function AdminCategoriesPage() {
                               partnerNameEn: category.partner_name_en || "",
                               color: presentation.color,
                               icon: presentation.iconName,
-                              challengeDescription: category.challenge_description || "",
-                              challengeDescriptionEn: category.challenge_description_en || "",
-                              showChallengeDescription: Boolean(category.show_challenge_description),
                               prize: category.prize || "",
                               targetGroup: category.target_group || "",
                               targetGroupEn: category.target_group_en || ""
@@ -586,59 +559,6 @@ export function AdminCategoriesPage() {
                                 </div>
                               </div>
 
-                              <div className="space-y-4 rounded-lg border p-4">
-                                <div className="flex items-center justify-between gap-4">
-                                  <div>
-                                    <Label htmlFor="showChallengeDescription">
-                                      {text.challengeToggleLabel}
-                                    </Label>
-                                    <p className="text-muted-foreground mt-1 text-xs">
-                                      {text.challengeToggleHint}
-                                    </p>
-                                  </div>
-                                  <Switch
-                                    id="showChallengeDescription"
-                                    checked={editForm.showChallengeDescription}
-                                    onCheckedChange={(checked) =>
-                                      setEditForm((current) => ({
-                                        ...current,
-                                        showChallengeDescription: Boolean(checked)
-                                      }))
-                                    }
-                                  />
-                                </div>
-
-                                <div className="grid gap-4 lg:grid-cols-2">
-                                  <div>
-                                    <Label htmlFor="challengeDescription">
-                                      {text.challengeDescriptionLabel} ({text.germanSection})
-                                    </Label>
-                                    <Textarea
-                                      id="challengeDescription"
-                                      value={editForm.challengeDescription}
-                                      onChange={(e) => updateEditForm("challengeDescription", e.target.value)}
-                                      placeholder="Konkrete Aufgabenstellung, Ziele und Rahmenbedingungen der Challenge..."
-                                      rows={5}
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <Label htmlFor="challengeDescriptionEn">
-                                      {text.challengeDescriptionLabel} ({text.englishSection})
-                                    </Label>
-                                    <Textarea
-                                      id="challengeDescriptionEn"
-                                      value={editForm.challengeDescriptionEn}
-                                      onChange={(e) =>
-                                        updateEditForm("challengeDescriptionEn", e.target.value)
-                                      }
-                                      placeholder="Concrete challenge statement, goals, and constraints..."
-                                      rows={5}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-
                               <div className="grid gap-4 md:grid-cols-2">
                                 <div>
                                   <Label htmlFor="prize">{text.prizeLabel}</Label>
@@ -688,11 +608,8 @@ export function AdminCategoriesPage() {
                                       description_en: editForm.descriptionEn,
                                       partner_name: editForm.partnerName,
                                       partner_name_en: editForm.partnerNameEn,
-                                      challenge_description: editForm.challengeDescription,
-                                      challenge_description_en: editForm.challengeDescriptionEn,
                                       color: editForm.color,
-                                      icon: editForm.icon,
-                                      show_challenge_description: editForm.showChallengeDescription
+                                      icon: editForm.icon
                                     },
                                     language
                                   ).textColor
@@ -707,9 +624,6 @@ export function AdminCategoriesPage() {
                                       description_en: editForm.descriptionEn,
                                       partner_name: editForm.partnerName,
                                       partner_name_en: editForm.partnerNameEn,
-                                      challenge_description: editForm.challengeDescription,
-                                      challenge_description_en: editForm.challengeDescriptionEn,
-                                      show_challenge_description: editForm.showChallengeDescription,
                                       color: editForm.color,
                                       icon: editForm.icon
                                     },
@@ -727,11 +641,6 @@ export function AdminCategoriesPage() {
                                       <div>
                                         <p className="font-display text-xl font-bold">{preview.title}</p>
                                         <p className="mt-2 text-sm opacity-90">{preview.description}</p>
-                                        {preview.showChallengeDescription && preview.challengeDescription ? (
-                                          <p className="mt-2 text-sm opacity-85">
-                                            {text.challengePreviewLabel}: {preview.challengeDescription}
-                                          </p>
-                                        ) : null}
                                         <p className="mt-3 text-xs opacity-75">
                                           {text.partnerPreviewLabel}: {preview.partnerName}
                                         </p>
@@ -769,13 +678,6 @@ export function AdminCategoriesPage() {
                   <p className="text-muted-foreground line-clamp-3 text-sm">
                     {getCategoryPresentationByLanguage(category, language).description}
                   </p>
-                  {getCategoryPresentationByLanguage(category, language).showChallengeDescription &&
-                  getCategoryPresentationByLanguage(category, language).challengeDescription ? (
-                    <p className="text-muted-foreground mt-2 line-clamp-3 text-sm">
-                      {text.challengePreviewLabel}:{" "}
-                      {getCategoryPresentationByLanguage(category, language).challengeDescription}
-                    </p>
-                  ) : null}
                 </CardContent>
               </Card>
             ))

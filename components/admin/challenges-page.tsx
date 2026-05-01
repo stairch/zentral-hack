@@ -67,7 +67,7 @@ const copy = {
     deleteTitle: "Challenge löschen?",
     deleteWarning: "Diese Aktion kann nicht rückgängig gemacht werden.",
     cancel: "Abbrechen",
-    delete: "Löschen",
+    deleteBtn: "Löschen",
     loadError: "Fehler beim Laden der Challenges",
     publishSuccess: "Veröffentlicht",
     unpublishSuccess: "Auf Entwurf gesetzt",
@@ -111,7 +111,7 @@ const copy = {
     deleteTitle: "Delete challenge?",
     deleteWarning: "This action cannot be undone.",
     cancel: "Cancel",
-    delete: "Delete",
+    deleteBtn: "Delete",
     loadError: "Failed to load challenges",
     publishSuccess: "Published",
     unpublishSuccess: "Set to draft",
@@ -439,7 +439,7 @@ export function AdminChallengesPage() {
             <Button
               onClick={remove}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {text.delete}
+              {text.deleteBtn}
             </Button>
           </DialogFooter>
         </DialogContent>

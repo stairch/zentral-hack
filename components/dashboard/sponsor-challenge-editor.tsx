@@ -8,12 +8,16 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { Eye, Loader2, Save, Send, Trophy } from "lucide-react"
+import { Eye, FileText, Gavel, Info, Loader2, Package, Plus, Save, Send, Trash2, Trophy } from "lucide-react"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
+import { useLanguage } from "@/lib/language-context"
 import {
   createEmptySponsorChallengeData,
   normalizeSponsorChallengeData,
+  type EvaluationCriterion,
   type SponsorChallengeData,
   type SponsorChallengeRecord
 } from "@/lib/sponsor-challenge"
@@ -34,14 +38,26 @@ interface ChallengeListItem {
   category_id: string
 }
 
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+function Field({
+  label,
+  hint,
+  required,
+  children
+}: {
+  label: string
+  hint?: string
+  required?: boolean
+  children: React.ReactNode
+}) {
   return (
-    <Card className="border-border/60 shadow-sm">
-      <CardHeader className="border-b pb-4">
-        <CardTitle className="text-xl">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4 pt-6">{children}</CardContent>
-    </Card>
+    <div className="space-y-1.5">
+      <Label className="text-sm font-medium">
+        {label}
+        {required && <span className="text-destructive ml-1">*</span>}
+      </Label>
+      {children}
+      {hint && <p className="text-muted-foreground text-xs">{hint}</p>}
+    </div>
   )
 }
 
@@ -60,10 +76,124 @@ function CheckboxRow({
 }) {
   return (
     <div className="flex items-start gap-3 rounded-lg border p-3">
-      <Checkbox id={id} checked={checked} onCheckedChange={(value) => onCheckedChange(Boolean(value))} />
-      <div className="space-y-1">
-        <Label htmlFor={id}>{label}</Label>
-        {hint ? <p className="text-muted-foreground text-sm">{hint}</p> : null}
+      <Checkbox id={id} checked={checked} onCheckedChange={(v) => onCheckedChange(Boolean(v))} className="mt-0.5" />
+      <div className="space-y-0.5">
+        <Label htmlFor={id} className="cursor-pointer text-sm font-medium leading-snug">
+          {label}
+        </Label>
+        {hint && <p className="text-muted-foreground text-xs">{hint}</p>}
+      </div>
+    </div>
+  )
+}
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="text-muted-foreground border-border border-b pb-2 text-xs font-semibold uppercase tracking-wider">
+      {children}
+    </h3>
+  )
+}
+
+function EvaluationTable({
+  criteria,
+  onChange,
+  labels
+}: {
+  criteria: EvaluationCriterion[]
+  onChange: (criteria: EvaluationCriterion[]) => void
+  labels: {
+    criterion: string
+    weight: string
+    description: string
+    addCriterion: string
+    total: string
+    mustBe100: string
+    noCriteria: string
+  }
+}) {
+  const totalWeight = criteria.reduce((sum, c) => sum + (c.weight || 0), 0)
+
+  const addRow = () => onChange([...criteria, { name: "", weight: 0, description: "" }])
+  const removeRow = (i: number) => onChange(criteria.filter((_, idx) => idx !== i))
+  const updateRow = (i: number, partial: Partial<EvaluationCriterion>) =>
+    onChange(criteria.map((c, idx) => (idx === i ? { ...c, ...partial } : c)))
+
+  return (
+    <div className="space-y-3">
+      <div className="overflow-x-auto rounded-lg border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="px-3 py-2 text-left font-medium">{labels.criterion}</th>
+              <th className="w-28 px-3 py-2 text-left font-medium">{labels.weight}</th>
+              <th className="px-3 py-2 text-left font-medium">{labels.description}</th>
+              <th className="w-10 px-2 py-2" />
+            </tr>
+          </thead>
+          <tbody>
+            {criteria.map((c, i) => (
+              <tr key={i} className="border-b last:border-0 hover:bg-muted/20">
+                <td className="px-3 py-1.5">
+                  <Input
+                    value={c.name}
+                    onChange={(e) => updateRow(i, { name: e.target.value })}
+                    placeholder="e.g. Innovation"
+                    className="h-8 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
+                  />
+                </td>
+                <td className="px-3 py-1.5">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={c.weight === 0 ? "" : c.weight}
+                    onChange={(e) => updateRow(i, { weight: parseInt(e.target.value) || 0 })}
+                    placeholder="0"
+                    className="h-8 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
+                  />
+                </td>
+                <td className="px-3 py-1.5">
+                  <Input
+                    value={c.description}
+                    onChange={(e) => updateRow(i, { description: e.target.value })}
+                    placeholder="Optional"
+                    className="h-8 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
+                  />
+                </td>
+                <td className="px-2 py-1.5">
+                  <button
+                    type="button"
+                    onClick={() => removeRow(i)}
+                    className="text-muted-foreground hover:text-destructive transition-colors">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {criteria.length === 0 && (
+              <tr>
+                <td colSpan={4} className="text-muted-foreground px-3 py-4 text-center text-sm">
+                  {labels.noCriteria}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <Button type="button" variant="outline" size="sm" onClick={addRow} className="gap-1.5">
+          <Plus className="h-4 w-4" />
+          {labels.addCriterion}
+        </Button>
+        <span
+          className={cn(
+            "text-sm font-medium",
+            totalWeight === 100 ? "text-green-600" : totalWeight > 0 ? "text-amber-600" : "text-muted-foreground"
+          )}>
+          {labels.total}: {totalWeight}%{totalWeight > 0 && totalWeight !== 100 && ` ${labels.mustBe100}`}
+        </span>
       </div>
     </div>
   )
@@ -76,68 +206,326 @@ export function SponsorChallengeEditor({
   initialChallenge,
   onSaved
 }: SponsorChallengeEditorProps) {
+  const { language } = useLanguage()
+
+  const t = {
+    de: {
+      existingChallenges: "Vorhandene Challenges",
+      loading: "Lade…",
+      selectChallenge: "Challenge auswählen",
+      publishedLabel: "Veröffentlicht",
+      draftLabel: "Entwurf",
+      newChallenge: "+ Neue Challenge",
+      saveDraft: "Entwurf speichern",
+      publish: "Veröffentlichen",
+      websiteVisible: "Auf der Website sichtbar",
+      websiteVisibleDesc: "Diese Felder werden direkt auf der Zentral Hack Website bei den Challenges angezeigt.",
+      challengeTitle: "Challenge-Titel",
+      shortDescription: "Kurzbeschreibung",
+      shortDescriptionHint: "Max. 2–3 Sätze – wird als Teaser angezeigt",
+      prize: "Preisgeld / Preis",
+      prizeHint: "Wird als Preis-Highlight auf der Challenge-Karte angezeigt",
+      englishNotice: "Bitte alle Inhalte auf Englisch ausfüllen",
+      englishNoticeDetail:
+        "Die Challenge wird auf der Website und gegenüber den Teilnehmenden auf Englisch präsentiert.",
+      challengeFormat: "Challenge-Format",
+      difficulty: "Schwierigkeitsgrad",
+      teamSize: "Empfohlene Teamgrösse",
+      language: "Sprache",
+      beginner: "Einsteiger",
+      intermediate: "Fortgeschritten",
+      expert: "Expert",
+      german: "Deutsch",
+      english: "Englisch",
+      both: "Beides",
+      choose: "Wählen",
+      tabContent: "Inhalt",
+      tabResources: "Ressourcen",
+      tabClosing: "Abschluss",
+      problemContext: "Problemstellung & Kontext",
+      background: "Hintergrund",
+      backgroundHint: "Kontext und Ausgangssituation beschreiben",
+      problem: "Das Problem",
+      problemHint: "Was soll gelöst werden?",
+      goal: "Zielsetzung",
+      goalHint: "Was ist das erwünschte Ergebnis?",
+      requirements: "Anforderungen",
+      mustRequirements: "MUSS-Anforderungen",
+      mustRequirementsHint: "Was muss die Lösung zwingend erfüllen?",
+      canRequirements: "KANN-Anforderungen",
+      canRequirementsHint: "Optionale Erweiterungen / Bonus-Features",
+      outOfScope: "Nicht im Scope",
+      outOfScopeHint: "Was soll explizit nicht Teil der Lösung sein?",
+      technical: "Technische Rahmenbedingungen",
+      allowedTechnologies: "Erlaubte Technologien & Vorgaben",
+      restrictions: "Einschränkungen",
+      infrastructure: "Infrastruktur / Umgebung",
+      providedResources: "Bereitgestellte Ressourcen",
+      datasets: "Datensätze / Daten",
+      apis: "APIs / Endpoints",
+      documentation: "Dokumentation",
+      credentials: "Zugangsdaten / Credentials",
+      sdk: "SDK / Libraries",
+      hardware: "Hardware",
+      aiModels: "KI-Modelle / LLMs",
+      mentoringSupport: "Mentoring-Support",
+      resourceDetails: "Details zu den Ressourcen",
+      resourceTimes: "Bereitstellungszeitpunkt",
+      resourceTimesHint: "Wann stehen die Ressourcen bereit?",
+      deliverables: "Erwartete Deliverables",
+      prototype: "Funktionierender Prototyp / Demo",
+      pitch: "Präsentation / Pitch",
+      codeRepository: "Code-Repository",
+      readme: "README / Dokumentation",
+      video: "Kurzvideo",
+      pitchFormat: "Pitch-Format",
+      videoLength: "Max. Video-Länge",
+      otherDeliverables: "Weitere Deliverables",
+      otherDeliverablesHint: "Sonstiges",
+      evaluationCriteria: "Bewertungskriterien",
+      criterion: "Kriterium",
+      weight: "Gewichtung %",
+      evalDescription: "Beschreibung",
+      addCriterion: "Kriterium hinzufügen",
+      total: "Total",
+      mustBe100: "· muss 100% ergeben",
+      noCriteria: "Noch keine Kriterien hinzugefügt",
+      prizes: "Preise & Anreize",
+      firstPlace: "1. Platz",
+      secondPlace: "2. Platz",
+      thirdPlace: "3. Platz",
+      specialPrize: "Sonderpreis",
+      legal: "Datenschutz & Rechtliches",
+      dataAnonymous: "Alle bereitgestellten Daten sind anonymisiert oder frei verwendbar",
+      noRestrictions: "Keine rechtlichen Einschränkungen für die Teilnahme",
+      portfolioAllowed: "Teams dürfen die Lösung im Portfolio verwenden",
+      noSpecialIpRules: "IP/Urheberrecht: keine Sonderregelungen",
+      specialIpRules: "Sonderregelungen IP/Urheberrecht",
+      specialIpRulesPlaceholder: "Nur ausfüllen falls Sonderregelungen bestehen",
+      categorySpecific: "Kategoriespezifisch",
+      targetAudience: "Zielpublikum",
+      targetAudienceHint: "z.B. 1. bis 3. Lehrjahr, Fachrichtung",
+      prerequisiteKnowledge: "Vorausgesetztes Wissen",
+      mentorOnSite: "Mentor vor Ort anwesend",
+      progressEvaluated: "Lernfortschritt wird bewertet",
+      learningGoals: "Lernziele",
+      entryHelp: "Einstiegshilfen",
+      entryHelpHint: "z.B. Starter-Code, Tutorial",
+      expectedTechnology: "Erwartete KI-Technologie",
+      ownModelsAllowed: "Eigene Modelle erlaubt?",
+      yes: "Ja",
+      no: "Nein",
+      apiKeysProvided: "API-Keys werden bereitgestellt?",
+      evaluationMetric: "Evaluation-Metrik",
+      privacyRequirements: "Datenschutzanforderungen",
+      outputQualityEvaluated: "Output-Qualität wird bewertet",
+      evaluationMethod: "Bewertungsmethode",
+      challengeType: "Art der Challenge",
+      flagFormat: "Flag-Format",
+      numberOfFlags: "Anzahl Flags / Levels",
+      infrastructureProvidedBy: "Infrastruktur bereitgestellt durch",
+      scopeOfAttack: "Scope of Attack",
+      campusOutOfScope: "Out of Scope",
+      regionalConnection: "Regionaler Bezug",
+      localDataAvailable: "Lokale Daten verfügbar",
+      localStakeholders: "Lokale Stakeholder",
+      reuseAfterEvent: "Weiternutzung nach Event",
+      loadError: "Fehler beim Laden",
+      saveSuccess: "Entwurf gespeichert",
+      publishSuccess: "Challenge veröffentlicht",
+      saveError: "Fehler beim Speichern"
+    },
+    en: {
+      existingChallenges: "Existing Challenges",
+      loading: "Loading…",
+      selectChallenge: "Select challenge",
+      publishedLabel: "Published",
+      draftLabel: "Draft",
+      newChallenge: "+ New Challenge",
+      saveDraft: "Save draft",
+      publish: "Publish",
+      websiteVisible: "Visible on website",
+      websiteVisibleDesc: "These fields are displayed directly on the Zentral Hack website under Challenges.",
+      challengeTitle: "Challenge title",
+      shortDescription: "Short description",
+      shortDescriptionHint: "Max. 2–3 sentences – shown as a teaser",
+      prize: "Prize / Reward",
+      prizeHint: "Shown as a prize highlight on the challenge card",
+      englishNotice: "Please fill in all content in English",
+      englishNoticeDetail:
+        "The challenge will be presented in English on the website and to participants.",
+      challengeFormat: "Challenge Format",
+      difficulty: "Difficulty",
+      teamSize: "Recommended team size",
+      language: "Language",
+      beginner: "Beginner",
+      intermediate: "Intermediate",
+      expert: "Expert",
+      german: "German",
+      english: "English",
+      both: "Both",
+      choose: "Select",
+      tabContent: "Content",
+      tabResources: "Resources",
+      tabClosing: "Closing",
+      problemContext: "Problem Statement & Context",
+      background: "Background",
+      backgroundHint: "Describe the context and starting situation",
+      problem: "The Problem",
+      problemHint: "What needs to be solved?",
+      goal: "Goal",
+      goalHint: "What is the desired outcome?",
+      requirements: "Requirements",
+      mustRequirements: "MUST requirements",
+      mustRequirementsHint: "What must the solution absolutely fulfil?",
+      canRequirements: "SHOULD requirements",
+      canRequirementsHint: "Optional extensions / bonus features",
+      outOfScope: "Out of scope",
+      outOfScopeHint: "What should explicitly not be part of the solution?",
+      technical: "Technical Constraints",
+      allowedTechnologies: "Allowed technologies & requirements",
+      restrictions: "Restrictions",
+      infrastructure: "Infrastructure / Environment",
+      providedResources: "Provided Resources",
+      datasets: "Datasets / Data",
+      apis: "APIs / Endpoints",
+      documentation: "Documentation",
+      credentials: "Access credentials",
+      sdk: "SDK / Libraries",
+      hardware: "Hardware",
+      aiModels: "AI models / LLMs",
+      mentoringSupport: "Mentoring support",
+      resourceDetails: "Resource details",
+      resourceTimes: "Availability",
+      resourceTimesHint: "When will the resources be available?",
+      deliverables: "Expected Deliverables",
+      prototype: "Working prototype / demo",
+      pitch: "Presentation / pitch",
+      codeRepository: "Code repository",
+      readme: "README / documentation",
+      video: "Short video",
+      pitchFormat: "Pitch format",
+      videoLength: "Max. video length",
+      otherDeliverables: "Other deliverables",
+      otherDeliverablesHint: "Miscellaneous",
+      evaluationCriteria: "Evaluation Criteria",
+      criterion: "Criterion",
+      weight: "Weight %",
+      evalDescription: "Description",
+      addCriterion: "Add criterion",
+      total: "Total",
+      mustBe100: "· must equal 100%",
+      noCriteria: "No criteria added yet",
+      prizes: "Prizes & Incentives",
+      firstPlace: "1st place",
+      secondPlace: "2nd place",
+      thirdPlace: "3rd place",
+      specialPrize: "Special prize",
+      legal: "Privacy & Legal",
+      dataAnonymous: "All provided data is anonymised or freely usable",
+      noRestrictions: "No legal restrictions for participation",
+      portfolioAllowed: "Teams may use the solution in their portfolio",
+      noSpecialIpRules: "IP/copyright: no special rules",
+      specialIpRules: "Special IP/copyright rules",
+      specialIpRulesPlaceholder: "Only fill in if special rules apply",
+      categorySpecific: "Category-specific",
+      targetAudience: "Target audience",
+      targetAudienceHint: "e.g. 1st–3rd year apprentices, field of study",
+      prerequisiteKnowledge: "Prerequisite knowledge",
+      mentorOnSite: "Mentor present on site",
+      progressEvaluated: "Learning progress is evaluated",
+      learningGoals: "Learning goals",
+      entryHelp: "Getting started aids",
+      entryHelpHint: "e.g. starter code, tutorial",
+      expectedTechnology: "Expected AI technology",
+      ownModelsAllowed: "Own models allowed?",
+      yes: "Yes",
+      no: "No",
+      apiKeysProvided: "API keys provided?",
+      evaluationMetric: "Evaluation metric",
+      privacyRequirements: "Privacy requirements",
+      outputQualityEvaluated: "Output quality is evaluated",
+      evaluationMethod: "Evaluation method",
+      challengeType: "Challenge type",
+      flagFormat: "Flag format",
+      numberOfFlags: "Number of flags / levels",
+      infrastructureProvidedBy: "Infrastructure provided by",
+      scopeOfAttack: "Scope of attack",
+      campusOutOfScope: "Out of scope",
+      regionalConnection: "Regional connection",
+      localDataAvailable: "Local data available",
+      localStakeholders: "Local stakeholders",
+      reuseAfterEvent: "Reuse after event",
+      loadError: "Error loading",
+      saveSuccess: "Draft saved",
+      publishSuccess: "Challenge published",
+      saveError: "Error saving"
+    }
+  }[language]
+
   const [formData, setFormData] = useState<SponsorChallengeData>(() => createEmptySponsorChallengeData())
   const [prize, setPrize] = useState("")
   const [status, setStatus] = useState<"draft" | "published">("draft")
-  const [saving, setSaving] = useState(false)
+  const [saving, setSaving] = useState<"draft" | "published" | null>(null)
   const [challengeList, setChallengeList] = useState<ChallengeListItem[]>([])
   const [selectedChallengeId, setSelectedChallengeId] = useState<string>("")
   const [loadingList, setLoadingList] = useState(false)
 
+  const patch = (partial: Partial<SponsorChallengeData>) =>
+    setFormData((prev) => ({ ...prev, ...partial }))
+
+  const patchSpecific = (partial: Partial<SponsorChallengeData["categorySpecific"]>) =>
+    setFormData((prev) => ({ ...prev, categorySpecific: { ...prev.categorySpecific, ...partial } }))
+
+  const patchResources = (partial: Partial<SponsorChallengeData["resources"]>) =>
+    setFormData((prev) => ({ ...prev, resources: { ...prev.resources, ...partial } }))
+
+  const patchDeliverables = (partial: Partial<SponsorChallengeData["deliverables"]>) =>
+    setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, ...partial } }))
+
+  const patchEvaluation = (partial: Partial<SponsorChallengeData["evaluation"]>) =>
+    setFormData((prev) => ({ ...prev, evaluation: { ...prev.evaluation, ...partial } }))
+
+  const patchPrizes = (partial: Partial<SponsorChallengeData["prizes"]>) =>
+    setFormData((prev) => ({ ...prev, prizes: { ...prev.prizes, ...partial } }))
+
+  const patchLegal = (partial: Partial<SponsorChallengeData["legal"]>) =>
+    setFormData((prev) => ({ ...prev, legal: { ...prev.legal, ...partial } }))
+
+  function applyRecord(record: SponsorChallengeRecord) {
+    setStatus(record.status)
+    setPrize(record.prize || "")
+    const normalized = normalizeSponsorChallengeData(record.challenge_data)
+    setFormData({
+      ...normalized,
+      difficulty: (record.difficulty as SponsorChallengeData["difficulty"]) || normalized.difficulty,
+      teamSize: record.team_size || normalized.teamSize,
+      challengeLanguage:
+        (record.challenge_language as SponsorChallengeData["challengeLanguage"]) || normalized.challengeLanguage
+    })
+  }
+
   async function loadChallengeCollection(challengeId?: string) {
     if (!categoryId) return
-
     setLoadingList(true)
     try {
-      const query = new URLSearchParams({ categoryId })
-      if (challengeId) {
-        query.set("challengeId", challengeId)
-      }
-
-      const response = await fetch(`/api/sponsor/challenge?${query.toString()}`, {
-        credentials: "include"
-      })
-
-      if (!response.ok) {
-        throw new Error("Fehler beim Laden der Challenges")
-      }
-
-      const json = await response.json()
+      const params = new URLSearchParams({ categoryId })
+      if (challengeId) params.set("challengeId", challengeId)
+      const res = await fetch(`/api/sponsor/challenge?${params}`, { credentials: "include" })
+      if (!res.ok) throw new Error()
+      const json = await res.json()
       const list = (json.data?.challenges || []) as ChallengeListItem[]
       const selected = (json.data?.challenge || null) as SponsorChallengeRecord | null
-
       setChallengeList(list)
       setSelectedChallengeId(selected?.id || list[0]?.id || "")
-
-      if (selected) {
-        setStatus(selected.status)
-        setPrize(selected.prize || "")
-        const normalized = normalizeSponsorChallengeData(selected.challenge_data)
-        setFormData({
-          ...normalized,
-          companyName: selected.company_name || normalized.companyName,
-          branch: selected.branch || normalized.branch,
-          contactName: selected.contact_name || normalized.contactName,
-          contactFunction: selected.contact_function || normalized.contactFunction,
-          contactEmail: selected.contact_email || normalized.contactEmail,
-          contactPhone: selected.contact_phone || normalized.contactPhone,
-          website: selected.website || normalized.website,
-          logoNote: selected.logo_note || normalized.logoNote,
-          challengeTitle: selected.challenge_title || normalized.challengeTitle,
-          shortDescription: selected.short_description || normalized.shortDescription,
-          difficulty: (selected.difficulty as SponsorChallengeData["difficulty"]) || normalized.difficulty,
-          teamSize: selected.team_size || normalized.teamSize,
-          challengeLanguage:
-            (selected.challenge_language as SponsorChallengeData["challengeLanguage"]) ||
-            normalized.challengeLanguage
-        })
-      } else {
+      if (selected) applyRecord(selected)
+      else {
         setStatus("draft")
         setPrize("")
         setFormData(createEmptySponsorChallengeData())
       }
-    } catch (error) {
-      console.error("Failed to load challenge collection:", error)
+    } catch {
+      toast.error(t.loadError)
     } finally {
       setLoadingList(false)
     }
@@ -146,6 +534,7 @@ export function SponsorChallengeEditor({
   function startNewChallenge() {
     setSelectedChallengeId("")
     setStatus("draft")
+    setPrize("")
     setFormData(createEmptySponsorChallengeData())
   }
 
@@ -154,36 +543,12 @@ export function SponsorChallengeEditor({
       void loadChallengeCollection()
       return
     }
-
     if (!initialChallenge) {
       setStatus("draft")
       setFormData(createEmptySponsorChallengeData())
       return
     }
-
-    setStatus(initialChallenge.status)
-    setPrize(initialChallenge.prize || "")
-    const normalized = normalizeSponsorChallengeData(initialChallenge.challenge_data)
-
-    setFormData({
-      ...normalized,
-      companyName: initialChallenge.company_name || normalized.companyName,
-      branch: initialChallenge.branch || normalized.branch,
-      contactName: initialChallenge.contact_name || normalized.contactName,
-      contactFunction: initialChallenge.contact_function || normalized.contactFunction,
-      contactEmail: initialChallenge.contact_email || normalized.contactEmail,
-      contactPhone: initialChallenge.contact_phone || normalized.contactPhone,
-      website: initialChallenge.website || normalized.website,
-      logoNote: initialChallenge.logo_note || normalized.logoNote,
-      challengeTitle: initialChallenge.challenge_title || normalized.challengeTitle,
-      shortDescription: initialChallenge.short_description || normalized.shortDescription,
-      difficulty:
-        (initialChallenge.difficulty as SponsorChallengeData["difficulty"]) || normalized.difficulty,
-      teamSize: initialChallenge.team_size || normalized.teamSize,
-      challengeLanguage:
-        (initialChallenge.challenge_language as SponsorChallengeData["challengeLanguage"]) ||
-        normalized.challengeLanguage
-    })
+    applyRecord(initialChallenge)
   }, [initialChallenge, categoryId])
 
   const isPublished = status === "published"
@@ -193,355 +558,203 @@ export function SponsorChallengeEditor({
       case "young-talents":
         return (
           <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="youngTalentsTargetAudience">Zielpublikum</Label>
-                <Input
-                  id="youngTalentsTargetAudience"
-                  value={formData.categorySpecific.youngTalentsTargetAudience}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: {
-                        ...prev.categorySpecific,
-                        youngTalentsTargetAudience: e.target.value
-                      }
-                    }))
-                  }
-                  placeholder="z.B. 1. bis 3. Lehrjahr, Fachrichtung"
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="youngTalentsPrerequisiteKnowledge">Vorausgesetztes Wissen</Label>
-                <Textarea
-                  id="youngTalentsPrerequisiteKnowledge"
-                  value={formData.categorySpecific.youngTalentsPrerequisiteKnowledge}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: {
-                        ...prev.categorySpecific,
-                        youngTalentsPrerequisiteKnowledge: e.target.value
-                      }
-                    }))
-                  }
-                  placeholder="z.B. Grundkenntnisse in Python"
-                />
-              </div>
+            <Field label={t.targetAudience} hint={t.targetAudienceHint}>
+              <Input
+                value={formData.categorySpecific.youngTalentsTargetAudience}
+                onChange={(e) => patchSpecific({ youngTalentsTargetAudience: e.target.value })}
+                placeholder="e.g. 1st–3rd year apprentices, field of study"
+              />
+            </Field>
+            <Field label={t.prerequisiteKnowledge}>
+              <Textarea
+                value={formData.categorySpecific.youngTalentsPrerequisiteKnowledge}
+                onChange={(e) => patchSpecific({ youngTalentsPrerequisiteKnowledge: e.target.value })}
+                placeholder="e.g. Basic Python knowledge"
+                rows={3}
+              />
+            </Field>
+            <div className="grid gap-3 sm:grid-cols-2">
               <CheckboxRow
                 id="youngTalentsMentorOnSite"
-                label="Mentor vor Ort anwesend?"
+                label={t.mentorOnSite}
                 checked={formData.categorySpecific.youngTalentsMentorOnSite}
-                onCheckedChange={(value) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    categorySpecific: { ...prev.categorySpecific, youngTalentsMentorOnSite: value }
-                  }))
-                }
+                onCheckedChange={(v) => patchSpecific({ youngTalentsMentorOnSite: v })}
               />
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="youngTalentsLearningGoals">Lernziele definiert?</Label>
-                <Textarea
-                  id="youngTalentsLearningGoals"
-                  value={formData.categorySpecific.youngTalentsLearningGoals}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: {
-                        ...prev.categorySpecific,
-                        youngTalentsLearningGoals: e.target.value
-                      }
-                    }))
-                  }
-                />
-              </div>
               <CheckboxRow
                 id="youngTalentsProgressEvaluated"
-                label="Lernfortschritt wird bewertet?"
+                label={t.progressEvaluated}
                 checked={formData.categorySpecific.youngTalentsProgressEvaluated}
-                onCheckedChange={(value) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    categorySpecific: { ...prev.categorySpecific, youngTalentsProgressEvaluated: value }
-                  }))
-                }
+                onCheckedChange={(v) => patchSpecific({ youngTalentsProgressEvaluated: v })}
               />
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="youngTalentsEntryHelp">Einstiegshilfen vorhanden?</Label>
-                <Textarea
-                  id="youngTalentsEntryHelp"
-                  value={formData.categorySpecific.youngTalentsEntryHelp}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: { ...prev.categorySpecific, youngTalentsEntryHelp: e.target.value }
-                    }))
-                  }
-                  placeholder="z.B. Starter-Code, Tutorial"
-                />
-              </div>
             </div>
+            <Field label={t.learningGoals}>
+              <Textarea
+                value={formData.categorySpecific.youngTalentsLearningGoals}
+                onChange={(e) => patchSpecific({ youngTalentsLearningGoals: e.target.value })}
+                rows={3}
+              />
+            </Field>
+            <Field label={t.entryHelp} hint={t.entryHelpHint}>
+              <Textarea
+                value={formData.categorySpecific.youngTalentsEntryHelp}
+                onChange={(e) => patchSpecific({ youngTalentsEntryHelp: e.target.value })}
+                placeholder="e.g. starter code, tutorial link"
+                rows={3}
+              />
+            </Field>
           </div>
         )
       case "ai-agentic":
         return (
           <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="aiExpectedTechnology">Erwartete KI-Technologie</Label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label={t.expectedTechnology}>
                 <Input
-                  id="aiExpectedTechnology"
                   value={formData.categorySpecific.aiExpectedTechnology}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: { ...prev.categorySpecific, aiExpectedTechnology: e.target.value }
-                    }))
-                  }
-                  placeholder="LLM, ML-Modell, Computer Vision, Offen"
+                  onChange={(e) => patchSpecific({ aiExpectedTechnology: e.target.value })}
+                  placeholder="LLM, ML model, Computer Vision, Open"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>Eigene Modelle erlaubt?</Label>
+              </Field>
+              <Field label={t.ownModelsAllowed}>
                 <Select
                   value={String(formData.categorySpecific.aiOwnModelsAllowed)}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: { ...prev.categorySpecific, aiOwnModelsAllowed: value === "true" }
-                    }))
-                  }>
+                  onValueChange={(v) => patchSpecific({ aiOwnModelsAllowed: v === "true" })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Wählen" />
+                    <SelectValue placeholder={t.choose} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="true">Ja</SelectItem>
-                    <SelectItem value="false">Nein</SelectItem>
+                    <SelectItem value="true">{t.yes}</SelectItem>
+                    <SelectItem value="false">{t.no}</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="aiApiKeysProvided">API-Keys werden bereitgestellt?</Label>
+              </Field>
+              <Field label={t.apiKeysProvided}>
                 <Input
-                  id="aiApiKeysProvided"
                   value={formData.categorySpecific.aiApiKeysProvided}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: { ...prev.categorySpecific, aiApiKeysProvided: e.target.value }
-                    }))
-                  }
-                  placeholder="Ja - welche / Nein"
+                  onChange={(e) => patchSpecific({ aiApiKeysProvided: e.target.value })}
+                  placeholder="Yes – which ones / No"
                 />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="aiPrivacyRequirements">Datenschutzanforderungen</Label>
-                <Textarea
-                  id="aiPrivacyRequirements"
-                  value={formData.categorySpecific.aiPrivacyRequirements}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: { ...prev.categorySpecific, aiPrivacyRequirements: e.target.value }
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="aiEvaluationMetric">Evaluation-Metrik</Label>
+              </Field>
+              <Field label={t.evaluationMetric}>
                 <Input
-                  id="aiEvaluationMetric"
                   value={formData.categorySpecific.aiEvaluationMetric}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: { ...prev.categorySpecific, aiEvaluationMetric: e.target.value }
-                    }))
-                  }
+                  onChange={(e) => patchSpecific({ aiEvaluationMetric: e.target.value })}
                 />
-              </div>
+              </Field>
+            </div>
+            <Field label={t.privacyRequirements}>
+              <Textarea
+                value={formData.categorySpecific.aiPrivacyRequirements}
+                onChange={(e) => patchSpecific({ aiPrivacyRequirements: e.target.value })}
+                rows={3}
+              />
+            </Field>
+            <div className="grid gap-3 sm:grid-cols-2">
               <CheckboxRow
                 id="aiOutputQualityEvaluated"
-                label="Wird Output-Qualität bewertet?"
+                label={t.outputQualityEvaluated}
                 checked={formData.categorySpecific.aiOutputQualityEvaluated}
-                onCheckedChange={(value) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    categorySpecific: { ...prev.categorySpecific, aiOutputQualityEvaluated: value }
-                  }))
-                }
+                onCheckedChange={(v) => patchSpecific({ aiOutputQualityEvaluated: v })}
               />
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="aiOutputQualityMethod">Methode</Label>
-                <Textarea
-                  id="aiOutputQualityMethod"
-                  value={formData.categorySpecific.aiOutputQualityMethod}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: { ...prev.categorySpecific, aiOutputQualityMethod: e.target.value }
-                    }))
-                  }
-                />
-              </div>
             </div>
+            <Field label={t.evaluationMethod}>
+              <Textarea
+                value={formData.categorySpecific.aiOutputQualityMethod}
+                onChange={(e) => patchSpecific({ aiOutputQualityMethod: e.target.value })}
+                rows={3}
+              />
+            </Field>
           </div>
         )
       case "campus-challenge":
         return (
           <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="campusChallengeType">Art der Challenge</Label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label={t.challengeType}>
                 <Input
-                  id="campusChallengeType"
                   value={formData.categorySpecific.campusChallengeType}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: { ...prev.categorySpecific, campusChallengeType: e.target.value }
-                    }))
-                  }
+                  onChange={(e) => patchSpecific({ campusChallengeType: e.target.value })}
                   placeholder="CTF, Red Team, Blue Team, Pentest, Mixed"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="campusFlagFormat">Flag-Format</Label>
+              </Field>
+              <Field label={t.flagFormat}>
                 <Input
-                  id="campusFlagFormat"
                   value={formData.categorySpecific.campusFlagFormat}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: { ...prev.categorySpecific, campusFlagFormat: e.target.value }
-                    }))
-                  }
+                  onChange={(e) => patchSpecific({ campusFlagFormat: e.target.value })}
                   placeholder="FLAG{...}"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="campusNumberOfFlags">Anzahl Flags / Levels</Label>
+              </Field>
+              <Field label={t.numberOfFlags}>
                 <Input
-                  id="campusNumberOfFlags"
                   value={formData.categorySpecific.campusNumberOfFlags}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: { ...prev.categorySpecific, campusNumberOfFlags: e.target.value }
-                    }))
-                  }
+                  onChange={(e) => patchSpecific({ campusNumberOfFlags: e.target.value })}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="campusInfrastructureProvidedBy">Infrastruktur bereitgestellt durch</Label>
+              </Field>
+              <Field label={t.infrastructureProvidedBy}>
                 <Input
-                  id="campusInfrastructureProvidedBy"
                   value={formData.categorySpecific.campusInfrastructureProvidedBy}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: {
-                        ...prev.categorySpecific,
-                        campusInfrastructureProvidedBy: e.target.value
-                      }
-                    }))
-                  }
-                  placeholder="Unternehmen, HSLU, Gemeinsam"
+                  onChange={(e) => patchSpecific({ campusInfrastructureProvidedBy: e.target.value })}
+                  placeholder="Company, HSLU, Together"
                 />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="campusScopeOfAttack">Scope of Attack</Label>
-                <Textarea
-                  id="campusScopeOfAttack"
-                  value={formData.categorySpecific.campusScopeOfAttack}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: { ...prev.categorySpecific, campusScopeOfAttack: e.target.value }
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="campusOutOfScope">Out of Scope</Label>
-                <Textarea
-                  id="campusOutOfScope"
-                  value={formData.categorySpecific.campusOutOfScope}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categorySpecific: { ...prev.categorySpecific, campusOutOfScope: e.target.value }
-                    }))
-                  }
-                />
-              </div>
+              </Field>
             </div>
+            <Field label={t.scopeOfAttack}>
+              <Textarea
+                value={formData.categorySpecific.campusScopeOfAttack}
+                onChange={(e) => patchSpecific({ campusScopeOfAttack: e.target.value })}
+                rows={3}
+              />
+            </Field>
+            <Field label={t.campusOutOfScope}>
+              <Textarea
+                value={formData.categorySpecific.campusOutOfScope}
+                onChange={(e) => patchSpecific({ campusOutOfScope: e.target.value })}
+                rows={3}
+              />
+            </Field>
           </div>
         )
       default:
         return (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="regionalConnection">Regionaler Bezug</Label>
+            <Field label={t.regionalConnection}>
               <Textarea
-                id="regionalConnection"
                 value={formData.categorySpecific.regionalConnection}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    categorySpecific: { ...prev.categorySpecific, regionalConnection: e.target.value }
-                  }))
-                }
-                placeholder="Was verbindet die Challenge mit der Region?"
+                onChange={(e) => patchSpecific({ regionalConnection: e.target.value })}
+                placeholder="What connects the challenge to the region?"
+                rows={3}
               />
-            </div>
+            </Field>
             <CheckboxRow
               id="regionalLocalDataAvailable"
-              label="Lokale Daten verfügbar?"
+              label={t.localDataAvailable}
               checked={formData.categorySpecific.regionalLocalDataAvailable}
-              onCheckedChange={(value) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  categorySpecific: { ...prev.categorySpecific, regionalLocalDataAvailable: value }
-                }))
-              }
+              onCheckedChange={(v) => patchSpecific({ regionalLocalDataAvailable: v })}
             />
-            <div className="space-y-2">
-              <Label htmlFor="regionalLocalStakeholders">Lokale Stakeholder</Label>
+            <Field label={t.localStakeholders}>
               <Textarea
-                id="regionalLocalStakeholders"
                 value={formData.categorySpecific.regionalLocalStakeholders}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    categorySpecific: { ...prev.categorySpecific, regionalLocalStakeholders: e.target.value }
-                  }))
-                }
-                placeholder="Gemeinden, Vereine, KMU, etc."
+                onChange={(e) => patchSpecific({ regionalLocalStakeholders: e.target.value })}
+                placeholder="Municipalities, clubs, SMEs, etc."
+                rows={3}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="regionalReuseAfterEvent">Weiternutzung nach Event</Label>
+            </Field>
+            <Field label={t.reuseAfterEvent}>
               <Textarea
-                id="regionalReuseAfterEvent"
                 value={formData.categorySpecific.regionalReuseAfterEvent}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    categorySpecific: { ...prev.categorySpecific, regionalReuseAfterEvent: e.target.value }
-                  }))
-                }
+                onChange={(e) => patchSpecific({ regionalReuseAfterEvent: e.target.value })}
+                rows={3}
               />
-            </div>
+            </Field>
           </div>
         )
     }
-  }, [categorySlug, formData])
+  }, [categorySlug, formData.categorySpecific, language])
 
   const saveChallenge = async (nextStatus: "draft" | "published") => {
-    setSaving(true)
+    setSaving(nextStatus)
     try {
-      const response = await fetch("/api/sponsor/challenge", {
+      const res = await fetch("/api/sponsor/challenge", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -553,761 +766,517 @@ export function SponsorChallengeEditor({
           prize: prize.trim() || null
         })
       })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || error.message || "Fehler beim Speichern")
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || err.message || t.saveError)
       }
-
-      const json = await response.json()
+      const json = await res.json()
       const challenge = json.data?.challenge as SponsorChallengeRecord
       setStatus(challenge.status)
       setPrize(challenge.prize || "")
       setSelectedChallengeId(challenge.id)
       setFormData(normalizeSponsorChallengeData(challenge.challenge_data))
-
       if (categoryId) {
-        const nextList = (challengeList || []).filter((item) => item.id !== challenge.id)
-        setChallengeList([
-          {
-            id: challenge.id,
-            challenge_title: challenge.challenge_title,
-            status: challenge.status,
-            updated_at: challenge.updated_at,
-            category_id: challenge.category_id
-          },
-          ...nextList
-        ])
+        setChallengeList((prev) => {
+          const rest = prev.filter((c) => c.id !== challenge.id)
+          return [
+            {
+              id: challenge.id,
+              challenge_title: challenge.challenge_title,
+              status: challenge.status,
+              updated_at: challenge.updated_at,
+              category_id: challenge.category_id
+            },
+            ...rest
+          ]
+        })
       }
-
-      toast.success(nextStatus === "published" ? "Challenge veröffentlicht" : "Entwurf gespeichert")
+      toast.success(nextStatus === "published" ? t.publishSuccess : t.saveSuccess)
       onSaved?.(challenge)
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Fehler beim Speichern")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t.saveError)
     } finally {
-      setSaving(false)
+      setSaving(null)
     }
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6">
-      <Card className="border-[#530A5D]/20 bg-[#530A5D]/5">
-        <CardHeader className="space-y-3">
-          {categoryId ? (
-            <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
-              <div className="space-y-2">
-                <Label htmlFor="challenge-select">Vorhandene Challenges</Label>
+    <div className="mx-auto w-full max-w-4xl space-y-6">
+      {/* ── Status / Actions ── */}
+      <Card className="border-border">
+        <CardHeader className="space-y-4 pb-4">
+          {categoryId && (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <Label className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                  {t.existingChallenges}
+                </Label>
                 <Select
                   value={selectedChallengeId}
-                  onValueChange={(value) => {
-                    setSelectedChallengeId(value)
-                    void loadChallengeCollection(value)
+                  onValueChange={(v) => {
+                    setSelectedChallengeId(v)
+                    void loadChallengeCollection(v)
                   }}>
-                  <SelectTrigger id="challenge-select" disabled={loadingList}>
-                    <SelectValue placeholder={loadingList ? "Lade Challenges..." : "Challenge auswählen"} />
+                  <SelectTrigger disabled={loadingList}>
+                    <SelectValue placeholder={loadingList ? t.loading : t.selectChallenge} />
                   </SelectTrigger>
                   <SelectContent>
-                    {challengeList.map((challenge, index) => (
-                      <SelectItem key={challenge.id} value={challenge.id}>
-                        {challenge.challenge_title || `Challenge ${index + 1}`}
+                    {challengeList.map((c, i) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.challenge_title || `Challenge ${i + 1}`}
+                        {c.status === "published" && (
+                          <span className="ml-2 text-xs text-green-600">● {t.publishedLabel}</span>
+                        )}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <Button type="button" variant="outline" onClick={startNewChallenge}>
-                Neue Challenge
+              <Button type="button" variant="outline" onClick={startNewChallenge} className="shrink-0">
+                {t.newChallenge}
               </Button>
             </div>
-          ) : null}
+          )}
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-2xl">
-                Deine Challenge
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div>
+                <p className="text-muted-foreground text-sm">{categoryName}</p>
                 <Badge
                   variant={isPublished ? "default" : "outline"}
-                  className={isPublished ? "bg-green-600" : ""}>
-                  {isPublished ? "Veröffentlicht" : "Entwurf"}
+                  className={isPublished ? "bg-green-600 text-white" : ""}>
+                  {isPublished ? t.publishedLabel : t.draftLabel}
                 </Badge>
-              </CardTitle>
-              <p className="text-muted-foreground mt-1 text-sm">{categoryName}</p>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={() => saveChallenge("draft")}
-                disabled={saving}
-                className="gap-2">
-                {saving && status === "draft" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                Entwurf speichern
+                disabled={saving !== null}
+                className="flex-1 gap-2 sm:flex-none">
+                {saving === "draft" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {t.saveDraft}
               </Button>
               <Button
                 onClick={() => saveChallenge("published")}
-                disabled={saving}
-                className="gap-2 bg-[#530A5D] hover:bg-[#530A5D]/90">
-                {saving && status === "published" ? (
+                disabled={saving !== null}
+                className="flex-1 gap-2 bg-[#530A5D] hover:bg-[#530A5D]/90 sm:flex-none">
+                {saving === "published" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Send className="h-4 w-4" />
                 )}
-                Veröffentlichen
+                {t.publish}
               </Button>
             </div>
           </div>
         </CardHeader>
       </Card>
 
+      {/* ── English-only notice ── */}
+      <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950/30">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+        <div>
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">{t.englishNotice}</p>
+          <p className="text-muted-foreground text-xs">{t.englishNoticeDetail}</p>
+        </div>
+      </div>
+
+      {/* ── Website-visible section ── */}
       <Card className="border-[#530A5D]/40 bg-gradient-to-br from-[#530A5D]/5 to-[#530A5D]/10 shadow-sm">
         <CardHeader className="border-b pb-4">
           <CardTitle className="flex items-center gap-2 text-xl text-[#530A5D]">
             <Eye className="h-5 w-5" />
-            Auf der Website sichtbar
+            {t.websiteVisible}
           </CardTitle>
-          <p className="text-muted-foreground text-sm">
-            Diese drei Felder werden direkt auf der Zentral Hack Website bei den Challenges angezeigt.
-          </p>
+          <p className="text-muted-foreground text-sm">{t.websiteVisibleDesc}</p>
         </CardHeader>
         <CardContent className="space-y-4 pt-6">
-          <div className="space-y-2">
-            <Label htmlFor="ws-challengeTitle" className="font-semibold">
-              Challenge-Titel <span className="text-destructive">*</span>
-            </Label>
+          <Field label={t.challengeTitle} required>
             <Input
-              id="ws-challengeTitle"
               value={formData.challengeTitle}
-              onChange={(e) => setFormData((prev) => ({ ...prev, challengeTitle: e.target.value }))}
-              placeholder="Kurzer, prägnanter Titel der Challenge"
+              onChange={(e) => patch({ challengeTitle: e.target.value })}
+              placeholder="Short, punchy title in English"
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="ws-shortDescription" className="font-semibold">
-              Kurzbeschreibung <span className="text-destructive">*</span>
-            </Label>
+          </Field>
+          <Field label={t.shortDescription} required hint={t.shortDescriptionHint}>
             <Textarea
-              id="ws-shortDescription"
               value={formData.shortDescription}
-              onChange={(e) => setFormData((prev) => ({ ...prev, shortDescription: e.target.value }))}
-              placeholder="Max. 2–3 Sätze – wird auf der Website als Teaser angezeigt"
+              onChange={(e) => patch({ shortDescription: e.target.value })}
+              placeholder="2–3 sentences in English shown as a teaser on the website"
               rows={3}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="ws-prize" className="flex items-center gap-1.5 font-semibold">
-              <Trophy className="h-4 w-4 text-[#530A5D]" />
-              Preisgeld / Preis
-            </Label>
-            <Input
-              id="ws-prize"
-              value={prize}
-              onChange={(e) => setPrize(e.target.value)}
-              placeholder="z.B. CHF 1'000 Gutschein, iPad, Internship-Angebot"
-            />
-            <p className="text-muted-foreground text-xs">
-              Wird als Preis-Highlight auf der Challenge-Karte angezeigt.
-            </p>
+          </Field>
+          <Field label={t.prize} hint={t.prizeHint}>
+            <div className="relative">
+              <Trophy className="text-muted-foreground absolute top-2.5 left-3 h-4 w-4" />
+              <Input
+                value={prize}
+                onChange={(e) => setPrize(e.target.value)}
+                placeholder="e.g. CHF 1,000 voucher, iPad, internship offer"
+                className="pl-9"
+              />
+            </div>
+          </Field>
+        </CardContent>
+      </Card>
+
+      {/* ── Challenge-Format ── */}
+      <Card>
+        <CardContent className="pt-6">
+          <SectionHeading>{t.challengeFormat}</SectionHeading>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Field label={t.difficulty}>
+              <Select
+                value={formData.difficulty}
+                onValueChange={(v) => patch({ difficulty: v as SponsorChallengeData["difficulty"] })}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t.choose} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Einsteiger">{t.beginner}</SelectItem>
+                  <SelectItem value="Fortgeschritten">{t.intermediate}</SelectItem>
+                  <SelectItem value="Expert">{t.expert}</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label={t.teamSize}>
+              <Input
+                value={formData.teamSize}
+                onChange={(e) => patch({ teamSize: e.target.value })}
+                placeholder="e.g. 2–4 people"
+              />
+            </Field>
           </div>
         </CardContent>
       </Card>
 
-      <SectionCard title="Unternehmen & Kontakt">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="companyName">Unternehmensname</Label>
-            <Input
-              id="companyName"
-              value={formData.companyName}
-              onChange={(e) => setFormData((prev) => ({ ...prev, companyName: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="branch">Branche</Label>
-            <Input
-              id="branch"
-              value={formData.branch}
-              onChange={(e) => setFormData((prev) => ({ ...prev, branch: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="contactName">Ansprechperson</Label>
-            <Input
-              id="contactName"
-              value={formData.contactName}
-              onChange={(e) => setFormData((prev) => ({ ...prev, contactName: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="contactFunction">Funktion</Label>
-            <Input
-              id="contactFunction"
-              value={formData.contactFunction}
-              onChange={(e) => setFormData((prev) => ({ ...prev, contactFunction: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="contactEmail">E-Mail</Label>
-            <Input
-              id="contactEmail"
-              type="email"
-              value={formData.contactEmail}
-              onChange={(e) => setFormData((prev) => ({ ...prev, contactEmail: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="contactPhone">Telefon</Label>
-            <Input
-              id="contactPhone"
-              value={formData.contactPhone}
-              onChange={(e) => setFormData((prev) => ({ ...prev, contactPhone: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="website">Website</Label>
-            <Input
-              id="website"
-              value={formData.website}
-              onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="logoNote">Logo</Label>
-            <Input
-              id="logoNote"
-              value={formData.logoNote}
-              onChange={(e) => setFormData((prev) => ({ ...prev, logoNote: e.target.value }))}
-              placeholder="PNG oder SVG separat beilegen"
-            />
-          </div>
-        </div>
-      </SectionCard>
+      {/* ── Tabbed detail form ── */}
+      <Tabs defaultValue="content">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="content" className="gap-1.5">
+            <FileText className="h-4 w-4 shrink-0" />
+            <span>{t.tabContent}</span>
+          </TabsTrigger>
+          <TabsTrigger value="resources" className="gap-1.5">
+            <Package className="h-4 w-4 shrink-0" />
+            <span>{t.tabResources}</span>
+          </TabsTrigger>
+          <TabsTrigger value="legal" className="gap-1.5">
+            <Gavel className="h-4 w-4 shrink-0" />
+            <span>{t.tabClosing}</span>
+          </TabsTrigger>
+        </TabsList>
 
-      <SectionCard title="Challenge-Übersicht">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="challengeTitle">Challenge-Titel</Label>
-            <Input
-              id="challengeTitle"
-              value={formData.challengeTitle}
-              onChange={(e) => setFormData((prev) => ({ ...prev, challengeTitle: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="shortDescription">Kurzbeschreibung</Label>
-            <Textarea
-              id="shortDescription"
-              value={formData.shortDescription}
-              onChange={(e) => setFormData((prev) => ({ ...prev, shortDescription: e.target.value }))}
-              placeholder="Max. 2-3 Sätze für die Website"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Schwierigkeitsgrad</Label>
-            <Select
-              value={formData.difficulty}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, difficulty: value as SponsorChallengeData["difficulty"] }))
-              }>
-              <SelectTrigger>
-                <SelectValue placeholder="Wählen" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Einsteiger">Einsteiger</SelectItem>
-                <SelectItem value="Fortgeschritten">Fortgeschritten</SelectItem>
-                <SelectItem value="Expert">Expert</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="teamSize">Empfohlene Teamgrösse</Label>
-            <Input
-              id="teamSize"
-              value={formData.teamSize}
-              onChange={(e) => setFormData((prev) => ({ ...prev, teamSize: e.target.value }))}
-              placeholder="z.B. 2-4 Personen"
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label>Sprache der Challenge</Label>
-            <Select
-              value={formData.challengeLanguage}
-              onValueChange={(value) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  challengeLanguage: value as SponsorChallengeData["challengeLanguage"]
-                }))
-              }>
-              <SelectTrigger>
-                <SelectValue placeholder="Wählen" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Deutsch">Deutsch</SelectItem>
-                <SelectItem value="Englisch">Englisch</SelectItem>
-                <SelectItem value="Beides">Beides</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </SectionCard>
+        {/* ── Tab 1: Content ── */}
+        <TabsContent value="content" className="mt-4 space-y-6">
+          <Card>
+            <CardContent className="space-y-6 pt-6">
+              <SectionHeading>{t.problemContext}</SectionHeading>
+              <Field label={t.background} hint={t.backgroundHint}>
+                <Textarea
+                  value={formData.background}
+                  onChange={(e) => patch({ background: e.target.value })}
+                  rows={4}
+                  placeholder="What is your company / department working on?"
+                />
+              </Field>
+              <Field label={t.problem} hint={t.problemHint}>
+                <Textarea
+                  value={formData.problemStatement}
+                  onChange={(e) => patch({ problemStatement: e.target.value })}
+                  rows={4}
+                  placeholder="What is the concrete challenge?"
+                />
+              </Field>
+              <Field label={t.goal} hint={t.goalHint}>
+                <Textarea
+                  value={formData.goal}
+                  onChange={(e) => patch({ goal: e.target.value })}
+                  rows={3}
+                  placeholder="What should be achieved by the end of the challenge?"
+                />
+              </Field>
 
-      <SectionCard title="Problemstellung & Kontext">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="background">4.1 Hintergrund</Label>
-            <Textarea
-              id="background"
-              value={formData.background}
-              onChange={(e) => setFormData((prev) => ({ ...prev, background: e.target.value }))}
-              rows={5}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="problemStatement">4.2 Das Problem</Label>
-            <Textarea
-              id="problemStatement"
-              value={formData.problemStatement}
-              onChange={(e) => setFormData((prev) => ({ ...prev, problemStatement: e.target.value }))}
-              rows={5}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="goal">4.3 Zielsetzung</Label>
-            <Textarea
-              id="goal"
-              value={formData.goal}
-              onChange={(e) => setFormData((prev) => ({ ...prev, goal: e.target.value }))}
-              rows={4}
-            />
-          </div>
-        </div>
-      </SectionCard>
+              <SectionHeading>{t.requirements}</SectionHeading>
+              <Field label={t.mustRequirements} hint={t.mustRequirementsHint}>
+                <Textarea
+                  value={formData.mustRequirements}
+                  onChange={(e) => patch({ mustRequirements: e.target.value })}
+                  rows={4}
+                  placeholder="One requirement per line"
+                />
+              </Field>
+              <Field label={t.canRequirements} hint={t.canRequirementsHint}>
+                <Textarea
+                  value={formData.canRequirements}
+                  onChange={(e) => patch({ canRequirements: e.target.value })}
+                  rows={3}
+                  placeholder="Bonus requirements"
+                />
+              </Field>
+              <Field label={t.outOfScope} hint={t.outOfScopeHint}>
+                <Textarea
+                  value={formData.outOfScope}
+                  onChange={(e) => patch({ outOfScope: e.target.value })}
+                  rows={3}
+                />
+              </Field>
 
-      <SectionCard title="Anforderungen">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="mustRequirements">5.1 MUSS-Anforderungen</Label>
-            <Textarea
-              id="mustRequirements"
-              value={formData.mustRequirements}
-              onChange={(e) => setFormData((prev) => ({ ...prev, mustRequirements: e.target.value }))}
-              rows={4}
-              placeholder="Eine Anforderung pro Zeile"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="canRequirements">5.2 KANN-Anforderungen</Label>
-            <Textarea
-              id="canRequirements"
-              value={formData.canRequirements}
-              onChange={(e) => setFormData((prev) => ({ ...prev, canRequirements: e.target.value }))}
-              rows={4}
-              placeholder="Bonus-Anforderungen"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="outOfScope">5.3 Nicht im Scope</Label>
-            <Textarea
-              id="outOfScope"
-              value={formData.outOfScope}
-              onChange={(e) => setFormData((prev) => ({ ...prev, outOfScope: e.target.value }))}
-              rows={4}
-              placeholder="Was explizit nicht Teil der Lösung sein soll"
-            />
-          </div>
-        </div>
-      </SectionCard>
+              <SectionHeading>{t.technical}</SectionHeading>
+              <Field label={t.allowedTechnologies}>
+                <Textarea
+                  value={formData.allowedTechnologies}
+                  onChange={(e) => patch({ allowedTechnologies: e.target.value })}
+                  rows={3}
+                />
+              </Field>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label={t.restrictions}>
+                  <Textarea
+                    value={formData.restrictions}
+                    onChange={(e) => patch({ restrictions: e.target.value })}
+                    rows={3}
+                  />
+                </Field>
+                <Field label={t.infrastructure}>
+                  <Textarea
+                    value={formData.infrastructure}
+                    onChange={(e) => patch({ infrastructure: e.target.value })}
+                    rows={3}
+                  />
+                </Field>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <SectionCard title="Technische Rahmenbedingungen">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="allowedTechnologies">6.1 Erlaubte Technologien / Vorgaben</Label>
-            <Textarea
-              id="allowedTechnologies"
-              value={formData.allowedTechnologies}
-              onChange={(e) => setFormData((prev) => ({ ...prev, allowedTechnologies: e.target.value }))}
-              rows={4}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="restrictions">6.2 Einschränkungen</Label>
-            <Textarea
-              id="restrictions"
-              value={formData.restrictions}
-              onChange={(e) => setFormData((prev) => ({ ...prev, restrictions: e.target.value }))}
-              rows={4}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="infrastructure">6.3 Infrastruktur / Umgebung</Label>
-            <Textarea
-              id="infrastructure"
-              value={formData.infrastructure}
-              onChange={(e) => setFormData((prev) => ({ ...prev, infrastructure: e.target.value }))}
-              rows={4}
-            />
-          </div>
-        </div>
-      </SectionCard>
+        {/* ── Tab 2: Resources ── */}
+        <TabsContent value="resources" className="mt-4 space-y-6">
+          <Card>
+            <CardContent className="space-y-6 pt-6">
+              <SectionHeading>{t.providedResources}</SectionHeading>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <CheckboxRow
+                  id="datasets"
+                  label={t.datasets}
+                  checked={formData.resources.datasets}
+                  onCheckedChange={(v) => patchResources({ datasets: v })}
+                />
+                <CheckboxRow
+                  id="apis"
+                  label={t.apis}
+                  checked={formData.resources.apis}
+                  onCheckedChange={(v) => patchResources({ apis: v })}
+                />
+                <CheckboxRow
+                  id="documentation"
+                  label={t.documentation}
+                  checked={formData.resources.documentation}
+                  onCheckedChange={(v) => patchResources({ documentation: v })}
+                />
+                <CheckboxRow
+                  id="credentials"
+                  label={t.credentials}
+                  checked={formData.resources.credentials}
+                  onCheckedChange={(v) => patchResources({ credentials: v })}
+                />
+                <CheckboxRow
+                  id="sdk"
+                  label={t.sdk}
+                  checked={formData.resources.sdk}
+                  onCheckedChange={(v) => patchResources({ sdk: v })}
+                />
+                <CheckboxRow
+                  id="hardware"
+                  label={t.hardware}
+                  checked={formData.resources.hardware}
+                  onCheckedChange={(v) => patchResources({ hardware: v })}
+                />
+                <CheckboxRow
+                  id="aiModels"
+                  label={t.aiModels}
+                  checked={formData.resources.aiModels}
+                  onCheckedChange={(v) => patchResources({ aiModels: v })}
+                />
+                <CheckboxRow
+                  id="mentoringSupport"
+                  label={t.mentoringSupport}
+                  checked={formData.resources.mentoringSupport}
+                  onCheckedChange={(v) => patchResources({ mentoringSupport: v })}
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label={t.resourceDetails}>
+                  <Textarea
+                    value={formData.resources.details}
+                    onChange={(e) => patchResources({ details: e.target.value })}
+                    rows={3}
+                  />
+                </Field>
+                <Field label={t.resourceTimes} hint={t.resourceTimesHint}>
+                  <Input
+                    value={formData.resources.times}
+                    onChange={(e) => patchResources({ times: e.target.value })}
+                    placeholder="e.g. at least 1 week before the event"
+                  />
+                </Field>
+              </div>
 
-      <SectionCard title="Bereitgestellte Ressourcen">
-        <div className="grid gap-3 md:grid-cols-2">
-          <CheckboxRow
-            id="datasets"
-            label="Datensätze / Daten"
-            checked={formData.resources.datasets}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, datasets: value } }))
-            }
-          />
-          <CheckboxRow
-            id="apis"
-            label="APIs / Endpoints"
-            checked={formData.resources.apis}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, apis: value } }))
-            }
-          />
-          <CheckboxRow
-            id="documentation"
-            label="Dokumentation"
-            checked={formData.resources.documentation}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, documentation: value } }))
-            }
-          />
-          <CheckboxRow
-            id="credentials"
-            label="Zugangsdaten / Credentials"
-            checked={formData.resources.credentials}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, credentials: value } }))
-            }
-          />
-          <CheckboxRow
-            id="sdk"
-            label="SDK / Libraries"
-            checked={formData.resources.sdk}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, sdk: value } }))
-            }
-          />
-          <CheckboxRow
-            id="hardware"
-            label="Hardware"
-            checked={formData.resources.hardware}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, hardware: value } }))
-            }
-          />
-          <CheckboxRow
-            id="aiModels"
-            label="KI-Modelle / LLMs"
-            checked={formData.resources.aiModels}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, aiModels: value } }))
-            }
-          />
-          <CheckboxRow
-            id="mentoringSupport"
-            label="Mentoring-Support"
-            checked={formData.resources.mentoringSupport}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, resources: { ...prev.resources, mentoringSupport: value } }))
-            }
-          />
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="resourceDetails">Details / Zeiten</Label>
-            <Textarea
-              id="resourceDetails"
-              value={formData.resources.details}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  resources: { ...prev.resources, details: e.target.value }
-                }))
-              }
-              rows={3}
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="resourceTimes">Zeiten</Label>
-            <Input
-              id="resourceTimes"
-              value={formData.resources.times}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, resources: { ...prev.resources, times: e.target.value } }))
-              }
-              placeholder="Spätestens 1 Woche vor Event bereitstellen"
-            />
-          </div>
-        </div>
-      </SectionCard>
+              <SectionHeading>{t.deliverables}</SectionHeading>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <CheckboxRow
+                  id="prototype"
+                  label={t.prototype}
+                  checked={formData.deliverables.prototype}
+                  onCheckedChange={(v) => patchDeliverables({ prototype: v })}
+                />
+                <CheckboxRow
+                  id="pitch"
+                  label={t.pitch}
+                  checked={formData.deliverables.pitch}
+                  onCheckedChange={(v) => patchDeliverables({ pitch: v })}
+                />
+                <CheckboxRow
+                  id="codeRepository"
+                  label={t.codeRepository}
+                  checked={formData.deliverables.codeRepository}
+                  onCheckedChange={(v) => patchDeliverables({ codeRepository: v })}
+                />
+                <CheckboxRow
+                  id="readme"
+                  label={t.readme}
+                  checked={formData.deliverables.readme}
+                  onCheckedChange={(v) => patchDeliverables({ readme: v })}
+                />
+                <CheckboxRow
+                  id="video"
+                  label={t.video}
+                  checked={formData.deliverables.video}
+                  onCheckedChange={(v) => patchDeliverables({ video: v })}
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label={t.pitchFormat}>
+                  <Input
+                    value={formData.deliverables.pitchFormat}
+                    onChange={(e) => patchDeliverables({ pitchFormat: e.target.value })}
+                    placeholder="e.g. 5 slides / 3 min."
+                  />
+                </Field>
+                <Field label={t.videoLength}>
+                  <Input
+                    value={formData.deliverables.videoLength}
+                    onChange={(e) => patchDeliverables({ videoLength: e.target.value })}
+                    placeholder="e.g. 2 minutes"
+                  />
+                </Field>
+                <Field label={t.otherDeliverables} hint={t.otherDeliverablesHint}>
+                  <Textarea
+                    value={formData.deliverables.other}
+                    onChange={(e) => patchDeliverables({ other: e.target.value })}
+                    rows={2}
+                  />
+                </Field>
+              </div>
 
-      <SectionCard title="Erwartete Deliverables">
-        <div className="grid gap-3 md:grid-cols-2">
-          <CheckboxRow
-            id="prototype"
-            label="Funktionierender Prototyp / Demo"
-            checked={formData.deliverables.prototype}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, prototype: value } }))
-            }
-          />
-          <CheckboxRow
-            id="pitch"
-            label="Präsentation / Pitch"
-            checked={formData.deliverables.pitch}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, pitch: value } }))
-            }
-          />
-          <CheckboxRow
-            id="codeRepository"
-            label="Code-Repository"
-            checked={formData.deliverables.codeRepository}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({
-                ...prev,
-                deliverables: { ...prev.deliverables, codeRepository: value }
-              }))
-            }
-          />
-          <CheckboxRow
-            id="readme"
-            label="README / Dokumentation"
-            checked={formData.deliverables.readme}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, readme: value } }))
-            }
-          />
-          <CheckboxRow
-            id="video"
-            label="Kurzvideo"
-            checked={formData.deliverables.video}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, deliverables: { ...prev.deliverables, video: value } }))
-            }
-          />
-          <div className="space-y-2">
-            <Label htmlFor="pitchFormat">Max. Folien / Min.</Label>
-            <Input
-              id="pitchFormat"
-              value={formData.deliverables.pitchFormat}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  deliverables: { ...prev.deliverables, pitchFormat: e.target.value }
-                }))
-              }
-              placeholder="z.B. 5 Folien / 3 Min."
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="videoLength">Max. Video-Minuten</Label>
-            <Input
-              id="videoLength"
-              value={formData.deliverables.videoLength}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  deliverables: { ...prev.deliverables, videoLength: e.target.value }
-                }))
-              }
-              placeholder="z.B. 2 Minuten"
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="deliverableOther">Sonstiges</Label>
-            <Textarea
-              id="deliverableOther"
-              value={formData.deliverables.other}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  deliverables: { ...prev.deliverables, other: e.target.value }
-                }))
-              }
-              rows={3}
-            />
-          </div>
-        </div>
-      </SectionCard>
+              <SectionHeading>{t.evaluationCriteria}</SectionHeading>
+              <EvaluationTable
+                criteria={formData.evaluation.criteria}
+                onChange={(criteria) => patchEvaluation({ criteria })}
+                labels={{
+                  criterion: t.criterion,
+                  weight: t.weight,
+                  description: t.evalDescription,
+                  addCriterion: t.addCriterion,
+                  total: t.total,
+                  mustBe100: t.mustBe100,
+                  noCriteria: t.noCriteria
+                }}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <SectionCard title="Bewertung">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="evaluationCriteria">Kriterien</Label>
-            <Textarea
-              id="evaluationCriteria"
-              value={formData.evaluation.criteria}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  evaluation: { ...prev.evaluation, criteria: e.target.value }
-                }))
-              }
-              rows={8}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="weightingNotes">Gewichtungs-Hinweise</Label>
-            <Textarea
-              id="weightingNotes"
-              value={formData.evaluation.weightingNotes}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  evaluation: { ...prev.evaluation, weightingNotes: e.target.value }
-                }))
-              }
-              rows={3}
-            />
-          </div>
-        </div>
-      </SectionCard>
+        {/* ── Tab 3: Closing ── */}
+        <TabsContent value="legal" className="mt-4 space-y-6">
+          <Card>
+            <CardContent className="space-y-6 pt-6">
+              <SectionHeading>{t.prizes}</SectionHeading>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label={t.firstPlace}>
+                  <Textarea
+                    value={formData.prizes.first}
+                    onChange={(e) => patchPrizes({ first: e.target.value })}
+                    rows={2}
+                  />
+                </Field>
+                <Field label={t.secondPlace}>
+                  <Textarea
+                    value={formData.prizes.second}
+                    onChange={(e) => patchPrizes({ second: e.target.value })}
+                    rows={2}
+                  />
+                </Field>
+                <Field label={t.thirdPlace}>
+                  <Textarea
+                    value={formData.prizes.third}
+                    onChange={(e) => patchPrizes({ third: e.target.value })}
+                    rows={2}
+                  />
+                </Field>
+                <Field label={t.specialPrize}>
+                  <Textarea
+                    value={formData.prizes.special}
+                    onChange={(e) => patchPrizes({ special: e.target.value })}
+                    rows={2}
+                  />
+                </Field>
+              </div>
 
-      <SectionCard title="Preise & Anreize">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="prizeFirst">1. Platz</Label>
-            <Textarea
-              id="prizeFirst"
-              value={formData.prizes.first}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, prizes: { ...prev.prizes, first: e.target.value } }))
-              }
-              rows={2}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="prizeSecond">2. Platz</Label>
-            <Textarea
-              id="prizeSecond"
-              value={formData.prizes.second}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, prizes: { ...prev.prizes, second: e.target.value } }))
-              }
-              rows={2}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="prizeThird">3. Platz</Label>
-            <Textarea
-              id="prizeThird"
-              value={formData.prizes.third}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, prizes: { ...prev.prizes, third: e.target.value } }))
-              }
-              rows={2}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="prizeSpecial">Sonderpreis</Label>
-            <Textarea
-              id="prizeSpecial"
-              value={formData.prizes.special}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, prizes: { ...prev.prizes, special: e.target.value } }))
-              }
-              rows={2}
-            />
-          </div>
-        </div>
-      </SectionCard>
+              <SectionHeading>{t.legal}</SectionHeading>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <CheckboxRow
+                  id="dataAnonymous"
+                  label={t.dataAnonymous}
+                  checked={formData.legal.dataAnonymous}
+                  onCheckedChange={(v) => patchLegal({ dataAnonymous: v })}
+                />
+                <CheckboxRow
+                  id="noRestrictions"
+                  label={t.noRestrictions}
+                  checked={formData.legal.noRestrictions}
+                  onCheckedChange={(v) => patchLegal({ noRestrictions: v })}
+                />
+                <CheckboxRow
+                  id="portfolioAllowed"
+                  label={t.portfolioAllowed}
+                  checked={formData.legal.portfolioAllowed}
+                  onCheckedChange={(v) => patchLegal({ portfolioAllowed: v })}
+                />
+                <CheckboxRow
+                  id="noSpecialIpRules"
+                  label={t.noSpecialIpRules}
+                  checked={formData.legal.noSpecialIpRules}
+                  onCheckedChange={(v) => patchLegal({ noSpecialIpRules: v })}
+                />
+              </div>
+              <Field label={t.specialIpRules}>
+                <Textarea
+                  value={formData.legal.specialIpRules}
+                  onChange={(e) => patchLegal({ specialIpRules: e.target.value })}
+                  rows={3}
+                  placeholder={t.specialIpRulesPlaceholder}
+                />
+              </Field>
 
-      <SectionCard title="Kategoriespezifische Ergänzungen">{categorySpecificFields}</SectionCard>
-
-      <SectionCard title="Datenschutz & Rechtliches">
-        <div className="grid gap-3 md:grid-cols-2">
-          <CheckboxRow
-            id="dataAnonymous"
-            label="Alle bereitgestellten Daten sind anonymisiert oder frei verwendbar"
-            checked={formData.legal.dataAnonymous}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, legal: { ...prev.legal, dataAnonymous: value } }))
-            }
-          />
-          <CheckboxRow
-            id="noRestrictions"
-            label="Es bestehen keine rechtlichen Einschränkungen für die Teilnahme"
-            checked={formData.legal.noRestrictions}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, legal: { ...prev.legal, noRestrictions: value } }))
-            }
-          />
-          <CheckboxRow
-            id="portfolioAllowed"
-            label="Teams dürfen die Lösung nach dem Event im Portfolio verwenden"
-            checked={formData.legal.portfolioAllowed}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, legal: { ...prev.legal, portfolioAllowed: value } }))
-            }
-          />
-          <CheckboxRow
-            id="noSpecialIpRules"
-            label="IP/Urheberrecht: keine Sonderregelungen"
-            checked={formData.legal.noSpecialIpRules}
-            onCheckedChange={(value) =>
-              setFormData((prev) => ({ ...prev, legal: { ...prev.legal, noSpecialIpRules: value } }))
-            }
-          />
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="specialIpRules">Sonderregelungen bezüglich IP/Urheberrecht</Label>
-            <Textarea
-              id="specialIpRules"
-              value={formData.legal.specialIpRules}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, legal: { ...prev.legal, specialIpRules: e.target.value } }))
-              }
-              rows={3}
-            />
-          </div>
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Unterschrift & Einreichung">
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="space-y-2">
-            <Label htmlFor="placeDate">Ort, Datum</Label>
-            <Input
-              id="placeDate"
-              value={formData.signature.placeDate}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  signature: { ...prev.signature, placeDate: e.target.value }
-                }))
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="signatureName">Name</Label>
-            <Input
-              id="signatureName"
-              value={formData.signature.name}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, signature: { ...prev.signature, name: e.target.value } }))
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="signatureFunction">Funktion</Label>
-            <Input
-              id="signatureFunction"
-              value={formData.signature.function}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  signature: { ...prev.signature, function: e.target.value }
-                }))
-              }
-            />
-          </div>
-        </div>
-      </SectionCard>
+              <SectionHeading>{t.categorySpecific}</SectionHeading>
+              {categorySpecificFields}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

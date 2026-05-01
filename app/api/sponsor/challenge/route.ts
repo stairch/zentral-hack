@@ -203,8 +203,8 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
                challenge_data = $17::jsonb,
                prize = $18,
                published_at = CASE
-                 WHEN $3 = 'published' AND sponsor_challenges.published_at IS NULL THEN NOW()
-                 WHEN $3 = 'published' THEN sponsor_challenges.published_at
+                 WHEN $3::text = 'published' AND sponsor_challenges.published_at IS NULL THEN NOW()
+                 WHEN $3::text = 'published' THEN sponsor_challenges.published_at
                  ELSE NULL
                END,
                updated_at = NOW()
@@ -234,7 +234,7 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
              $8, $9, $10, $11,
              $12, $13, $14, $15,
              $16, $17::jsonb, $18,
-             CASE WHEN $3 = 'published' THEN NOW() ELSE NULL END,
+             CASE WHEN $3::text = 'published' THEN NOW() ELSE NULL END,
              NOW()
            )
            RETURNING id, user_id, category_id, status,

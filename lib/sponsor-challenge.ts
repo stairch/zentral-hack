@@ -3,6 +3,45 @@ export type SponsorRole = "user" | "category_partner" | "sponsor" | "admin"
 export type SponsorChallengeDifficulty = "Einsteiger" | "Fortgeschritten" | "Expert"
 export type SponsorChallengeLanguage = "Deutsch" | "Englisch" | "Beides"
 
+export interface EvaluationCriterion {
+  name: string
+  weight: number
+  description: string
+}
+
+const DEFAULT_CRITERIA: EvaluationCriterion[] = [
+  { name: "Innovation & Kreativität", weight: 25, description: "Neuartigkeit, Originalität" },
+  { name: "Technische Umsetzung", weight: 25, description: "Code-Qualität, Architektur" },
+  { name: "Problemlösung & Relevanz", weight: 20, description: "Löst die Challenge das definierte Problem?" },
+  { name: "Präsentation & Pitch", weight: 15, description: "Klarheit, Demo, Überzeugungskraft" },
+  { name: "Business-Potenzial", weight: 15, description: "Umsetzbarkeit, Skalierbarkeit" }
+]
+
+function normalizeCriteria(value: unknown): EvaluationCriterion[] {
+  if (Array.isArray(value)) {
+    return value.map((item) => ({
+      name: typeof item.name === "string" ? item.name : "",
+      weight: typeof item.weight === "number" ? item.weight : 0,
+      description: typeof item.description === "string" ? item.description : ""
+    }))
+  }
+  // Backward compat: old string format "Name | weight | description\n..."
+  if (typeof value === "string" && value.trim()) {
+    return value
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => {
+        const parts = line.split("|").map((s) => s.trim())
+        return {
+          name: parts[0] || "",
+          weight: parseInt(parts[1] || "0", 10) || 0,
+          description: parts[2] || ""
+        }
+      })
+  }
+  return [...DEFAULT_CRITERIA]
+}
+
 export interface SponsorChallengeData {
   companyName: string
   branch: string
@@ -49,7 +88,7 @@ export interface SponsorChallengeData {
     other: string
   }
   evaluation: {
-    criteria: string
+    criteria: EvaluationCriterion[]
     weightingNotes: string
   }
   prizes: {
@@ -172,9 +211,8 @@ export function createEmptySponsorChallengeData(): SponsorChallengeData {
       other: ""
     },
     evaluation: {
-      criteria:
-        "Innovation & Kreativität | 25 | Neuartigkeit, Originalität\nTechnische Umsetzung | 25 | Code-Qualität, Architektur\nProblemlösung & Relevanz | 20 | Löst die Challenge das definierte Problem?\nPräsentation & Pitch | 15 | Klarheit, Demo, Überzeugungskraft\nBusiness-Potenzial | 15 | Umsetzbarkeit, Skalierbarkeit",
-      weightingNotes: "Die Gewichtung muss gesamthaft 100% ergeben."
+      criteria: [...DEFAULT_CRITERIA],
+      weightingNotes: ""
     },
     prizes: {
       first: "",
@@ -245,8 +283,8 @@ export function normalizeSponsorChallengeData(
       ...(value.deliverables || {})
     },
     evaluation: {
-      ...empty.evaluation,
-      ...(value.evaluation || {})
+      weightingNotes: value.evaluation?.weightingNotes ?? empty.evaluation.weightingNotes,
+      criteria: normalizeCriteria((value.evaluation as { criteria?: unknown } | undefined)?.criteria)
     },
     prizes: {
       ...empty.prizes,
