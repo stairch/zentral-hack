@@ -1,3 +1,4 @@
+import { del } from "@vercel/blob"
 import { query } from "@/lib/db"
 import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, serverError, validationError } from "@/lib/api"
@@ -88,7 +89,20 @@ async function handleDelete(req: AuthenticatedRequest) {
     const id = searchParams.get("id")
     if (!id) return validationError("id required")
 
+    const result = await query("SELECT logo_url FROM partner_logos WHERE id = $1", [id])
+    if (result.rows.length === 0) return validationError("Logo not found")
+
+    const logoUrl: string | null = result.rows[0].logo_url
     await query("DELETE FROM partner_logos WHERE id = $1", [id])
+
+    if (logoUrl?.startsWith("https://")) {
+      try {
+        await del(logoUrl)
+      } catch (e) {
+        console.warn("[Partner Logos] Blob deletion failed, continuing:", e)
+      }
+    }
+
     return successResponse({ message: "Logo deleted" })
   } catch {
     return serverError("Failed to delete partner logo")

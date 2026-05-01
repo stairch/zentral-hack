@@ -1,3 +1,4 @@
+import path from "path"
 import { NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
 import { verifyJWT } from "@/lib/auth"
@@ -59,6 +60,10 @@ export async function GET(request: NextRequest) {
 
       blobUrl = doc.file_path
       originalName = doc.name
+      if (blobUrl && !path.extname(originalName)) {
+        const ext = path.extname(new URL(blobUrl).pathname)
+        if (ext) originalName += ext
+      }
       mimeType = "application/octet-stream" // overridden by Blob Content-Type below
     } else {
       // Team file
