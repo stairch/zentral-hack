@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog"
-import { Plus, Loader2, Pencil, Trash2, GripVertical, HelpCircle } from "lucide-react"
+import { Plus, Loader2, Pencil, Trash2, GripVertical, HelpCircle, ChevronUp, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 
@@ -38,6 +38,8 @@ export function FAQAdminPage() {
   const [saving, setSaving] = useState(false)
   const [editingFaq, setEditingFaq] = useState<FAQ | null>(null)
   const [form, setForm] = useState({ question: "", questionEn: "", answer: "", answerEn: "" })
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
 
   const text =
     language === "en"
@@ -236,32 +238,59 @@ export function FAQAdminPage() {
     const idx = faqs.findIndex((f) => f.id === faq.id)
     const swapIdx = direction === "up" ? idx - 1 : idx + 1
     if (swapIdx < 0 || swapIdx >= faqs.length) return
-
-    const other = faqs[swapIdx]
+    const newFaqs = [...faqs]
+    ;[newFaqs[idx], newFaqs[swapIdx]] = [newFaqs[swapIdx], newFaqs[idx]]
+    const updated = newFaqs.map((f, i) => ({ ...f, order_position: i + 1 }))
+    setFaqs(updated)
     try {
-      await Promise.all([
-        fetch("/api/admin/faqs", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ id: faq.id, order_position: other.order_position })
-        }),
-        fetch("/api/admin/faqs", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ id: other.id, order_position: faq.order_position })
-        })
-      ])
-
-      const newFaqs = [...faqs]
-      const tempOrder = newFaqs[idx].order_position
-      newFaqs[idx] = { ...newFaqs[idx], order_position: newFaqs[swapIdx].order_position }
-      newFaqs[swapIdx] = { ...newFaqs[swapIdx], order_position: tempOrder }
-      newFaqs.sort((a, b) => a.order_position - b.order_position)
-      setFaqs(newFaqs)
+      await fetch("/api/admin/faqs", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ orderedIds: updated.map((f) => f.id) })
+      })
     } catch {
       toast.error(text.sortError)
+      fetchFaqs()
+    }
+  }
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDragId(id)
+    e.dataTransfer.effectAllowed = "move"
+  }
+
+  const handleDragOver = (e: React.DragEvent, id: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    if (id !== dragId) setDragOverId(id)
+  }
+
+  const handleDrop = async (e: React.DragEvent, targetId: string) => {
+    e.preventDefault()
+    setDragOverId(null)
+    if (!dragId || dragId === targetId) {
+      setDragId(null)
+      return
+    }
+    const fromIdx = faqs.findIndex((f) => f.id === dragId)
+    const toIdx = faqs.findIndex((f) => f.id === targetId)
+    const newFaqs = [...faqs]
+    const [removed] = newFaqs.splice(fromIdx, 1)
+    newFaqs.splice(toIdx, 0, removed)
+    const updated = newFaqs.map((f, i) => ({ ...f, order_position: i + 1 }))
+    setFaqs(updated)
+    setDragId(null)
+    try {
+      await fetch("/api/admin/faqs", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ orderedIds: updated.map((f) => f.id) })
+      })
+    } catch {
+      toast.error(text.sortError)
+      fetchFaqs()
     }
   }
 
@@ -363,27 +392,41 @@ export function FAQAdminPage() {
               {faqs.map((faq, idx) => (
                 <div
                   key={faq.id}
-                  className={`flex items-start gap-3 rounded-lg border p-4 transition-colors ${
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, faq.id)}
+                  onDragOver={(e) => handleDragOver(e, faq.id)}
+                  onDragLeave={() => setDragOverId(null)}
+                  onDrop={(e) => handleDrop(e, faq.id)}
+                  onDragEnd={() => {
+                    setDragId(null)
+                    setDragOverId(null)
+                  }}
+                  className={[
+                    "flex items-start gap-3 rounded-lg border p-4 transition-colors select-none",
                     faq.is_active
                       ? "border-border bg-card"
-                      : "border-muted bg-muted/30 border-dashed opacity-60"
-                  }`}>
-                  <div className="flex flex-col gap-1 pt-1">
+                      : "border-muted bg-muted/30 border-dashed opacity-60",
+                    dragId === faq.id ? "opacity-40" : "",
+                    dragOverId === faq.id ? "border-primary ring-primary ring-2" : ""
+                  ].join(" ")}>
+                  {/* Drag handle + chevrons */}
+                  <div className="flex shrink-0 flex-col items-center gap-0.5 pt-0.5">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6"
+                      className="h-7 w-7"
                       disabled={idx === 0}
                       onClick={() => moveOrder(faq, "up")}>
-                      <GripVertical className="h-3 w-3 rotate-180" />
+                      <ChevronUp className="h-4 w-4" />
                     </Button>
+                    <GripVertical className="text-muted-foreground h-4 w-4 cursor-grab active:cursor-grabbing" />
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6"
+                      className="h-7 w-7"
                       disabled={idx === faqs.length - 1}
                       onClick={() => moveOrder(faq, "down")}>
-                      <GripVertical className="h-3 w-3" />
+                      <ChevronDown className="h-4 w-4" />
                     </Button>
                   </div>
                   <HelpCircle className="text-violet mt-1 h-5 w-5 shrink-0" />

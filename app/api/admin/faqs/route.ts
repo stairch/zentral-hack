@@ -148,7 +148,27 @@ async function handleDelete(req: AuthenticatedRequest) {
   }
 }
 
+async function handlePatch(req: AuthenticatedRequest) {
+  try {
+    const body = await req.json()
+    const orderedIds: unknown = body.orderedIds
+    if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+      return validationError("orderedIds is required")
+    }
+    await Promise.all(
+      (orderedIds as string[]).map((id, index) =>
+        query("UPDATE faqs SET order_position = $1, updated_at = NOW() WHERE id = $2", [index + 1, id])
+      )
+    )
+    return successResponse({ message: "FAQs reordered" })
+  } catch (error) {
+    console.error("[Admin FAQs] PATCH Error:", error)
+    return serverError()
+  }
+}
+
 export const GET = withAdminAuth(handleGet)
 export const POST = withAdminAuth(handlePost)
 export const PUT = withAdminAuth(handlePut)
+export const PATCH = withAdminAuth(handlePatch)
 export const DELETE = withAdminAuth(handleDelete)

@@ -76,9 +76,14 @@ function CheckboxRow({
 }) {
   return (
     <div className="flex items-start gap-3 rounded-lg border p-3">
-      <Checkbox id={id} checked={checked} onCheckedChange={(v) => onCheckedChange(Boolean(v))} className="mt-0.5" />
+      <Checkbox
+        id={id}
+        checked={checked}
+        onCheckedChange={(v) => onCheckedChange(Boolean(v))}
+        className="mt-0.5"
+      />
       <div className="space-y-0.5">
-        <Label htmlFor={id} className="cursor-pointer text-sm font-medium leading-snug">
+        <Label htmlFor={id} className="cursor-pointer text-sm leading-snug font-medium">
           {label}
         </Label>
         {hint && <p className="text-muted-foreground text-xs">{hint}</p>}
@@ -89,7 +94,7 @@ function CheckboxRow({
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-muted-foreground border-border border-b pb-2 text-xs font-semibold uppercase tracking-wider">
+    <h3 className="text-muted-foreground border-border border-b pb-2 text-xs font-semibold tracking-wider uppercase">
       {children}
     </h3>
   )
@@ -124,7 +129,7 @@ function EvaluationTable({
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-muted/50">
+            <tr className="bg-muted/50 border-b">
               <th className="px-3 py-2 text-left font-medium">{labels.criterion}</th>
               <th className="w-28 px-3 py-2 text-left font-medium">{labels.weight}</th>
               <th className="px-3 py-2 text-left font-medium">{labels.description}</th>
@@ -133,7 +138,7 @@ function EvaluationTable({
           </thead>
           <tbody>
             {criteria.map((c, i) => (
-              <tr key={i} className="border-b last:border-0 hover:bg-muted/20">
+              <tr key={i} className="hover:bg-muted/20 border-b last:border-0">
                 <td className="px-3 py-1.5">
                   <Input
                     value={c.name}
@@ -190,7 +195,11 @@ function EvaluationTable({
         <span
           className={cn(
             "text-sm font-medium",
-            totalWeight === 100 ? "text-green-600" : totalWeight > 0 ? "text-amber-600" : "text-muted-foreground"
+            totalWeight === 100
+              ? "text-green-600"
+              : totalWeight > 0
+                ? "text-amber-600"
+                : "text-muted-foreground"
           )}>
           {labels.total}: {totalWeight}%{totalWeight > 0 && totalWeight !== 100 && ` ${labels.mustBe100}`}
         </span>
@@ -219,7 +228,8 @@ export function SponsorChallengeEditor({
       saveDraft: "Entwurf speichern",
       publish: "Veröffentlichen",
       websiteVisible: "Auf der Website sichtbar",
-      websiteVisibleDesc: "Diese Felder werden direkt auf der Zentral Hack Website bei den Challenges angezeigt.",
+      websiteVisibleDesc:
+        "Diese Felder werden direkt auf der Zentral Hack Website bei den Challenges angezeigt.",
       challengeTitle: "Challenge-Titel",
       shortDescription: "Kurzbeschreibung",
       shortDescriptionHint: "Max. 2–3 Sätze – wird als Teaser angezeigt",
@@ -352,8 +362,7 @@ export function SponsorChallengeEditor({
       prize: "Prize / Reward",
       prizeHint: "Shown as a prize highlight on the challenge card",
       englishNotice: "Please fill in all content in English",
-      englishNoticeDetail:
-        "The challenge will be presented in English on the website and to participants.",
+      englishNoticeDetail: "The challenge will be presented in English on the website and to participants.",
       challengeFormat: "Challenge Format",
       difficulty: "Difficulty",
       teamSize: "Recommended team size",
@@ -471,8 +480,7 @@ export function SponsorChallengeEditor({
   const [selectedChallengeId, setSelectedChallengeId] = useState<string>("")
   const [loadingList, setLoadingList] = useState(false)
 
-  const patch = (partial: Partial<SponsorChallengeData>) =>
-    setFormData((prev) => ({ ...prev, ...partial }))
+  const patch = (partial: Partial<SponsorChallengeData>) => setFormData((prev) => ({ ...prev, ...partial }))
 
   const patchSpecific = (partial: Partial<SponsorChallengeData["categorySpecific"]>) =>
     setFormData((prev) => ({ ...prev, categorySpecific: { ...prev.categorySpecific, ...partial } }))
@@ -501,7 +509,8 @@ export function SponsorChallengeEditor({
       difficulty: (record.difficulty as SponsorChallengeData["difficulty"]) || normalized.difficulty,
       teamSize: record.team_size || normalized.teamSize,
       challengeLanguage:
-        (record.challenge_language as SponsorChallengeData["challengeLanguage"]) || normalized.challengeLanguage
+        (record.challenge_language as SponsorChallengeData["challengeLanguage"]) ||
+        normalized.challengeLanguage
     })
   }
 
@@ -808,7 +817,7 @@ export function SponsorChallengeEditor({
           {categoryId && (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
               <div className="min-w-0 flex-1 space-y-1.5">
-                <Label className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                <Label className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                   {t.existingChallenges}
                 </Label>
                 <Select
@@ -855,7 +864,11 @@ export function SponsorChallengeEditor({
                 onClick={() => saveChallenge("draft")}
                 disabled={saving !== null}
                 className="flex-1 gap-2 sm:flex-none">
-                {saving === "draft" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {saving === "draft" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
                 {t.saveDraft}
               </Button>
               <Button
