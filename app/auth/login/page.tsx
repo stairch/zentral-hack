@@ -45,6 +45,7 @@ export default function LoginPage() {
       back: "Zurück",
       twoFaSent: "2FA Code wurde an deine E-Mail gesendet",
       loginFailed: "Login fehlgeschlagen",
+      wrongCredentials: "Die eingegebene E-Mail-Adresse oder das Passwort ist nicht korrekt.",
       enterCode: "Bitte geben Sie den 2FA-Code ein",
       twoFaSuccess: "2FA erfolgreich verifiziert",
       twoFaError: "Fehler bei der 2FA Verifizierung"
@@ -70,6 +71,7 @@ export default function LoginPage() {
       back: "Back",
       twoFaSent: "2FA code was sent to your email",
       loginFailed: "Login failed",
+      wrongCredentials: "The email address or password you entered is incorrect.",
       enterCode: "Please enter the 2FA code",
       twoFaSuccess: "2FA verified successfully",
       twoFaError: "2FA verification failed"
@@ -90,7 +92,8 @@ export default function LoginPage() {
       setShow2FA(true)
       toast.success(t.twoFaSent)
     } catch (err) {
-      const message = err instanceof Error ? err.message : t.loginFailed
+      const raw = err instanceof Error ? err.message : ""
+      const message = raw === "Unauthorized" ? t.wrongCredentials : raw || t.loginFailed
       setError(message)
       toast.error(message)
     } finally {
