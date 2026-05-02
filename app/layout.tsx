@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next"
 import { Inter, Space_Grotesk, Geist_Mono } from "next/font/google"
 import { AuthProvider } from "@/lib/auth-context"
 import { LanguageProvider } from "@/lib/language-context"
-import { Toaster } from "sonner"
+import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
 const inter = Inter({
