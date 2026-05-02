@@ -246,7 +246,10 @@ export function Categories() {
       null
     )
   }, [selectedCategory, selectedChallengeId, availableChallenges])
-  const selectedData = useMemo(() => (selectedChallenge?.challenge_data as SponsorChallengeData | null) || null, [selectedChallenge])
+  const selectedData = useMemo(
+    () => (selectedChallenge?.challenge_data as SponsorChallengeData | null) || null,
+    [selectedChallenge]
+  )
   const hasChallenge = Boolean(selectedChallenge)
 
   return (
