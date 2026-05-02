@@ -42,8 +42,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
-          console.log(`[AuthContext] Verify attempt ${attempt + 1}/${maxRetries}`)
-
           const res = await fetch(endpoint, {
             method: "GET",
             credentials: "include",
@@ -54,7 +52,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if (res.ok) {
             const data = await res.json()
-            console.log("[AuthContext] Verify successful:", { userId: data.data?.user?.id })
             if (data.data?.user) {
               setUser(data.data.user)
               setToken(data.data.token || "authenticated")
@@ -62,7 +59,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               return
             }
           } else if (res.status === 401) {
-            console.log("[AuthContext] Not authenticated (401)")
             setUser(null)
             setToken(null)
             setIsLoading(false)
@@ -72,7 +68,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // If not ok and not 401, retry with exponential backoff
           if (attempt < maxRetries - 1) {
             const delayMs = initialDelayMs * Math.pow(2, attempt)
-            console.log(`[AuthContext] Retrying after ${delayMs}ms...`)
             await new Promise((resolve) => setTimeout(resolve, delayMs))
           }
         } catch (verifyError) {
@@ -86,7 +81,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // All retries exhausted - not authenticated
-      console.log("[AuthContext] All verify attempts failed")
       setUser(null)
       setToken(null)
       setIsLoading(false)
