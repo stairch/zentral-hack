@@ -3,8 +3,8 @@
   "version": "1.0.0-beta.5",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "next build --webpack",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
     "format": "prettier --write --list-different .",
     "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --composite false --incremental false",

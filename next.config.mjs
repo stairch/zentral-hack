@@ -80,18 +80,17 @@ const nextConfig = {
     }
   },
 
-  webpack(config) {
-    config.module.rules.push(
-      {
-        test: /\.md$/,
-        use: "raw-loader"
+  turbopack: {
+    rules: {
+      "*.md": {
+        loaders: ["raw-loader"],
+        as: "*.js"
       },
-      {
-        test: /\.svg$/i,
-        use: ["@svgr/webpack"]
+      "*.svg": {
+        loaders: ["@svgr/webpack"],
+        as: "*.js"
       }
-    )
-    return config
+    }
   }
 }
 
