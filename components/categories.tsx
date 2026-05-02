@@ -304,8 +304,10 @@ export function Categories() {
           <VisuallyHidden>
             <DialogTitle>{selectedCategory?.title ?? "Dialog"}</DialogTitle>
           </VisuallyHidden>
-          <DialogContent className="h-[82vh] w-[92vw] max-w-none min-w-[360px] overflow-hidden border-0 p-0 sm:h-[86vh] sm:max-w-2xl sm:min-w-[600px]">
-            {selectedCategory ? (
+          {selectedCategory ? (
+            <DialogContent
+              className="h-[82vh] w-[92vw] max-w-none min-w-[360px] overflow-hidden border-0 p-0 sm:h-[86vh] sm:max-w-2xl sm:min-w-[600px]"
+              closeButtonStyle={{ color: getContrastForegroundColor(selectedCategory.color) }}>
               <div className="relative h-full min-h-0">
                 <div className="bg-background relative flex h-full min-h-0 flex-col overflow-hidden">
                   {!isChallengeBrowserOpen ? (
@@ -613,8 +615,8 @@ export function Categories() {
                   )}
                 </div>
               </div>
-            ) : null}
-          </DialogContent>
+            </DialogContent>
+          ) : null}
         </Dialog>
       </div>
     </section>
