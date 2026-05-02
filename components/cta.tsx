@@ -149,7 +149,7 @@ export function CTA() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="h-12 flex-1 rounded-full border-white/20 bg-white/10 px-6 text-white placeholder:text-white/50 focus:border-[#E6FF17] focus:ring-[#E6FF17]"
+                    className="h-12 rounded-full border-white/20 bg-white/10 px-6 text-white placeholder:text-white/50 focus:border-[#E6FF17] focus:ring-[#E6FF17]"
                   />
                   <Button
                     type="submit"
