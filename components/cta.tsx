@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { ArrowRight, CheckCircle, Calendar, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
+import { useAuth } from "@/lib/auth-context"
 
 const copy = {
   de: {
@@ -15,6 +16,7 @@ const copy = {
     heading2: "HACKEN",
     description: "Abonniere den Newsletter, um alle Updates zum Zentral Hack 2026 zu erhalten.",
     register: "Jetzt registrieren",
+    dashboard: "Zum Dashboard",
     or: "oder",
     newsletterButton: "Abonnieren",
     newsletterPlaceholder: "deine@email.ch",
@@ -30,6 +32,7 @@ const copy = {
     heading2: "HACK",
     description: "Sign up for the newsletter to receive all the latest updates on Zentral Hack 2026.",
     register: "Register now",
+    dashboard: "Go to Dashboard",
     or: "or",
     newsletterButton: "Subscribe",
     newsletterPlaceholder: "your@email.com",
@@ -49,6 +52,7 @@ export function CTA() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { language } = useLanguage()
+  const { user } = useAuth()
   const text = copy[language]
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,12 +122,12 @@ export function CTA() {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.5 }}
             className="space-y-6">
-            {/* Primary CTA - Registration */}
-            <Link href="/anmeldung">
+            {/* Primary CTA - Registration or Dashboard */}
+            <Link href={user ? "/dashboard" : "/anmeldung"}>
               <Button
                 size="lg"
                 className="bg-accent text-primary hover:bg-accent/90 group mb-20 rounded-full px-8 py-6 text-lg font-semibold">
-                {text.register}
+                {user ? text.dashboard : text.register}
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
