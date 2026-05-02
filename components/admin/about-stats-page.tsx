@@ -38,7 +38,8 @@ const copy = {
     newLabelDe: "Neu",
     newLabelEn: "New",
     saved: "Gespeichert",
-    saveError: "Fehler beim Speichern"
+    saveError: "Fehler beim Speichern",
+    previewTitle: "Vorschau"
   },
   en: {
     heading: "ABOUT STATS",
@@ -53,7 +54,8 @@ const copy = {
     newLabelDe: "New",
     newLabelEn: "New",
     saved: "Saved",
-    saveError: "Failed to save"
+    saveError: "Failed to save",
+    previewTitle: "Preview"
   }
 } as const
 
@@ -149,13 +151,8 @@ export function AboutStatsPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         {stats.map((stat, index) => (
           <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base">
-                <span className="text-yellow font-display text-2xl font-bold">
-                  {stat.value}
-                  {stat.suffix}
-                </span>
-              </CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base">{language === "de" ? stat.label_de : stat.label_en}</CardTitle>
               <Button
                 variant="ghost"
                 size="icon"
@@ -191,6 +188,34 @@ export function AboutStatsPage() {
                 <div>
                   <Label className="text-xs">{text.labelEn}</Label>
                   <Input value={stat.label_en} onChange={(e) => update(index, "label_en", e.target.value)} />
+                </div>
+              </div>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                {/* Preview German */}
+                <div>
+                  <p className="text-xs font-medium">{text.previewTitle} (DE)</p>
+                  <div className="bg-primary mt-2 flex w-fit flex-col items-center gap-1 rounded-lg px-5 py-2 font-bold">
+                    <div className="text-yellow font-display text-3xl">
+                      {stat.value}
+                      {stat.suffix}
+                    </div>
+                    <div>
+                      <div className="text-light-violet text-xs font-medium">{stat.label_de}</div>
+                    </div>
+                  </div>
+                </div>
+                {/* Preview English */}
+                <div>
+                  <p className="text-xs font-medium">{text.previewTitle} (EN)</p>
+                  <div className="bg-primary mt-2 flex w-fit flex-col items-center gap-1 rounded-lg px-5 py-2 font-bold">
+                    <div className="text-yellow font-display text-3xl">
+                      {stat.value}
+                      {stat.suffix}
+                    </div>
+                    <div>
+                      <div className="text-light-violet text-xs font-medium">{stat.label_en}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
