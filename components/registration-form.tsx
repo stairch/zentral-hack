@@ -382,7 +382,7 @@ export function RegistrationForm() {
                 const isDone = step > s
                 const isActive = step === s
                 return (
-                  <div key={s} className="flex flex-1 items-center">
+                  <div key={s} className={`flex ${i < 3 ? "flex-1" : ""} w-fit items-center`}>
                     <div className="flex flex-col items-center gap-1.5">
                       <div
                         className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${
@@ -403,7 +403,7 @@ export function RegistrationForm() {
                     </div>
                     {i < 3 && (
                       <div
-                        className={`mb-4 h-px flex-1 transition-all duration-300 sm:mb-6 ${
+                        className={`mb-0 h-px flex-1 transition-all duration-300 sm:mb-5 ${
                           step > s ? "bg-[#530A5D]" : "bg-muted"
                         }`}
                       />
@@ -516,7 +516,7 @@ export function RegistrationForm() {
                 <div>
                   <h2 className="text-2xl font-bold tracking-tight">{t.step2Title}</h2>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid items-end gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="firstName" className="text-sm font-medium">
                       {t.firstName}
@@ -696,7 +696,7 @@ export function RegistrationForm() {
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
-                      className="grid gap-4 sm:grid-cols-2">
+                      className="grid items-end gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="studyProgram" className="text-sm font-medium">
                           {t.studyProgram} *
