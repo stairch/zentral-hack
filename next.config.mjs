@@ -81,10 +81,16 @@ const nextConfig = {
   },
 
   webpack(config) {
-    config.module.rules.push({
-      test: /\.md$/,
-      use: "raw-loader"
-    })
+    config.module.rules.push(
+      {
+        test: /\.md$/,
+        use: "raw-loader"
+      },
+      {
+        test: /\.svg$/i,
+        use: ["@svgr/webpack"]
+      }
+    )
     return config
   }
 }

@@ -19,7 +19,8 @@ import {
   Download,
   ExternalLink,
   FolderOpen,
-  Lock
+  Lock,
+  ShieldCogCorner
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -133,7 +134,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
 
   const t = {
     de: {
-      adminPanel: "Admin Panel",
+      adminPanel: "Admin",
       logout: "Abmelden",
       greeting: (name: string) => `Hallo, ${name}!`,
       welcomeSubtitle: "Willkommen in deinem Zentral Hack Dashboard",
@@ -181,7 +182,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       homeAriaLabel: "Zentral Hack Startseite"
     },
     en: {
-      adminPanel: "Admin Panel",
+      adminPanel: "Admin",
       logout: "Sign out",
       greeting: (name: string) => `Hello, ${name}!`,
       welcomeSubtitle: "Welcome to your Zentral Hack dashboard",
@@ -369,19 +370,19 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       <header className="border-border bg-card border-b">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
           <Link href="/" className="inline-block" aria-label={t.homeAriaLabel}>
-            <BrandMark className="w-32 sm:w-36" imageClassName="drop-shadow-sm" priority />
+            <BrandMark className="w-20" imageClassName="drop-shadow-sm" priority />
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             {(user?.role === "admin" || user?.role === "category_partner") && (
               <Link href="/admin">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <ExternalLink className="h-4 w-4" />
-                  <span className="hidden sm:inline">{t.adminPanel}</span>
+                <Button variant="outline" className="gap-2">
+                  <ShieldCogCorner className="h-5 w-5" />
+                  <span className="">{t.adminPanel}</span>
                 </Button>
               </Link>
             )}
             <Select value={language} onValueChange={(v) => setLanguage(v as "de" | "en")}>
-              <SelectTrigger className="w-20 text-sm">
+              <SelectTrigger className="w-18 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent align="end">

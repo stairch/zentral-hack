@@ -1,11 +1,12 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Instagram, Mail } from "lucide-react"
+import { Mail } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { Emails } from "@/lib/constants"
 import { BrandMark } from "@/components/brand-mark"
+import Instagram from "@/assets/icons/instagram.svg"
 
 const footerLinks = {
   event: {
@@ -89,7 +90,7 @@ export function Footer() {
                   key={social.label}
                   href={social.href}
                   target="_blank"
-                  className="text-muted-foreground hover:text-yellow flex h-10 w-10 items-center justify-center rounded-full bg-white/5 transition-colors hover:bg-white/10"
+                  className="text-muted-foreground fill-muted-foreground hover:text-yellow hover:fill-yellow flex h-10 w-10 items-center justify-center rounded-full bg-white/5 transition-colors hover:bg-white/10"
                   whileHover={{ scale: 1.1, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                   aria-label={social.label}>
