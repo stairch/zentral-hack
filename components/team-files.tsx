@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { FileUp, Github, Loader2, Trash2, ExternalLink } from "lucide-react"
 import { toast } from "sonner"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 interface TeamFile {
   id: string
@@ -47,6 +48,9 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
   const [githubUrl, setGithubUrl] = useState("")
   const [githubTitle, setGithubTitle] = useState("")
   const [githubDesc, setGithubDesc] = useState("")
+  const [deleteFileId, setDeleteFileId] = useState<string | null>(null)
+  const [deleteRepoId, setDeleteRepoId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   // Fetch team files and repos
   useEffect(() => {
@@ -151,43 +155,45 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
     }
   }
 
-  // Delete file
-  const handleDeleteFile = async (fileId: string) => {
-    if (!confirm("Datei wirklich löschen?")) return
-
+  const handleDeleteFile = async () => {
+    if (!deleteFileId) return
     try {
-      const res = await fetch(`/api/teams-files?teamId=${teamId}&fileId=${fileId}`, {
+      setDeleting(true)
+      const res = await fetch(`/api/teams-files?teamId=${teamId}&fileId=${deleteFileId}`, {
         method: "DELETE",
         credentials: "include"
       })
-
       if (res.ok) {
-        setFiles(files.filter((f) => f.id !== fileId))
+        setFiles(files.filter((f) => f.id !== deleteFileId))
         toast.success("Datei gelöscht")
+        setDeleteFileId(null)
       }
     } catch (error) {
       console.error("Delete error:", error)
       toast.error("Fehler beim Löschen")
+    } finally {
+      setDeleting(false)
     }
   }
 
-  // Delete repo
-  const handleDeleteRepo = async (repoId: string) => {
-    if (!confirm("Repository wirklich löschen?")) return
-
+  const handleDeleteRepo = async () => {
+    if (!deleteRepoId) return
     try {
-      const res = await fetch(`/api/teams-github?teamId=${teamId}&repoId=${repoId}`, {
+      setDeleting(true)
+      const res = await fetch(`/api/teams-github?teamId=${teamId}&repoId=${deleteRepoId}`, {
         method: "DELETE",
         credentials: "include"
       })
-
       if (res.ok) {
-        setRepos(repos.filter((r) => r.id !== repoId))
+        setRepos(repos.filter((r) => r.id !== deleteRepoId))
         toast.success("Repository gelöscht")
+        setDeleteRepoId(null)
       }
     } catch (error) {
       console.error("Delete error:", error)
       toast.error("Fehler beim Löschen")
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -266,7 +272,7 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
                       <ExternalLink className="h-4 w-4" />
                     </a>
                     <button
-                      onClick={() => handleDeleteFile(file.id)}
+                      onClick={() => setDeleteFileId(file.id)}
                       className="hover:bg-destructive/10 hover:text-destructive cursor-pointer rounded p-1">
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -365,7 +371,7 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
                       <ExternalLink className="h-4 w-4" />
                     </a>
                     <button
-                      onClick={() => handleDeleteRepo(repo.id)}
+                      onClick={() => setDeleteRepoId(repo.id)}
                       className="hover:bg-destructive/10 hover:text-destructive cursor-pointer rounded p-1">
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -378,6 +384,27 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
           </div>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={!!deleteFileId}
+        onOpenChange={(open) => !open && setDeleteFileId(null)}
+        title="Datei löschen?"
+        description="Möchtest du diese Datei wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        confirmLabel="Löschen"
+        cancelLabel="Abbrechen"
+        onConfirm={handleDeleteFile}
+        loading={deleting}
+      />
+      <ConfirmDialog
+        open={!!deleteRepoId}
+        onOpenChange={(open) => !open && setDeleteRepoId(null)}
+        title="Repository entfernen?"
+        description="Möchtest du dieses Repository wirklich entfernen? Diese Aktion kann nicht rückgängig gemacht werden."
+        confirmLabel="Entfernen"
+        cancelLabel="Abbrechen"
+        onConfirm={handleDeleteRepo}
+        loading={deleting}
+      />
     </div>
   )
 }

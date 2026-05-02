@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 interface Stat {
   value: number
@@ -63,6 +64,7 @@ export function AboutStatsPage() {
   const [stats, setStats] = useState<Stat[]>(defaultStats)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -86,8 +88,10 @@ export function AboutStatsPage() {
     setStats((prev) => prev.map((s, i) => (i === index ? { ...s, [field]: value } : s)))
   }
 
-  const remove = (index: number) => {
-    setStats((prev) => prev.filter((_, i) => i !== index))
+  const remove = () => {
+    if (deleteIndex === null) return
+    setStats((prev) => prev.filter((_, i) => i !== deleteIndex))
+    setDeleteIndex(null)
   }
 
   const add = () => {
@@ -156,7 +160,7 @@ export function AboutStatsPage() {
                 variant="ghost"
                 size="icon"
                 className="text-destructive h-8 w-8"
-                onClick={() => remove(index)}>
+                onClick={() => setDeleteIndex(index)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </CardHeader>
@@ -193,6 +197,19 @@ export function AboutStatsPage() {
           </Card>
         ))}
       </div>
+      <ConfirmDialog
+        open={deleteIndex !== null}
+        onOpenChange={(open) => !open && setDeleteIndex(null)}
+        title={language === "en" ? "Delete stat?" : "Statistik löschen?"}
+        description={
+          language === "en"
+            ? "This stat will be removed. Don't forget to save afterwards."
+            : "Diese Statistik wird entfernt. Vergiss nicht, danach zu speichern."
+        }
+        confirmLabel={language === "en" ? "Delete" : "Löschen"}
+        cancelLabel={language === "en" ? "Cancel" : "Abbrechen"}
+        onConfirm={remove}
+      />
     </div>
   )
 }

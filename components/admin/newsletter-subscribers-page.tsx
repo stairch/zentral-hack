@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Download, Loader2, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 interface Subscriber {
   email: string
@@ -70,6 +71,8 @@ export function NewsletterSubscribersPage() {
   const [loading, setLoading] = useState(true)
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set())
   const [allSelected, setAllSelected] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [unsubscribing, setUnsubscribing] = useState(false)
 
   useEffect(() => {
     const fetchSubscribers = async () => {
@@ -135,8 +138,12 @@ export function NewsletterSubscribersPage() {
       toast.error(text.noEmailsUnsubscribe)
       return
     }
-    if (!confirm(`${text.unsubscribeConfirm} ${selectedEmails.size} ${text.unsubscribeConfirm2}`)) return
+    setConfirmOpen(true)
+  }
+
+  const confirmUnsubscribe = async () => {
     try {
+      setUnsubscribing(true)
       const res = await fetch("/api/admin/newsletter-unsubscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -148,12 +155,15 @@ export function NewsletterSubscribersPage() {
         setSelectedEmails(new Set())
         setAllSelected(false)
         toast.success(text.unsubscribeSuccess)
+        setConfirmOpen(false)
       } else {
         toast.error(text.unsubscribeError)
       }
     } catch (error) {
       console.error("Unsubscribe error:", error)
       toast.error(text.unsubscribeError)
+    } finally {
+      setUnsubscribing(false)
     }
   }
 
@@ -231,6 +241,17 @@ export function NewsletterSubscribersPage() {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={language === "en" ? "Unsubscribe from weekly updates?" : "Von Weekly Updates abmelden?"}
+        description={`${text.unsubscribeConfirm} ${selectedEmails.size} ${text.unsubscribeConfirm2}`}
+        confirmLabel={language === "en" ? "Unsubscribe" : "Abmelden"}
+        cancelLabel={language === "en" ? "Cancel" : "Abbrechen"}
+        onConfirm={confirmUnsubscribe}
+        loading={unsubscribing}
+      />
     </div>
   )
 }

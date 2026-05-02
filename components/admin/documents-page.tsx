@@ -18,6 +18,7 @@ import { FileText, Upload, Loader2, Check, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 interface Document {
   id: string
@@ -101,6 +102,8 @@ export function DocumentsManagementPage() {
   const [uploading, setUploading] = useState(false)
   const [uploaded, setUploaded] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const hasDataFetched = useRef(false)
   const [file, setFile] = useState<File | null>(null)
   const [categoryId, setCategoryId] = useState<string>(user?.categoryId || "")
@@ -174,19 +177,23 @@ export function DocumentsManagementPage() {
     }
   }
 
-  const handleDelete = async (docId: string) => {
-    if (!confirm(text.deleteConfirm)) return
+  const handleDelete = async () => {
+    if (!deleteId) return
     try {
-      const res = await fetch(`/api/admin/documents?id=${docId}`, {
+      setDeleting(true)
+      const res = await fetch(`/api/admin/documents?id=${deleteId}`, {
         method: "DELETE",
         credentials: "include"
       })
       if (!res.ok) throw new Error(text.deleteError)
-      setDocuments(documents.filter((d) => d.id !== docId))
+      setDocuments(documents.filter((d) => d.id !== deleteId))
       toast.success(text.deleteSuccess)
+      setDeleteId(null)
     } catch (error) {
       console.error("Delete failed:", error)
       toast.error(error instanceof Error ? error.message : text.deleteError)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -315,7 +322,7 @@ export function DocumentsManagementPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(doc.id)}
+                      onClick={() => setDeleteId(doc.id)}
                       className="text-destructive hover:text-destructive">
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -328,6 +335,16 @@ export function DocumentsManagementPage() {
           )}
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title={language === "en" ? "Delete document?" : "Dokument löschen?"}
+        description={text.deleteConfirm}
+        confirmLabel={language === "en" ? "Delete" : "Löschen"}
+        cancelLabel={language === "en" ? "Cancel" : "Abbrechen"}
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
     </div>
   )
 }

@@ -31,6 +31,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { renderEmailTemplate } from "@/lib/email-templates"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 interface NewsletterSubscriber {
   email: string
@@ -137,6 +138,8 @@ export function EmailManagementPage() {
   const [sending, setSending] = useState(false)
   const [sendingTest, setSendingTest] = useState(false)
   const [savingTemplate, setSavingTemplate] = useState(false)
+  const [deleteTemplateId, setDeleteTemplateId] = useState<string | null>(null)
+  const [deletingTemplate, setDeletingTemplate] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
   const [campaignSent, setCampaignSent] = useState(false)
@@ -256,18 +259,23 @@ export function EmailManagementPage() {
     }
   }
 
-  async function handleDeleteTemplate(id: string) {
+  async function confirmDeleteTemplate() {
+    if (!deleteTemplateId) return
     try {
-      const res = await fetch(`/api/admin/email-templates?id=${id}`, {
+      setDeletingTemplate(true)
+      const res = await fetch(`/api/admin/email-templates?id=${deleteTemplateId}`, {
         method: "DELETE",
         credentials: "include"
       })
       if (res.ok) {
         toast.success("Vorlage gelöscht")
+        setDeleteTemplateId(null)
         fetchSavedTemplates()
       }
     } catch {
       toast.error("Fehler beim Löschen")
+    } finally {
+      setDeletingTemplate(false)
     }
   }
 
@@ -957,7 +965,7 @@ export function EmailManagementPage() {
                       className="h-8 w-8 text-red-500 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-700"
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleDeleteTemplate(tpl.id)
+                        setDeleteTemplateId(tpl.id)
                       }}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -971,6 +979,17 @@ export function EmailManagementPage() {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={!!deleteTemplateId}
+        onOpenChange={(open) => !open && setDeleteTemplateId(null)}
+        title="Vorlage löschen?"
+        description="Möchtest du diese E-Mail-Vorlage wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        confirmLabel="Löschen"
+        cancelLabel="Abbrechen"
+        onConfirm={confirmDeleteTemplate}
+        loading={deletingTemplate}
+      />
     </div>
   )
 }
