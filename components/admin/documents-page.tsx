@@ -17,6 +17,7 @@ import {
 import { FileText, Upload, Loader2, Check, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
+import { useAuth } from "@/lib/auth-context"
 
 interface Document {
   id: string
@@ -90,7 +91,9 @@ const copy = {
 
 export function DocumentsManagementPage() {
   const { language } = useLanguage()
+  const { user } = useAuth()
   const text = copy[language]
+  const isCategoryPartner = user?.role === "category_partner"
 
   const [documents, setDocuments] = useState<Document[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -99,7 +102,7 @@ export function DocumentsManagementPage() {
   const [uploaded, setUploaded] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
-  const [categoryId, setCategoryId] = useState<string>("")
+  const [categoryId, setCategoryId] = useState<string>(user?.categoryId || "")
   const [docName, setDocName] = useState<string>("")
 
   useEffect(() => {
@@ -228,21 +231,23 @@ export function DocumentsManagementPage() {
                     placeholder={text.docNamePlaceholder}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="category">{text.category}</Label>
-                  <Select value={categoryId} onValueChange={setCategoryId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={text.categoryPlaceholder} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {!isCategoryPartner && (
+                  <div>
+                    <Label htmlFor="category">{text.category}</Label>
+                    <Select value={categoryId} onValueChange={setCategoryId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={text.categoryPlaceholder} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="file">{text.file}</Label>
                   <Input

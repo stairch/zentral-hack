@@ -20,6 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Users, Plus, Loader2, ArrowLeft, UserPlus, Trash2, Crown } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
+import { useAuth } from "@/lib/auth-context"
 
 interface Team {
   id: string
@@ -151,15 +152,17 @@ const copy = {
 
 export function TeamsAdminPage() {
   const { language } = useLanguage()
+  const { user } = useAuth()
   const text = copy[language]
   const dateLocale = language === "en" ? "en-GB" : "de-CH"
+  const isCategoryPartner = user?.role === "category_partner"
 
   const [teams, setTeams] = useState<Team[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
-  const [newTeam, setNewTeam] = useState({ name: "", description: "", categoryId: "" })
+  const [newTeam, setNewTeam] = useState({ name: "", description: "", categoryId: user?.categoryId || "" })
 
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
   const [members, setMembers] = useState<TeamMember[]>([])
@@ -514,23 +517,25 @@ export function TeamsAdminPage() {
                   placeholder={text.teamNamePlaceholder}
                 />
               </div>
-              <div>
-                <Label htmlFor="category">{text.category}</Label>
-                <Select
-                  value={newTeam.categoryId}
-                  onValueChange={(val) => setNewTeam({ ...newTeam, categoryId: val })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={text.categoryPlaceholder} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {!isCategoryPartner && (
+                <div>
+                  <Label htmlFor="category">{text.category}</Label>
+                  <Select
+                    value={newTeam.categoryId}
+                    onValueChange={(val) => setNewTeam({ ...newTeam, categoryId: val })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={text.categoryPlaceholder} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div>
                 <Label htmlFor="description">{text.description}</Label>
                 <Textarea
