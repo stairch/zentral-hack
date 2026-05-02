@@ -179,7 +179,9 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       noCategorySelected: "Keine Kategorie verfügbar oder ausgewählt.",
       yourCategory: "Deine Kategorie",
       category: "Kategorie",
-      homeAriaLabel: "Zentral Hack Startseite"
+      homeAriaLabel: "Zentral Hack Startseite",
+      currentCategory: "Aktuelle Kategorie",
+      categoryMissing: "Keine Kategorie registriert"
     },
     en: {
       adminPanel: "Admin",
@@ -227,7 +229,9 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       noCategorySelected: "No category available or selected.",
       yourCategory: "Your Category",
       category: "Category",
-      homeAriaLabel: "Zentral Hack Home"
+      homeAriaLabel: "Zentral Hack Home",
+      currentCategory: "Current category",
+      categoryMissing: "No category registered"
     }
   }[language]
 
@@ -363,6 +367,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
   const dashboardCategoryId = registration?.category?.id || profile?.category_id || null
   const dashboardCategoryName =
     registration?.category?.name || profile?.category_slug?.replace(/-/g, " ") || null
+  const categoryLabel = dashboardCategoryName || t.categoryMissing
 
   return (
     <main className="bg-background min-h-screen">
@@ -515,6 +520,10 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                         </p>
                       </div>
                     )}
+                    <div>
+                      <Label className="text-muted-foreground text-sm">{t.currentCategory}</Label>
+                      <p className="font-medium">{categoryLabel}</p>
+                    </div>
                     {profile?.linkedin_url && (
                       <div>
                         <Label className="text-muted-foreground text-sm">{t.labelLinkedIn}</Label>
@@ -532,11 +541,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                 </CardContent>
               </Card>
 
-              <AccountSettings
-                currentCategoryId={dashboardCategoryId}
-                currentCategoryName={dashboardCategoryName}
-                onUpdated={fetchDashboardData}
-              />
+              <AccountSettings currentCategoryId={dashboardCategoryId} onUpdated={fetchDashboardData} />
             </div>
           </TabsContent>
 

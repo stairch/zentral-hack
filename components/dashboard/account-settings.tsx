@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { Loader2, Mail, Lock, Trash2, RefreshCw, ShieldAlert } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Loader2, Mail, Lock, Trash2, RefreshCw } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,11 +18,10 @@ interface CategoryOption {
 
 interface AccountSettingsProps {
   currentCategoryId: string | null
-  currentCategoryName: string | null
   onUpdated: () => Promise<void> | void
 }
 
-export function AccountSettings({ currentCategoryId, currentCategoryName, onUpdated }: AccountSettingsProps) {
+export function AccountSettings({ currentCategoryId, onUpdated }: AccountSettingsProps) {
   const { refreshAuth, logout, user } = useAuth()
   const showCategoryChange = user?.role !== "sponsor" && user?.role !== "category_partner"
   const { language } = useLanguage()
@@ -42,8 +41,12 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
     challengeToken: "",
     code: ""
   })
-  const [categoryState, setCategoryState] = useState({
-    categoryId: currentCategoryId || "",
+  const [categoryState, setCategoryState] = useState<{
+    categoryId: string
+    challengeToken: string
+    code: string
+  }>({
+    categoryId: "",
     challengeToken: "",
     code: ""
   })
@@ -59,30 +62,27 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
         de: {
           sectionTitle: "Profil verwalten",
           sectionSubtitle: "E-Mail, Passwort, Kategorie und Konto",
-          currentCategory: "Aktuelle Kategorie",
-          categoryMissing: "Keine Kategorie registriert",
           emailTitle: "E-Mail-Adresse ändern",
-          emailDescription: "Der Bestätigungscode wird an die neue E-Mail gesendet.",
+          emailDescription: "Ändere die E-Mail-Adresse deines Kontos.",
+          emailInfo: "Der Bestätigungscode wird an deine neue E-Mail gesendet.",
           newEmail: "Neue E-Mail",
           sendCode: "Code senden",
           confirmCode: "Code bestätigen",
           code: "2FA-Code",
           codePlaceholder: "AB12CD",
           passwordTitle: "Passwort ändern",
-          passwordDescription:
-            "Altes Passwort eingeben, neues Passwort zweimal setzen und mit 2FA bestätigen.",
+          passwordDescription: "Ändere das Passwort deines Kontos.",
           currentPassword: "Aktuelles Passwort",
           newPassword: "Neues Passwort",
           confirmPassword: "Neues Passwort bestätigen",
           categoryTitle: "Kategorie ändern",
-          categoryDescription: "Deine Anmeldung wird auf eine andere Kategorie verschoben.",
+          categoryDescription: "Ändere die Kategorie deiner Anmeldung.",
           selectCategory: "Kategorie auswählen",
           noCategories: "Keine Kategorien verfügbar",
           deleteTitle: "Konto löschen",
-          deleteDescription:
-            "Dein Konto wird deaktiviert und deine Anmeldung wird zurückgezogen. Verknüpfte Dokumente bleiben erhalten.",
+          deleteDescription: "Lösche dein Konto und ziehe deine Event-Anmeldung zurück.",
           deleteWarning:
-            "Nach der Löschung kannst du dich nicht mehr anmelden. Dein Benutzerkonto wird deaktiviert, Registrierungen werden entfernt und verknüpfte Dokumente bleiben im System erhalten.",
+            "Dein Konto wird gelöscht und du kannst dich danach nicht mehr anmelden. Deine Event-Anmeldung wird zurückgezogen. Verknüpfte Dokumente bleiben im System erhalten.",
           deleteAck: "Ich habe die Folgen verstanden",
           requestDelete: "Löschcode senden",
           confirmDelete: "Löschen bestätigen",
@@ -96,29 +96,27 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
         en: {
           sectionTitle: "Manage profile",
           sectionSubtitle: "Email, password, category and account",
-          currentCategory: "Current category",
-          categoryMissing: "No category registered",
           emailTitle: "Change email address",
-          emailDescription: "The confirmation code will be sent to the new email address.",
+          emailDescription: "Change the email address for your account.",
+          emailInfo: "The confirmation code will be sent to your new email address.",
           newEmail: "New email",
           sendCode: "Send code",
           confirmCode: "Confirm code",
           code: "2FA code",
           codePlaceholder: "AB12CD",
           passwordTitle: "Change password",
-          passwordDescription: "Enter your old password, set the new password twice, then confirm with 2FA.",
+          passwordDescription: "Change the password for your account.",
           currentPassword: "Current password",
           newPassword: "New password",
           confirmPassword: "Confirm new password",
           categoryTitle: "Change category",
-          categoryDescription: "Your registration will be moved to another category.",
+          categoryDescription: "Change the category of your registration.",
           selectCategory: "Select category",
           noCategories: "No categories available",
           deleteTitle: "Delete account",
-          deleteDescription:
-            "Your account will be deactivated and your registration withdrawn. Linked documents will remain.",
+          deleteDescription: "Delete your account and cancel your event registration.",
           deleteWarning:
-            "After deletion you will no longer be able to sign in. Your account will be deactivated, registrations removed, and linked documents will remain in the system.",
+            "Your account will be deleted, and you will no longer be able to sign in. Your event registration will be canceled. Any associated documents will remain in the system.",
           deleteAck: "I understand the consequences",
           requestDelete: "Send delete code",
           confirmDelete: "Confirm deletion",
@@ -154,10 +152,6 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
 
     void loadCategories()
   }, [])
-
-  useEffect(() => {
-    setCategoryState((prev) => ({ ...prev, categoryId: currentCategoryId || prev.categoryId }))
-  }, [currentCategoryId])
 
   const requestAction = async (action: string, body: Record<string, string>) => {
     const res = await fetch("/api/account/request", {
@@ -290,6 +284,8 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
       })
       await refreshAuth()
       await onUpdated()
+      setCategoryState((prev) => ({ ...prev, categoryId: "", code: "" }))
+
       toast.success(text.successUpdate)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : text.errorGeneric)
@@ -328,39 +324,36 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
     }
   }
 
-  const categoryLabel = currentCategoryName || text.categoryMissing
+  console.log(
+    "categoryState.categoryId",
+    categoryState.categoryId,
+    categoryState.categoryId || undefined,
+    categoryState.categoryId ? categories.filter((c) => c.id === categoryState.categoryId)[0].name : undefined
+  )
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ShieldAlert className="h-5 w-5 text-[#530A5D]" />
-          {text.sectionTitle}
-        </CardTitle>
-        <CardDescription>{text.sectionSubtitle}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="bg-muted/30 rounded-lg border p-4">
-          <Label className="text-muted-foreground text-sm">{text.currentCategory}</Label>
-          <p className="mt-1 font-medium">{categoryLabel}</p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="border-border/60">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
+    <Card className="py-0!">
+      <CardContent className="space-y-0">
+        <div className="divide-y">
+          {/* E-Mail */}
+          <div className="grid gap-4 pt-6 pb-10 md:grid-cols-2">
+            <div>
+              <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-[#530A5D]" />
-                {text.emailTitle}
-              </CardTitle>
-              <CardDescription>{text.emailDescription}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
+                <span className="font-medium">{text.emailTitle}</span>
+              </div>
+              <p className="text-muted-foreground mt-1 text-sm">{text.emailDescription}</p>
+            </div>
+            <div className="space-y-3">
+              <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-3 text-sm leading-6">
+                {text.emailInfo}
+              </div>
               <div className="space-y-2">
                 <Label>{text.newEmail}</Label>
                 <Input
                   type="email"
                   value={emailState.newEmail}
-                  onChange={(event) => setEmailState((prev) => ({ ...prev, newEmail: event.target.value }))}
+                  onChange={(e) => setEmailState((prev) => ({ ...prev, newEmail: e.target.value }))}
                   placeholder="name@example.com"
                 />
               </div>
@@ -378,9 +371,7 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
                 <Label>{text.code}</Label>
                 <Input
                   value={emailState.code}
-                  onChange={(event) =>
-                    setEmailState((prev) => ({ ...prev, code: event.target.value.toUpperCase() }))
-                  }
+                  onChange={(e) => setEmailState((prev) => ({ ...prev, code: e.target.value.toUpperCase() }))}
                   placeholder={text.codePlaceholder}
                   maxLength={6}
                 />
@@ -400,26 +391,25 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
                   text.confirmCode
                 )}
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="border-border/60">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
+          {/* Passwort */}
+          <div className="grid gap-4 py-10 md:grid-cols-2">
+            <div>
+              <div className="flex items-center gap-2">
                 <Lock className="h-4 w-4 text-[#530A5D]" />
-                {text.passwordTitle}
-              </CardTitle>
-              <CardDescription>{text.passwordDescription}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
+                <span className="font-medium">{text.passwordTitle}</span>
+              </div>
+              <p className="text-muted-foreground mt-1 text-sm">{text.passwordDescription}</p>
+            </div>
+            <div className="space-y-3">
               <div className="space-y-2">
                 <Label>{text.currentPassword}</Label>
                 <Input
                   type="password"
                   value={passwordState.currentPassword}
-                  onChange={(event) =>
-                    setPasswordState((prev) => ({ ...prev, currentPassword: event.target.value }))
-                  }
+                  onChange={(e) => setPasswordState((prev) => ({ ...prev, currentPassword: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
@@ -427,9 +417,7 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
                 <Input
                   type="password"
                   value={passwordState.newPassword}
-                  onChange={(event) =>
-                    setPasswordState((prev) => ({ ...prev, newPassword: event.target.value }))
-                  }
+                  onChange={(e) => setPasswordState((prev) => ({ ...prev, newPassword: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
@@ -437,9 +425,7 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
                 <Input
                   type="password"
                   value={passwordState.confirmPassword}
-                  onChange={(event) =>
-                    setPasswordState((prev) => ({ ...prev, confirmPassword: event.target.value }))
-                  }
+                  onChange={(e) => setPasswordState((prev) => ({ ...prev, confirmPassword: e.target.value }))}
                 />
               </div>
               <Button
@@ -461,8 +447,8 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
                 <Label>{text.code}</Label>
                 <Input
                   value={passwordState.code}
-                  onChange={(event) =>
-                    setPasswordState((prev) => ({ ...prev, code: event.target.value.toUpperCase() }))
+                  onChange={(e) =>
+                    setPasswordState((prev) => ({ ...prev, code: e.target.value.toUpperCase() }))
                   }
                   placeholder={text.codePlaceholder}
                   maxLength={6}
@@ -483,19 +469,20 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
                   text.confirmCode
                 )}
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
+          {/* Kategorie */}
           {showCategoryChange && (
-            <Card className="border-border/60">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
+            <div className="grid gap-4 py-10 md:grid-cols-2">
+              <div>
+                <div className="flex items-center gap-2">
                   <RefreshCw className="h-4 w-4 text-[#530A5D]" />
-                  {text.categoryTitle}
-                </CardTitle>
-                <CardDescription>{text.categoryDescription}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
+                  <span className="font-medium">{text.categoryTitle}</span>
+                </div>
+                <p className="text-muted-foreground mt-1 text-sm">{text.categoryDescription}</p>
+              </div>
+              <div className="space-y-3">
                 <div className="space-y-2">
                   <Label>{text.selectCategory}</Label>
                   <Select
@@ -505,11 +492,13 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
                       <SelectValue placeholder={loadingCategories ? "..." : text.selectCategory} />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
+                      {categories
+                        .filter((c) => c.id !== currentCategoryId)
+                        .map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -525,15 +514,15 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
                     text.sendCode
                   )}
                 </Button>
-                {!currentCategoryId ? (
+                {!currentCategoryId && (
                   <p className="text-muted-foreground text-sm">{text.noCategoryChange}</p>
-                ) : null}
+                )}
                 <div className="space-y-2">
                   <Label>{text.code}</Label>
                   <Input
                     value={categoryState.code}
-                    onChange={(event) =>
-                      setCategoryState((prev) => ({ ...prev, code: event.target.value.toUpperCase() }))
+                    onChange={(e) =>
+                      setCategoryState((prev) => ({ ...prev, code: e.target.value.toUpperCase() }))
                     }
                     placeholder={text.codePlaceholder}
                     maxLength={6}
@@ -555,27 +544,28 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
                     text.confirmCode
                   )}
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
-          <Card className="border-destructive/20 bg-destructive/5 md:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-destructive flex items-center gap-2 text-lg">
-                <Trash2 className="h-4 w-4" />
-                {text.deleteTitle}
-              </CardTitle>
-              <CardDescription>{text.deleteDescription}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="border-destructive/20 bg-background rounded-lg border p-4 text-sm leading-6">
+          {/* Konto löschen */}
+          <div className="grid gap-4 pt-10 pb-6 md:grid-cols-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <Trash2 className="text-destructive h-4 w-4" />
+                <span className="text-destructive font-medium">{text.deleteTitle}</span>
+              </div>
+              <p className="text-muted-foreground mt-1 text-sm">{text.deleteDescription}</p>
+            </div>
+            <div className="space-y-3">
+              <div className="border-destructive/20 bg-destructive/5 rounded-lg border p-3 text-sm leading-6">
                 {text.deleteWarning}
               </div>
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   checked={deleteWarningAcknowledged}
-                  onChange={(event) => setDeleteWarningAcknowledged(event.target.checked)}
+                  onChange={(e) => setDeleteWarningAcknowledged(e.target.checked)}
                 />
                 <span>{text.deleteAck}</span>
               </label>
@@ -591,12 +581,12 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
                 )}
                 {text.requestDelete}
               </Button>
-              <div className="max-w-sm space-y-2">
+              <div className="space-y-2">
                 <Label>{text.code}</Label>
                 <Input
                   value={deleteState.code}
-                  onChange={(event) =>
-                    setDeleteState((prev) => ({ ...prev, code: event.target.value.toUpperCase() }))
+                  onChange={(e) =>
+                    setDeleteState((prev) => ({ ...prev, code: e.target.value.toUpperCase() }))
                   }
                   placeholder={text.codePlaceholder}
                   maxLength={6}
@@ -618,8 +608,8 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
                 )}
                 {text.confirmDelete}
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
