@@ -14,6 +14,7 @@ import { ArrowRight, ArrowLeft, Check, Loader2, Home, Lock } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { getCategoryPresentationByLanguage, type CategoryRecord } from "@/lib/category-config"
+import { isDarkContrastForegroundColor } from "@/lib/helpers"
 
 interface DisplayCategory {
   id: string
@@ -22,7 +23,7 @@ interface DisplayCategory {
   description: string
   color: string
   textColor: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ComponentType<{ className?: string; style?: Record<any, any> }>
   partnerName: string
 }
 
@@ -495,17 +496,21 @@ export function RegistrationForm() {
                 className="space-y-5">
                 {selectedCategory && (
                   <div
-                    className="flex items-center gap-3 rounded-xl px-4 py-3"
+                    className="flex items-center gap-3 rounded-xl border border-neutral-200 px-4 py-3"
                     style={{
-                      backgroundColor: selectedCategory.color + "22",
-                      borderLeft: `3px solid ${selectedCategory.color}`
+                      backgroundColor: selectedCategory.color + "14"
                     }}>
-                    <span style={{ color: selectedCategory.color }}>
-                      <selectedCategory.icon className="h-5 w-5 shrink-0" />
-                    </span>
-                    <span className="text-sm font-semibold" style={{ color: selectedCategory.color }}>
-                      {selectedCategory.name}
-                    </span>
+                    <div
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                      style={{ backgroundColor: selectedCategory.color }}>
+                      <selectedCategory.icon
+                        className="h-4 w-4"
+                        style={{
+                          color: `color-mix(in srgb, ${selectedCategory.color} 40%, ${isDarkContrastForegroundColor(selectedCategory.color) ? "black" : "white"} 100%)`
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm font-semibold">{selectedCategory.name}</span>
                   </div>
                 )}
                 <div>
