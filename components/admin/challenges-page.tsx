@@ -6,12 +6,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Loader2, Trash2, Eye, Trophy, CheckCircle, XCircle, Filter } from "lucide-react"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Loader2, Trash2, Eye, Trophy, CheckCircle, XCircle, Filter, PenLine, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
+import { useAuth } from "@/lib/auth-context"
+import { SponsorChallengeEditor } from "@/components/dashboard/sponsor-challenge-editor"
 
 interface Challenge {
   id: string
+  user_id: string
   status: "draft" | "published"
   company_name: string | null
   challenge_title: string | null
@@ -27,15 +31,23 @@ interface Challenge {
   updated_at: string
   category_name: string
   category_id: string
+  category_slug: string
   user_email: string
   first_name: string | null
   last_name: string | null
+}
+
+interface CategoryInfo {
+  id: string
+  name: string
+  slug: string
 }
 
 const copy = {
   de: {
     heading: "CHALLENGES",
     subtitle: "Alle eingereichten Sponsor-Challenges verwalten",
+    subtitleCategory: "Challenges für deine Kategorie verwalten",
     total: "total",
     allStatus: "Alle Status",
     published: "Veröffentlicht",
@@ -75,11 +87,17 @@ const copy = {
     prizeSaved: "Preisgeld gespeichert",
     prizeSaveError: "Fehler beim Speichern",
     deleted: "Gelöscht",
-    deleteError: "Fehler beim Löschen"
+    deleteError: "Fehler beim Löschen",
+    newChallenge: "Neue Challenge",
+    editChallenge: "Challenge bearbeiten",
+    challengeEditor: "Challenge-Editor",
+    selectCategory: "Kategorie wählen",
+    selectCategoryHint: "Für welche Kategorie soll die Challenge erstellt werden?"
   },
   en: {
     heading: "CHALLENGES",
     subtitle: "Manage all submitted sponsor challenges",
+    subtitleCategory: "Manage challenges for your category",
     total: "total",
     allStatus: "All Status",
     published: "Published",
@@ -119,13 +137,21 @@ const copy = {
     prizeSaved: "Prize saved",
     prizeSaveError: "Failed to save",
     deleted: "Deleted",
-    deleteError: "Failed to delete"
+    deleteError: "Failed to delete",
+    newChallenge: "New Challenge",
+    editChallenge: "Edit Challenge",
+    challengeEditor: "Challenge Editor",
+    selectCategory: "Select category",
+    selectCategoryHint: "Which category should this challenge be created for?"
   }
 } as const
 
 export function AdminChallengesPage() {
   const { language } = useLanguage()
+  const { user } = useAuth()
   const text = copy[language]
+
+  const isCategoryPartner = user?.role === "category_partner"
 
   const [challenges, setChallenges] = useState<Challenge[]>([])
   const [loading, setLoading] = useState(true)
@@ -137,10 +163,18 @@ export function AdminChallengesPage() {
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
+  // Editor sheet state
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [editorCategory, setEditorCategory] = useState<CategoryInfo | null>(null)
+  const [allCategories, setAllCategories] = useState<CategoryInfo[]>([])
+  const [categoryPickerOpen, setCategoryPickerOpen] = useState(false)
+  const [pickedCategoryId, setPickedCategoryId] = useState<string>("")
+
   const dateLocale = language === "en" ? "en-GB" : "de-CH"
 
   useEffect(() => {
     void load()
+    if (!isCategoryPartner) void loadAllCategories()
   }, [])
 
   const load = async () => {
@@ -149,12 +183,77 @@ export function AdminChallengesPage() {
       const res = await fetch("/api/admin/challenges", { credentials: "include" })
       if (!res.ok) return
       const data = await res.json()
-      setChallenges(data.data?.challenges || [])
+      const list: Challenge[] = data.data?.challenges || []
+      setChallenges(list)
+
+      // For category partner, derive editor category from the loaded data or user
+      if (isCategoryPartner && list.length > 0) {
+        setEditorCategory({
+          id: list[0].category_id,
+          name: list[0].category_name,
+          slug: list[0].category_slug
+        })
+      }
     } catch {
       toast.error(text.loadError)
     } finally {
       setLoading(false)
     }
+  }
+
+  const loadAllCategories = async () => {
+    try {
+      const res = await fetch("/api/categories", { credentials: "include" })
+      if (!res.ok) return
+      const data = await res.json()
+      const cats: CategoryInfo[] = (data.data?.categories || []).map(
+        (c: { id: string; name: string; slug: string }) => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug
+        })
+      )
+      setAllCategories(cats)
+    } catch {
+      // non-critical
+    }
+  }
+
+  // Fetch category info for category_partner when there are no challenges yet
+  useEffect(() => {
+    if (!isCategoryPartner || editorCategory || !user?.categoryId) return
+    const found = challenges.find((c) => c.category_id === user.categoryId)
+    if (found) {
+      setEditorCategory({ id: found.category_id, name: found.category_name, slug: found.category_slug })
+      return
+    }
+    // Fetch from public categories endpoint
+    fetch("/api/categories", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => {
+        const cat = (data.data?.categories || []).find((c: { id: string }) => c.id === user.categoryId)
+        if (cat) setEditorCategory({ id: cat.id, name: cat.name, slug: cat.slug })
+      })
+      .catch(() => {})
+  }, [isCategoryPartner, challenges, editorCategory, user?.categoryId])
+
+  const openEditor = (category: CategoryInfo) => {
+    setEditorCategory(category)
+    setEditorOpen(true)
+  }
+
+  const handleNewChallenge = () => {
+    if (isCategoryPartner) {
+      if (editorCategory) openEditor(editorCategory)
+      return
+    }
+    // Admin: pick category first
+    setPickedCategoryId(allCategories[0]?.id || "")
+    setCategoryPickerOpen(true)
+  }
+
+  const handleEditChallenge = (challenge: Challenge) => {
+    openEditor({ id: challenge.category_id, name: challenge.category_name, slug: challenge.category_slug })
   }
 
   const toggleStatus = async (challenge: Challenge) => {
@@ -230,11 +329,17 @@ export function AdminChallengesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl font-bold">{text.heading}</h1>
-        <p className="text-muted-foreground mt-2">
-          {text.subtitle} ({challenges.length} {text.total})
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-bold">{text.heading}</h1>
+          <p className="text-muted-foreground mt-2">
+            {isCategoryPartner ? text.subtitleCategory : text.subtitle} ({challenges.length} {text.total})
+          </p>
+        </div>
+        <Button onClick={handleNewChallenge} className="gap-2">
+          <Plus className="h-4 w-4" />
+          {text.newChallenge}
+        </Button>
       </div>
 
       {/* Filters */}
@@ -252,19 +357,21 @@ export function AdminChallengesPage() {
             </SelectContent>
           </Select>
         </div>
-        <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-52">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{text.allCategories}</SelectItem>
-            {categories.map((cat) => (
-              <SelectItem key={cat} value={cat}>
-                {cat}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {!isCategoryPartner && (
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="w-52">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{text.allCategories}</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <div className="text-muted-foreground flex items-center text-sm">
           {filtered.length} {text.of} {challenges.length} {text.challenges}
         </div>
@@ -345,6 +452,13 @@ export function AdminChallengesPage() {
               </Button>
               <Button
                 variant="ghost"
+                size="icon"
+                title={text.editChallenge}
+                onClick={() => handleEditChallenge(challenge)}>
+                <PenLine className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
                 size="sm"
                 disabled={togglingId === challenge.id}
                 onClick={() => toggleStatus(challenge)}
@@ -372,6 +486,74 @@ export function AdminChallengesPage() {
           </div>
         ))}
       </div>
+
+      {/* Challenge Editor Sheet */}
+      <Sheet open={editorOpen} onOpenChange={setEditorOpen}>
+        <SheetContent side="right" className="flex w-full max-w-4xl flex-col gap-0 p-0 sm:max-w-4xl">
+          <SheetHeader className="border-border border-b px-6 py-4">
+            <SheetTitle>
+              {text.challengeEditor}
+              {editorCategory ? ` – ${editorCategory.name}` : ""}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto p-6">
+            {editorCategory && (
+              <SponsorChallengeEditor
+                key={editorCategory.id}
+                categoryName={editorCategory.name}
+                categorySlug={editorCategory.slug}
+                categoryId={editorCategory.id}
+                initialChallenge={null}
+                onSaved={() => {
+                  void load()
+                }}
+              />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Admin category picker for new challenge */}
+      {!isCategoryPartner && (
+        <Dialog open={categoryPickerOpen} onOpenChange={setCategoryPickerOpen}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{text.newChallenge}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-sm">{text.selectCategoryHint}</p>
+              <Select value={pickedCategoryId} onValueChange={setPickedCategoryId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={text.selectCategory} />
+                </SelectTrigger>
+                <SelectContent>
+                  {allCategories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setCategoryPickerOpen(false)}>
+                {text.cancel}
+              </Button>
+              <Button
+                disabled={!pickedCategoryId}
+                onClick={() => {
+                  const cat = allCategories.find((c) => c.id === pickedCategoryId)
+                  if (cat) {
+                    setCategoryPickerOpen(false)
+                    openEditor(cat)
+                  }
+                }}>
+                {text.newChallenge}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Detail dialog */}
       <Dialog open={!!detailChallenge} onOpenChange={(open) => !open && setDetailChallenge(null)}>

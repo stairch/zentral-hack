@@ -161,6 +161,11 @@ async function handleConfirm(req: AuthenticatedRequest) {
         req.user!.userId
       ])
 
+      await query("UPDATE users SET category_id = $1, updated_at = NOW() WHERE id = $2", [
+        categoryId,
+        req.user!.userId
+      ])
+
       await markAccountActionVerified(challenge.id)
       await cleanupPendingActions(req.user!.userId)
 

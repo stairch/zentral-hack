@@ -1,5 +1,5 @@
 import { query } from "@/lib/db"
-import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
+import { withCategoryPartnerAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, serverError, validationError } from "@/lib/api"
 
 type QueryValue = string | number | boolean | null | string[]
@@ -9,13 +9,16 @@ async function handleGet(req: AuthenticatedRequest) {
     const { searchParams } = new URL(req.url)
     const categoryId = searchParams.get("category")
     const status = searchParams.get("status")
+    const isCategoryPartner = req.user?.role === "category_partner"
 
     let sql = `
       SELECT
-        sc.id, sc.status, sc.company_name, sc.challenge_title, sc.short_description,
-        sc.difficulty, sc.team_size, sc.challenge_language, sc.contact_email,
+        sc.id, sc.user_id, sc.status, sc.company_name, sc.branch,
+        sc.contact_name, sc.contact_function, sc.contact_email, sc.contact_phone,
+        sc.website, sc.logo_note, sc.challenge_title, sc.short_description,
+        sc.difficulty, sc.team_size, sc.challenge_language,
         sc.challenge_data, sc.prize, sc.published_at, sc.created_at, sc.updated_at,
-        c.name AS category_name, c.id AS category_id,
+        c.name AS category_name, c.id AS category_id, c.slug AS category_slug,
         u.email AS user_email, u.first_name, u.last_name
       FROM sponsor_challenges sc
       JOIN categories c ON sc.category_id = c.id
@@ -24,10 +27,15 @@ async function handleGet(req: AuthenticatedRequest) {
     `
     const values: QueryValue[] = []
 
-    if (categoryId) {
+    if (isCategoryPartner) {
+      if (!req.user?.categoryId) return validationError("No category assigned")
+      values.push(req.user.categoryId)
+      sql += ` AND sc.category_id = $${values.length}`
+    } else if (categoryId) {
       values.push(categoryId)
       sql += ` AND sc.category_id = $${values.length}`
     }
+
     if (status) {
       values.push(status)
       sql += ` AND sc.status = $${values.length}`
@@ -47,6 +55,15 @@ async function handlePut(req: AuthenticatedRequest) {
   try {
     const { id, status, prize } = await req.json()
     if (!id) return validationError("id required")
+    const isCategoryPartner = req.user?.role === "category_partner"
+
+    if (isCategoryPartner) {
+      const check = await query("SELECT id FROM sponsor_challenges WHERE id = $1 AND category_id = $2", [
+        id,
+        req.user?.categoryId ?? null
+      ])
+      if (check.rows.length === 0) return validationError("Challenge not found in your category")
+    }
 
     const fields: string[] = []
     const values: QueryValue[] = []
@@ -83,6 +100,15 @@ async function handleDelete(req: AuthenticatedRequest) {
     const { searchParams } = new URL(req.url)
     const id = searchParams.get("id")
     if (!id) return validationError("id required")
+    const isCategoryPartner = req.user?.role === "category_partner"
+
+    if (isCategoryPartner) {
+      const check = await query("SELECT id FROM sponsor_challenges WHERE id = $1 AND category_id = $2", [
+        id,
+        req.user?.categoryId ?? null
+      ])
+      if (check.rows.length === 0) return validationError("Challenge not found in your category")
+    }
 
     await query("DELETE FROM sponsor_challenges WHERE id = $1", [id])
     return successResponse({ message: "Challenge deleted" })
@@ -92,6 +118,6 @@ async function handleDelete(req: AuthenticatedRequest) {
   }
 }
 
-export const GET = withAdminAuth(handleGet)
-export const PUT = withAdminAuth(handlePut)
-export const DELETE = withAdminAuth(handleDelete)
+export const GET = withCategoryPartnerAuth(handleGet)
+export const PUT = withCategoryPartnerAuth(handlePut)
+export const DELETE = withCategoryPartnerAuth(handleDelete)

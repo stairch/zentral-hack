@@ -26,7 +26,7 @@ async function resolveSponsorCategoryId(
 }
 
 async function loadChallengeRows(req: AuthenticatedRequest, categoryId: string) {
-  if (req.user?.role === "admin") {
+  if (req.user?.role === "admin" || req.user?.role === "category_partner") {
     return query(
       `SELECT id, user_id, category_id, status,
               company_name, branch, contact_name, contact_function,
@@ -143,7 +143,8 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
       )
     }
 
-    const status = body.status === "published" ? "published" : "draft"
+    const isSponsorOnly = req.user?.role === "sponsor"
+    const status = body.status === "published" && !isSponsorOnly ? "published" : "draft"
     const challengeData = normalizeSponsorChallengeData(body.challengeData)
     const prize = typeof body.prize === "string" ? body.prize.trim() || null : null
 
@@ -180,7 +181,7 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
 
       if (challengeId) {
         const whereClause =
-          req.user?.role === "admin"
+          req.user?.role === "admin" || req.user?.role === "category_partner"
             ? "WHERE id = $19 AND category_id = $2"
             : "WHERE id = $19 AND user_id = $1 AND category_id = $2"
 

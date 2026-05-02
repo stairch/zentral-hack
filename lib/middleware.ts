@@ -79,7 +79,7 @@ export function withCategoryPartnerAuth(handler: (req: AuthenticatedRequest) => 
 export function withSponsorAuth(handler: (req: AuthenticatedRequest) => Promise<NextResponse>) {
   return withAuth(async (req: AuthenticatedRequest) => {
     const role = req.user?.role as string | undefined
-    if (role !== "sponsor" && role !== "admin") {
+    if (role !== "sponsor" && role !== "admin" && role !== "category_partner") {
       return NextResponse.json({ success: false, error: "Sponsor access required" }, { status: 403 })
     }
 

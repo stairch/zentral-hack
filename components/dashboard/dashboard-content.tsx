@@ -127,7 +127,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
   }, [user, isAuthLoading, router])
 
   useEffect(() => {
-    if (user?.role === "admin") {
+    if (user?.role === "admin" || user?.role === "category_partner") {
       void initializeAdminChallengeEditor()
     }
   }, [user?.role, data?.profile?.category_id])
@@ -259,6 +259,19 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
         })
       ) as CategoryOption[]
 
+      // Category partner: auto-select their own category, no picker shown
+      if (user?.role === "category_partner") {
+        const myCategoryId = data?.profile?.category_id || user?.categoryId
+        const myCategory = categories.find((c) => c.id === myCategoryId)
+        if (myCategory) {
+          setChallengeCategories([myCategory])
+          setSelectedChallengeCategoryId(myCategory.id)
+          void fetchAdminChallenge(myCategory.id)
+        }
+        return
+      }
+
+      // Admin: full category list with picker
       setChallengeCategories(categories)
       if (categories.length === 0) {
         setSelectedChallengeCategoryId("")
@@ -328,7 +341,8 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
   const sponsorChallenge = data?.sponsorChallenge || null
   const isAdmin = user?.role === "admin"
   const isSponsor = user?.role === "sponsor"
-  const isChallengeManager = isSponsor || isAdmin
+  const isCategoryPartner = user?.role === "category_partner"
+  const isChallengeManager = isSponsor || isAdmin || isCategoryPartner
   const showChallengeTab = isChallengeManager
   const showTeamTab = !isChallengeManager
   const sponsorCategoryName =
@@ -336,13 +350,16 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
   const selectedChallengeCategory = challengeCategories.find(
     (category) => category.id === selectedChallengeCategoryId
   )
-  const challengeCategoryName = isAdmin ? selectedChallengeCategory?.name || t.category : sponsorCategoryName
-  const challengeCategorySlug = isAdmin
-    ? selectedChallengeCategory?.slug || "regional-impact"
-    : registration?.category?.slug || profile?.category_slug || "regional-impact"
-  const challengeCategoryId = isAdmin
-    ? selectedChallengeCategoryId
-    : registration?.category?.id || profile?.category_id || undefined
+  const challengeCategoryName =
+    isAdmin || isCategoryPartner ? selectedChallengeCategory?.name || t.category : sponsorCategoryName
+  const challengeCategorySlug =
+    isAdmin || isCategoryPartner
+      ? selectedChallengeCategory?.slug || "regional-impact"
+      : registration?.category?.slug || profile?.category_slug || "regional-impact"
+  const challengeCategoryId =
+    isAdmin || isCategoryPartner
+      ? selectedChallengeCategoryId || undefined
+      : registration?.category?.id || profile?.category_id || undefined
   const dashboardCategoryId = registration?.category?.id || profile?.category_id || null
   const dashboardCategoryName =
     registration?.category?.name || profile?.category_slug?.replace(/-/g, " ") || null
@@ -691,7 +708,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                         <p className="text-muted-foreground">{t.noCategorySelected}</p>
                       </CardContent>
                     </Card>
-                  ) : loadingAdminChallenge ? (
+                  ) : loadingAdminChallenge || (isCategoryPartner && !selectedChallengeCategoryId) ? (
                     <div className="flex min-h-[160px] items-center justify-center">
                       <Loader2 className="h-6 w-6 animate-spin text-[#530A5D]" />
                     </div>
@@ -700,9 +717,9 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                       categoryName={challengeCategoryName}
                       categorySlug={challengeCategorySlug}
                       categoryId={challengeCategoryId}
-                      initialChallenge={isAdmin ? adminChallenge : sponsorChallenge}
+                      initialChallenge={isAdmin || isCategoryPartner ? adminChallenge : sponsorChallenge}
                       onSaved={(challenge) => {
-                        if (isAdmin) setAdminChallenge(challenge)
+                        if (isAdmin || isCategoryPartner) setAdminChallenge(challenge)
                       }}
                     />
                   )}

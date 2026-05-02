@@ -14,6 +14,7 @@ import { Eye, FileText, Gavel, Info, Loader2, Package, Plus, Save, Send, Trash2,
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/language-context"
+import { useAuth } from "@/lib/auth-context"
 import {
   createEmptySponsorChallengeData,
   normalizeSponsorChallengeData,
@@ -216,6 +217,8 @@ export function SponsorChallengeEditor({
   onSaved
 }: SponsorChallengeEditorProps) {
   const { language } = useLanguage()
+  const { user: currentUser } = useAuth()
+  const canPublish = currentUser?.role !== "sponsor"
 
   const t = {
     de: {
@@ -871,17 +874,19 @@ export function SponsorChallengeEditor({
                 )}
                 {t.saveDraft}
               </Button>
-              <Button
-                onClick={() => saveChallenge("published")}
-                disabled={saving !== null}
-                className="flex-1 gap-2 bg-[#530A5D] hover:bg-[#530A5D]/90 sm:flex-none">
-                {saving === "published" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-                {t.publish}
-              </Button>
+              {canPublish && (
+                <Button
+                  onClick={() => saveChallenge("published")}
+                  disabled={saving !== null}
+                  className="flex-1 gap-2 bg-[#530A5D] hover:bg-[#530A5D]/90 sm:flex-none">
+                  {saving === "published" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  {t.publish}
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>

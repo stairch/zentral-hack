@@ -7,7 +7,7 @@ const JWT_EXPIRATION = (process.env.JWT_EXPIRATION || "24h") as SignOptions["exp
 export interface JWTPayload {
   userId: string
   email: string
-  role: "user" | "category_partner" | "admin"
+  role: "user" | "category_partner" | "sponsor" | "admin"
   twoFaVerified?: boolean
   categoryId?: string
   adminRoleId?: string

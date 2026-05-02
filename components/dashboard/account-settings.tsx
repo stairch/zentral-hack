@@ -23,7 +23,8 @@ interface AccountSettingsProps {
 }
 
 export function AccountSettings({ currentCategoryId, currentCategoryName, onUpdated }: AccountSettingsProps) {
-  const { refreshAuth, logout } = useAuth()
+  const { refreshAuth, logout, user } = useAuth()
+  const showCategoryChange = user?.role !== "sponsor" && user?.role !== "category_partner"
   const { language } = useLanguage()
   const [categories, setCategories] = useState<CategoryOption[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
@@ -485,76 +486,78 @@ export function AccountSettings({ currentCategoryId, currentCategoryName, onUpda
             </CardContent>
           </Card>
 
-          <Card className="border-border/60">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <RefreshCw className="h-4 w-4 text-[#530A5D]" />
-                {text.categoryTitle}
-              </CardTitle>
-              <CardDescription>{text.categoryDescription}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <Label>{text.selectCategory}</Label>
-                <Select
-                  value={categoryState.categoryId}
-                  onValueChange={(value) => setCategoryState((prev) => ({ ...prev, categoryId: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={loadingCategories ? "..." : text.selectCategory} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button
-                className="w-full bg-[#530A5D] text-white hover:bg-[#3f0847]"
-                onClick={() => void handleRequestCategory()}
-                disabled={
-                  loadingAction === "category-request" || !categoryState.categoryId || !currentCategoryId
-                }>
-                {loadingAction === "category-request" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  text.sendCode
-                )}
-              </Button>
-              {!currentCategoryId ? (
-                <p className="text-muted-foreground text-sm">{text.noCategoryChange}</p>
-              ) : null}
-              <div className="space-y-2">
-                <Label>{text.code}</Label>
-                <Input
-                  value={categoryState.code}
-                  onChange={(event) =>
-                    setCategoryState((prev) => ({ ...prev, code: event.target.value.toUpperCase() }))
-                  }
-                  placeholder={text.codePlaceholder}
-                  maxLength={6}
-                />
-              </div>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => void handleConfirmCategory()}
-                disabled={
-                  loadingAction === "category-confirm" ||
-                  !categoryState.challengeToken ||
-                  categoryState.code.length !== 6 ||
-                  !currentCategoryId
-                }>
-                {loadingAction === "category-confirm" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  text.confirmCode
-                )}
-              </Button>
-            </CardContent>
-          </Card>
+          {showCategoryChange && (
+            <Card className="border-border/60">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <RefreshCw className="h-4 w-4 text-[#530A5D]" />
+                  {text.categoryTitle}
+                </CardTitle>
+                <CardDescription>{text.categoryDescription}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-2">
+                  <Label>{text.selectCategory}</Label>
+                  <Select
+                    value={categoryState.categoryId}
+                    onValueChange={(value) => setCategoryState((prev) => ({ ...prev, categoryId: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={loadingCategories ? "..." : text.selectCategory} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  className="w-full bg-[#530A5D] text-white hover:bg-[#3f0847]"
+                  onClick={() => void handleRequestCategory()}
+                  disabled={
+                    loadingAction === "category-request" || !categoryState.categoryId || !currentCategoryId
+                  }>
+                  {loadingAction === "category-request" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    text.sendCode
+                  )}
+                </Button>
+                {!currentCategoryId ? (
+                  <p className="text-muted-foreground text-sm">{text.noCategoryChange}</p>
+                ) : null}
+                <div className="space-y-2">
+                  <Label>{text.code}</Label>
+                  <Input
+                    value={categoryState.code}
+                    onChange={(event) =>
+                      setCategoryState((prev) => ({ ...prev, code: event.target.value.toUpperCase() }))
+                    }
+                    placeholder={text.codePlaceholder}
+                    maxLength={6}
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => void handleConfirmCategory()}
+                  disabled={
+                    loadingAction === "category-confirm" ||
+                    !categoryState.challengeToken ||
+                    categoryState.code.length !== 6 ||
+                    !currentCategoryId
+                  }>
+                  {loadingAction === "category-confirm" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    text.confirmCode
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-destructive/20 bg-destructive/5 md:col-span-2">
             <CardHeader>

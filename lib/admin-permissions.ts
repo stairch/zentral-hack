@@ -26,5 +26,6 @@ export const DEFAULT_CATEGORY_PARTNER_PERMISSIONS = [
   "teams",
   "documents",
   "categories",
-  "users"
+  "users",
+  "challenges"
 ]

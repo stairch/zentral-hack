@@ -150,7 +150,7 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       label: text.challenges,
       icon: Trophy,
       permissionKey: "challenges",
-      adminOnly: true
+      adminOnly: false
     },
     {
       id: "about",
