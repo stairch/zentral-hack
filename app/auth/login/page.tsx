@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { Suspense, useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useAuth } from "@/lib/auth-context"
@@ -12,8 +12,10 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Loader2, LogIn, Lock } from "lucide-react"
 import { toast } from "sonner"
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const from = searchParams.get("from") || "/dashboard"
   const { login, verify2FA, user, isLoading } = useAuth()
   const { language } = useLanguage()
   const [email, setEmail] = useState("")
@@ -80,8 +82,12 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isLoading) return
-    if (user) router.push("/dashboard")
-  }, [user, isLoading, router])
+    if (user) {
+      const canAccessAdmin = user.role === "admin" || user.role === "category_partner"
+      const destination = from.startsWith("/admin") && !canAccessAdmin ? "/dashboard" : from
+      router.push(destination)
+    }
+  }, [user, isLoading, router, from])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -107,9 +113,11 @@ export default function LoginPage() {
     setError(null)
     try {
       if (!code2FA.trim()) throw new Error(t.enterCode)
-      await verify2FA(email, code2FA)
+      const loggedInUser = await verify2FA(email, code2FA)
       toast.success(t.twoFaSuccess)
-      router.push("/dashboard")
+      const canAccessAdmin = loggedInUser.role === "admin" || loggedInUser.role === "category_partner"
+      const destination = from.startsWith("/admin") && !canAccessAdmin ? "/dashboard" : from
+      router.push(destination)
     } catch (err) {
       const message = err instanceof Error ? err.message : t.twoFaError
       setError(message)
@@ -258,5 +266,13 @@ export default function LoginPage() {
         </div>
       </motion.div>
     </main>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }

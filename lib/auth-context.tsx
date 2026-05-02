@@ -20,7 +20,7 @@ interface AuthContextType {
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string, firstName: string, lastName: string) => Promise<void>
-  verify2FA: (email: string, code: string) => Promise<void>
+  verify2FA: (email: string, code: string) => Promise<User>
   refreshAuth: () => Promise<void>
   logout: () => void
 }
@@ -143,7 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(data.data.user)
   }
 
-  const verify2FA = async (email: string, code: string) => {
+  const verify2FA = async (email: string, code: string): Promise<User> => {
     const res = await fetch("/api/auth/2fa/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -159,6 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await res.json()
     setUser(data.data.user)
     setToken(data.data.token)
+    return data.data.user as User
   }
 
   const refreshAuth = async () => {
