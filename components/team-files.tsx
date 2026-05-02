@@ -14,8 +14,9 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog"
-import { FileUp, Github, Loader2, Trash2, ExternalLink } from "lucide-react"
+import { FileUp, Loader2, Trash2, ExternalLink } from "lucide-react"
 import { toast } from "sonner"
+import Github from "@/assets/icons/github.svg"
 
 interface TeamFile {
   id: string
@@ -293,7 +294,7 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
           <Dialog>
             <DialogTrigger asChild>
               <Button className="w-full gap-2">
-                <Github className="h-4 w-4" />
+                <Github className="h-4 w-4 fill-white" />
                 Repository hinzufügen
               </Button>
             </DialogTrigger>
