@@ -825,7 +825,7 @@ export function UsersAdminPage() {
             </DialogTitle>
             <DialogDescription className="space-y-2 pt-2">
               <span className="block">
-                {text.deleteConfirm1} <strong>{pendingDelete?.name}</strong> ({pendingDelete?.email})
+                {text.deleteConfirm1} <strong>{pendingDelete?.name}</strong> ({pendingDelete?.email}){" "}
                 {text.deleteConfirm2}
               </span>
               <span className="text-destructive block text-sm font-medium">{text.deleteWarning}</span>
