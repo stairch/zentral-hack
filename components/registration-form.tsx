@@ -437,7 +437,7 @@ export function RegistrationForm() {
                         key={cat.id}
                         type="button"
                         onClick={() => handleInputChange("categoryId", cat.id)}
-                        className={`relative overflow-hidden rounded-xl p-5 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#530A5D] focus-visible:ring-offset-2 ${
+                        className={`relative cursor-pointer overflow-hidden rounded-xl p-5 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#530A5D] focus-visible:ring-offset-2 ${
                           isSelected
                             ? "scale-[1.02] shadow-lg"
                             : "opacity-90 hover:opacity-100 hover:shadow-md"
