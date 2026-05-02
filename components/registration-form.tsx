@@ -558,17 +558,21 @@ export function RegistrationForm() {
                 className="space-y-5">
                 {selectedCategory && (
                   <div
-                    className="flex items-center gap-3 rounded-xl px-4 py-3"
+                    className="flex items-center gap-3 rounded-xl border border-neutral-200 px-3 py-2"
                     style={{
-                      backgroundColor: selectedCategory.color + "22",
-                      borderLeft: `3px solid ${selectedCategory.color}`
+                      backgroundColor: selectedCategory.color + "14"
                     }}>
-                    <span style={{ color: selectedCategory.color }}>
-                      <selectedCategory.icon className="h-5 w-5 shrink-0" />
-                    </span>
-                    <span className="text-sm font-semibold" style={{ color: selectedCategory.color }}>
-                      {selectedCategory.name}
-                    </span>
+                    <div
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                      style={{ backgroundColor: selectedCategory.color }}>
+                      <selectedCategory.icon
+                        className="h-4 w-4"
+                        style={{
+                          color: `color-mix(in srgb, ${selectedCategory.color} 40%, ${isDarkContrastForegroundColor(selectedCategory.color) ? "black" : "white"} 100%)`
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm font-semibold">{selectedCategory.name}</span>
                   </div>
                 )}
                 <div>
@@ -654,17 +658,21 @@ export function RegistrationForm() {
                 className="space-y-5">
                 {selectedCategory && (
                   <div
-                    className="flex items-center gap-3 rounded-xl px-4 py-3"
+                    className="flex items-center gap-3 rounded-xl border border-neutral-200 px-3 py-2"
                     style={{
-                      backgroundColor: selectedCategory.color + "22",
-                      borderLeft: `3px solid ${selectedCategory.color}`
+                      backgroundColor: selectedCategory.color + "14"
                     }}>
-                    <span style={{ color: selectedCategory.color }}>
-                      <selectedCategory.icon className="h-5 w-5 shrink-0" />
-                    </span>
-                    <span className="text-sm font-semibold" style={{ color: selectedCategory.color }}>
-                      {selectedCategory.name}
-                    </span>
+                    <div
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                      style={{ backgroundColor: selectedCategory.color }}>
+                      <selectedCategory.icon
+                        className="h-4 w-4"
+                        style={{
+                          color: `color-mix(in srgb, ${selectedCategory.color} 40%, ${isDarkContrastForegroundColor(selectedCategory.color) ? "black" : "white"} 100%)`
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm font-semibold">{selectedCategory.name}</span>
                   </div>
                 )}
                 <div>
