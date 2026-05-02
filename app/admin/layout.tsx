@@ -13,19 +13,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const token = cookieStore.get("token")?.value
 
   if (!token) {
-    console.log("[AdminLayout] No token found, redirecting to login")
     redirect("/auth/login")
   }
 
   const payload = verifyJWT(token)
 
   if (!payload) {
-    console.log("[AdminLayout] Invalid token payload, redirecting to login")
     redirect("/auth/login")
   }
 
   if (payload.role !== "admin" && payload.role !== "category_partner") {
-    console.log("[AdminLayout] User role not admin/category_partner, redirecting to dashboard:", payload.role)
     redirect("/dashboard")
   }
 

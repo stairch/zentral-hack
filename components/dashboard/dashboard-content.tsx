@@ -120,7 +120,6 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
   useEffect(() => {
     if (isAuthLoading) return
     if (!user) {
-      console.log("[Dashboard] No user found, redirecting to login")
       router.push("/auth/login")
     } else {
       fetchDashboardData()

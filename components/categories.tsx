@@ -14,6 +14,7 @@ import {
 } from "@/lib/category-config"
 import { useLanguage } from "@/lib/language-context"
 import { getContrastForegroundColor, isDarkContrastForegroundColor } from "@/lib/helpers"
+import { type SponsorChallengeData } from "@/lib/sponsor-challenge"
 
 interface DisplayCategory {
   id?: string
@@ -245,7 +246,10 @@ export function Categories() {
       null
     )
   }, [selectedCategory, selectedChallengeId, availableChallenges])
-  const selectedData = useMemo(() => (selectedChallenge?.challenge_data as any) || null, [selectedChallenge])
+  const selectedData = useMemo(
+    () => (selectedChallenge?.challenge_data as SponsorChallengeData | null) || null,
+    [selectedChallenge]
+  )
   const hasChallenge = Boolean(selectedChallenge)
 
   return (

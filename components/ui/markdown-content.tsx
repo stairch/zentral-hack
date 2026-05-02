@@ -1,3 +1,4 @@
+import React from "react"
 import Markdown, { defaultUrlTransform } from "react-markdown"
 import rehypeRaw from "rehype-raw"
 import { Emails, PhoneNumbers, Urls } from "@/lib/constants"
@@ -30,7 +31,7 @@ export default function MarkdownContent({ children, toReplace }: MarkdownContent
         rehypePlugins={[rehypeRaw]}
         urlTransform={(url: string) => (url.startsWith("tel:") ? url : defaultUrlTransform(url))}
         components={{
-          a(props: any) {
+          a(props: React.ComponentProps<"a">) {
             return (
               <a href={props.href} target="_blank" className="text-primary hover:underline">
                 {props.children}
