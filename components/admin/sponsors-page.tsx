@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState, useRef } from "react"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
@@ -751,6 +752,8 @@ export function AdminSponsorsPage() {
   const [saving, setSaving] = useState(false)
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState<EditForm>(emptyForm)
+  const [deletePackageId, setDeletePackageId] = useState<string | null>(null)
+  const [deletingPackage, setDeletingPackage] = useState(false)
   const { language, isReady } = useLanguage()
   const hasDataFetched = useRef(false)
 
@@ -921,13 +924,15 @@ export function AdminSponsorsPage() {
     }
   }
 
-  async function removePackage(id: string) {
+  async function removePackage() {
+    if (!deletePackageId) return
     try {
+      setDeletingPackage(true)
       const res = await fetch("/api/admin/sponsors", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ id })
+        body: JSON.stringify({ id: deletePackageId })
       })
 
       if (!res.ok) {
@@ -935,11 +940,14 @@ export function AdminSponsorsPage() {
         throw new Error(error.error || text.errors.packageDeleteFailed)
       }
 
-      setPackages((prev) => prev.filter((pkg) => pkg.id !== id))
+      setPackages((prev) => prev.filter((pkg) => pkg.id !== deletePackageId))
       toast.success(text.success.packageDeleted)
+      setDeletePackageId(null)
     } catch (error) {
       console.error(error)
       toast.error(error instanceof Error ? error.message : text.errors.packageDeleteFailed)
+    } finally {
+      setDeletingPackage(false)
     }
   }
 
@@ -1068,7 +1076,7 @@ export function AdminSponsorsPage() {
                         <Edit2 className="mr-1 h-3 w-3" />
                         {text.packageCardEditButton}
                       </Button>
-                      <Button variant="destructive" size="sm" onClick={() => void removePackage(pkg.id)}>
+                      <Button variant="destructive" size="sm" onClick={() => setDeletePackageId(pkg.id)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
@@ -1386,6 +1394,21 @@ export function AdminSponsorsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deletePackageId}
+        onOpenChange={(open) => !open && setDeletePackageId(null)}
+        title={language === "en" ? "Delete package?" : "Paket löschen?"}
+        description={
+          language === "en"
+            ? "This sponsor package will be permanently deleted."
+            : "Dieses Sponsoren-Paket wird dauerhaft gelöscht."
+        }
+        confirmLabel={language === "en" ? "Delete" : "Löschen"}
+        cancelLabel={language === "en" ? "Cancel" : "Abbrechen"}
+        onConfirm={() => void removePackage()}
+        loading={deletingPackage}
+      />
     </div>
   )
 }

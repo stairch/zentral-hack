@@ -21,6 +21,7 @@ import { Users, Plus, Loader2, ArrowLeft, UserPlus, Trash2, Crown } from "lucide
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 interface Team {
   id: string
@@ -175,6 +176,10 @@ export function TeamsAdminPage() {
     { id: string; email: string; first_name: string; last_name: string }[]
   >([])
   const [loadingAvailable, setLoadingAvailable] = useState(false)
+  const [deleteTeamId, setDeleteTeamId] = useState<string | null>(null)
+  const [deletingTeam, setDeletingTeam] = useState(false)
+  const [removeMemberId, setRemoveMemberId] = useState<string | null>(null)
+  const [removingMember, setRemovingMember] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -236,20 +241,24 @@ export function TeamsAdminPage() {
     }
   }
 
-  const handleDeleteTeam = async (teamId: string) => {
-    if (!confirm(text.deleteConfirm)) return
+  const handleDeleteTeam = async () => {
+    if (!deleteTeamId) return
     try {
-      const res = await fetch(`/api/admin/teams?id=${teamId}`, {
+      setDeletingTeam(true)
+      const res = await fetch(`/api/admin/teams?id=${deleteTeamId}`, {
         method: "DELETE",
         credentials: "include"
       })
       if (res.ok) {
-        setTeams(teams.filter((t) => t.id !== teamId))
-        if (selectedTeam?.id === teamId) setSelectedTeam(null)
+        setTeams(teams.filter((t) => t.id !== deleteTeamId))
+        if (selectedTeam?.id === deleteTeamId) setSelectedTeam(null)
         toast.success(text.deleteSuccess)
+        setDeleteTeamId(null)
       }
     } catch {
       toast.error(text.deleteError)
+    } finally {
+      setDeletingTeam(false)
     }
   }
 
@@ -323,15 +332,19 @@ export function TeamsAdminPage() {
     }
   }
 
-  const handleRemoveMember = async (memberId: string) => {
-    if (!selectedTeam || !confirm(text.removeMemberConfirm)) return
+  const handleRemoveMember = async () => {
+    if (!selectedTeam || !removeMemberId) return
     try {
-      const res = await fetch(`/api/admin/teams/members?memberId=${memberId}&teamId=${selectedTeam.id}`, {
-        method: "DELETE",
-        credentials: "include"
-      })
+      setRemovingMember(true)
+      const res = await fetch(
+        `/api/admin/teams/members?memberId=${removeMemberId}&teamId=${selectedTeam.id}`,
+        {
+          method: "DELETE",
+          credentials: "include"
+        }
+      )
       if (res.ok) {
-        setMembers(members.filter((m) => m.id !== memberId))
+        setMembers(members.filter((m) => m.id !== removeMemberId))
         setTeams(
           teams.map((t) =>
             t.id === selectedTeam.id
@@ -340,9 +353,12 @@ export function TeamsAdminPage() {
           )
         )
         toast.success(text.removeMemberSuccess)
+        setRemoveMemberId(null)
       }
     } catch {
       toast.error(text.removeMemberError)
+    } finally {
+      setRemovingMember(false)
     }
   }
 
@@ -468,7 +484,7 @@ export function TeamsAdminPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleRemoveMember(member.id)}
+                          onClick={() => setRemoveMemberId(member.id)}
                           className="text-destructive hover:text-destructive">
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -590,7 +606,7 @@ export function TeamsAdminPage() {
                     variant="ghost"
                     size="icon"
                     className="text-destructive hover:text-destructive"
-                    onClick={() => handleDeleteTeam(team.id)}>
+                    onClick={() => setDeleteTeamId(team.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -608,6 +624,27 @@ export function TeamsAdminPage() {
           </CardContent>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTeamId}
+        onOpenChange={(open) => !open && setDeleteTeamId(null)}
+        title={language === "en" ? "Delete team?" : "Team löschen?"}
+        description={text.deleteConfirm}
+        confirmLabel={language === "en" ? "Delete" : "Löschen"}
+        cancelLabel={language === "en" ? "Cancel" : "Abbrechen"}
+        onConfirm={handleDeleteTeam}
+        loading={deletingTeam}
+      />
+      <ConfirmDialog
+        open={!!removeMemberId}
+        onOpenChange={(open) => !open && setRemoveMemberId(null)}
+        title={language === "en" ? "Remove member?" : "Mitglied entfernen?"}
+        description={text.removeMemberConfirm}
+        confirmLabel={language === "en" ? "Remove" : "Entfernen"}
+        cancelLabel={language === "en" ? "Cancel" : "Abbrechen"}
+        onConfirm={handleRemoveMember}
+        loading={removingMember}
+      />
     </div>
   )
 }

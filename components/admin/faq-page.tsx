@@ -18,6 +18,7 @@ import {
 import { Plus, Loader2, Pencil, Trash2, GripVertical, HelpCircle, ChevronUp, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 interface FAQ {
   id: string
@@ -40,6 +41,8 @@ export function FAQAdminPage() {
   const [form, setForm] = useState({ question: "", questionEn: "", answer: "", answerEn: "" })
   const [dragId, setDragId] = useState<string | null>(null)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const hasDataFetched = useRef(false)
 
   const text =
@@ -205,19 +208,23 @@ export function FAQAdminPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(text.deleteConfirm)) return
+  const handleDelete = async () => {
+    if (!deleteId) return
     try {
-      const res = await fetch(`/api/admin/faqs?id=${id}`, {
+      setDeleting(true)
+      const res = await fetch(`/api/admin/faqs?id=${deleteId}`, {
         method: "DELETE",
         credentials: "include"
       })
       if (res.ok) {
-        setFaqs(faqs.filter((f) => f.id !== id))
+        setFaqs(faqs.filter((f) => f.id !== deleteId))
         toast.success(text.deleteSuccess)
+        setDeleteId(null)
       }
     } catch {
       toast.error(text.deleteError)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -450,7 +457,7 @@ export function FAQAdminPage() {
                       variant="ghost"
                       size="icon"
                       className="text-destructive hover:text-destructive"
-                      onClick={() => handleDelete(faq.id)}>
+                      onClick={() => setDeleteId(faq.id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -465,6 +472,20 @@ export function FAQAdminPage() {
           )}
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title={text.deleteConfirm}
+        description={
+          language === "en"
+            ? "This action cannot be undone."
+            : "Diese Aktion kann nicht rückgängig gemacht werden."
+        }
+        confirmLabel={language === "en" ? "Delete" : "Löschen"}
+        cancelLabel={language === "en" ? "Cancel" : "Abbrechen"}
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
     </div>
   )
 }
