@@ -496,12 +496,12 @@ export function RegistrationForm() {
                 className="space-y-5">
                 {selectedCategory && (
                   <div
-                    className="flex items-center gap-3 rounded-xl border border-neutral-200 px-4 py-3"
+                    className="flex items-center gap-3 rounded-xl border border-neutral-200 px-3 py-2"
                     style={{
                       backgroundColor: selectedCategory.color + "14"
                     }}>
                     <div
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
                       style={{ backgroundColor: selectedCategory.color }}>
                       <selectedCategory.icon
                         className="h-4 w-4"
