@@ -15,18 +15,18 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog"
-import { Edit2, Loader2, Check, Plus } from "lucide-react"
+import { Edit2, Loader2, Plus } from "lucide-react"
 import { toast } from "sonner"
 import {
   categoryIconMap,
   categoryIconOptions,
   getCategoryPresentation,
-  getCategoryPresentationByLanguage,
-  hexToRgba
+  getCategoryPresentationByLanguage
 } from "@/lib/category-config"
 import { useLanguage } from "@/lib/language-context"
-import { normalizeHexColor } from "@/lib/helpers"
+import { getContrastForegroundColor, normalizeHexColor } from "@/lib/helpers"
 import { useAuth } from "@/lib/auth-context"
+import ColorPicker from "../ui/color-picker"
 
 interface Category {
   id: string
@@ -80,8 +80,6 @@ export function AdminCategoriesPage() {
     targetGroup: "",
     targetGroupEn: ""
   })
-  const [saved, setSaved] = useState(false)
-
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [createForm, setCreateForm] = useState({
@@ -258,7 +256,6 @@ export function AdminCategoriesPage() {
         throw new Error(error.error || "Fehler beim Speichern")
       }
 
-      setSaved(true)
       toast.success(text.saveSuccess)
 
       // Update local state
@@ -282,11 +279,6 @@ export function AdminCategoriesPage() {
             : category
         )
       )
-
-      setTimeout(() => {
-        setSaved(false)
-        setEditingId(null)
-      }, 2000)
     } catch (error) {
       console.error("Failed to save category:", error)
       toast.error(error instanceof Error ? error.message : text.saveError)
@@ -392,10 +384,13 @@ export function AdminCategoriesPage() {
                           <div
                             className="flex h-12 w-12 items-center justify-center rounded-lg"
                             style={{
-                              backgroundColor: hexToRgba(presentation.color, 0.14),
+                              backgroundColor: presentation.color,
                               color: presentation.color
                             }}>
-                            <Icon className="h-6 w-6" />
+                            <Icon
+                              className="h-6 w-6"
+                              style={{ color: getContrastForegroundColor(presentation.color) }}
+                            />
                           </div>
                         )
                       })()}
@@ -442,233 +437,162 @@ export function AdminCategoriesPage() {
                             </DialogDescription>
                           </DialogHeader>
 
-                          {saved ? (
-                            <div className="flex flex-col items-center justify-center py-8">
-                              <Check className="mb-4 h-12 w-12 text-green-500" />
-                              <p>{text.saved}</p>
+                          <div className="space-y-6 pr-1">
+                            <div className="grid gap-4 lg:grid-cols-2">
+                              <div className="space-y-4 rounded-lg border p-4">
+                                <p className="text-sm font-semibold">{text.germanSection}</p>
+                                <div>
+                                  <Label htmlFor="name">{text.titleLabel}</Label>
+                                  <Input
+                                    id="name"
+                                    value={editForm.name}
+                                    onChange={(e) => updateEditForm("name", e.target.value)}
+                                    placeholder="Name der Kategorie"
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label htmlFor="partnerName">{text.partnerLabel}</Label>
+                                  <Input
+                                    id="partnerName"
+                                    value={editForm.partnerName}
+                                    onChange={(e) => updateEditForm("partnerName", e.target.value)}
+                                    placeholder="Partnername"
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label htmlFor="description">{text.descriptionLabel}</Label>
+                                  <Textarea
+                                    id="description"
+                                    value={editForm.description}
+                                    onChange={(e) => updateEditForm("description", e.target.value)}
+                                    placeholder="Beschreibe diese Kategorie und ihre Herausforderungen..."
+                                    rows={6}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="space-y-4 rounded-lg border p-4">
+                                <p className="text-sm font-semibold">{text.englishSection}</p>
+                                <div>
+                                  <Label htmlFor="nameEn">Title</Label>
+                                  <Input
+                                    id="nameEn"
+                                    value={editForm.nameEn}
+                                    onChange={(e) => updateEditForm("nameEn", e.target.value)}
+                                    placeholder="Category title"
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label htmlFor="partnerNameEn">Partner</Label>
+                                  <Input
+                                    id="partnerNameEn"
+                                    value={editForm.partnerNameEn}
+                                    onChange={(e) => updateEditForm("partnerNameEn", e.target.value)}
+                                    placeholder="Partner name"
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label htmlFor="descriptionEn">Description</Label>
+                                  <Textarea
+                                    id="descriptionEn"
+                                    value={editForm.descriptionEn}
+                                    onChange={(e) => updateEditForm("descriptionEn", e.target.value)}
+                                    placeholder="Describe this category and its challenge context..."
+                                    rows={6}
+                                  />
+                                </div>
+                              </div>
                             </div>
-                          ) : (
-                            <div className="space-y-4 pr-1">
-                              <div className="grid gap-4 lg:grid-cols-2">
-                                <div className="space-y-4 rounded-lg border p-4">
-                                  <p className="text-sm font-semibold">{text.germanSection}</p>
-                                  <div>
-                                    <Label htmlFor="name">{text.titleLabel}</Label>
-                                    <Input
-                                      id="name"
-                                      value={editForm.name}
-                                      onChange={(e) => updateEditForm("name", e.target.value)}
-                                      placeholder="Name der Kategorie"
-                                    />
-                                  </div>
 
-                                  <div>
-                                    <Label htmlFor="partnerName">{text.partnerLabel}</Label>
-                                    <Input
-                                      id="partnerName"
-                                      value={editForm.partnerName}
-                                      onChange={(e) => updateEditForm("partnerName", e.target.value)}
-                                      placeholder="Partnername"
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <Label htmlFor="description">{text.descriptionLabel}</Label>
-                                    <Textarea
-                                      id="description"
-                                      value={editForm.description}
-                                      onChange={(e) => updateEditForm("description", e.target.value)}
-                                      placeholder="Beschreibe diese Kategorie und ihre Herausforderungen..."
-                                      rows={6}
-                                    />
-                                  </div>
-                                </div>
-
-                                <div className="space-y-4 rounded-lg border p-4">
-                                  <p className="text-sm font-semibold">{text.englishSection}</p>
-                                  <div>
-                                    <Label htmlFor="nameEn">Title</Label>
-                                    <Input
-                                      id="nameEn"
-                                      value={editForm.nameEn}
-                                      onChange={(e) => updateEditForm("nameEn", e.target.value)}
-                                      placeholder="Category title"
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <Label htmlFor="partnerNameEn">Partner</Label>
-                                    <Input
-                                      id="partnerNameEn"
-                                      value={editForm.partnerNameEn}
-                                      onChange={(e) => updateEditForm("partnerNameEn", e.target.value)}
-                                      placeholder="Partner name"
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <Label htmlFor="descriptionEn">Description</Label>
-                                    <Textarea
-                                      id="descriptionEn"
-                                      value={editForm.descriptionEn}
-                                      onChange={(e) => updateEditForm("descriptionEn", e.target.value)}
-                                      placeholder="Describe this category and its challenge context..."
-                                      rows={6}
-                                    />
-                                  </div>
-                                </div>
+                            <div className="grid gap-4 md:grid-cols-2">
+                              <div>
+                                <Label htmlFor="color">{text.colorLabel}</Label>
+                                <ColorPicker
+                                  current={normalizeHexColor(editForm.color)}
+                                  onChange={(color) => updateEditForm("color", color)}
+                                  onPresetClick={(color) => updateEditForm("color", color)}
+                                  withPresets
+                                />
                               </div>
+                              <div>
+                                <Label htmlFor="icon">{text.iconLabel}</Label>
+                                <Select
+                                  value={editForm.icon}
+                                  onValueChange={(value) => updateEditForm("icon", value)}>
+                                  <SelectTrigger id="icon">
+                                    <SelectValue placeholder={text.iconPlaceholder} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {categoryIconOptions.map((option) => {
+                                      const Icon = categoryIconMap[option.value]
 
-                              <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_160px]">
-                                <div>
-                                  <Label htmlFor="icon">{text.iconLabel}</Label>
-                                  <Select
-                                    value={editForm.icon}
-                                    onValueChange={(value) => updateEditForm("icon", value)}>
-                                    <SelectTrigger id="icon">
-                                      <SelectValue placeholder={text.iconPlaceholder} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {categoryIconOptions.map((option) => {
-                                        const Icon = categoryIconMap[option.value]
-
-                                        return (
-                                          <SelectItem key={option.value} value={option.value}>
-                                            <span className="flex items-center gap-2">
-                                              <Icon className="h-4 w-4" />
-                                              <span>{option.label}</span>
-                                            </span>
-                                          </SelectItem>
-                                        )
-                                      })}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div>
-                                  <Label htmlFor="color">{text.colorLabel}</Label>
-                                  <div className="flex gap-2">
-                                    <Input
-                                      id="color"
-                                      type="color"
-                                      value={normalizeHexColor(editForm.color)}
-                                      onChange={(e) => updateEditForm("color", e.target.value)}
-                                      className="h-10 w-14 p-1"
-                                    />
-                                    <Input
-                                      value={editForm.color}
-                                      onChange={(e) => updateEditForm("color", e.target.value)}
-                                      placeholder="#530A5D"
-                                    />
-                                  </div>
-                                </div>
+                                      return (
+                                        <SelectItem key={option.value} value={option.value}>
+                                          <span className="flex items-center gap-2">
+                                            <Icon className="h-4 w-4" />
+                                            <span>{option.label}</span>
+                                          </span>
+                                        </SelectItem>
+                                      )
+                                    })}
+                                  </SelectContent>
+                                </Select>
                               </div>
-
-                              <div className="grid gap-4 md:grid-cols-2">
-                                <div>
-                                  <Label htmlFor="prize">{text.prizeLabel}</Label>
-                                  <Input
-                                    id="prize"
-                                    value={editForm.prize}
-                                    onChange={(e) => updateEditForm("prize", e.target.value)}
-                                    placeholder={text.prizePlaceholder}
-                                  />
-                                  <p className="text-muted-foreground mt-1 text-xs">{text.prizeHint}</p>
-                                </div>
-                                <div />
-                                <div>
-                                  <Label htmlFor="targetGroup">
-                                    {text.targetGroupLabel} ({text.germanSection})
-                                  </Label>
-                                  <Input
-                                    id="targetGroup"
-                                    value={editForm.targetGroup}
-                                    onChange={(e) => updateEditForm("targetGroup", e.target.value)}
-                                    placeholder={text.targetGroupPlaceholder}
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="targetGroupEn">
-                                    {text.targetGroupLabel} ({text.englishSection})
-                                  </Label>
-                                  <Input
-                                    id="targetGroupEn"
-                                    value={editForm.targetGroupEn}
-                                    onChange={(e) => updateEditForm("targetGroupEn", e.target.value)}
-                                    placeholder={text.targetGroupPlaceholderEn}
-                                  />
-                                </div>
-                              </div>
-
-                              <div
-                                className="rounded-xl border p-4"
-                                style={{
-                                  backgroundColor: normalizeHexColor(editForm.color),
-                                  color: getCategoryPresentationByLanguage(
-                                    {
-                                      slug: category.slug,
-                                      name: editForm.name,
-                                      name_en: editForm.nameEn,
-                                      description: editForm.description,
-                                      description_en: editForm.descriptionEn,
-                                      partner_name: editForm.partnerName,
-                                      partner_name_en: editForm.partnerNameEn,
-                                      color: editForm.color,
-                                      icon: editForm.icon
-                                    },
-                                    language
-                                  ).textColor
-                                }}>
-                                {(() => {
-                                  const preview = getCategoryPresentationByLanguage(
-                                    {
-                                      slug: category.slug,
-                                      name: editForm.name,
-                                      name_en: editForm.nameEn,
-                                      description: editForm.description,
-                                      description_en: editForm.descriptionEn,
-                                      partner_name: editForm.partnerName,
-                                      partner_name_en: editForm.partnerNameEn,
-                                      color: editForm.color,
-                                      icon: editForm.icon
-                                    },
-                                    language
-                                  )
-                                  const Icon = preview.icon
-
-                                  return (
-                                    <div className="space-y-3">
-                                      <div className="flex items-center gap-3">
-                                        <Icon className="h-5 w-5" />
-                                        <p className="font-semibold">{text.previewLabel}</p>
-                                      </div>
-                                      <p className="text-xs opacity-75">{text.previewHint}</p>
-                                      <div>
-                                        <p className="font-display text-xl font-bold">{preview.title}</p>
-                                        <p className="mt-2 text-sm opacity-90">{preview.description}</p>
-                                        <p className="mt-3 text-xs opacity-75">
-                                          {text.partnerPreviewLabel}: {preview.partnerName}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  )
-                                })()}
-                              </div>
-
-                              <Button
-                                onClick={() => handleSaveCategory(category.id)}
-                                disabled={saving}
-                                className="bg-violet hover:bg-violet/90 w-full">
-                                {saving ? (
-                                  <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    {text.saving}
-                                  </>
-                                ) : (
-                                  text.save
-                                )}
-                              </Button>
                             </div>
-                          )}
+
+                            <div className="grid gap-4 md:grid-cols-2">
+                              <div>
+                                <Label htmlFor="prize">{text.prizeLabel}</Label>
+                                <Input
+                                  id="prize"
+                                  value={editForm.prize}
+                                  onChange={(e) => updateEditForm("prize", e.target.value)}
+                                  placeholder={text.prizePlaceholder}
+                                />
+                                <p className="text-muted-foreground mt-1 text-xs">{text.prizeHint}</p>
+                              </div>
+                              <div />
+                              <div>
+                                <Label htmlFor="targetGroup">
+                                  {text.targetGroupLabel} ({text.germanSection})
+                                </Label>
+                                <Input
+                                  id="targetGroup"
+                                  value={editForm.targetGroup}
+                                  onChange={(e) => updateEditForm("targetGroup", e.target.value)}
+                                  placeholder={text.targetGroupPlaceholder}
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="targetGroupEn">
+                                  {text.targetGroupLabel} ({text.englishSection})
+                                </Label>
+                                <Input
+                                  id="targetGroupEn"
+                                  value={editForm.targetGroupEn}
+                                  onChange={(e) => updateEditForm("targetGroupEn", e.target.value)}
+                                  placeholder={text.targetGroupPlaceholderEn}
+                                />
+                              </div>
+                            </div>
+                            <Button
+                              onClick={() => handleSaveCategory(category.id)}
+                              disabled={saving}
+                              className="bg-violet hover:bg-violet/90 mt-5 w-full">
+                              {saving ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  {text.saving}
+                                </>
+                              ) : (
+                                text.save
+                              )}
+                            </Button>
+                          </div>
                         </DialogContent>
                       </Dialog>
                     )}
