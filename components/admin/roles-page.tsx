@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -114,12 +114,13 @@ interface RoleFormState {
 const EMPTY_FORM: RoleFormState = { name: "", categoryId: "", permissions: [] }
 
 export function AdminRolesPage() {
-  const { language } = useLanguage()
+  const { language, isReady } = useLanguage()
   const text = copy[language]
 
   const [roles, setRoles] = useState<AdminRole[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const hasDataFetched = useRef(false)
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingRole, setEditingRole] = useState<AdminRole | null>(null)
@@ -131,8 +132,10 @@ export function AdminRolesPage() {
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
+    if (!isReady || hasDataFetched.current) return
+    hasDataFetched.current = true
     fetchData()
-  }, [])
+  }, [isReady])
 
   async function fetchData() {
     try {

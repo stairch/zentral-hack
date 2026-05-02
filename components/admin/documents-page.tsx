@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -90,7 +90,7 @@ const copy = {
 } as const
 
 export function DocumentsManagementPage() {
-  const { language } = useLanguage()
+  const { language, isReady } = useLanguage()
   const { user } = useAuth()
   const text = copy[language]
   const isCategoryPartner = user?.role === "category_partner"
@@ -101,11 +101,14 @@ export function DocumentsManagementPage() {
   const [uploading, setUploading] = useState(false)
   const [uploaded, setUploaded] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const hasDataFetched = useRef(false)
   const [file, setFile] = useState<File | null>(null)
   const [categoryId, setCategoryId] = useState<string>(user?.categoryId || "")
   const [docName, setDocName] = useState<string>("")
 
   useEffect(() => {
+    if (!isReady || hasDataFetched.current) return
+    hasDataFetched.current = true
     const fetchData = async () => {
       try {
         setLoading(true)
@@ -129,7 +132,7 @@ export function DocumentsManagementPage() {
       }
     }
     fetchData()
-  }, [])
+  }, [isReady])
 
   const handleUpload = async () => {
     if (!file || !categoryId) {

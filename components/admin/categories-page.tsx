@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -59,7 +59,7 @@ interface EditFormState {
 }
 
 export function AdminCategoriesPage() {
-  const { language } = useLanguage()
+  const { language, isReady } = useLanguage()
   const { user } = useAuth()
   const isAdmin = user?.role === "admin"
   const isCategoryPartner = user?.role === "category_partner"
@@ -186,8 +186,12 @@ export function AdminCategoriesPage() {
           noCategories: "Keine Kategorien gefunden"
         }
 
+  const hasDataFetched = useRef(false)
+
   // Fetch categories
   useEffect(() => {
+    if (!isReady || hasDataFetched.current) return
+    hasDataFetched.current = true
     const fetchCategories = async () => {
       try {
         setLoading(true)
@@ -207,7 +211,7 @@ export function AdminCategoriesPage() {
     }
 
     fetchCategories()
-  }, [])
+  }, [isReady])
 
   const updateEditForm = (field: keyof EditFormState, value: string) => {
     setEditForm((current) => ({ ...current, [field]: value }))

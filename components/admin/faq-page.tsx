@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,7 +31,7 @@ interface FAQ {
 }
 
 export function FAQAdminPage() {
-  const { language } = useLanguage()
+  const { language, isReady } = useLanguage()
   const [faqs, setFaqs] = useState<FAQ[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -40,6 +40,7 @@ export function FAQAdminPage() {
   const [form, setForm] = useState({ question: "", questionEn: "", answer: "", answerEn: "" })
   const [dragId, setDragId] = useState<string | null>(null)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
+  const hasDataFetched = useRef(false)
 
   const text =
     language === "en"
@@ -107,8 +108,10 @@ export function FAQAdminPage() {
         }
 
   useEffect(() => {
+    if (!isReady || hasDataFetched.current) return
+    hasDataFetched.current = true
     fetchFaqs()
-  }, [])
+  }, [isReady])
 
   const fetchFaqs = async () => {
     try {

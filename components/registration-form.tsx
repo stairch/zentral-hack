@@ -44,7 +44,7 @@ export function RegistrationForm() {
   const searchParams = useSearchParams()
   const [show2FA, setShow2FA] = useState(false)
   const [code2FA, setCode2FA] = useState("")
-  const { language } = useLanguage()
+  const { language, isReady } = useLanguage()
 
   const t = {
     de: {
@@ -177,8 +177,9 @@ export function RegistrationForm() {
   })
 
   useEffect(() => {
+    if (!isReady) return
     fetchCategories()
-  }, [language])
+  }, [isReady, language])
 
   useEffect(() => {
     const categoryParam = searchParams.get("category")

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -137,7 +137,7 @@ const empty = (): Omit<ScheduleItem, "id"> => ({
 })
 
 export function AdminSchedulePage() {
-  const { language } = useLanguage()
+  const { language, isReady } = useLanguage()
   const text = copy[language]
   const ICONS = language === "en" ? ICONS_EN : ICONS_DE
 
@@ -149,12 +149,15 @@ export function AdminSchedulePage() {
   const [form, setForm] = useState(empty())
   const [saving, setSaving] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const hasDataFetched = useRef(false)
 
   const dayItems = items.filter((i) => i.day === activeDay).sort((a, b) => a.sort_order - b.sort_order)
 
   useEffect(() => {
+    if (!isReady || hasDataFetched.current) return
+    hasDataFetched.current = true
     void load()
-  }, [])
+  }, [isReady])
 
   const load = async () => {
     try {
