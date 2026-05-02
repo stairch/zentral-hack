@@ -58,8 +58,8 @@ export function RegistrationForm() {
       passwordUpper: "Passwort muss mindestens einen Großbuchstaben enthalten",
       passwordNumber: "Passwort muss mindestens eine Zahl enthalten",
       passwordSpecial: "Passwort muss mindestens ein Sonderzeichen enthalten (!@#$%^&*...)",
-      studyRequired: "Studiengang erforderlich, wenn Hochschule/Schule angegeben ist",
-      semesterRequired: "Semester erforderlich, wenn Hochschule/Schule angegeben ist",
+      studyRequired: "Angabe erforderlich, wenn Organisation angegeben ist",
+      semesterRequired: "Angabe erforderlich, wenn Organisation angegeben ist",
       categoryRequired: "Bitte wähle eine Kategorie",
       signupFailed: "Registrierung fehlgeschlagen",
       twoFaSent: "2FA Code wurde an deine E-Mail gesendet",
@@ -79,9 +79,9 @@ export function RegistrationForm() {
       email: "E-Mail *",
       password: "Passwort *",
       confirmPassword: "Passwort bestätigen *",
-      university: "Universität / Schule (optional)",
-      studyProgram: "Studiengang",
-      semester: "Semester",
+      university: "Universität / Schule / Firma (optional)",
+      studyProgram: "Studiengang / Ausbildung / Beruf",
+      semester: "Studiensemester / Ausbildungsjahr / Berufsjahre",
       allergies: "Allergien (optional)",
       intolerances: "Unverträglichkeiten (optional)",
       newsletterOptIn: "Ich möchte Hackathon-Updates und Neuigkeiten per E-Mail erhalten",
@@ -98,8 +98,8 @@ export function RegistrationForm() {
       verificationCode: "Verifizierungscode",
       codeHint: "6 Zeichen aus deiner E-Mail",
       verify: "Verifizieren",
-      schoolPlaceholder: "z.B. HSLU, ETH Zürich, etc.",
-      studyPlaceholder: "z.B. Informatik, Wirtschaft, etc.",
+      schoolPlaceholder: "z.B. HSLU, ETH Zürich, GIBZ, ...",
+      studyPlaceholder: "z.B. Informatik, Software Entwickler:in, ...",
       emailExists: "Ein Konto mit dieser E-Mail-Adresse existiert bereits",
       emailExistsHint: "Melden Sie sich an oder verwenden Sie eine andere E-Mail",
       stepLabels: ["Kategorie", "Persönlich", "Zugangsdaten", "Weiteres"]
@@ -114,8 +114,8 @@ export function RegistrationForm() {
       passwordUpper: "Password must include at least one uppercase letter",
       passwordNumber: "Password must include at least one number",
       passwordSpecial: "Password must include at least one special character (!@#$%^&*...)",
-      studyRequired: "Study program is required if university/school is provided",
-      semesterRequired: "Semester is required if university/school is provided",
+      studyRequired: "Field is required if organization is provided",
+      semesterRequired: "Field is required if organization is provided",
       categoryRequired: "Please choose a category",
       signupFailed: "Registration failed",
       twoFaSent: "2FA code was sent to your email",
@@ -135,9 +135,9 @@ export function RegistrationForm() {
       email: "Email *",
       password: "Password *",
       confirmPassword: "Confirm password *",
-      university: "University / School (optional)",
-      studyProgram: "Study program",
-      semester: "Semester",
+      university: "University / School / Company (optional)",
+      studyProgram: "Study program / Apprenticeship / Profession",
+      semester: "Study semester / Apprenticeship year / Years of experience",
       allergies: "Allergies (optional)",
       intolerances: "Intolerances (optional)",
       newsletterOptIn: "I want to receive hackathon updates and news by email",
@@ -154,8 +154,8 @@ export function RegistrationForm() {
       verificationCode: "Verification code",
       codeHint: "6 characters from your email",
       verify: "Verify",
-      schoolPlaceholder: "e.g. HSLU, ETH Zurich, etc.",
-      studyPlaceholder: "e.g. Computer Science, Business, etc.",
+      schoolPlaceholder: "e.g. HSLU, ETH Zurich, GIBZ, ...",
+      studyPlaceholder: "e.g. Computer Science, Software Engineer, ...",
       emailExists: "An account with this email address already exists",
       emailExistsHint: "Sign in or use a different email",
       stepLabels: ["Category", "Personal", "Credentials", "More Info"]
@@ -718,7 +718,6 @@ export function RegistrationForm() {
                           type="number"
                           value={formData.semester}
                           onChange={(e) => handleInputChange("semester", e.target.value)}
-                          placeholder={language === "de" ? "z.B. 3" : "e.g. 3"}
                           min="1"
                           className="h-11"
                         />
