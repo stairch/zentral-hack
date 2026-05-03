@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     }
 
     const result = await query(
-      "SELECT logo_url FROM sponsor_contacts WHERE id = $1 AND status = 'published' AND logo_url IS NOT NULL",
+      "SELECT logo_url FROM sponsor_contacts WHERE id = $1 AND logo_url IS NOT NULL",
       [id]
     )
 
@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (!blobResponse.ok) {
+      console.error("[Sponsor logo] Error:", await blobResponse.text())
       return new NextResponse(null, { status: 502 })
     }
 

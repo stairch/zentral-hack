@@ -43,6 +43,7 @@ import {
   getSponsorPackagePriceLabel,
   type SponsorPackagePriceStatus
 } from "@/lib/sponsorship-packages"
+import Image from "next/image"
 
 type SponsorPackage = {
   id: string
@@ -195,10 +196,10 @@ const copy = {
     publishDialog: {
       title: "Sponsor veröffentlichen",
       description: (companyName: string) => `${companyName} auf der Landing Page publizieren`,
-      logoUrlLabel: "Logo URL *",
+      logoUrlLabel: "Logo *",
       logoUploadButton: "Logo hochladen",
       logoUploadLoading: "Upload...",
-      logoUploadHint: "PNG, JPG, WEBP oder SVG (max. 5 MB)",
+      logoUploadHint: "PNG, JPG oder WEBP (max. 5 MB)",
       websiteUrlLabel: "Website",
       backgroundColorLabel: "Hintergrundfarbe",
       resetButton: "Zurücksetzen",
@@ -310,10 +311,10 @@ const copy = {
     publishDialog: {
       title: "Publish sponsor",
       description: (companyName: string) => `Publish ${companyName} on the landing page`,
-      logoUrlLabel: "Logo URL *",
+      logoUrlLabel: "Logo *",
       logoUploadButton: "Upload logo",
       logoUploadLoading: "Uploading...",
-      logoUploadHint: "PNG, JPG, WEBP or SVG (max. 5 MB)",
+      logoUploadHint: "PNG, JPG, or WEBP (max. 5 MB)",
       websiteUrlLabel: "Website",
       backgroundColorLabel: "Background color",
       resetButton: "Reset",
@@ -454,9 +455,10 @@ function PublishDialog({
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
-  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null)
   const [errors, setErrors] = useState<Partial<Record<keyof PublishFormData, string>>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isNewLogo, setIsNewLogo] = useState<boolean>(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [form, setForm] = useState<PublishFormData>({
     logoUrl: "",
     websiteUrl: "",
@@ -485,27 +487,16 @@ function PublishDialog({
         logoSize: contact.logo_size || "medium",
         tier: contact.tier || contact.interested_in || ""
       })
-      setLocalPreviewUrl(null)
+      setIsNewLogo(false)
+      setPreviewUrl(`/api/sponsor-logo?id=${contact.id}`)
     } else {
       setErrors({})
     }
   }, [open])
 
-  useEffect(() => {
-    return () => {
-      if (localPreviewUrl) {
-        URL.revokeObjectURL(localPreviewUrl)
-      }
-    }
-  }, [localPreviewUrl])
-
   const handleLogoUpload = async (file: File) => {
-    const nextLocalPreview = URL.createObjectURL(file)
-
-    setLocalPreviewUrl((prev) => {
-      if (prev) URL.revokeObjectURL(prev)
-      return nextLocalPreview
-    })
+    const localPreview = URL.createObjectURL(file)
+    setPreviewUrl(localPreview)
 
     try {
       setUploadingLogo(true)
@@ -525,15 +516,15 @@ function PublishDialog({
 
       const data = await res.json()
       setForm((prev) => ({ ...prev, logoUrl: data.url }))
+      setIsNewLogo(true)
+
       if (errors.logoUrl) {
         setErrors((prev) => ({ ...prev, logoUrl: undefined }))
       }
       toast.success(text.success.logoUploadSuccess)
     } catch (err) {
-      setLocalPreviewUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev)
-        return null
-      })
+      setPreviewUrl(null)
+      URL.revokeObjectURL(localPreview)
       toast.error(err instanceof Error ? err.message : text.errors.logoUploadFailed)
     } finally {
       setUploadingLogo(false)
@@ -568,6 +559,23 @@ function PublishDialog({
     }
   }
 
+  const handleCancel = async () => {
+    setOpen(false)
+
+    // if a new logo was uploaded, let's remove it again from blob to save storage
+    if (isNewLogo) {
+      const res = await fetch("/api/admin/logo-upload", {
+        method: "DELETE",
+        credentials: "include",
+        body: JSON.stringify({ url: form.logoUrl })
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error)
+      }
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -592,21 +600,22 @@ function PublishDialog({
             {/* Logo URL */}
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="logoUrl">{text.publishDialog.logoUrlLabel}</Label>
+              {previewUrl && (
+                <div className="flex h-16 w-full items-center justify-center rounded-lg border bg-white p-2">
+                  <Image
+                    src={previewUrl}
+                    alt="Preview logo"
+                    width={400}
+                    height={50}
+                    className="h-auto max-h-12 max-w-full object-contain"
+                  />
+                </div>
+              )}
               <div className="flex gap-2">
-                <Input
-                  id="logoUrl"
-                  placeholder="https://example.com/logo.png"
-                  value={form.logoUrl}
-                  className={errors.logoUrl ? "border-destructive" : ""}
-                  onChange={(e) => {
-                    setForm((f) => ({ ...f, logoUrl: e.target.value }))
-                    if (errors.logoUrl) setErrors((err) => ({ ...err, logoUrl: undefined }))
-                  }}
-                />
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                  accept="image/png,image/jpeg,image/webp"
                   className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0]
@@ -710,17 +719,12 @@ function PublishDialog({
               </div>
             </div>
             {/* Marquee Preview */}
-            {form.logoUrl && (
+            {previewUrl && (
               <div className="flex flex-col gap-1.5">
                 <Label className="text-muted-foreground text-xs">{text.publishDialog.previewLabel}</Label>
                 <div className="rounded-lg border">
                   <PreviewMarqueeRow
-                    currentLogo={
-                      localPreviewUrl ||
-                      (form.logoUrl.startsWith("https://")
-                        ? `/api/admin/blob-preview?url=${encodeURIComponent(form.logoUrl)}`
-                        : form.logoUrl)
-                    }
+                    currentLogo={previewUrl}
                     currentBgColor={form.logoBgColor}
                     currentLogoSize={form.logoSize}
                     currentWebsite={form.websiteUrl}
@@ -731,7 +735,7 @@ function PublishDialog({
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button variant="outline" onClick={handleCancel}>
               {text.publishDialog.cancelButton}
             </Button>
             <Button onClick={handlePublish} disabled={loading} className="gap-1.5">
