@@ -1,4 +1,4 @@
-import { put } from "@vercel/blob"
+import { put, del } from "@vercel/blob"
 import sharp from "sharp"
 import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { serverError, validationError } from "@/lib/api"
@@ -14,9 +14,9 @@ async function handlePost(req: AuthenticatedRequest) {
 
     if (!file) return validationError("No file provided")
 
-    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"]
+    const allowedTypes = ["image/png", "image/jpeg", "image/webp"]
     if (!allowedTypes.includes(file.type)) {
-      return validationError("Only PNG, JPG, WEBP and SVG files are allowed")
+      return validationError("Only PNG, JPG, and WEBP files are allowed")
     }
 
     if (file.size > 5 * 1024 * 1024) {
@@ -28,24 +28,17 @@ async function handlePost(req: AuthenticatedRequest) {
     let uploadName: string
     let contentType: string
 
-    if (file.type === "image/svg+xml") {
-      // SVGs are vector — no resize needed
-      uploadBuffer = buffer
-      uploadName = file.name
-      contentType = "image/svg+xml"
-    } else {
-      // Raster images: resize to max dimensions, keep aspect ratio, convert to WebP
-      uploadBuffer = await sharp(buffer)
-        .resize(LOGO_MAX_WIDTH, LOGO_MAX_HEIGHT, { fit: "inside", withoutEnlargement: false })
-        .webp({ quality: 90 })
-        .toBuffer()
-      uploadName = file.name.replace(/\.[^.]+$/, "") + ".webp"
-      contentType = "image/webp"
-    }
+    // Raster images: resize to max dimensions, keep aspect ratio, convert to WebP
+    uploadBuffer = await sharp(buffer)
+      .resize(LOGO_MAX_WIDTH, LOGO_MAX_HEIGHT, { fit: "inside", withoutEnlargement: false })
+      .webp({ quality: 90 })
+      .toBuffer()
+    uploadName = file.name.replace(/\.[^.]+$/, "") + ".webp"
+    contentType = "image/webp"
 
     const blob = await put(uploadName, uploadBuffer, {
       access: "private",
-      allowOverwrite: true,
+      addRandomSuffix: true,
       contentType
     })
 
@@ -56,4 +49,18 @@ async function handlePost(req: AuthenticatedRequest) {
   }
 }
 
+async function handleDelete(req: AuthenticatedRequest) {
+  try {
+    const body = await req.json()
+    const blobUrl = body.url
+    await del(blobUrl)
+
+    return NextResponse.json(null, { status: 200 })
+  } catch (error) {
+    console.error("Upload delete error:", error)
+    return serverError("Upload delete failed")
+  }
+}
+
 export const POST = withAdminAuth(handlePost)
+export const DELETE = withAdminAuth(handleDelete)

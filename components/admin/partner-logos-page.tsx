@@ -40,7 +40,7 @@ const copy = {
     logo: "Logo",
     preview: "Vorschau",
     logoPlaceholder: "/partners/logo.png oder https://...",
-    logoHint: "Datei hochladen (PNG, JPG, SVG, max. 5 MB) oder URL direkt eingeben.",
+    logoHint: "Datei hochladen (PNG, JPG, max. 5 MB)",
     websiteLabel: "Website-Link",
     websitePlaceholder: "https://example.com",
     sizeLabel: "Grösse",
@@ -58,7 +58,8 @@ const copy = {
     saveError: "Fehler beim Speichern",
     toggleError: "Fehler",
     deleted: "Gelöscht",
-    deleteError: "Fehler beim Löschen"
+    deleteError: "Fehler beim Löschen",
+    upload: "Bild hochladen"
   },
   en: {
     heading: "PARTNER LOGOS",
@@ -75,7 +76,7 @@ const copy = {
     logo: "Logo",
     preview: "Preview",
     logoPlaceholder: "/partners/logo.png or https://...",
-    logoHint: "Upload file (PNG, JPG, SVG, max. 5 MB) or enter URL directly.",
+    logoHint: "Upload file (PNG, JPG, max. 5 MB)",
     websiteLabel: "Website link",
     websitePlaceholder: "https://example.com",
     sizeLabel: "Size",
@@ -93,7 +94,8 @@ const copy = {
     saveError: "Failed to save",
     toggleError: "Error",
     deleted: "Deleted",
-    deleteError: "Failed to delete"
+    deleteError: "Failed to delete",
+    upload: "Upload image"
   }
 } as const
 
@@ -119,6 +121,7 @@ export function AdminPartnerLogosPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isNewLogo, setIsNewLogo] = useState<boolean>(false)
 
   useEffect(() => {
     void load()
@@ -156,6 +159,7 @@ export function AdminPartnerLogosPage() {
   const openEdit = (logo: PartnerLogo) => {
     setEditingLogo(logo)
     setPreviewUrl(`/api/partner-logo?id=${logo.id}`)
+    setIsNewLogo(false)
     setForm({
       name: logo.name,
       logo_url: logo.logo_url,
@@ -168,23 +172,25 @@ export function AdminPartnerLogosPage() {
   }
 
   const handleUpload = async (file: File) => {
-    const localPreview = URL.createObjectURL(file)
-    setPreviewUrl(localPreview)
     try {
       setUploading(true)
+
       const fd = new FormData()
       fd.append("file", file)
-      const res = await fetch("/api/admin/upload", { method: "POST", credentials: "include", body: fd })
+
+      const res = await fetch("/api/admin/logo-upload", { method: "POST", credentials: "include", body: fd })
       if (!res.ok) {
         const err = await res.json()
         throw new Error(err.error || text.uploadError)
       }
+
       const data = await res.json()
       setForm((f) => ({ ...f, logo_url: data.url }))
+      setIsNewLogo(true)
+
       toast.success(text.uploadSuccess)
     } catch (error) {
       setPreviewUrl(null)
-      URL.revokeObjectURL(localPreview)
       toast.error(error instanceof Error ? error.message : text.uploadError)
     } finally {
       setUploading(false)
@@ -268,6 +274,23 @@ export function AdminPartnerLogosPage() {
     await load()
   }
 
+  const handleCancel = async () => {
+    setDialogOpen(false)
+
+    // if a new logo was uploaded, let's remove it again from blob to save storage
+    if (isNewLogo) {
+      const res = await fetch("/api/admin/logo-upload", {
+        method: "DELETE",
+        credentials: "include",
+        body: JSON.stringify({ url: form.logo_url })
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || text.uploadError)
+      }
+    }
+  }
+
   const sortedLogos = [...logos].sort((a, b) => a.sort_order - b.sort_order)
 
   if (loading)
@@ -315,7 +338,7 @@ export function AdminPartnerLogosPage() {
               </div>
               <div className="flex h-14 w-24 shrink-0 items-center justify-center rounded-lg border bg-white p-2">
                 <img
-                  src={`/api/partner-logo?id=${logo.id}`}
+                  src={logo.logo_url}
                   alt={logo.name}
                   className="h-auto max-h-10 max-w-full object-contain"
                 />
@@ -377,28 +400,28 @@ export function AdminPartnerLogosPage() {
                   </div>
                 )}
                 <div className="flex gap-2">
-                  <Input
-                    value={form.logo_url}
-                    onChange={(e) => setForm((f) => ({ ...f, logo_url: e.target.value }))}
-                    placeholder={text.logoPlaceholder}
-                    className="flex-1"
-                  />
                   <Button
                     type="button"
                     variant="outline"
                     disabled={uploading}
                     onClick={() => fileInputRef.current?.click()}>
                     {uploading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>{text.upload}</span>
+                      </>
                     ) : (
-                      <Upload className="h-4 w-4" />
+                      <>
+                        <Upload className="h-4 w-4" />
+                        <span>{text.upload}</span>
+                      </>
                     )}
                   </Button>
                 </div>
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/png,image/jpeg,image/webp"
                   className="hidden"
                   onChange={(e) => {
                     const f = e.target.files?.[0]
@@ -438,10 +461,10 @@ export function AdminPartnerLogosPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button variant="outline" onClick={handleCancel}>
               {text.cancel}
             </Button>
-            <Button onClick={save} disabled={saving}>
+            <Button onClick={save} disabled={saving || uploading}>
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {text.save}
             </Button>

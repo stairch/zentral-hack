@@ -512,7 +512,7 @@ function PublishDialog({
       const fd = new FormData()
       fd.append("file", file)
 
-      const res = await fetch("/api/admin/upload", {
+      const res = await fetch("/api/admin/logo-upload", {
         method: "POST",
         credentials: "include",
         body: fd
