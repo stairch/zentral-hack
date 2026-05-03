@@ -198,7 +198,7 @@ const copy = {
       description: (companyName: string) => `${companyName} auf der Landing Page publizieren`,
       logoUrlLabel: "Logo *",
       logoUploadButton: "Logo hochladen",
-      logoUploadLoading: "Upload...",
+      logoUploadLoading: "Lädt hoch...",
       logoUploadHint: "PNG, JPG oder WEBP (max. 5 MB)",
       websiteUrlLabel: "Website",
       backgroundColorLabel: "Hintergrundfarbe",
