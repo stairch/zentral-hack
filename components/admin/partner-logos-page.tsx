@@ -155,7 +155,7 @@ export function AdminPartnerLogosPage() {
 
   const openEdit = (logo: PartnerLogo) => {
     setEditingLogo(logo)
-    setPreviewUrl(`/api/logo?id=${logo.id}`)
+    setPreviewUrl(`/api/partner-logo?id=${logo.id}`)
     setForm({
       name: logo.name,
       logo_url: logo.logo_url,
@@ -315,7 +315,7 @@ export function AdminPartnerLogosPage() {
               </div>
               <div className="flex h-14 w-24 shrink-0 items-center justify-center rounded-lg border bg-white p-2">
                 <img
-                  src={`/api/logo?id=${logo.id}`}
+                  src={`/api/partner-logo?id=${logo.id}`}
                   alt={logo.name}
                   className="h-auto max-h-10 max-w-full object-contain"
                 />

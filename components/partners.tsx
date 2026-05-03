@@ -8,6 +8,7 @@ import { Emails } from "@/lib/constants"
 import { getSponsorPackageByLanguage } from "@/lib/sponsorship-packages"
 import { getContrastForegroundColor } from "@/lib/helpers"
 import { type SponsorPackage } from "@/lib/sponsorship-packages"
+import Image from "next/image"
 
 interface Sponsor {
   id: string
@@ -20,59 +21,12 @@ interface Sponsor {
   logo_bg_color: string | null
 }
 
-type Organiser = { name: string; logo: string; link: string; bgColor: string; logoWidth: string }
-const partners: { organisers: Organiser[] } = {
-  organisers: [
-    {
-      name: "HSLU",
-      logo: "/partners/hslu-logo.png",
-      logoWidth: "w-36",
-      link: "https://hslu.ch/informatik",
-      bgColor: "transparent"
-    },
-    {
-      name: "ICT Berufsbildung Zentralschweiz",
-      logo: "/partners/ict-bz-logo.png",
-      logoWidth: "w-24",
-      link: "https://ict-bz.ch",
-      bgColor: "transparent"
-    },
-    {
-      name: "UMB AG",
-      logo: "/partners/umb-logo.png",
-      logoWidth: "w-24",
-      link: "https://umb.ch",
-      bgColor: "transparent"
-    },
-    {
-      name: "Digital & AI Community",
-      logo: "/partners/ai-community-logo.png",
-      logoWidth: "w-30",
-      link: "https://ai-community.ch",
-      bgColor: "transparent"
-    },
-    {
-      name: "getAbstract",
-      logo: "/partners/getabstract-logo.png",
-      logoWidth: "w-32",
-      link: "https://getabstract.com",
-      bgColor: "transparent"
-    },
-    {
-      name: "STAIR",
-      logo: "/partners/stair-logo.png",
-      logoWidth: "w-28",
-      link: "https://stair.ch",
-      bgColor: "transparent"
-    },
-    {
-      name: "SchwyzNext",
-      logo: "/partners/schwyznext-logo.png",
-      logoWidth: "w-20",
-      link: "https://schwyz-next.ch",
-      bgColor: "transparent"
-    }
-  ]
+interface OrganiserOrSponsor {
+  name: string
+  logo: string
+  link: string | null
+  bgColor: string
+  logoWidth: string
 }
 
 function MarqueeRow({
@@ -80,7 +34,7 @@ function MarqueeRow({
   direction = "left",
   speed = 30
 }: {
-  items: { name: string; logo: string; logoWidth: string; link: string | null; bgColor: string }[]
+  items: OrganiserOrSponsor[]
   direction?: "left" | "right"
   speed?: number
 }) {
@@ -130,7 +84,7 @@ function MarqueeRow({
                   style={{ background: item.bgColor }}
                   href={item.link === null ? undefined : item.link}
                   target="_blank">
-                  <img
+                  <Image
                     src={item.logo}
                     alt={item.name}
                     width={1000}
@@ -153,7 +107,7 @@ function MarqueeRow({
                 style={{ background: item.bgColor }}
                 href={item.link === null ? undefined : item.link}
                 target="_blank">
-                <img
+                <Image
                   src={item.logo}
                   alt={item.name}
                   width={1000}
@@ -238,7 +192,7 @@ export function Partners() {
   const [selectedPackage, setSelectedPackage] = useState<SponsorPackage | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const [sponsors, setSponsors] = useState<Sponsor[]>([])
-  const [dbOrganisers, setDbOrganisers] = useState<typeof partners.organisers | null>(null)
+  const [dbOrganisers, setDbOrganisers] = useState<OrganiserOrSponsor[]>([])
   const [sponsorPackageItems, setSponsorPackageItems] = useState<SponsorPackage[]>([])
   const { language } = useLanguage()
 
@@ -252,7 +206,9 @@ export function Partners() {
         if (list.length > 0) {
           setSponsorPackageItems([...list].sort((a, b) => a.display_order - b.display_order))
         }
-      } catch {}
+      } catch (err) {
+        console.error("Failed to fetch sponsor packages: ", err)
+      }
     }
 
     const fetchSponsorContacts = async () => {
@@ -264,7 +220,9 @@ export function Partners() {
         if (list.length > 0) {
           setSponsors(list)
         }
-      } catch {}
+      } catch (err) {
+        console.error("Failed to fetch sponsors: ", err)
+      }
     }
 
     const fetchPartnerLogos = async () => {
@@ -283,14 +241,16 @@ export function Partners() {
           setDbOrganisers(
             list.map((l) => ({
               name: l.name,
-              logo: `/api/logo?id=${l.id}`,
+              logo: `/api/partner-logo?id=${l.id}`,
               logoWidth: l.logo_size === "small" ? "w-20" : l.logo_size === "large" ? "w-36" : "w-28",
-              link: l.website_url ?? "#",
+              link: l.website_url,
               bgColor: "transparent"
             }))
           )
         }
-      } catch {}
+      } catch (err) {
+        console.error("Failed to fetch partners: ", err)
+      }
     }
 
     void fetchSponsorPackages()
@@ -298,7 +258,7 @@ export function Partners() {
     void fetchPartnerLogos()
   }, [])
 
-  function mapSponsor(e: Sponsor) {
+  function mapSponsor(e: Sponsor): OrganiserOrSponsor {
     let logoWidth = ""
     if (e.logo_size === "small") {
       logoWidth = "w-20"
@@ -320,12 +280,13 @@ export function Partners() {
     }
   }
 
-  const sponsorsByPackage = sponsorPackageItems.map((pkg) => ({
-    package: pkg,
-    sponsors: sponsors
-      .filter((s) => s.tier === pkg.id && s.status === "published" && s.logo_url)
-      .map(mapSponsor)
-  }))
+  const sponsorsByPackage: { package: SponsorPackage; sponsors: OrganiserOrSponsor[] }[] =
+    sponsorPackageItems.map((pkg) => ({
+      package: pkg,
+      sponsors: sponsors
+        .filter((s) => s.tier === pkg.id && s.status === "published" && s.logo_url)
+        .map(mapSponsor)
+    }))
 
   const copy = {
     de: {
@@ -381,7 +342,7 @@ export function Partners() {
             <h3 className="font-display text-foreground mb-4 flex justify-center text-center text-lg font-bold">
               <div className="bg-primary w-fit rounded-md px-5 text-white">{text.organisers}</div>
             </h3>
-            <MarqueeRow items={dbOrganisers ?? partners.organisers} direction="left" speed={30} />
+            <MarqueeRow items={dbOrganisers} direction="left" speed={30} />
             {sponsorsByPackage
               .filter(({ sponsors }) => sponsors.length > 0)
               .map(({ package: pkg, sponsors }, i) => {

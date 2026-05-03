@@ -6,7 +6,14 @@ const nextConfig = {
   },
   images: {
     formats: ["image/webp", "image/avif"],
-    remotePatterns: []
+    localPatterns: [
+      {
+        pathname: "/api/sponsor-logo"
+      },
+      {
+        pathname: "/api/partner-logo"
+      }
+    ]
   },
   // Security headers
   async headers() {
