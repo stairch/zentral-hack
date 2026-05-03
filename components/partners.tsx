@@ -130,8 +130,6 @@ function MarqueeRow({
                   style={{ background: item.bgColor }}
                   href={item.link === null ? undefined : item.link}
                   target="_blank">
-                  {/* We use img insted of Image, because external urls must be whitelisted in next.config, but we don't the image origin */}
-                  {/* TODO: replace logo url with vercel blob upload */}
                   <img
                     src={item.logo}
                     alt={item.name}
@@ -155,8 +153,6 @@ function MarqueeRow({
                 style={{ background: item.bgColor }}
                 href={item.link === null ? undefined : item.link}
                 target="_blank">
-                {/* We use img insted of Image, because external urls must be whitelisted in next.config, but we don't the image origin */}
-                {/* TODO: replace logo url with vercel blob upload */}
                 <img
                   src={item.logo}
                   alt={item.name}
@@ -257,7 +253,6 @@ export function Partners() {
           setSponsorPackageItems([...list].sort((a, b) => a.display_order - b.display_order))
         }
       } catch {
-        // Keep fallback data
       }
     }
 
@@ -271,7 +266,6 @@ export function Partners() {
           setSponsors(list)
         }
       } catch {
-        // Keep fallback data
       }
     }
 
@@ -299,7 +293,6 @@ export function Partners() {
           )
         }
       } catch {
-        // Keep hardcoded fallback
       }
     }
 

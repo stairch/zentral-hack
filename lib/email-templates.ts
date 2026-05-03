@@ -8,22 +8,14 @@ export interface EmailTemplate {
 
 export interface EmailTemplateParams {
   subject: string
-  /** Main body text (supports line breaks → <br>) */
   content: string
-  /** Optional English subject */
   subjectEn?: string
-  /** Optional English body text (supports line breaks → <br>) */
   contentEn?: string
-  /** Optional call-to-action button */
   ctaText?: string
-  /** Optional English CTA button text */
   ctaTextEn?: string
   ctaUrl?: string
-  /** Optional footer note */
   footerNote?: string
-  /** Optional English footer note */
   footerNoteEn?: string
-  /** Optional unsubscribe link (e.g. weekly updates opt-out) */
   unsubscribeUrl?: string
 }
 
@@ -383,4 +375,39 @@ export function renderEmailTemplate(templateId: string, params: EmailTemplatePar
     throw new Error(`Template "${templateId}" not found`)
   }
   return template.render(params)
+}
+
+export function renderAuthCodeEmail({
+  headline,
+  intro,
+  code,
+  footerNote,
+  label = "Sicherheit",
+  englishHeadline,
+  englishIntro,
+  englishFooterNote
+}: {
+  headline: string
+  intro: string
+  code: string
+  footerNote?: string
+  label?: string
+  englishHeadline?: string
+  englishIntro?: string
+  englishFooterNote?: string
+}): string {
+  const codeHtml = `<div style="text-align:center;margin:20px 0 8px;">
+    <span style="display:inline-block;letter-spacing:0.2em;font-size:36px;font-weight:800;color:${brandColor};font-family:'Space Grotesk','Inter','Segoe UI',Arial,sans-serif;background:${lightViolet}40;border:1px solid ${borderColor};border-radius:12px;padding:16px 32px;">${escapeHtml(code)}</span>
+  </div>`
+
+  return wrapLayout({
+    label,
+    headline,
+    intro,
+    contentHtml: codeHtml,
+    footerNote,
+    englishHeadline,
+    englishIntro,
+    englishFooterNote
+  })
 }

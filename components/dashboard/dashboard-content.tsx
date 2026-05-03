@@ -20,7 +20,7 @@ import {
   ExternalLink,
   FolderOpen,
   Lock,
-  ShieldCogCorner
+  ShieldCheck
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -381,7 +381,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
             {(user?.role === "admin" || user?.role === "category_partner") && (
               <Link href="/admin">
                 <Button variant="outline" className="gap-2">
-                  <ShieldCogCorner className="h-5 w-5" />
+                  <ShieldCheck className="h-5 w-5" />
                   <span className="">{t.adminPanel}</span>
                 </Button>
               </Link>

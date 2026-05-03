@@ -4,6 +4,7 @@ import { query } from "@/lib/db"
 import { successResponse, serverError } from "@/lib/api"
 import { sendEmail } from "@/lib/email"
 import { createAccountActionChallenge } from "@/lib/account-actions"
+import { renderAuthCodeEmail } from "@/lib/email-templates"
 
 const emailSchema = z
   .string()
@@ -36,15 +37,22 @@ export async function POST(request: NextRequest) {
 
       await sendEmail({
         to: email,
-        subject: "Zentral Hack - Passwort zurücksetzen",
-        html: `
-          <h2>Passwort zurücksetzen</h2>
-          <p>Du hast ein neues Passwort angefordert.</p>
-          <h1 style="letter-spacing: 0.1em; font-size: 32px; margin: 24px 0; color: #530A5D;">${challenge.code}</h1>
-          <p>Gib diesen Code zusammen mit deinem neuen Passwort auf der Reset-Seite ein.</p>
-          <p style="color: #666; font-size: 12px;">Falls du das nicht warst, kannst du diese E-Mail ignorieren.</p>
-        `,
-        text: `Dein Passwort-Reset-Code lautet: ${challenge.code}`
+        subject: "Zentral Hack – Passwort zurücksetzen",
+        html: renderAuthCodeEmail({
+          label: "Sicherheit",
+          headline: "Passwort zurücksetzen",
+          intro:
+            "Du hast ein neues Passwort angefordert. Gib diesen Code zusammen mit deinem neuen Passwort auf der Reset-Seite ein.",
+          code: challenge.code,
+          footerNote:
+            "Falls du das nicht warst, kannst du diese E-Mail ignorieren. Der Code ist 15 Minuten gültig.",
+          englishHeadline: "Reset your password",
+          englishIntro:
+            "You requested a new password. Enter this code along with your new password on the reset page.",
+          englishFooterNote:
+            "If you didn't request this, you can safely ignore this email. The code is valid for 15 minutes."
+        }),
+        text: `Dein Passwort-Reset-Code lautet: ${challenge.code}\n\nFalls du das nicht warst, kannst du diese E-Mail ignorieren.`
       })
     }
 

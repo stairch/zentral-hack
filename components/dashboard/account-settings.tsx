@@ -324,13 +324,6 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
     }
   }
 
-  console.log(
-    "categoryState.categoryId",
-    categoryState.categoryId,
-    categoryState.categoryId || undefined,
-    categoryState.categoryId ? categories.filter((c) => c.id === categoryState.categoryId)[0].name : undefined
-  )
-
   return (
     <Card className="py-0!">
       <CardContent className="space-y-0">
