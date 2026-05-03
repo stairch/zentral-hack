@@ -19,6 +19,7 @@ interface Sponsor {
   logo_size: string | null
   tier: string | null
   logo_bg_color: string | null
+  updated_at: number
 }
 
 interface OrganiserOrSponsor {
@@ -27,6 +28,12 @@ interface OrganiserOrSponsor {
   link: string | null
   bgColor: string
   logoWidth: string
+  updatedAt: number
+}
+
+function srcWithVersion(url: string, version: string | number) {
+  const separator = url.includes("?") ? "&" : "?"
+  return `${url}${separator}v=${version}`
 }
 
 function MarqueeRow({
@@ -85,7 +92,7 @@ function MarqueeRow({
                   href={item.link === null ? undefined : item.link}
                   target="_blank">
                   <Image
-                    src={item.logo}
+                    src={srcWithVersion(item.logo, item.updatedAt)}
                     alt={item.name}
                     width={1000}
                     height={1000}
@@ -98,25 +105,28 @@ function MarqueeRow({
         </>
       ) : (
         <div className="flex flex-wrap justify-center gap-8">
-          {items.map((item, index) => (
-            <div
-              key={`partners-item-${item.name}-${index}`}
-              className="flex shrink-0 items-center rounded-lg px-8 py-4">
-              <a
-                className={`rounded-xs p-1`}
-                style={{ background: item.bgColor }}
-                href={item.link === null ? undefined : item.link}
-                target="_blank">
-                <Image
-                  src={item.logo}
-                  alt={item.name}
-                  width={1000}
-                  height={1000}
-                  className={`h-auto ${item.logoWidth}`}
-                />
-              </a>
-            </div>
-          ))}
+          {items.map((item, index) => {
+            srcWithVersion(item.logo, item.updatedAt)
+            return (
+              <div
+                key={`partners-item-${item.name}-${index}`}
+                className="flex shrink-0 items-center rounded-lg px-8 py-4">
+                <a
+                  className={`rounded-xs p-1`}
+                  style={{ background: item.bgColor }}
+                  href={item.link === null ? undefined : item.link}
+                  target="_blank">
+                  <Image
+                    src={srcWithVersion(item.logo, item.updatedAt)}
+                    alt={item.name}
+                    width={1000}
+                    height={1000}
+                    className={`h-auto ${item.logoWidth}`}
+                  />
+                </a>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
@@ -236,6 +246,7 @@ export function Partners() {
           logo_url: string
           website_url: string | null
           logo_size: string
+          updated_at: number
         }[]
         if (list?.length > 0) {
           setDbOrganisers(
@@ -244,7 +255,8 @@ export function Partners() {
               logo: `/api/partner-logo?id=${l.id}`,
               logoWidth: l.logo_size === "small" ? "w-20" : l.logo_size === "large" ? "w-36" : "w-28",
               link: l.website_url,
-              bgColor: "transparent"
+              bgColor: "transparent",
+              updatedAt: l.updated_at
             }))
           )
         }
@@ -276,7 +288,8 @@ export function Partners() {
           : (e.logo_url as string),
       logoWidth,
       bgColor: e.logo_bg_color === null ? "transparent" : e.logo_bg_color,
-      link: e.website_url
+      link: e.website_url,
+      updatedAt: e.updated_at
     }
   }
 
