@@ -11,6 +11,7 @@ import { Loader2, Plus, Trash2, Edit2, Upload, ChevronUp, ChevronDown, Eye, EyeO
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import Image from "next/image"
+import LogoMarqueePreview from "./logo-marquee-preview"
 
 interface PartnerLogo {
   id: string
@@ -383,103 +384,119 @@ export function AdminPartnerLogosPage() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingLogo ? text.editDialog : text.newDialog}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>{text.name}</Label>
-              <Input
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder={text.namePlaceholder}
-              />
-            </div>
-            <div>
-              <Label>{text.logo}</Label>
-              <div className="space-y-2">
-                {previewUrl && (
-                  <div className="flex h-16 w-full items-center justify-center rounded-lg border bg-white p-2">
-                    <Image
-                      src={previewUrl}
-                      alt={text.preview}
-                      width={400}
-                      height={50}
-                      className="h-auto max-h-12 max-w-full object-contain"
+        <DialogContent className="flex sm:max-w-lg">
+          <div className="flex w-full flex-col gap-5">
+            <DialogHeader>
+              <DialogTitle>{editingLogo ? text.editDialog : text.newDialog}</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col gap-4 py-2">
+              <div>
+                <Label>{text.name}</Label>
+                <Input
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder={text.namePlaceholder}
+                />
+              </div>
+              <div>
+                <Label>{text.logo}</Label>
+                <div className="space-y-2">
+                  {previewUrl && (
+                    <div className="flex h-16 w-full items-center justify-center rounded-lg border bg-white p-2">
+                      <Image
+                        src={previewUrl}
+                        alt="Preview logo"
+                        width={400}
+                        height={50}
+                        className="h-auto max-h-12 max-w-full object-contain"
+                      />
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploading}
+                      onClick={() => fileInputRef.current?.click()}>
+                      {uploading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>{text.uploadLoading}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4" />
+                          <span>{text.upload}</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0]
+                      if (f) void handleUpload(f)
+                      e.target.value = ""
+                    }}
+                  />
+                  <p className="text-muted-foreground text-xs">{text.logoHint}</p>
+                </div>
+              </div>
+              <div>
+                <Label>{text.websiteLabel}</Label>
+                <Input
+                  value={form.website_url}
+                  onChange={(e) => setForm((f) => ({ ...f, website_url: e.target.value }))}
+                  placeholder={text.websitePlaceholder}
+                />
+              </div>
+              <div>
+                <Label>{text.sizeLabel}</Label>
+                <Select
+                  value={form.logo_size}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, logo_size: v as "small" | "medium" | "large" }))
+                  }>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(SIZE_LABELS).map(([val, label]) => (
+                      <SelectItem key={val} value={val}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {/* Marquee Preview */}
+              {previewUrl && (
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-muted-foreground text-xs">{text.preview}</Label>
+                  <div className="rounded-lg border">
+                    <LogoMarqueePreview
+                      currentLogo={previewUrl}
+                      currentBgColor={null}
+                      currentLogoSize={form.logo_size}
+                      currentWebsite={form.website_url}
                     />
                   </div>
-                )}
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={uploading}
-                    onClick={() => fileInputRef.current?.click()}>
-                    {uploading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>{text.uploadLoading}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4" />
-                        <span>{text.upload}</span>
-                      </>
-                    )}
-                  </Button>
                 </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0]
-                    if (f) void handleUpload(f)
-                    e.target.value = ""
-                  }}
-                />
-                <p className="text-muted-foreground text-xs">{text.logoHint}</p>
-              </div>
+              )}
             </div>
-            <div>
-              <Label>{text.websiteLabel}</Label>
-              <Input
-                value={form.website_url}
-                onChange={(e) => setForm((f) => ({ ...f, website_url: e.target.value }))}
-                placeholder={text.websitePlaceholder}
-              />
-            </div>
-            <div>
-              <Label>{text.sizeLabel}</Label>
-              <Select
-                value={form.logo_size}
-                onValueChange={(v) =>
-                  setForm((f) => ({ ...f, logo_size: v as "small" | "medium" | "large" }))
-                }>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(SIZE_LABELS).map(([val, label]) => (
-                    <SelectItem key={val} value={val}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleCancel}>
+                {text.cancel}
+              </Button>
+              <Button onClick={save} disabled={saving || uploading}>
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {text.save}
+              </Button>
+            </DialogFooter>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCancel}>
-              {text.cancel}
-            </Button>
-            <Button onClick={save} disabled={saving || uploading}>
-              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {text.save}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
