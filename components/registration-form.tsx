@@ -174,7 +174,7 @@ export function RegistrationForm() {
     allergies: "",
     intolerances: "",
     categoryId: "",
-    newsletter: true
+    newsletter: false
   })
 
   useEffect(() => {

@@ -252,8 +252,7 @@ export function Partners() {
         if (list.length > 0) {
           setSponsorPackageItems([...list].sort((a, b) => a.display_order - b.display_order))
         }
-      } catch {
-      }
+      } catch {}
     }
 
     const fetchSponsorContacts = async () => {
@@ -265,8 +264,7 @@ export function Partners() {
         if (list.length > 0) {
           setSponsors(list)
         }
-      } catch {
-      }
+      } catch {}
     }
 
     const fetchPartnerLogos = async () => {
@@ -292,8 +290,7 @@ export function Partners() {
             }))
           )
         }
-      } catch {
-      }
+      } catch {}
     }
 
     void fetchSponsorPackages()
