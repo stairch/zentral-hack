@@ -35,7 +35,7 @@ import {
   GlobeOff
 } from "lucide-react"
 import { toast } from "sonner"
-import { isValidUrl } from "@/lib/helpers"
+import { isValidUrl, srcWithVersion } from "@/lib/helpers"
 import { useLanguage } from "@/lib/language-context"
 import {
   getSponsorPackageByLanguage,
@@ -77,6 +77,7 @@ type SponsorContact = {
   logo_size: "small" | "medium" | "large" | null
   tier: string | null
   logo_bg_color: string | null
+  updated_at: number
 }
 
 interface EditForm {
@@ -375,7 +376,7 @@ function PublishDialog({
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [errors, setErrors] = useState<Partial<Record<keyof PublishFormData, string>>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [isNewLogo, setIsNewLogo] = useState<boolean>(false)
+  const [isUnsavedLogo, setIsUnsavedLogo] = useState<boolean>(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [form, setForm] = useState<PublishFormData>({
     logoUrl: "",
@@ -405,8 +406,10 @@ function PublishDialog({
         logoSize: contact.logo_size || "medium",
         tier: contact.tier || contact.interested_in || ""
       })
-      setIsNewLogo(false)
-      setPreviewUrl(`/api/sponsor-logo?id=${contact.id}`)
+      setIsUnsavedLogo(false)
+      if (contact.logo_url) {
+        setPreviewUrl(srcWithVersion(`/api/sponsor-logo?id=${contact.id}`, contact.updated_at))
+      }
     } else {
       setErrors({})
     }
@@ -423,7 +426,7 @@ function PublishDialog({
       }
     }
     // if a new logo was uploaded, let's remove it again from blob to save storage when dialog closed
-    if (!open && isNewLogo) {
+    if (!open && isUnsavedLogo) {
       removeBlob()
     }
   }, [open])
@@ -450,7 +453,7 @@ function PublishDialog({
 
       const data = await res.json()
       setForm((prev) => ({ ...prev, logoUrl: data.url }))
-      setIsNewLogo(true)
+      setIsUnsavedLogo(true)
 
       if (errors.logoUrl) {
         setErrors((prev) => ({ ...prev, logoUrl: undefined }))
@@ -487,6 +490,7 @@ function PublishDialog({
     setLoading(true)
     try {
       await onPublish(contact.id, form)
+      setIsUnsavedLogo(false)
       setOpen(false)
     } finally {
       setLoading(false)

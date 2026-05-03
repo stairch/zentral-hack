@@ -9,6 +9,7 @@ import { getSponsorPackageByLanguage } from "@/lib/sponsorship-packages"
 import { getContrastForegroundColor } from "@/lib/helpers"
 import { type SponsorPackage } from "@/lib/sponsorship-packages"
 import Image from "next/image"
+import { srcWithVersion } from "@/lib/helpers"
 
 interface Sponsor {
   id: string
@@ -29,13 +30,6 @@ interface OrganiserOrSponsor {
   bgColor: string
   logoWidth: string
   updatedAt: number
-}
-
-function srcWithVersion(url: string, version: string | number) {
-  // adds timestamp via 'v' query param
-  // this forces next to retrieve new image instead of using the cached, outdated one
-  const separator = url.includes("?") ? "&" : "?"
-  return `${url}${separator}v=${version}`
 }
 
 function MarqueeRow({

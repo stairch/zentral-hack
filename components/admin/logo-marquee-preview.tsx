@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion } from "framer-motion"
+import Image from "next/image"
 
 const PLACEHOLDER_SPONSORS = [
   { name: "Sponsor A", logo: "https://placehold.co/130x20/e2e8f0/94a3b8?text=Sponsor A" },
@@ -65,9 +66,11 @@ export default function LogoMarqueePreview({
                   className="rounded-xs"
                   style={{ backgroundColor: currentBgColor ?? undefined }}
                   onClick={(e) => e.preventDefault()}>
-                  <img
-                    src={currentLogo}
+                  <Image
+                    src={item.logo}
                     alt="Preview logo"
+                    width={100}
+                    height={100}
                     className={`h-auto ${logoSizeClass}`}
                     onError={(e) => (e.currentTarget.style.display = "none")}
                   />

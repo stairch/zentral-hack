@@ -12,6 +12,7 @@ import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import Image from "next/image"
 import LogoMarqueePreview from "./logo-marquee-preview"
+import { srcWithVersion } from "@/lib/helpers"
 
 interface PartnerLogo {
   id: string
@@ -21,6 +22,7 @@ interface PartnerLogo {
   logo_size: "small" | "medium" | "large"
   sort_order: number
   is_active: boolean
+  updated_at: number
 }
 
 const SIZE_LABELS_DE = { small: "Klein", medium: "Mittel", large: "Gross" }
@@ -125,7 +127,7 @@ export function AdminPartnerLogosPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [isNewLogo, setIsNewLogo] = useState<boolean>(false)
+  const [isUnsavedLogo, setIsUnsavedLogo] = useState<boolean>(false)
 
   useEffect(() => {
     void load()
@@ -145,7 +147,7 @@ export function AdminPartnerLogosPage() {
     }
 
     // if a new logo was uploaded, let's remove it again from blob to save storage when dialog closed
-    if (!dialogOpen && isNewLogo) {
+    if (!dialogOpen && isUnsavedLogo) {
       removeBlob()
     }
   }, [dialogOpen])
@@ -181,8 +183,8 @@ export function AdminPartnerLogosPage() {
 
   const openEdit = (logo: PartnerLogo) => {
     setEditingLogo(logo)
-    setPreviewUrl(`/api/partner-logo?id=${logo.id}`)
-    setIsNewLogo(false)
+    setPreviewUrl(srcWithVersion(`/api/partner-logo?id=${logo.id}`, logo.updated_at))
+    setIsUnsavedLogo(false)
     setForm({
       name: logo.name,
       logo_url: logo.logo_url,
@@ -212,7 +214,7 @@ export function AdminPartnerLogosPage() {
 
       const data = await res.json()
       setForm((f) => ({ ...f, logo_url: data.url }))
-      setIsNewLogo(true)
+      setIsUnsavedLogo(true)
 
       toast.success(text.uploadSuccess)
     } catch (error) {
@@ -243,6 +245,7 @@ export function AdminPartnerLogosPage() {
       })
       if (!res.ok) throw new Error()
       toast.success(editingLogo ? text.updated : text.added)
+      setIsUnsavedLogo(false)
       setDialogOpen(false)
       await load()
     } catch {
@@ -348,7 +351,7 @@ export function AdminPartnerLogosPage() {
               </div>
               <div className="flex h-14 w-24 shrink-0 items-center justify-center rounded-lg border bg-white p-2">
                 <Image
-                  src={`/api/partner-logo?id=${logo.id}`}
+                  src={srcWithVersion(`/api/partner-logo?id=${logo.id}`, logo.updated_at)}
                   alt={logo.name}
                   width={100}
                   height={60}

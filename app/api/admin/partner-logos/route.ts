@@ -8,10 +8,16 @@ type QueryValue = string | number | boolean | null | string[]
 async function handleGet() {
   try {
     const result = await query(
-      `SELECT id, name, logo_url, website_url, logo_size, sort_order, is_active
+      `SELECT id, name, logo_url, website_url, logo_size, sort_order, is_active, updated_at
        FROM partner_logos ORDER BY sort_order ASC`
     )
-    return successResponse({ logos: result.rows })
+
+    const logos = result.rows.map((row) => ({
+      ...row,
+      updated_at: new Date(row.updated_at).getTime()
+    }))
+
+    return successResponse({ logos })
   } catch {
     return serverError("Failed to load partner logos")
   }

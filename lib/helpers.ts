@@ -41,3 +41,10 @@ export function isDarkContrastForegroundColor(hexColor: string): boolean {
 export function getContrastForegroundColor(hexColor: string): string {
   return isDarkContrastForegroundColor(hexColor) ? "#1A1A1A" : "#FFFFFF"
 }
+
+export function srcWithVersion(url: string, version: string | number) {
+  // adds timestamp via 'v' query param
+  // this forces next to retrieve new image instead of using the cached, outdated one
+  const separator = url.includes("?") ? "&" : "?"
+  return `${url}${separator}v=${version}`
+}
