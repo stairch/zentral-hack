@@ -738,7 +738,7 @@ function PublishDialog({
             <Button variant="outline" onClick={handleCancel}>
               {text.publishDialog.cancelButton}
             </Button>
-            <Button onClick={handlePublish} disabled={loading} className="gap-1.5">
+            <Button onClick={handlePublish} disabled={loading || uploadingLogo} className="gap-1.5">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
               {loading ? text.publishDialog.publishButtonLoading : text.publishDialog.publishButton}
             </Button>
