@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Loader2, Plus, Trash2, Edit2, Upload, ChevronUp, ChevronDown, Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
+import Image from "next/image"
 
 interface PartnerLogo {
   id: string
@@ -337,9 +338,11 @@ export function AdminPartnerLogosPage() {
                 </Button>
               </div>
               <div className="flex h-14 w-24 shrink-0 items-center justify-center rounded-lg border bg-white p-2">
-                <img
+                <Image
                   src={`/api/partner-logo?id=${logo.id}`}
                   alt={logo.name}
+                  width={100}
+                  height={60}
                   className="h-auto max-h-10 max-w-full object-contain"
                 />
               </div>
@@ -392,9 +395,11 @@ export function AdminPartnerLogosPage() {
               <div className="space-y-2">
                 {previewUrl && (
                   <div className="flex h-16 w-full items-center justify-center rounded-lg border bg-white p-2">
-                    <img
+                    <Image
                       src={previewUrl}
                       alt={text.preview}
+                      width={400}
+                      height={50}
                       className="h-auto max-h-12 max-w-full object-contain"
                     />
                   </div>
