@@ -338,7 +338,7 @@ export function AdminPartnerLogosPage() {
               </div>
               <div className="flex h-14 w-24 shrink-0 items-center justify-center rounded-lg border bg-white p-2">
                 <img
-                  src={logo.logo_url}
+                  src={`/api/partner-logo?id=${logo.id}`}
                   alt={logo.name}
                   className="h-auto max-h-10 max-w-full object-contain"
                 />
