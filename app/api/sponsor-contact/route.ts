@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
 import { successResponse } from "@/lib/api"
 import { sendEmail } from "@/lib/email"
+import { Emails } from "@/lib/constants"
 
 export async function GET() {
   try {
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
 
     const emails: string[] = []
     if (process.env.NODE_ENV === "production") {
-      emails.push("sponsoring@zentralhack.ch")
+      emails.push(Emails.sponsoringZentralHack)
       try {
         const result = await query(`SELECT u.id, u.email FROM users u WHERE u.role = 'admin'`)
         result.rows?.forEach((element) => {

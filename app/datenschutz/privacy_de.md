@@ -51,7 +51,7 @@ Daten werden grundsätzlich nicht an Dritte weitergegeben, ausser wenn dies für
 
 ## Ihre Rechte
 
-Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Widerspruch. Kontakt: info@hslu.ch
+Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Widerspruch.
 
 <div class="spacer-lg"></div>
 

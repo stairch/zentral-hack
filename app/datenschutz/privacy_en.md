@@ -51,7 +51,7 @@ Data is generally not shared with third parties unless required for the event or
 
 ## Your Rights
 
-You have the right to access, rectify, delete, and object to the processing of your data. Contact: info@hslu.ch
+You have the right to access, rectify, delete, and object to the processing of your data.
 
 <div class="spacer-lg"></div>
 
