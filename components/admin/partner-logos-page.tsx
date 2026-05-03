@@ -60,7 +60,8 @@ const copy = {
     toggleError: "Fehler",
     deleted: "Gelöscht",
     deleteError: "Fehler beim Löschen",
-    upload: "Bild hochladen"
+    upload: "Bild hochladen",
+    uploadLoading: "Lädt hoch..."
   },
   en: {
     heading: "PARTNER LOGOS",
@@ -96,7 +97,8 @@ const copy = {
     toggleError: "Error",
     deleted: "Deleted",
     deleteError: "Failed to delete",
-    upload: "Upload image"
+    upload: "Upload image",
+    uploadLoading: "Uploading..."
   }
 } as const
 
@@ -417,7 +419,7 @@ export function AdminPartnerLogosPage() {
                     {uploading ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>{text.upload}</span>
+                        <span>{text.uploadLoading}</span>
                       </>
                     ) : (
                       <>
