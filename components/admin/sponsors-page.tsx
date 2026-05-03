@@ -36,13 +36,14 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { isValidUrl } from "@/lib/helpers"
-import { motion } from "framer-motion"
 import { useLanguage } from "@/lib/language-context"
 import {
   getSponsorPackageByLanguage,
   getSponsorPackagePriceLabel,
   type SponsorPackagePriceStatus
 } from "@/lib/sponsorship-packages"
+import Image from "next/image"
+import LogoMarqueePreview from "./logo-marquee-preview"
 
 type SponsorPackage = {
   id: string
@@ -195,10 +196,10 @@ const copy = {
     publishDialog: {
       title: "Sponsor veröffentlichen",
       description: (companyName: string) => `${companyName} auf der Landing Page publizieren`,
-      logoUrlLabel: "Logo URL *",
+      logoUrlLabel: "Logo *",
       logoUploadButton: "Logo hochladen",
-      logoUploadLoading: "Upload...",
-      logoUploadHint: "PNG, JPG, WEBP oder SVG (max. 5 MB)",
+      logoUploadLoading: "Lädt hoch...",
+      logoUploadHint: "PNG, JPG oder WEBP (max. 5 MB)",
       websiteUrlLabel: "Website",
       backgroundColorLabel: "Hintergrundfarbe",
       resetButton: "Zurücksetzen",
@@ -310,10 +311,10 @@ const copy = {
     publishDialog: {
       title: "Publish sponsor",
       description: (companyName: string) => `Publish ${companyName} on the landing page`,
-      logoUrlLabel: "Logo URL *",
+      logoUrlLabel: "Logo *",
       logoUploadButton: "Upload logo",
       logoUploadLoading: "Uploading...",
-      logoUploadHint: "PNG, JPG, WEBP or SVG (max. 5 MB)",
+      logoUploadHint: "PNG, JPG, or WEBP (max. 5 MB)",
       websiteUrlLabel: "Website",
       backgroundColorLabel: "Background color",
       resetButton: "Reset",
@@ -360,88 +361,6 @@ const copy = {
   }
 }
 
-const PLACEHOLDER_SPONSORS = [
-  { name: "Sponsor A", logo: "https://placehold.co/130x20/e2e8f0/94a3b8?text=Sponsor A" },
-  { name: "Sponsor B", logo: "https://placehold.co/110x35/e2e8f0/94a3b8?text=Sponsor B" }
-]
-
-function PreviewMarqueeRow({
-  currentLogo,
-  currentBgColor,
-  currentLogoSize,
-  currentWebsite
-}: {
-  currentLogo: string
-  currentBgColor: string | null
-  currentLogoSize: "small" | "medium" | "large"
-  currentWebsite: string
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [containerWidth, setContainerWidth] = useState(0)
-
-  const logoSizeClass = currentLogoSize === "small" ? "w-20" : currentLogoSize === "medium" ? "w-28" : "w-36"
-
-  const allItems = [
-    ...PLACEHOLDER_SPONSORS,
-    { name: "current", logo: currentLogo, isCurrent: true },
-    ...PLACEHOLDER_SPONSORS,
-    { name: "current2", logo: currentLogo, isCurrent: true }
-  ]
-  const duplicatedItems = [...allItems, ...allItems, ...allItems]
-
-  useEffect(() => {
-    if (!ref.current) return
-    const observer = new ResizeObserver(() => {
-      if (ref.current) {
-        setContainerWidth(ref.current.scrollWidth / 2)
-      }
-    })
-    observer.observe(ref.current)
-    return () => observer.disconnect()
-  }, [currentLogo, currentLogoSize])
-
-  return (
-    <div className="relative overflow-hidden py-3">
-      <motion.div
-        ref={ref}
-        className="flex gap-6"
-        style={{ willChange: "transform" }}
-        animate={containerWidth ? { x: [0, -containerWidth] } : {}}
-        transition={{
-          x: { duration: 18, repeat: Infinity, ease: "linear", repeatType: "loop" }
-        }}>
-        {duplicatedItems.map((item, index) => {
-          const isCurrent = "isCurrent" in item && item.isCurrent
-          return (
-            <div
-              key={`preview-${item.name}-${index}`}
-              className="flex shrink-0 items-center rounded-lg px-6 py-3">
-              {isCurrent ? (
-                <a
-                  href={currentWebsite || "#"}
-                  className="rounded-xs"
-                  style={{ backgroundColor: currentBgColor ?? undefined }}
-                  onClick={(e) => e.preventDefault()}>
-                  <img
-                    src={currentLogo}
-                    alt="Preview logo"
-                    className={`h-auto ${logoSizeClass}`}
-                    onError={(e) => (e.currentTarget.style.display = "none")}
-                  />
-                </a>
-              ) : (
-                <div className="bg-muted rounded-xs p-1">
-                  <img src={item.logo} alt={item.name} className="h-auto w-20 opacity-40" />
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </motion.div>
-    </div>
-  )
-}
-
 function PublishDialog({
   contact,
   packages,
@@ -454,9 +373,10 @@ function PublishDialog({
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
-  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null)
   const [errors, setErrors] = useState<Partial<Record<keyof PublishFormData, string>>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isNewLogo, setIsNewLogo] = useState<boolean>(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [form, setForm] = useState<PublishFormData>({
     logoUrl: "",
     websiteUrl: "",
@@ -485,34 +405,39 @@ function PublishDialog({
         logoSize: contact.logo_size || "medium",
         tier: contact.tier || contact.interested_in || ""
       })
-      setLocalPreviewUrl(null)
+      setIsNewLogo(false)
+      setPreviewUrl(`/api/sponsor-logo?id=${contact.id}`)
     } else {
       setErrors({})
     }
-  }, [open])
 
-  useEffect(() => {
-    return () => {
-      if (localPreviewUrl) {
-        URL.revokeObjectURL(localPreviewUrl)
+    async function removeBlob() {
+      const res = await fetch("/api/admin/logo-upload", {
+        method: "DELETE",
+        credentials: "include",
+        body: JSON.stringify({ url: form.logoUrl })
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error)
       }
     }
-  }, [localPreviewUrl])
+    // if a new logo was uploaded, let's remove it again from blob to save storage when dialog closed
+    if (!open && isNewLogo) {
+      removeBlob()
+    }
+  }, [open])
 
   const handleLogoUpload = async (file: File) => {
-    const nextLocalPreview = URL.createObjectURL(file)
-
-    setLocalPreviewUrl((prev) => {
-      if (prev) URL.revokeObjectURL(prev)
-      return nextLocalPreview
-    })
+    const localPreview = URL.createObjectURL(file)
+    setPreviewUrl(localPreview)
 
     try {
       setUploadingLogo(true)
       const fd = new FormData()
       fd.append("file", file)
 
-      const res = await fetch("/api/admin/upload", {
+      const res = await fetch("/api/admin/logo-upload", {
         method: "POST",
         credentials: "include",
         body: fd
@@ -525,15 +450,15 @@ function PublishDialog({
 
       const data = await res.json()
       setForm((prev) => ({ ...prev, logoUrl: data.url }))
+      setIsNewLogo(true)
+
       if (errors.logoUrl) {
         setErrors((prev) => ({ ...prev, logoUrl: undefined }))
       }
       toast.success(text.success.logoUploadSuccess)
     } catch (err) {
-      setLocalPreviewUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev)
-        return null
-      })
+      setPreviewUrl(null)
+      URL.revokeObjectURL(localPreview)
       toast.error(err instanceof Error ? err.message : text.errors.logoUploadFailed)
     } finally {
       setUploadingLogo(false)
@@ -592,21 +517,22 @@ function PublishDialog({
             {/* Logo URL */}
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="logoUrl">{text.publishDialog.logoUrlLabel}</Label>
+              {previewUrl && (
+                <div className="flex h-16 w-full items-center justify-center rounded-lg border bg-white p-2">
+                  <Image
+                    src={previewUrl}
+                    alt="Preview logo"
+                    width={400}
+                    height={50}
+                    className="h-auto max-h-12 max-w-full object-contain"
+                  />
+                </div>
+              )}
               <div className="flex gap-2">
-                <Input
-                  id="logoUrl"
-                  placeholder="https://example.com/logo.png"
-                  value={form.logoUrl}
-                  className={errors.logoUrl ? "border-destructive" : ""}
-                  onChange={(e) => {
-                    setForm((f) => ({ ...f, logoUrl: e.target.value }))
-                    if (errors.logoUrl) setErrors((err) => ({ ...err, logoUrl: undefined }))
-                  }}
-                />
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                  accept="image/png,image/jpeg,image/webp"
                   className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0]
@@ -710,17 +636,12 @@ function PublishDialog({
               </div>
             </div>
             {/* Marquee Preview */}
-            {form.logoUrl && (
+            {previewUrl && (
               <div className="flex flex-col gap-1.5">
                 <Label className="text-muted-foreground text-xs">{text.publishDialog.previewLabel}</Label>
                 <div className="rounded-lg border">
-                  <PreviewMarqueeRow
-                    currentLogo={
-                      localPreviewUrl ||
-                      (form.logoUrl.startsWith("https://")
-                        ? `/api/admin/blob-preview?url=${encodeURIComponent(form.logoUrl)}`
-                        : form.logoUrl)
-                    }
+                  <LogoMarqueePreview
+                    currentLogo={previewUrl}
                     currentBgColor={form.logoBgColor}
                     currentLogoSize={form.logoSize}
                     currentWebsite={form.websiteUrl}
@@ -734,7 +655,7 @@ function PublishDialog({
             <Button variant="outline" onClick={() => setOpen(false)}>
               {text.publishDialog.cancelButton}
             </Button>
-            <Button onClick={handlePublish} disabled={loading} className="gap-1.5">
+            <Button onClick={handlePublish} disabled={loading || uploadingLogo} className="gap-1.5">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
               {loading ? text.publishDialog.publishButtonLoading : text.publishDialog.publishButton}
             </Button>

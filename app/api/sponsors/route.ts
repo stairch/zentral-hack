@@ -12,7 +12,8 @@ export async function GET() {
          website_url,
          logo_size,
          tier,
-         logo_bg_color
+         logo_bg_color,
+         updated_at
        FROM sponsor_contacts
        ORDER BY created_at ASC`
     )
@@ -20,14 +21,8 @@ export async function GET() {
     if (result.rows.length > 0) {
       const sponsors = result.rows.map((row) => {
         return {
-          id: row.id,
-          company_name: row.company_name,
-          status: row.status,
-          logo_url: row.logo_url,
-          website_url: row.website_url,
-          logo_size: row.logo_size,
-          tier: row.tier,
-          logo_bg_color: row.logo_bg_color
+          ...row,
+          updated_at: new Date(row.updated_at).getTime()
         }
       })
 

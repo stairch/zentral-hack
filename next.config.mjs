@@ -5,7 +5,6 @@ const nextConfig = {
     // Remove ignoreBuildErrors to catch issues early
   },
   images: {
-    formats: ["image/webp", "image/avif"],
     localPatterns: [
       {
         pathname: "/api/sponsor-logo"
