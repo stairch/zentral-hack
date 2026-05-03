@@ -173,6 +173,9 @@ export function AdminPartnerLogosPage() {
   }
 
   const handleUpload = async (file: File) => {
+    const localPreview = URL.createObjectURL(file)
+    setPreviewUrl(localPreview)
+
     try {
       setUploading(true)
 
@@ -192,6 +195,7 @@ export function AdminPartnerLogosPage() {
       toast.success(text.uploadSuccess)
     } catch (error) {
       setPreviewUrl(null)
+      URL.revokeObjectURL(localPreview)
       toast.error(error instanceof Error ? error.message : text.uploadError)
     } finally {
       setUploading(false)
@@ -287,7 +291,7 @@ export function AdminPartnerLogosPage() {
       })
       if (!res.ok) {
         const err = await res.json()
-        throw new Error(err.error || text.uploadError)
+        throw new Error(err.error)
       }
     }
   }
