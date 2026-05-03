@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
-import { generateJWT, JWTPayload } from "@/lib/auth"
+import { generateJWT, compareCode, JWTPayload } from "@/lib/auth"
 import { successResponse, validationError, serverError, unauthorizedError } from "@/lib/api"
 
 export async function POST(request: NextRequest) {
@@ -23,13 +23,18 @@ export async function POST(request: NextRequest) {
 
     const user = userResult.rows[0]
 
-    // Find valid 2FA token with matching code
+    // Fetch the latest unverified, non-expired token for this user
     const result = await query(
-      "SELECT id, user_id, code, verified, expires_at FROM two_fa_tokens WHERE user_id = $1 AND code = $2 AND expires_at > NOW() AND verified = false ORDER BY created_at DESC LIMIT 1",
-      [user.id, code]
+      "SELECT id, user_id, code, verified, expires_at FROM two_fa_tokens WHERE user_id = $1 AND expires_at > NOW() AND verified = false ORDER BY created_at DESC LIMIT 1",
+      [user.id]
     )
 
     if (result.rows.length === 0) {
+      return unauthorizedError("Invalid or expired 2FA code")
+    }
+
+    const codeMatches = await compareCode(code, result.rows[0].code)
+    if (!codeMatches) {
       return unauthorizedError("Invalid or expired 2FA code")
     }
 

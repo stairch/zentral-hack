@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto"
 import { query } from "@/lib/db"
-import { generateVerificationCode } from "@/lib/auth"
+import { generateVerificationCode, hashCode } from "@/lib/auth"
 
 export type AccountAction =
   | "email_change"
@@ -18,6 +18,7 @@ export async function createAccountActionChallenge(params: {
   expiresInMinutes?: number
 }) {
   const code = generateVerificationCode()
+  const codeHash = await hashCode(code)
   const token = randomBytes(24).toString("hex")
   const expiresAt = new Date(Date.now() + (params.expiresInMinutes || 15) * 60 * 1000)
   const payload = params.payload || {}
@@ -31,7 +32,7 @@ export async function createAccountActionChallenge(params: {
   await query(
     `INSERT INTO account_action_tokens (user_id, action, token, code, payload, expires_at)
      VALUES ($1, $2, $3, $4, $5::jsonb, $6)`,
-    [params.userId, params.action, token, code, JSON.stringify(payload), expiresAt.toISOString()]
+    [params.userId, params.action, token, codeHash, JSON.stringify(payload), expiresAt.toISOString()]
   )
 
   return { token, code, expiresAt }

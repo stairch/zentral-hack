@@ -41,6 +41,14 @@ export async function comparePassword(password: string, hash: string): Promise<b
   return bcrypt.compare(password, hash)
 }
 
+export async function hashCode(code: string): Promise<string> {
+  return bcrypt.hash(code, 10)
+}
+
+export async function compareCode(code: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(code, hash)
+}
+
 // Cryptographically secure verification code generation
 export function generateVerificationCode(): string {
   // Generate 3 bytes (24 bits) = 6 hex characters (0-9, A-F)

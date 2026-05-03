@@ -1,7 +1,7 @@
 import { query } from "@/lib/db"
 import { withAuth, type AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError, unauthorizedError } from "@/lib/api"
-import { generateJWT, hashPassword } from "@/lib/auth"
+import { generateJWT, hashPassword, compareCode } from "@/lib/auth"
 import {
   cleanupPendingActions,
   getPendingAccountAction,
@@ -27,7 +27,7 @@ async function handleConfirm(req: AuthenticatedRequest) {
     }
 
     const challenge = await getPendingAccountAction({ token, action, userId: req.user!.userId })
-    if (!challenge || challenge.code !== code) {
+    if (!challenge || !(await compareCode(code, challenge.code))) {
       return unauthorizedError("Invalid or expired confirmation code")
     }
 

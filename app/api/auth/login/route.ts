@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
-import { comparePassword, generateVerificationCode } from "@/lib/auth"
+import { comparePassword, generateVerificationCode, hashCode } from "@/lib/auth"
 import { successResponse, validationError, serverError, unauthorizedError } from "@/lib/api"
 import { LoginSchema, validateRequest } from "@/lib/validation"
 import { createRateLimiter } from "@/lib/rate-limit"
@@ -50,15 +50,16 @@ export async function POST(request: NextRequest) {
 
     // Generate 2FA code for ALL users
     const code = generateVerificationCode()
+    const codeHash = await hashCode(code)
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
 
     await query("DELETE FROM two_fa_tokens WHERE user_id = $1 AND verified = false", [user.id])
 
-    // Save 2FA code to database
+    // Save hashed 2FA code to database
     await query("INSERT INTO two_fa_tokens (user_id, token, code, expires_at) VALUES ($1, $2, $3, $4)", [
       user.id,
-      code,
-      code,
+      codeHash,
+      codeHash,
       expiresAt
     ])
 
