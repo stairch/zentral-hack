@@ -33,7 +33,8 @@ export async function GET(request: NextRequest) {
               u.is_active,
               u.admin_role_id,
               ar.name AS admin_role_name,
-              ar.permissions AS role_permissions
+              ar.permissions AS role_permissions,
+              u.updated_at
        FROM users u
        LEFT JOIN admin_roles ar ON u.admin_role_id = ar.id
        WHERE u.id = $1`,
@@ -47,6 +48,16 @@ export async function GET(request: NextRequest) {
     const user = result.rows[0]
     if (!user.is_active) {
       return NextResponse.json({ error: "Inactive user" }, { status: 401 })
+    }
+
+    // Invalidate token if user's credentials were changed after token was issued
+    if (payload.updatedAt) {
+      const tokenIssuedAt = new Date(payload.updatedAt).getTime()
+      const credsUpdatedAt = new Date(user.updated_at).getTime()
+
+      if (credsUpdatedAt > tokenIssuedAt) {
+        return NextResponse.json({ error: "Invalid" }, { status: 401 })
+      }
     }
 
     const permissions: string[] | null = Array.isArray(user.role_permissions) ? user.role_permissions : null

@@ -58,7 +58,7 @@ async function handleConfirm(req: AuthenticatedRequest) {
       )
 
       await markAccountActionVerified(challenge.id)
-      await cleanupPendingActions(req.user!.userId)
+      await cleanupPendingActions(req.user!.userId, action)
 
       const user = updated.rows[0]
       const tokenValue = generateJWT({
@@ -103,12 +103,12 @@ async function handleConfirm(req: AuthenticatedRequest) {
         `UPDATE users
          SET password_hash = $1, updated_at = NOW()
          WHERE id = $2
-         RETURNING id, email, first_name, last_name, role, category_id, admin_role_id`,
+         RETURNING id, email, first_name, last_name, role, category_id, admin_role_id, updated_at`,
         [newPasswordHash, req.user!.userId]
       )
 
       await markAccountActionVerified(challenge.id)
-      await cleanupPendingActions(req.user!.userId)
+      await cleanupPendingActions(req.user!.userId, action)
 
       const user = updated.rows[0]
       const tokenValue = generateJWT({
@@ -117,7 +117,8 @@ async function handleConfirm(req: AuthenticatedRequest) {
         role: user.role,
         categoryId: user.category_id || undefined,
         adminRoleId: user.admin_role_id || undefined,
-        twoFaVerified: true
+        twoFaVerified: true,
+        updatedAt: user.updated_at
       })
 
       const response = successResponse({
@@ -167,7 +168,7 @@ async function handleConfirm(req: AuthenticatedRequest) {
       ])
 
       await markAccountActionVerified(challenge.id)
-      await cleanupPendingActions(req.user!.userId)
+      await cleanupPendingActions(req.user!.userId, action)
 
       const updatedUser = await query(
         `SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.category_id, u.admin_role_id
@@ -237,7 +238,7 @@ async function handleConfirm(req: AuthenticatedRequest) {
       )
 
       await markAccountActionVerified(challenge.id)
-      await cleanupPendingActions(req.user!.userId)
+      await cleanupPendingActions(req.user!.userId, action)
 
       const response = successResponse({ message: "Account deleted" })
       response.cookies.delete("token")

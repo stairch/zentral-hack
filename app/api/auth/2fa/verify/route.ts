@@ -55,7 +55,8 @@ export async function POST(request: NextRequest) {
       email,
       role: user.role,
       categoryId: user.category_id || undefined,
-      twoFaVerified: true
+      twoFaVerified: true,
+      updatedAt: new Date().toISOString()
     }
 
     const authToken = generateJWT(payload)

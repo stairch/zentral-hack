@@ -59,6 +59,22 @@ export async function getPendingAccountAction(params: {
   return result.rows[0] || null
 }
 
+export async function getPendingAccountActionByUser(params: { userId: string; action: AccountAction }) {
+  const result = await query(
+    `SELECT id, user_id, action, token, code, payload, verified, expires_at
+     FROM account_action_tokens
+     WHERE user_id = $1
+       AND action = $2
+       AND verified = false
+       AND expires_at > NOW()
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [params.userId, params.action]
+  )
+
+  return result.rows[0] || null
+}
+
 export async function markAccountActionVerified(id: string) {
   await query("UPDATE account_action_tokens SET verified = true WHERE id = $1", [id])
 }

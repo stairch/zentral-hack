@@ -16,7 +16,6 @@ export default function ResetPasswordPage() {
   const { language } = useLanguage()
   const [step, setStep] = useState<"request" | "confirm">("request")
   const [email, setEmail] = useState("")
-  const [challengeToken, setChallengeToken] = useState("")
   const [code, setCode] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -63,13 +62,12 @@ export default function ResetPasswordPage() {
     event.preventDefault()
     setLoading(true)
     try {
-      const res = await fetch("/api/auth/password-reset/request", {
+      await fetch("/api/auth/password-reset/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })
       })
-      const json = await res.json()
-      setChallengeToken(json.data?.challengeToken || "")
+
       setStep("confirm")
       toast.success(t.sent)
     } catch (error) {
@@ -81,11 +79,9 @@ export default function ResetPasswordPage() {
 
   const confirmReset = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (!challengeToken) {
-      toast.error(t.error)
-      return
-    }
+
     if (!code || !newPassword || !confirmPassword) return
+
     setLoading(true)
     try {
       const res = await fetch("/api/auth/password-reset/confirm", {
@@ -93,16 +89,17 @@ export default function ResetPasswordPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          challengeToken,
           code,
           newPassword,
           confirmPassword
         })
       })
+
       if (!res.ok) {
         const json = await res.json().catch(() => ({}))
         throw new Error(json.error || t.error)
       }
+
       toast.success(t.success)
       router.push("/auth/login")
     } catch (error) {

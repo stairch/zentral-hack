@@ -30,7 +30,7 @@ export function withAuth(handler: (req: AuthenticatedRequest) => Promise<NextRes
     }
 
     const userResult = await query(
-      `SELECT u.id, u.email, u.role, u.category_id, u.admin_role_id, u.is_active
+      `SELECT u.id, u.email, u.role, u.category_id, u.admin_role_id, u.is_active, u.updated_at
        FROM users u
        WHERE u.id = $1`,
       [payload.userId]
@@ -38,6 +38,18 @@ export function withAuth(handler: (req: AuthenticatedRequest) => Promise<NextRes
 
     if (userResult.rows.length === 0 || !userResult.rows[0].is_active) {
       return NextResponse.json({ success: false, error: "Inactive or missing account" }, { status: 401 })
+    }
+
+    // Invalidate token if user's credentials were changed after token was issued
+    if (payload.updatedAt && userResult.rows[0].updated_at) {
+      const tokenIssuedAt = new Date(payload.updatedAt).getTime()
+      const credentialsUpdatedAt = new Date(userResult.rows[0].updated_at).getTime()
+      if (credentialsUpdatedAt > tokenIssuedAt) {
+        return NextResponse.json(
+          { success: false, error: "Session invalidated due to credential change" },
+          { status: 401 }
+        )
+      }
     }
 
     const user = userResult.rows[0]

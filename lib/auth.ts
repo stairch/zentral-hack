@@ -11,6 +11,7 @@ export interface JWTPayload {
   twoFaVerified?: boolean
   categoryId?: string
   adminRoleId?: string
+  updatedAt?: string
 }
 
 export function generateJWT(payload: JWTPayload): string {
