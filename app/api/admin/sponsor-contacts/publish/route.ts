@@ -1,4 +1,5 @@
 import { query } from "@/lib/db"
+import { del } from "@vercel/blob"
 import { successResponse, serverError, validationError, notFoundError } from "@/lib/api"
 import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { isValidHex, isValidUrl } from "@/lib/helpers"
@@ -14,6 +15,17 @@ async function handlePost(req: AuthenticatedRequest) {
     if (logoBgColor === undefined) return validationError("Sponsor logo background color required")
     if (!logoSize) return validationError("Sponsor logo size required")
     if (!tier) return validationError("Sponsor tier required")
+
+    // Delete existing blob if a logo already exists
+    const existing = await query(`SELECT logo_url FROM sponsor_contacts WHERE id = $1`, [String(id)])
+    const oldUrl = existing.rows[0]?.logo_url
+    if (oldUrl) {
+      try {
+        await del(oldUrl)
+      } catch (e) {
+        console.warn("[Admin Sponsors Publish] Blob deletion failed, continuing:", e)
+      }
+    }
 
     const ALLOWED_LOGO_SIZES = ["small", "medium", "large"]
 

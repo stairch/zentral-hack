@@ -50,6 +50,19 @@ async function handlePut(req: AuthenticatedRequest) {
     const { id, name, logo_url, website_url, logo_size, sort_order, is_active } = await req.json()
     if (!id) return validationError("id required")
 
+    // Delete existing blob if a logo already exists
+    if (logo_url !== undefined) {
+      const existing = await query(`SELECT logo_url FROM partner_logos WHERE id = $1`, [String(id)])
+      const oldUrl = existing.rows[0]?.logo_url
+      if (oldUrl) {
+        try {
+          await del(oldUrl)
+        } catch (e) {
+          console.warn("[Partner Logos] Blob deletion failed, continuing:", e)
+        }
+      }
+    }
+
     const fields: string[] = []
     const values: QueryValue[] = []
 
