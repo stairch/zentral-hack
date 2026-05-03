@@ -131,6 +131,25 @@ export function AdminPartnerLogosPage() {
     void load()
   }, [])
 
+  useEffect(() => {
+    async function removeBlob() {
+      const res = await fetch("/api/admin/logo-upload", {
+        method: "DELETE",
+        credentials: "include",
+        body: JSON.stringify({ url: form.logo_url })
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error)
+      }
+    }
+
+    // if a new logo was uploaded, let's remove it again from blob to save storage when dialog closed
+    if (!dialogOpen && isNewLogo) {
+      removeBlob()
+    }
+  }, [dialogOpen])
+
   const load = async () => {
     try {
       setLoading(true)
@@ -280,23 +299,6 @@ export function AdminPartnerLogosPage() {
       })
     ])
     await load()
-  }
-
-  const handleCancel = async () => {
-    setDialogOpen(false)
-
-    // if a new logo was uploaded, let's remove it again from blob to save storage
-    if (isNewLogo) {
-      const res = await fetch("/api/admin/logo-upload", {
-        method: "DELETE",
-        credentials: "include",
-        body: JSON.stringify({ url: form.logo_url })
-      })
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error)
-      }
-    }
   }
 
   const sortedLogos = [...logos].sort((a, b) => a.sort_order - b.sort_order)
@@ -488,7 +490,7 @@ export function AdminPartnerLogosPage() {
               )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={handleCancel}>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
                 {text.cancel}
               </Button>
               <Button onClick={save} disabled={saving || uploading}>

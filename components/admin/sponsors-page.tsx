@@ -410,6 +410,22 @@ function PublishDialog({
     } else {
       setErrors({})
     }
+
+    async function removeBlob() {
+      const res = await fetch("/api/admin/logo-upload", {
+        method: "DELETE",
+        credentials: "include",
+        body: JSON.stringify({ url: form.logoUrl })
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error)
+      }
+    }
+    // if a new logo was uploaded, let's remove it again from blob to save storage when dialog closed
+    if (!open && isNewLogo) {
+      removeBlob()
+    }
   }, [open])
 
   const handleLogoUpload = async (file: File) => {
@@ -474,23 +490,6 @@ function PublishDialog({
       setOpen(false)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleCancel = async () => {
-    setOpen(false)
-
-    // if a new logo was uploaded, let's remove it again from blob to save storage
-    if (isNewLogo) {
-      const res = await fetch("/api/admin/logo-upload", {
-        method: "DELETE",
-        credentials: "include",
-        body: JSON.stringify({ url: form.logoUrl })
-      })
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error)
-      }
     }
   }
 
@@ -653,7 +652,7 @@ function PublishDialog({
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={handleCancel}>
+            <Button variant="outline" onClick={() => setOpen(false)}>
               {text.publishDialog.cancelButton}
             </Button>
             <Button onClick={handlePublish} disabled={loading || uploadingLogo} className="gap-1.5">
