@@ -22,8 +22,8 @@ interface PartnerLogo {
   is_active: boolean
 }
 
-const SIZE_LABELS_DE = { small: "Klein (w-20)", medium: "Mittel (w-28)", large: "Gross (w-36)" }
-const SIZE_LABELS_EN = { small: "Small (w-20)", medium: "Medium (w-28)", large: "Large (w-36)" }
+const SIZE_LABELS_DE = { small: "Klein", medium: "Mittel", large: "Gross" }
+const SIZE_LABELS_EN = { small: "Small", medium: "Medium", large: "Large" }
 
 const copy = {
   de: {
