@@ -15,19 +15,14 @@ export async function GET(request: NextRequest) {
   try {
     // Get token from httpOnly cookie
     const token = request.cookies.get("token")?.value
-    console.log("[Verify] Token from cookie:", token ? "Found" : "Not found")
 
     if (!token) {
-      console.log("[Verify] No token in cookie, returning 401")
       return NextResponse.json({ error: "No token found" }, { status: 401 })
     }
 
-    // Verify JWT
     const payload = verifyJWT(token)
-    console.log("[Verify] JWT verification:", payload ? "Valid" : "Invalid")
 
     if (!payload) {
-      console.log("[Verify] Invalid JWT, returning 401")
       return NextResponse.json({ error: "Invalid token" }, { status: 401 })
     }
 
@@ -45,10 +40,7 @@ export async function GET(request: NextRequest) {
       [payload.userId]
     )
 
-    console.log("[Verify] User query result:", result.rows.length > 0 ? "Found" : "Not found")
-
     if (result.rows.length === 0) {
-      console.log("[Verify] User not found in DB, returning 401")
       return NextResponse.json({ error: "User not found" }, { status: 401 })
     }
 
@@ -56,7 +48,6 @@ export async function GET(request: NextRequest) {
     if (!user.is_active) {
       return NextResponse.json({ error: "Inactive user" }, { status: 401 })
     }
-    console.log("[Verify] Returning user:", user.email)
 
     const permissions: string[] | null = Array.isArray(user.role_permissions) ? user.role_permissions : null
 

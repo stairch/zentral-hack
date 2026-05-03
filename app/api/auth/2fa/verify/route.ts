@@ -74,8 +74,6 @@ export async function POST(request: NextRequest) {
       path: "/"
     })
 
-    console.log("[2FA] Token set in cookie for user:", email)
-
     return response
   } catch (error) {
     console.error("2FA verification error:", error)
