@@ -8,14 +8,21 @@ import {
   markAccountActionVerified,
   cleanupPendingActions
 } from "@/lib/account-actions"
+import { createRateLimiter } from "@/lib/rate-limit"
 
 const emailSchema = z
   .string()
   .email()
   .transform((value) => value.toLowerCase())
 
+const rateLimiter = createRateLimiter("twofa")
+
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await rateLimiter(request)
+    if (rateLimitResponse) return rateLimitResponse
+
     const body = await request.json()
 
     const emailParsed = emailSchema.safeParse(body.email)

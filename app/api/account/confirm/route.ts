@@ -8,9 +8,15 @@ import {
   markAccountActionVerified,
   type AccountAction
 } from "@/lib/account-actions"
+import { createRateLimiter } from "@/lib/rate-limit"
+
+const rateLimiter = createRateLimiter("twofa")
 
 async function handleConfirm(req: AuthenticatedRequest) {
   try {
+    const rateLimitResponse = await rateLimiter(req)
+    if (rateLimitResponse) return rateLimitResponse
+
     const body = await req.json()
     const action = String(body.action || "").trim() as AccountAction
     const code = String(body.code || "")

@@ -2,9 +2,16 @@ import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
 import { generateJWT, compareCode, JWTPayload } from "@/lib/auth"
 import { successResponse, validationError, serverError, unauthorizedError } from "@/lib/api"
+import { createRateLimiter } from "@/lib/rate-limit"
+
+const rateLimiter = createRateLimiter("twofa")
 
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await rateLimiter(request)
+    if (rateLimitResponse) return rateLimitResponse
+
     const body = await request.json()
     const { email, code } = body
 

@@ -8,6 +8,7 @@ const store: RateLimitStore = {}
 
 const WINDOWS = {
   auth: { windowMs: 15 * 60 * 1000, maxRequests: 5 }, // 5 requests per 15 minutes
+  twofa: { windowMs: 15 * 60 * 1000, maxRequests: 5 }, // 5 requests per 15 minutes
   signup: { windowMs: 60 * 60 * 1000, maxRequests: 10 }, // 10 requests per hour
   newsletter: { windowMs: 60 * 60 * 1000, maxRequests: 5 }, // 5 requests per hour
   sponsor: { windowMs: 60 * 60 * 1000, maxRequests: 20 }, // 20 requests per hour
