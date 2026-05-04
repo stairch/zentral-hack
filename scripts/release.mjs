@@ -96,7 +96,7 @@ function isStableRelease(version) {
 
 function extractFlagKeys() {
   const flagsFile = readFileSync("lib/flags.ts", "utf-8")
-  const matches = [...flagsFile.matchAll(/key:\s*['"]([^'"]+)['"]/g)]
+  const matches = [...flagsFile.matchAll(/makeFlag\(['"]([^'"]+)['"]\)/g)]
   return matches.map((m) => m[1])
 }
 
