@@ -31,27 +31,25 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
 
   const [emailState, setEmailState] = useState({
     newEmail: "",
-    challengeToken: "",
     code: ""
   })
+
   const [passwordState, setPasswordState] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
-    challengeToken: "",
     code: ""
   })
+
   const [categoryState, setCategoryState] = useState<{
     categoryId: string
-    challengeToken: string
     code: string
   }>({
     categoryId: "",
-    challengeToken: "",
     code: ""
   })
+
   const [deleteState, setDeleteState] = useState({
-    challengeToken: "",
     code: ""
   })
   const [deleteWarningAcknowledged, setDeleteWarningAcknowledged] = useState(false)
@@ -189,8 +187,8 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
     if (!emailState.newEmail) return
     setLoadingAction("email-request")
     try {
-      const json = await requestAction("email_change", { newEmail: emailState.newEmail })
-      setEmailState((prev) => ({ ...prev, challengeToken: json.data?.challengeToken || "", code: "" }))
+      await requestAction("email_change", { newEmail: emailState.newEmail })
+      setEmailState((prev) => ({ ...prev, code: "" }))
       toast.success(text.successRequest)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : text.errorGeneric)
@@ -200,16 +198,15 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
   }
 
   const handleConfirmEmail = async () => {
-    if (!emailState.challengeToken || !emailState.code) return
+    if (!emailState.code) return
     setLoadingAction("email-confirm")
     try {
       await confirmAction("email_change", {
-        challengeToken: emailState.challengeToken,
         code: emailState.code
       })
       await refreshAuth()
       await onUpdated()
-      setEmailState({ newEmail: "", challengeToken: "", code: "" })
+      setEmailState({ newEmail: "", code: "" })
       toast.success(text.successUpdate)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : text.errorGeneric)
@@ -222,12 +219,12 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
     if (!passwordState.currentPassword || !passwordState.newPassword || !passwordState.confirmPassword) return
     setLoadingAction("password-request")
     try {
-      const json = await requestAction("password_change", {
+      await requestAction("password_change", {
         currentPassword: passwordState.currentPassword,
         newPassword: passwordState.newPassword,
         confirmPassword: passwordState.confirmPassword
       })
-      setPasswordState((prev) => ({ ...prev, challengeToken: json.data?.challengeToken || "", code: "" }))
+      setPasswordState((prev) => ({ ...prev, code: "" }))
       toast.success(text.successRequest)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : text.errorGeneric)
@@ -237,11 +234,10 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
   }
 
   const handleConfirmPassword = async () => {
-    if (!passwordState.challengeToken || !passwordState.code) return
+    if (!passwordState.code) return
     setLoadingAction("password-confirm")
     try {
       await confirmAction("password_change", {
-        challengeToken: passwordState.challengeToken,
         code: passwordState.code
       })
       await refreshAuth()
@@ -249,7 +245,6 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
-        challengeToken: "",
         code: ""
       })
       toast.success(text.successUpdate)
@@ -264,8 +259,8 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
     if (!categoryState.categoryId) return
     setLoadingAction("category-request")
     try {
-      const json = await requestAction("category_change", { categoryId: categoryState.categoryId })
-      setCategoryState((prev) => ({ ...prev, challengeToken: json.data?.challengeToken || "", code: "" }))
+      await requestAction("category_change", { categoryId: categoryState.categoryId })
+      setCategoryState((prev) => ({ ...prev, code: "" }))
       toast.success(text.successRequest)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : text.errorGeneric)
@@ -275,11 +270,10 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
   }
 
   const handleConfirmCategory = async () => {
-    if (!categoryState.challengeToken || !categoryState.code) return
+    if (!categoryState.code) return
     setLoadingAction("category-confirm")
     try {
       await confirmAction("category_change", {
-        challengeToken: categoryState.challengeToken,
         code: categoryState.code
       })
       await refreshAuth()
@@ -297,8 +291,8 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
   const handleRequestDelete = async () => {
     setLoadingAction("delete-request")
     try {
-      const json = await requestAction("delete_account", {})
-      setDeleteState({ challengeToken: json.data?.challengeToken || "", code: "" })
+      await requestAction("delete_account", {})
+      setDeleteState({ code: "" })
       toast.success(text.successRequest)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : text.errorGeneric)
@@ -308,11 +302,10 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
   }
 
   const handleConfirmDelete = async () => {
-    if (!deleteState.challengeToken || !deleteState.code) return
+    if (!deleteState.code) return
     setLoadingAction("delete-confirm")
     try {
       await confirmAction("delete_account", {
-        challengeToken: deleteState.challengeToken,
         code: deleteState.code
       })
       await logout()
@@ -373,11 +366,7 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
                 variant="outline"
                 className="w-full"
                 onClick={() => void handleConfirmEmail()}
-                disabled={
-                  loadingAction === "email-confirm" ||
-                  !emailState.challengeToken ||
-                  emailState.code.length !== 6
-                }>
+                disabled={loadingAction === "email-confirm" || emailState.code.length !== 6}>
                 {loadingAction === "email-confirm" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
@@ -451,11 +440,7 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
                 variant="outline"
                 className="w-full"
                 onClick={() => void handleConfirmPassword()}
-                disabled={
-                  loadingAction === "password-confirm" ||
-                  !passwordState.challengeToken ||
-                  passwordState.code.length !== 6
-                }>
+                disabled={loadingAction === "password-confirm" || passwordState.code.length !== 6}>
                 {loadingAction === "password-confirm" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
@@ -527,7 +512,6 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
                   onClick={() => void handleConfirmCategory()}
                   disabled={
                     loadingAction === "category-confirm" ||
-                    !categoryState.challengeToken ||
                     categoryState.code.length !== 6 ||
                     !currentCategoryId
                   }>
@@ -588,11 +572,7 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
               <Button
                 variant="destructive"
                 onClick={() => void handleConfirmDelete()}
-                disabled={
-                  loadingAction === "delete-confirm" ||
-                  !deleteState.challengeToken ||
-                  deleteState.code.length !== 6
-                }
+                disabled={loadingAction === "delete-confirm" || deleteState.code.length !== 6}
                 className="gap-2">
                 {loadingAction === "delete-confirm" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

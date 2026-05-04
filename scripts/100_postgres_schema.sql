@@ -153,7 +153,6 @@ CREATE TABLE IF NOT EXISTS email_logs (
 CREATE TABLE IF NOT EXISTS two_fa_tokens (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  token TEXT NOT NULL UNIQUE,
   code TEXT NOT NULL,
   verified BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW(),

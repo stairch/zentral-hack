@@ -47,9 +47,8 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
 
     // Save hashed 2FA code to database
-    await query("INSERT INTO two_fa_tokens (user_id, token, code, expires_at) VALUES ($1, $2, $3, $4)", [
+    await query("INSERT INTO two_fa_tokens (user_id, code, expires_at) VALUES ($1, $2, $3)", [
       user.id,
-      codeHash,
       codeHash,
       expiresAt
     ])

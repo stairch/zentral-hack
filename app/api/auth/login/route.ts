@@ -56,9 +56,8 @@ export async function POST(request: NextRequest) {
     await query("DELETE FROM two_fa_tokens WHERE user_id = $1 AND verified = false", [user.id])
 
     // Save hashed 2FA code to database
-    await query("INSERT INTO two_fa_tokens (user_id, token, code, expires_at) VALUES ($1, $2, $3, $4)", [
+    await query("INSERT INTO two_fa_tokens (user_id, code, expires_at) VALUES ($1, $2, $3)", [
       user.id,
-      codeHash,
       codeHash,
       expiresAt
     ])

@@ -133,7 +133,6 @@ async function handleRequest(req: AuthenticatedRequest) {
     })
 
     return successResponse({
-      challengeToken: challenge.token,
       destinationEmail,
       action,
       message: "Confirmation code sent"

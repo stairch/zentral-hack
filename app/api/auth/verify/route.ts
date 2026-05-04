@@ -6,10 +6,6 @@ import { successResponse } from "@/lib/api"
 /**
  * GET /api/auth/verify
  * Verify current session via httpOnly cookie
- * Consolidated endpoint - consolidates all three previous endpoints:
- * - /api/verify
- * - /api/auth-verify
- * - /api/check-auth
  */
 export async function GET(request: NextRequest) {
   try {

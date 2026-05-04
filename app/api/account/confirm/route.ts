@@ -4,7 +4,7 @@ import { successResponse, validationError, serverError, unauthorizedError } from
 import { generateJWT, hashPassword, compareCode } from "@/lib/auth"
 import {
   cleanupPendingActions,
-  getPendingAccountAction,
+  getPendingAccountActionByUser,
   markAccountActionVerified,
   type AccountAction
 } from "@/lib/account-actions"
@@ -13,7 +13,6 @@ async function handleConfirm(req: AuthenticatedRequest) {
   try {
     const body = await req.json()
     const action = String(body.action || "").trim() as AccountAction
-    const token = String(body.challengeToken || "").trim()
     const code = String(body.code || "")
       .trim()
       .toUpperCase()
@@ -22,11 +21,15 @@ async function handleConfirm(req: AuthenticatedRequest) {
       return validationError("Invalid action")
     }
 
-    if (!token || !code) {
-      return validationError("Challenge token and code are required")
+    if (!code) {
+      return validationError("Code is required")
     }
 
-    const challenge = await getPendingAccountAction({ token, action, userId: req.user!.userId })
+    const challenge = await getPendingAccountActionByUser({
+      userId: req.user!.userId,
+      action
+    })
+
     if (!challenge || !(await compareCode(code, challenge.code))) {
       return unauthorizedError("Invalid or expired confirmation code")
     }
@@ -37,9 +40,7 @@ async function handleConfirm(req: AuthenticatedRequest) {
       const newEmail = String(payload.newEmail || "")
         .trim()
         .toLowerCase()
-      if (!newEmail) {
-        return validationError("Missing new email")
-      }
+      if (!newEmail) return validationError("Missing new email")
 
       const existing = await query("SELECT id FROM users WHERE email = $1 AND id <> $2", [
         newEmail,
@@ -83,6 +84,7 @@ async function handleConfirm(req: AuthenticatedRequest) {
         token: tokenValue,
         message: "Email updated"
       })
+
       response.cookies.set("token", tokenValue, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -90,14 +92,13 @@ async function handleConfirm(req: AuthenticatedRequest) {
         maxAge: 86400,
         path: "/"
       })
+
       return response
     }
 
     if (action === "password_change") {
       const newPasswordHash = String(payload.newPasswordHash || "")
-      if (!newPasswordHash) {
-        return validationError("Missing password payload")
-      }
+      if (!newPasswordHash) return validationError("Missing password payload")
 
       const updated = await query(
         `UPDATE users
@@ -134,6 +135,7 @@ async function handleConfirm(req: AuthenticatedRequest) {
         token: tokenValue,
         message: "Password updated"
       })
+
       response.cookies.set("token", tokenValue, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -141,14 +143,13 @@ async function handleConfirm(req: AuthenticatedRequest) {
         maxAge: 86400,
         path: "/"
       })
+
       return response
     }
 
     if (action === "category_change") {
       const categoryId = String(payload.categoryId || "").trim()
-      if (!categoryId) {
-        return validationError("Missing category payload")
-      }
+      if (!categoryId) return validationError("Missing category payload")
 
       const registrationResult = await query("SELECT id FROM registrations WHERE user_id = $1", [
         req.user!.userId
@@ -200,6 +201,7 @@ async function handleConfirm(req: AuthenticatedRequest) {
         token: tokenValue,
         message: "Category updated"
       })
+
       response.cookies.set("token", tokenValue, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -207,6 +209,7 @@ async function handleConfirm(req: AuthenticatedRequest) {
         maxAge: 86400,
         path: "/"
       })
+
       return response
     }
 

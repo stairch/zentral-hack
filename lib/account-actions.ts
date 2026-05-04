@@ -1,4 +1,3 @@
-import { randomBytes } from "crypto"
 import { query } from "@/lib/db"
 import { generateVerificationCode, hashCode } from "@/lib/auth"
 
@@ -19,7 +18,6 @@ export async function createAccountActionChallenge(params: {
 }) {
   const code = generateVerificationCode()
   const codeHash = await hashCode(code)
-  const token = randomBytes(24).toString("hex")
   const expiresAt = new Date(Date.now() + (params.expiresInMinutes || 15) * 60 * 1000)
   const payload = params.payload || {}
 
@@ -30,38 +28,17 @@ export async function createAccountActionChallenge(params: {
   )
 
   await query(
-    `INSERT INTO account_action_tokens (user_id, action, token, code, payload, expires_at)
-     VALUES ($1, $2, $3, $4, $5::jsonb, $6)`,
-    [params.userId, params.action, token, codeHash, JSON.stringify(payload), expiresAt.toISOString()]
+    `INSERT INTO account_action_tokens (user_id, action, code, payload, expires_at)
+     VALUES ($1, $2, $3, $4::jsonb, $5)`,
+    [params.userId, params.action, codeHash, JSON.stringify(payload), expiresAt.toISOString()]
   )
 
-  return { token, code, expiresAt }
-}
-
-export async function getPendingAccountAction(params: {
-  token: string
-  action: AccountAction
-  userId?: string
-}) {
-  const values: string[] = [params.token, params.action]
-  let sql = `SELECT id, user_id, action, token, code, payload, verified, expires_at
-     FROM account_action_tokens
-     WHERE token = $1 AND action = $2 AND verified = false AND expires_at > NOW()`
-
-  if (params.userId) {
-    values.push(params.userId)
-    sql += ` AND user_id = $3`
-  }
-
-  sql += ` ORDER BY created_at DESC LIMIT 1`
-
-  const result = await query(sql, values)
-  return result.rows[0] || null
+  return { code, expiresAt }
 }
 
 export async function getPendingAccountActionByUser(params: { userId: string; action: AccountAction }) {
   const result = await query(
-    `SELECT id, user_id, action, token, code, payload, verified, expires_at
+    `SELECT id, user_id, action, code, payload, verified, expires_at
      FROM account_action_tokens
      WHERE user_id = $1
        AND action = $2
