@@ -2,9 +2,9 @@
 
 | Type                                 | URL                                      | Vercel Project                                                            | Environment    | Vercel Deployment Type | [Vercel Flags](#feature-flags) |
 | ------------------------------------ | ---------------------------------------- | ------------------------------------------------------------------------- | -------------- | ---------------------- | ------------------------------ |
-| [Production](#production-deployment) | [zentralhack.ch](https://zentralhack.ch) | [prod-hack-zentral](https://vercel.com/stairs-projects/prod-hack-zentral) | Production     | Production (live)      | Production                     |
-| [Demo](#demo-deployment)             | See Bitwarden                            | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development ⚠️ | Production (live) ⚠️   | Production                     |
-| Development                          | localhost                                | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development    | -                      | Development                    |
+| [Production](#production-deployment) | [zentralhack.ch](https://zentralhack.ch) | [prod-zentral-hack](https://vercel.com/stairs-projects/prod-zentral-hack) | Production     | Production (live)      | Production                     |
+| [Demo](#demo-deployment)             | See Bitwarden                            | [dev-zentral-hack](https://vercel.com/stairs-projects/dev-zentral-hack)   | Development ⚠️ | Production (live) ⚠️   | Production                     |
+| Development                          | localhost                                | [dev-zentral-hack](https://vercel.com/stairs-projects/dev-zentral-hack)   | Development    | -                      | Development                    |
 
 ## Release Process
 
@@ -53,12 +53,12 @@ A deployment is created automatically whenever a tag is created that follows [Se
 
 ### Production Deployment
 
-Every tag that is a stable release (e.g. `1.0.0`, `1.2.0`) automatically creates a Production Deployment on the [**production Vercel project**](https://vercel.com/stairs-projects/prod-hack-zentral).
+Every tag that is a stable release (e.g. `1.0.0`, `1.2.0`) automatically creates a Production Deployment on the [**production Vercel project**](https://vercel.com/stairs-projects/prod-zentral-hack).
 This is the publicly accessible live website used by end-users.
 
 ### Demo Deployment
 
-Every tag that is a pre-release (e.g. `1.0.0-alpha.1`, `1.2.0-beta.5`) automatically creates a Vercel production deployment on the [**development Vercel project**](https://vercel.com/stairs-projects/dev-hack-zentral).
+Every tag that is a pre-release (e.g. `1.0.0-alpha.1`, `1.2.0-beta.5`) automatically creates a Vercel production deployment on the [**development Vercel project**](https://vercel.com/stairs-projects/dev-zentral-hack).
 This is used to showcase and test new features in a production-like environment before they are released to production.
 
 ---
@@ -128,8 +128,8 @@ export async function GET() {
    - `adapter: vercelAdapter()`
    - explicit `defaultValue`
 2. Create the same flag key in **both Vercel projects** via Vercel project > `Flags` on Sidebar:
-   - [prod-hack-zentral](https://vercel.com/stairs-projects/prod-hack-zentral)
-   - [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)
+   - [prod-zentral-hack](https://vercel.com/stairs-projects/prod-zentral-hack)
+   - [dev-zentral-hack](https://vercel.com/stairs-projects/dev-zentral-hack)
 
 > [!WARNING]
 > `defaultValue` must be set for every flag. This prevents a runtime error if a flag is missing or not configured correctly in Vercel.
