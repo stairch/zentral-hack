@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server"
-import { z } from "zod"
 import { query } from "@/lib/db"
 import { successResponse, validationError, serverError, unauthorizedError } from "@/lib/api"
 import { hashPassword, compareCode } from "@/lib/auth"
@@ -9,11 +8,7 @@ import {
   cleanupPendingActions
 } from "@/lib/account-actions"
 import { createRateLimiter } from "@/lib/rate-limit"
-
-const emailSchema = z
-  .string()
-  .email()
-  .transform((value) => value.toLowerCase())
+import { emailSchema, passwordSchema, getError } from "@/lib/validation"
 
 const rateLimiter = createRateLimiter("twofa")
 
@@ -25,19 +20,34 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
+    const rawEmail = body.email
+    if (!rawEmail) {
+      return validationError("Email is required")
+    }
+    const rawCode = body.code
+    const rawNewPassword = body.newPassword
+    const rawConfirmPassword = body.confirmPassword
+    if (!rawCode || !rawNewPassword || !rawConfirmPassword) {
+      return validationError("Code and passwords are required")
+    }
+
     const emailParsed = emailSchema.safeParse(body.email)
+    if (!emailParsed.success) {
+      return validationError(getError(emailParsed))
+    }
+
     const code = String(body.code || "")
       .trim()
       .toUpperCase()
-    const newPassword = String(body.newPassword || "")
-    const confirmPassword = String(body.confirmPassword || "")
-
-    if (!emailParsed.success || !code || !newPassword || !confirmPassword) {
-      return validationError("Email, code and passwords are required")
+    const newPasswordValidation = passwordSchema.safeParse(body.newPassword)
+    if (!newPasswordValidation.success) {
+      return validationError(getError(newPasswordValidation))
     }
 
-    if (newPassword !== confirmPassword) {
-      return validationError("Neue Passwörter stimmen nicht überein")
+    const confirmPassword = String(body.confirmPassword || "")
+    const newPasswordParsed = newPasswordValidation.data
+    if (newPasswordParsed !== confirmPassword) {
+      return validationError("Passwords not matching")
     }
 
     const userResult = await query("SELECT id FROM users WHERE email = $1 AND is_active = true", [
@@ -64,7 +74,7 @@ export async function POST(request: NextRequest) {
       return unauthorizedError("Invalid or expired reset code")
     }
 
-    const newPasswordHash = await hashPassword(newPassword)
+    const newPasswordHash = await hashPassword(newPasswordParsed)
 
     await query("UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2", [
       newPasswordHash,

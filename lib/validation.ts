@@ -1,14 +1,14 @@
 import { z } from "zod"
 
 // Shared patterns
-const passwordSchema = z
+export const passwordSchema = z
   .string()
-  .min(12, "Passwort muss mindestens 12 Zeichen lang sein")
-  .regex(/[A-Z]/, "Passwort muss mindestens einen Großbuchstaben enthalten")
-  .regex(/[0-9]/, "Passwort muss mindestens eine Zahl enthalten")
   .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, "Passwort muss mindestens ein Sonderzeichen enthalten")
+  .regex(/[0-9]/, "Passwort muss mindestens eine Zahl enthalten")
+  .regex(/[A-Z]/, "Passwort muss mindestens einen Großbuchstaben enthalten")
+  .min(12, "Passwort muss mindestens 12 Zeichen lang sein")
 
-const emailSchema = z.string().email("Ungültige E-Mail-Adresse").toLowerCase()
+export const emailSchema = z.string().email("Ungültige E-Mail-Adresse").toLowerCase()
 
 // Auth Schemas
 export const SignupSchema = z
@@ -166,10 +166,22 @@ export function validateRequest<T>(
   if (result.success) {
     return { success: true, data: result.data }
   }
+
+  const errors = formatErrors(result)
+  return { success: false, errors }
+}
+
+function formatErrors(result: any): Record<string, string> {
   const errors: Record<string, string> = {}
-  result.error.errors.forEach((err) => {
+  result.error.errors.forEach((err: any) => {
     const path = err.path.join(".")
     errors[path] = err.message
   })
-  return { success: false, errors }
+
+  return errors
+}
+
+export function getError(result: any): string {
+  const errors: Record<string, string> = formatErrors(result)
+  return Object.entries(errors)[0][1]
 }

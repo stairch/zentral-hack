@@ -9,6 +9,7 @@ import {
   type AccountAction
 } from "@/lib/account-actions"
 import { createRateLimiter } from "@/lib/rate-limit"
+import { passwordSchema, getError } from "@/lib/validation"
 
 const rateLimiter = createRateLimiter("twofa")
 
@@ -103,8 +104,23 @@ async function handleConfirm(req: AuthenticatedRequest) {
     }
 
     if (action === "password_change") {
-      const newPasswordHash = String(payload.newPasswordHash || "")
-      if (!newPasswordHash) return validationError("Missing password payload")
+      const rawNewPassword = payload.newPassword
+      const rawConfirmPassword = payload.confirmPassword
+
+      if (!rawNewPassword || !rawConfirmPassword) {
+        return validationError("Password required")
+      }
+
+      const passwordValidation = passwordSchema.safeParse(rawNewPassword)
+      if (!passwordValidation.success) {
+        return validationError(getError(passwordValidation))
+      }
+
+      if (rawNewPassword !== rawConfirmPassword) {
+        return validationError("Passwords not matching")
+      }
+
+      const newPasswordHash = await hashPassword(passwordValidation.data)
 
       const updated = await query(
         `UPDATE users

@@ -1,16 +1,11 @@
 import { NextRequest } from "next/server"
-import { z } from "zod"
 import { query } from "@/lib/db"
 import { successResponse, serverError } from "@/lib/api"
 import { sendEmail } from "@/lib/email"
 import { createAccountActionChallenge } from "@/lib/account-actions"
 import { renderAuthCodeEmail } from "@/lib/email-templates"
 import { createRateLimiter } from "@/lib/rate-limit"
-
-const emailSchema = z
-  .string()
-  .email()
-  .transform((value) => value.toLowerCase())
+import { emailSchema } from "@/lib/validation"
 
 const rateLimiter = createRateLimiter("auth")
 

@@ -37,7 +37,12 @@ export default function ResetPasswordPage() {
       sent: "Falls die E-Mail existiert, wurde ein Code gesendet.",
       success: "Passwort wurde aktualisiert",
       error: "Passwort zurücksetzen fehlgeschlagen",
-      backToLogin: "Zurück zum Login"
+      backToLogin: "Zurück zum Login",
+      passwordsNoMatch: "Passwörter stimmen nicht überein",
+      passwordMin: "Passwort muss mindestens 12 Zeichen lang sein",
+      passwordUpper: "Passwort muss mindestens einen Großbuchstaben enthalten",
+      passwordNumber: "Passwort muss mindestens eine Zahl enthalten",
+      passwordSpecial: "Passwort muss mindestens ein Sonderzeichen enthalten (!@#$%^&*...)"
     },
     en: {
       backHome: "Back to home",
@@ -54,7 +59,12 @@ export default function ResetPasswordPage() {
       sent: "If the email exists, a reset code was sent.",
       success: "Password updated successfully",
       error: "Password reset failed",
-      backToLogin: "Back to login"
+      backToLogin: "Back to login",
+      passwordsNoMatch: "Passwords do not match",
+      passwordMin: "Password must be at least 12 characters",
+      passwordUpper: "Password must include at least one uppercase letter",
+      passwordNumber: "Password must include at least one number",
+      passwordSpecial: "Password must include at least one special character (!@#$%^&*...)"
     }
   }[language]
 
@@ -77,13 +87,40 @@ export default function ResetPasswordPage() {
     }
   }
 
+  function validatePassword() {
+    if (newPassword !== confirmPassword) {
+      toast.error(t.passwordsNoMatch)
+      return false
+    }
+    if (newPassword.length < 12) {
+      toast.error(t.passwordMin)
+      return false
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      toast.error(t.passwordUpper)
+      return false
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      toast.error(t.passwordNumber)
+      return false
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword)) {
+      toast.error(t.passwordSpecial)
+      return false
+    }
+
+    return true
+  }
+
   const confirmReset = async (event: React.FormEvent) => {
     event.preventDefault()
 
     if (!code || !newPassword || !confirmPassword) return
+    if (!validatePassword()) return
 
     setLoading(true)
     try {
+      console.log("request: /api/auth/password-reset/confirm")
       const res = await fetch("/api/auth/password-reset/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -188,7 +225,7 @@ export default function ResetPasswordPage() {
               </div>
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !code || !newPassword || !confirmPassword}
                 className="h-12 w-full bg-[#530A5D] text-white hover:bg-[#530A5D]/90">
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Lock className="mr-2 h-5 w-5" />}
                 {loading ? t.confirmButton : t.confirmButton}

@@ -295,7 +295,13 @@ export function RegistrationForm() {
     setLoading(true)
     setEmailError("")
     try {
-      await signup(formData.email, formData.password, formData.firstName, formData.lastName)
+      await signup(
+        formData.email,
+        formData.password,
+        formData.confirmPassword,
+        formData.firstName,
+        formData.lastName
+      )
       setShow2FA(true)
       toast.success(t.twoFaSent)
     } catch (error) {

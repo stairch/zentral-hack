@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/lib/auth-context"
 import { useLanguage } from "@/lib/language-context"
+import { emailSchema } from "@/lib/validation"
 
 interface CategoryOption {
   id: string
@@ -63,6 +64,7 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
           emailTitle: "E-Mail-Adresse ändern",
           emailDescription: "Ändere die E-Mail-Adresse deines Kontos.",
           emailInfo: "Der Bestätigungscode wird an deine neue E-Mail gesendet.",
+          emailInvalid: "Ungültige E-Mail-Adresse.",
           newEmail: "Neue E-Mail",
           sendCode: "Code senden",
           confirmCode: "Code bestätigen",
@@ -73,6 +75,11 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
           currentPassword: "Aktuelles Passwort",
           newPassword: "Neues Passwort",
           confirmPassword: "Neues Passwort bestätigen",
+          passwordsNoMatch: "Neue Passwörter stimmen nicht überein",
+          passwordMin: "Neues Passwort muss mindestens 12 Zeichen lang sein",
+          passwordUpper: "Neues Passwort muss mindestens einen Großbuchstaben enthalten",
+          passwordNumber: "Neues Passwort muss mindestens eine Zahl enthalten",
+          passwordSpecial: "Neues Passwort muss mindestens ein Sonderzeichen enthalten (!@#$%^&*...)",
           categoryTitle: "Kategorie ändern",
           categoryDescription: "Ändere die Kategorie deiner Anmeldung.",
           selectCategory: "Kategorie auswählen",
@@ -97,6 +104,7 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
           emailTitle: "Change email address",
           emailDescription: "Change the email address for your account.",
           emailInfo: "The confirmation code will be sent to your new email address.",
+          emailInvalid: "Invalid email address.",
           newEmail: "New email",
           sendCode: "Send code",
           confirmCode: "Confirm code",
@@ -107,6 +115,11 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
           currentPassword: "Current password",
           newPassword: "New password",
           confirmPassword: "Confirm new password",
+          passwordsNoMatch: "New passwords do not match",
+          passwordMin: "New password must be at least 12 characters",
+          passwordUpper: "New password must include at least one uppercase letter",
+          passwordNumber: "New password must include at least one number",
+          passwordSpecial: "New password must include at least one special character (!@#$%^&*...)",
           categoryTitle: "Change category",
           categoryDescription: "Change the category of your registration.",
           selectCategory: "Select category",
@@ -185,6 +198,11 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
 
   const handleRequestEmail = async () => {
     if (!emailState.newEmail) return
+    if (!emailSchema.safeParse(emailState.newEmail).success) {
+      toast.error(text.emailInvalid)
+      return
+    }
+
     setLoadingAction("email-request")
     try {
       await requestAction("email_change", { newEmail: emailState.newEmail })
@@ -215,8 +233,37 @@ export function AccountSettings({ currentCategoryId, onUpdated }: AccountSetting
     }
   }
 
+  function validatePassword() {
+    const newPassword = passwordState.newPassword
+    const confirmPassword = passwordState.confirmPassword
+    if (newPassword !== confirmPassword) {
+      toast.error(text.passwordsNoMatch)
+      return false
+    }
+    if (newPassword.length < 12) {
+      toast.error(text.passwordMin)
+      return false
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      toast.error(text.passwordUpper)
+      return false
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      toast.error(text.passwordNumber)
+      return false
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword)) {
+      toast.error(text.passwordSpecial)
+      return false
+    }
+
+    return true
+  }
+
   const handleRequestPassword = async () => {
     if (!passwordState.currentPassword || !passwordState.newPassword || !passwordState.confirmPassword) return
+    if (!validatePassword()) return
+
     setLoadingAction("password-request")
     try {
       await requestAction("password_change", {
