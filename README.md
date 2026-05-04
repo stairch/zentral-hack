@@ -1,10 +1,10 @@
 ## Project Overview
 
-| Type                                 | URL                                                           | Vercel Project                                                            | Environment    | Vercel Deployment Type | [Vercel Flags](#feature-flags) |
-| ------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------- | ---------------------- | ------------------------------ |
-| [Production](#production-deployment) | [zentralhack.ch](https://zentralhack.ch)                      | [prod-hack-zentral](https://vercel.com/stairs-projects/prod-hack-zentral) | Production     | Production (live)      | Production                     |
-| [Demo](#demo-deployment)             | [project-7ly5q.vercel.app](https://project-7ly5q.vercel.app/) | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development ⚠️ | Production (live) ⚠️   | Production                     |
-| Development                          | localhost                                                     | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development    | -                      | Development                    |
+| Type                                 | URL                                      | Vercel Project                                                            | Environment    | Vercel Deployment Type | [Vercel Flags](#feature-flags) |
+| ------------------------------------ | ---------------------------------------- | ------------------------------------------------------------------------- | -------------- | ---------------------- | ------------------------------ |
+| [Production](#production-deployment) | [zentralhack.ch](https://zentralhack.ch) | [prod-hack-zentral](https://vercel.com/stairs-projects/prod-hack-zentral) | Production     | Production (live)      | Production                     |
+| [Demo](#demo-deployment)             | See Bitwarden                            | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development ⚠️ | Production (live) ⚠️   | Production                     |
+| Development                          | localhost                                | [dev-hack-zentral](https://vercel.com/stairs-projects/dev-hack-zentral)   | Development    | -                      | Development                    |
 
 ## Release Process
 
