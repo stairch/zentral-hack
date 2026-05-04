@@ -17,8 +17,6 @@
 - Always use a branch
 - Merge only via Pull Request (PR)
 
----
-
 ### Features
 
 - Develop features in separate branches
@@ -27,8 +25,6 @@
   - ready to be released
 
 - It is valid to keep finished features in a branch until the planned release (e.g. milestone)
-
----
 
 ### Bug Fixes (Hotfixes)
 
@@ -43,9 +39,9 @@
 
 We follow [Semantic Versioning](https://semver.org):
 
-- **Patch (1.0.x)** → bug fixes  
-- **Minor (1.x.0)** → new features  
-- **Major (x.0.0)** → breaking changes  
+- **Patch (1.0.x)** → bug fixes
+- **Minor (1.x.0)** → new features
+- **Major (x.0.0)** → breaking changes
 
 ---
 
