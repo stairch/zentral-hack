@@ -154,7 +154,6 @@ CREATE TABLE IF NOT EXISTS team_github_repos (
 CREATE TABLE IF NOT EXISTS two_fa_tokens (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  token       TEXT        NOT NULL UNIQUE,
   code        TEXT        NOT NULL,
   verified    BOOLEAN     NOT NULL DEFAULT false,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -166,7 +165,6 @@ CREATE TABLE IF NOT EXISTS account_action_tokens (
   user_id     UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   action      TEXT        NOT NULL
                           CHECK (action IN ('email_change', 'password_change', 'category_change', 'delete_account', 'password_reset')),
-  token       TEXT        NOT NULL UNIQUE,
   code        TEXT        NOT NULL,
   payload     JSONB       NOT NULL DEFAULT '{}'::jsonb,
   verified    BOOLEAN     NOT NULL DEFAULT false,
