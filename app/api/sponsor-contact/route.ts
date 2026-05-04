@@ -73,7 +73,11 @@ export async function POST(request: Request) {
 
     const emails: string[] = []
     if (process.env.NODE_ENV === "production") {
-      emails.push(Emails.sponsoringZentralHack)
+      if (process.env.TEST_EMAIL) {
+        emails.push(process.env.TEST_EMAIL)
+      } else {
+        emails.push(Emails.sponsoringZentralHack)
+      }
     } else {
       if (process.env.TEST_EMAIL) {
         emails.push(process.env.TEST_EMAIL)
