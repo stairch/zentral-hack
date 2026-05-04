@@ -1,7 +1,7 @@
 export class Emails {
   static infoZentralHack = "info@zentralhack.ch"
   static contactHSLU = "future.talents@hslu.ch"
-  static sponsoringZentralHack = Emails.contactHSLU // temporary; TODO: change to sponsoring@zentralhack.ch
+  static sponsoringZentralHack = "sponsoring@zentralhack.ch"
 }
 
 export class PhoneNumbers {
