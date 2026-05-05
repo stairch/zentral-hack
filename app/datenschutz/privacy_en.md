@@ -81,12 +81,12 @@ When accessing our website, technical access data (IP address, browser type, tim
 
 To provide our platform, we use the following service providers who may process personal data on our behalf:
 
-| Service Provider              | Purpose                          | Headquarters                    |
-| ----------------------------- | -------------------------------- | ------------------------------- |
-| **Vercel Inc.**               | Web application hosting          | USA (data in Frankfurt, EU)     |
-| **Neon Inc.**                 | Database operations (PostgreSQL) | USA (data in Frankfurt, EU)     |
-| **Microsoft Corporation**     | Email delivery via Microsoft 365 | USA                             |
-| **Vercel Blob (Vercel Inc.)** | Storage of uploaded files        | USA (data in Frankfurt, EU)     |
+| Service Provider              | Purpose                          | Headquarters                |
+| ----------------------------- | -------------------------------- | --------------------------- |
+| **Vercel Inc.**               | Web application hosting          | USA (data in Frankfurt, EU) |
+| **Neon Inc.**                 | Database operations (PostgreSQL) | USA (data in Frankfurt, EU) |
+| **Microsoft Corporation**     | Email delivery via Microsoft 365 | USA                         |
+| **Vercel Blob (Vercel Inc.)** | Storage of uploaded files        | USA (data in Frankfurt, EU) |
 
 Contractual data protection agreements are in place with all data processors.
 

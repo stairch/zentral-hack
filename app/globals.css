@@ -206,11 +206,11 @@
 }
 
 .md-content th {
-  @apply bg-muted text-muted-foreground border border-border px-4 py-2 text-left font-semibold;
+  @apply bg-muted text-muted-foreground border-border border px-4 py-2 text-left font-semibold;
 }
 
 .md-content td {
-  @apply text-muted-foreground border border-border px-4 py-2;
+  @apply text-muted-foreground border-border border px-4 py-2;
 }
 
 .md-content tr:nth-child(even) td {

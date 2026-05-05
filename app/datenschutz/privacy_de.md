@@ -81,12 +81,12 @@ Beim Aufruf unserer Website werden technische Zugriffsdaten (IP-Adresse, Browser
 
 Zur Bereitstellung unserer Plattform setzen wir folgende Dienstleister ein, welche Personendaten in unserem Auftrag bearbeiten können:
 
-| Dienstleister                 | Zweck                              | Sitz                              |
-| ----------------------------- | ---------------------------------- | --------------------------------- |
-| **Vercel Inc.**               | Hosting der Webanwendung           | USA (Daten in Frankfurt, EU)      |
-| **Neon Inc.**                 | Betrieb der Datenbank (PostgreSQL) | USA (Daten in Frankfurt, EU)      |
-| **Microsoft Corporation**     | E-Mail-Versand via Microsoft 365   | USA                               |
-| **Vercel Blob (Vercel Inc.)** | Speicherung hochgeladener Dateien  | USA (Daten in Frankfurt, EU)      |
+| Dienstleister                 | Zweck                              | Sitz                         |
+| ----------------------------- | ---------------------------------- | ---------------------------- |
+| **Vercel Inc.**               | Hosting der Webanwendung           | USA (Daten in Frankfurt, EU) |
+| **Neon Inc.**                 | Betrieb der Datenbank (PostgreSQL) | USA (Daten in Frankfurt, EU) |
+| **Microsoft Corporation**     | E-Mail-Versand via Microsoft 365   | USA                          |
+| **Vercel Blob (Vercel Inc.)** | Speicherung hochgeladener Dateien  | USA (Daten in Frankfurt, EU) |
 
 Mit allen Auftragsbearbeitern bestehen vertragliche Vereinbarungen zum Schutz Ihrer Personendaten.
 
