@@ -15,6 +15,7 @@ import {
   getSponsorPackagePriceLabel,
   type SponsorPackage
 } from "@/lib/sponsorship-packages"
+import { getContrastForegroundColor } from "@/lib/helpers"
 
 interface FormData {
   companyName: string
@@ -211,19 +212,22 @@ export function SponsorshipModal({
                   <div className="space-y-6">
                     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
                       <div
-                        className="rounded-xl border p-5"
+                        className="rounded-xl border border-neutral-200 p-5"
                         style={{
-                          backgroundColor: `${localizedActivePackage?.color}12`,
-                          borderColor: `${localizedActivePackage?.color}66`
+                          backgroundColor: `${localizedActivePackage?.color}12`
                         }}>
                         <div className="mb-4 flex flex-wrap items-center gap-2">
-                          <p
-                            className="text-xs font-semibold tracking-[0.2em] uppercase"
-                            style={{ color: localizedActivePackage?.color }}>
+                          <p className="text-xs font-semibold tracking-[0.2em] uppercase">
                             {localizedActivePackage?.name}
                           </p>
                           {activePackagePrice && (
-                            <span className="rounded-full border border-current/15 bg-white/70 px-2.5 py-0.5 text-xs font-medium">
+                            <span
+                              className="rounded-full border border-current/15 px-2.5 py-0.5 text-xs font-medium"
+                              style={{
+                                backgroundColor: localizedActivePackage?.color,
+                                color: getContrastForegroundColor(localizedActivePackage?.color || ""),
+                                borderColor: `color-mix(${localizedActivePackage?.color} 100%, black 20%)`
+                              }}>
                               {activePackagePrice === "Price on request" ||
                               activePackagePrice === "Preis auf Anfrage"
                                 ? text.packagePriceOnRequest
@@ -244,7 +248,9 @@ export function SponsorshipModal({
                             <div key={benefit} className="flex items-start gap-2 text-sm">
                               <Check
                                 className="mt-0.5 h-4 w-4 shrink-0"
-                                style={{ color: localizedActivePackage?.color }}
+                                style={{
+                                  color: `color-mix(${localizedActivePackage?.color} 100%, black 20%)`
+                                }}
                               />
                               <span>{benefit}</span>
                             </div>
@@ -265,19 +271,26 @@ export function SponsorshipModal({
                                 key={pkg.id}
                                 type="button"
                                 onClick={() => handleSelectPackage(pkg)}
-                                className="text-muted-foreground cursor-pointer rounded-lg border px-4 py-3 text-left text-xs transition-all"
+                                className="text-muted-foreground cursor-pointer rounded-lg border border-neutral-200 px-4 py-3 text-left text-xs transition-all"
                                 style={{
-                                  borderColor: activePackageId === pkg.id ? packageColor : "#e5e7eb",
                                   backgroundColor:
                                     activePackageId === pkg.id ? `${packageColor}12` : "transparent"
                                 }}>
-                                <p className="font-semibold" style={{ color: packageColor }}>
+                                <span
+                                  className="py-0.2 rounded-full border border-current/15 px-1.5 text-xs font-semibold"
+                                  style={{
+                                    backgroundColor: packageColor,
+                                    color: getContrastForegroundColor(packageColor),
+                                    borderColor: `color-mix(${packageColor} 100%, black 20%)`
+                                  }}>
                                   {localizedPkg.name}
-                                </p>
+                                </span>
                                 {localizedPkg.short_description && (
-                                  <p className="mt-1">{localizedPkg.short_description}</p>
+                                  <p className="mt-2">{localizedPkg.short_description}</p>
                                 )}
-                                {packagePriceLabel && <p className="mt-1">{packagePriceLabel}</p>}
+                                {packagePriceLabel && (
+                                  <p className="mt-2 font-semibold">{packagePriceLabel}</p>
+                                )}
                               </button>
                             )
                           })}
