@@ -40,6 +40,7 @@ interface Category {
   color?: string | null
   icon?: string | null
   prize?: string | null
+  prize_en?: string | null
   target_group?: string | null
   target_group_en?: string | null
 }
@@ -54,6 +55,7 @@ interface EditFormState {
   color: string
   icon: string
   prize: string
+  prizeEn: string
   targetGroup: string
   targetGroupEn: string
 }
@@ -77,6 +79,7 @@ export function AdminCategoriesPage() {
     color: "#530A5D",
     icon: "sparkles",
     prize: "",
+    prizeEn: "",
     targetGroup: "",
     targetGroupEn: ""
   })
@@ -122,7 +125,8 @@ export function AdminCategoriesPage() {
           previewHint: "Preview follows the currently selected admin language.",
           partnerPreviewLabel: "Partner",
           challengePreviewLabel: "Challenge",
-          prizeLabel: "Prize money (category-level)",
+          prizeLabel: "Prize money (category-level) German",
+          prizeLabelEn: "Prize money (category-level) English",
           prizePlaceholder: "e.g. CHF 500",
           prizeHint: "Shown publicly only for categories without individual challenges.",
           targetGroupLabel: "Target audience",
@@ -166,7 +170,8 @@ export function AdminCategoriesPage() {
           previewHint: "Die Vorschau folgt der aktuell gewählten Admin-Sprache.",
           partnerPreviewLabel: "Partner",
           challengePreviewLabel: "Challenge",
-          prizeLabel: "Preisgeld (Kategorie-Ebene)",
+          prizeLabel: "Preisgeld (Kategorie-Ebene) Deutsch",
+          prizeLabelEn: "Preisgeld (Kategorie-Ebene) Englisch",
           prizePlaceholder: "z.B. CHF 500",
           prizeHint: "Wird öffentlich nur für Kategorien ohne eigene Challenges angezeigt.",
           targetGroupLabel: "Zielgruppe",
@@ -246,6 +251,7 @@ export function AdminCategoriesPage() {
           color: normalizeHexColor(editForm.color),
           icon: editForm.icon,
           prize: editForm.prize || null,
+          prizeEn: editForm.prizeEn || null,
           targetGroup: editForm.targetGroup || null,
           targetGroupEn: editForm.targetGroupEn || null
         })
@@ -273,6 +279,7 @@ export function AdminCategoriesPage() {
                 color: normalizeHexColor(editForm.color),
                 icon: editForm.icon,
                 prize: editForm.prize || null,
+                prize_en: editForm.prizeEn || null,
                 target_group: editForm.targetGroup || null,
                 target_group_en: editForm.targetGroupEn || null
               }
@@ -416,6 +423,7 @@ export function AdminCategoriesPage() {
                               color: presentation.color,
                               icon: presentation.iconName,
                               prize: category.prize || "",
+                              prizeEn: category.prize_en || "",
                               targetGroup: category.target_group || "",
                               targetGroupEn: category.target_group_en || ""
                             })
@@ -555,7 +563,16 @@ export function AdminCategoriesPage() {
                                 />
                                 <p className="text-muted-foreground mt-1 text-xs">{text.prizeHint}</p>
                               </div>
-                              <div />
+                              <div>
+                                <Label htmlFor="prize">{text.prizeLabelEn}</Label>
+                                <Input
+                                  id="prize"
+                                  value={editForm.prizeEn}
+                                  onChange={(e) => updateEditForm("prizeEn", e.target.value)}
+                                  placeholder={text.prizePlaceholder}
+                                />
+                                <p className="text-muted-foreground mt-1 text-xs">{text.prizeHint}</p>
+                              </div>
                               <div>
                                 <Label htmlFor="targetGroup">
                                   {text.targetGroupLabel} ({text.germanSection})
