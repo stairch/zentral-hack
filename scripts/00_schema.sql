@@ -348,168 +348,168 @@ CREATE INDEX IF NOT EXISTS idx_sponsor_contacts_status        ON sponsor_contact
 
 
 -- =============================================================================
--- SEED DATA
+-- SEED DATA !! (ONLY FIRST TIME) !!
 -- =============================================================================
 
-INSERT INTO categories (name, name_en, slug, description, description_en, partner_name, partner_name_en, color, icon, is_active) VALUES
-  (
-    'Young Talents', 'Young Talents',
-    'young-talents',
-    'Für den Nachwuchs der ICT-Branche. Zeige dein Können und sammle erste echte Hackathon-Erfahrung.',
-    'For the next generation of ICT. Show what you can do and gain your first real hackathon experience.',
-    'ICT Berufsbildung Zentralschweiz & UMB AG', 'ICT Berufsbildung Zentralschweiz & UMB AG',
-    '#E6FF17', 'sparkles', true
-  ),
-  (
-    'AI Agentic', 'AI Agentic',
-    'ai-agentic',
-    'Entwickle agentische KI-Lösungen, intelligente Automationen und neue Formen der Zusammenarbeit mit AI.',
-    'Build agentic AI solutions, intelligent automations, and new ways of collaborating with AI.',
-    'ICT Berufsbildung Zentralschweiz, Digital & AI Community & getAbstract',
-    'ICT Berufsbildung Zentralschweiz, Digital & AI Community & getAbstract',
-    '#530A5D', 'brain', true
-  ),
-  (
-    'Campus Challenge', 'Campus Challenge',
-    'campus-challenge',
-    'Eine Challenge für Studierende, in der akademische Perspektiven auf praktische Probleme treffen.',
-    'A challenge for students where academic perspectives meet real-world problems.',
-    'STAIR', 'STAIR',
-    '#D6C6FF', 'graduation-cap', true
-  ),
-  (
-    'Regional Impact', 'Regional Impact',
-    'regional-impact',
-    'Arbeite an Lösungen mit direktem Nutzen für die Zentralschweiz und ihre Unternehmen, Institutionen und Menschen.',
-    'Work on solutions with direct impact for Central Switzerland and its businesses, institutions, and people.',
-    'SchwyzNext', 'SchwyzNext',
-    '#7A1F83', 'mountain', true
-  )
-ON CONFLICT (slug) DO UPDATE
-  SET name             = EXCLUDED.name,
-      name_en          = EXCLUDED.name_en,
-      description      = EXCLUDED.description,
-      description_en   = EXCLUDED.description_en,
-      partner_name     = EXCLUDED.partner_name,
-      partner_name_en  = EXCLUDED.partner_name_en,
-      color            = EXCLUDED.color,
-      icon             = EXCLUDED.icon,
-      is_active        = EXCLUDED.is_active;
-
-INSERT INTO schedule_items (day, time, icon, title_de, title_en, description_de, description_en, sort_order) VALUES
-  (1, '17:00', 'clock',        'Check-in',               'Check-in',              'Empfang und Registrierung',             'Welcome and registration',                10),
-  (1, '18:00', 'presentation', 'Begrüssung',             'Welcome',               'Willkommen zum Zentral Hack',           'Welcome to Zentral Hack',                 20),
-  (1, '18:30', 'presentation', 'Challenge Pitches',      'Challenge Pitches',     'Vorstellung der Challenges',            'Introduction to all challenges',          30),
-  (1, '19:00', 'coffee',       'Teambildung & Apéro',    'Team Matching & Apéro', 'Finde dein Team bei Sponsoren-Apéro',  'Find your team during the sponsor apéro', 40),
-  (1, '19:30', 'code',         'Start des Hacks',        'Hack Starts',           'Los geht''s!',                          'Let''s go!',                              50),
-  (1, '20:00', 'utensils',     'Dinner Buffet',          'Dinner Buffet',         'Stärkung für die Nacht',               'Fuel up for the night',                   60),
-  (1, '23:00', 'party-popper', 'Night Special',          'Night Special',         'Überraschung!',                        'Surprise!',                               70),
-  (2, '08:00', 'coffee',       'Frühstücksbuffet',       'Breakfast Buffet',      'Energie für den Tag',                  'Energy for the day',                      10),
-  (2, '10:00', 'presentation', 'Referate & Speeches',    'Talks & Speeches',      'Inspirierende Vorträge',               'Inspiring talks',                         20),
-  (2, '12:00', 'utensils',     'Lunchbuffet',            'Lunch Buffet',          'Mittagspause',                         'Lunch break',                             30),
-  (2, '16:00', 'coffee',       'Nachmittagssnack',       'Afternoon Snack',       'Letzte Energie',                       'Final energy boost',                      40),
-  (2, '19:00', 'presentation', 'Abschlusspräsentationen','Final Presentations',   'Zeigt was ihr geschafft habt',         'Show what you have built',                50),
-  (2, '22:00', 'party-popper', 'Ende & Preisverleihung', 'Closing & Awards',      'Feier mit uns!',                       'Celebrate with us!',                      60)
-ON CONFLICT DO NOTHING;
-
-INSERT INTO site_settings (key, value) VALUES (
-  'about_stats',
-  '[
-    {"value": 24,  "suffix": "",  "label_de": "Stunden",        "label_en": "Hours"},
-    {"value": 4,   "suffix": "",  "label_de": "Kategorien",     "label_en": "Categories"},
-    {"value": 200, "suffix": "+", "label_de": "Teilnehmende",   "label_en": "Participants"},
-    {"value": 1,   "suffix": "",  "label_de": "Ziel",           "label_en": "Goal"}
-  ]'::jsonb
-) ON CONFLICT (key) DO NOTHING;
-
-INSERT INTO partner_logos (name, logo_url, website_url, logo_size, sort_order) VALUES
-  ('HSLU',                         '/partners/hslu-logo.png',         'https://hslu.ch/informatik', 'large',  10),
-  ('ICT Berufsbildung Zentralschweiz', '/partners/ict-bz-logo.png',  'https://ict-bz.ch',          'medium', 20),
-  ('UMB AG',                       '/partners/umb-logo.png',          'https://umb.ch',             'medium', 30),
-  ('Digital & AI Community',       '/partners/ai-community-logo.png', 'https://ai-community.ch',   'medium', 40),
-  ('getAbstract',                  '/partners/getabstract-logo.png',  'https://getabstract.com',   'medium', 50),
-  ('STAIR',                        '/partners/stair-logo.png',        'https://stair.ch',           'medium', 60),
-  ('SchwyzNext',                   '/partners/schwyznext-logo.png',   'https://schwyz-next.ch',    'small',  70)
-ON CONFLICT DO NOTHING;
-
-INSERT INTO sponsor_packages (name, display_order, description, color, benefits) VALUES
-  ('Platin', 1,
-    'Das Platin-Paket ist die engste Partnerschaft mit dem Zentral Hack und kombiniert maximale Sichtbarkeit mit aktiver Mitgestaltung.',
-    '#530A5D', ARRAY[
-      'Beteiligung an Organisation und Mitgestaltung der Eventplanung',
-      'Lead-Partner einer Kategorie mit starker inhaltlicher Präsenz',
-      'Prominentes Branding auf Website, Event-Plattform, Flyer, Give-aways und Social Media',
-      'Sponsor-Porträt auf Social Media sowie zusätzliche Sichtbarkeit auf dem HSLU-Moodboard',
-      'Grosse Präsenzfläche vor Ort inklusive Werbemittel, LED-Banner und Recruiting-Möglichkeiten',
-      'Offizielle Erwähnung während des Events sowie Zugang zu Networking mit Jury, Departement und Talenten'
-    ]
-  ),
-  ('Gold', 2,
-    'Das Gold-Paket sorgt für eine starke Event-Präsenz mit hochwertigem Branding, Aktivierung vor Ort und direktem Austausch.',
-    '#E6FF17', ARRAY[
-      'Branding auf Website, Event-Plattform, Flyer und Social Media',
-      'Sponsor-Porträt auf Social Media und zusätzliche Sichtbarkeit über ausgewählte Eventflächen',
-      'LED-Banner-Präsenz und Einbindung in Give-away-Aktivierungen',
-      'Präsenzfläche vor Ort für Austausch, Interaktion und Markeninszenierung',
-      'Möglichkeit zur Platzierung eigener Werbemittel am Event',
-      'Direkter Zugang zu Apéro, Networking und Recruiting im Eventumfeld'
-    ]
-  ),
-  ('Silber', 3,
-    'Das Silber-Paket bietet eine ausgewogene Mischung aus Sichtbarkeit, Event-Präsenz und wertvollen Kontaktpunkten.',
-    '#C0C0C0', ARRAY[
-      'Sichtbarkeit auf Website, Event-Plattform und ausgewählten Eventmedien',
-      'Branding in Social-Media-Kommunikation und auf Sponsor-Übersichten',
-      'Präsenz vor Ort mit kompakten Werbe- und Aktivierungsmöglichkeiten',
-      'Einbindung in zentrale Eventmomente und Sponsorennennung',
-      'Möglichkeit zur Platzierung eigener Werbemittel',
-      'Zugang zu Networking mit Teilnehmenden und Partnern'
-    ]
-  ),
-  ('Bronze', 4,
-    'Das Bronze-Paket ist der kompakte Einstieg in das Sponsoring des Zentral Hack mit klarem, fokussiertem Auftritt.',
-    '#CD7F32', ARRAY[
-      'Branding auf Website und Event-Plattform',
-      'Präsenz auf ausgewählten Kommunikations- und Übersichtsflächen',
-      'Kompakte Sichtbarkeit vor Ort während des Events',
-      'Möglichkeit zur Platzierung von Werbematerial im Rahmen des Events',
-      'Einbindung in Sponsorennennung und Eventkommunikation',
-      'Niederschwelliger Zugang zum Sponsoring-Netzwerk des Zentral Hack'
-    ]
-  )
-ON CONFLICT (name) DO UPDATE
-  SET display_order = EXCLUDED.display_order,
-      description   = EXCLUDED.description,
-      color         = EXCLUDED.color,
-      benefits      = EXCLUDED.benefits;
-
-INSERT INTO faqs (question, question_en, answer, answer_en, order_position, is_active) VALUES
-  ('Was ist der Zentral Hack?', 'What is Zentral Hack?',
-    'Der Zentral Hack 2026 ist der grösste Hackathon der Zentralschweiz. 48 Stunden, in denen Studierende, Fachleute und Kreative zusammenkommen, um innovative Lösungen für reale Herausforderungen zu entwickeln.',
-    'Zentral Hack 2026 is the largest hackathon in Central Switzerland. A 48-hour event where students, professionals, and creatives come together to build innovative solutions for real-world challenges.',
-    1, true),
-  ('Wer kann teilnehmen?', 'Who can participate?',
-    'Alle sind willkommen! Ob Studierende, Berufstätige oder einfach technikbegeistert – jede:r kann sich registrieren und mitmachen.',
-    'Everyone is welcome. Whether you are a student, professional, or simply excited about technology, you can sign up and join.',
-    2, true),
-  ('Brauche ich ein Team?', 'Do I need a team?',
-    'Nein, du kannst dich auch alleine registrieren. Wir helfen dir, ein passendes Team zu finden. Alternativ kannst du auch bereits mit einem Team kommen.',
-    'No. You can also register on your own. We can help you find a suitable team, or you can join with your existing team.',
-    3, true),
-  ('Brauche ich Vorkenntnisse?', 'Do I need prior experience?',
-    'Grundlegende Programmierkenntnisse sind hilfreich, aber nicht zwingend. Es gibt Kategorien für verschiedene Erfahrungsstufen.',
-    'Basic programming experience is helpful, but not required. There are challenge categories for different experience levels.',
-    4, true),
-  ('Gibt es Verpflegung?', 'Will food and drinks be provided?',
-    'Ja! Während des gesamten Events gibt es Mahlzeiten, Snacks und Getränke. Bitte gib bei der Anmeldung Allergien und Unverträglichkeiten an.',
-    'Yes. Meals, snacks, and drinks are provided throughout the event. Please include allergies and intolerances during registration.',
-    5, true),
-  ('Wo findet der Hackathon statt?', 'Where does the hackathon take place?',
-    'Der Zentral Hack findet an der Hochschule Luzern (HSLU) statt. Der genaue Standort wird nach der Anmeldung bekannt gegeben.',
-    'Zentral Hack takes place at Lucerne University of Applied Sciences and Arts (HSLU). The exact location is shared after registration.',
-    6, true),
-  ('Wie kann ich mich registrieren?', 'How can I register?',
-    'Klicke einfach auf "Registrieren" und folge den Anweisungen. Du erhältst eine Bestätigungsemail mit allen Details.',
-    'Click "Register now" and follow the instructions. You will receive a confirmation email with all details.',
-    7, true)
-ON CONFLICT DO NOTHING;
+-- INSERT INTO categories (name, name_en, slug, description, description_en, partner_name, partner_name_en, color, icon, is_active) VALUES
+--   (
+--     'Young Talents', 'Young Talents',
+--     'young-talents',
+--     'Für den Nachwuchs der ICT-Branche. Zeige dein Können und sammle erste echte Hackathon-Erfahrung.',
+--     'For the next generation of ICT. Show what you can do and gain your first real hackathon experience.',
+--     'ICT Berufsbildung Zentralschweiz & UMB AG', 'ICT Berufsbildung Zentralschweiz & UMB AG',
+--     '#E6FF17', 'sparkles', true
+--   ),
+--   (
+--     'AI Agentic', 'AI Agentic',
+--     'ai-agentic',
+--     'Entwickle agentische KI-Lösungen, intelligente Automationen und neue Formen der Zusammenarbeit mit AI.',
+--     'Build agentic AI solutions, intelligent automations, and new ways of collaborating with AI.',
+--     'ICT Berufsbildung Zentralschweiz, Digital & AI Community & getAbstract',
+--     'ICT Berufsbildung Zentralschweiz, Digital & AI Community & getAbstract',
+--     '#530A5D', 'brain', true
+--   ),
+--   (
+--     'Campus Challenge', 'Campus Challenge',
+--     'campus-challenge',
+--     'Eine Challenge für Studierende, in der akademische Perspektiven auf praktische Probleme treffen.',
+--     'A challenge for students where academic perspectives meet real-world problems.',
+--     'STAIR', 'STAIR',
+--     '#D6C6FF', 'graduation-cap', true
+--   ),
+--   (
+--     'Regional Impact', 'Regional Impact',
+--     'regional-impact',
+--     'Arbeite an Lösungen mit direktem Nutzen für die Zentralschweiz und ihre Unternehmen, Institutionen und Menschen.',
+--     'Work on solutions with direct impact for Central Switzerland and its businesses, institutions, and people.',
+--     'SchwyzNext', 'SchwyzNext',
+--     '#7A1F83', 'mountain', true
+--   )
+-- ON CONFLICT (slug) DO UPDATE
+--   SET name             = EXCLUDED.name,
+--       name_en          = EXCLUDED.name_en,
+--       description      = EXCLUDED.description,
+--       description_en   = EXCLUDED.description_en,
+--       partner_name     = EXCLUDED.partner_name,
+--       partner_name_en  = EXCLUDED.partner_name_en,
+--       color            = EXCLUDED.color,
+--       icon             = EXCLUDED.icon,
+--       is_active        = EXCLUDED.is_active;
+-- 
+-- INSERT INTO schedule_items (day, time, icon, title_de, title_en, description_de, description_en, sort_order) VALUES
+--   (1, '17:00', 'clock',        'Check-in',               'Check-in',              'Empfang und Registrierung',             'Welcome and registration',                10),
+--   (1, '18:00', 'presentation', 'Begrüssung',             'Welcome',               'Willkommen zum Zentral Hack',           'Welcome to Zentral Hack',                 20),
+--   (1, '18:30', 'presentation', 'Challenge Pitches',      'Challenge Pitches',     'Vorstellung der Challenges',            'Introduction to all challenges',          30),
+--   (1, '19:00', 'coffee',       'Teambildung & Apéro',    'Team Matching & Apéro', 'Finde dein Team bei Sponsoren-Apéro',  'Find your team during the sponsor apéro', 40),
+--   (1, '19:30', 'code',         'Start des Hacks',        'Hack Starts',           'Los geht''s!',                          'Let''s go!',                              50),
+--   (1, '20:00', 'utensils',     'Dinner Buffet',          'Dinner Buffet',         'Stärkung für die Nacht',               'Fuel up for the night',                   60),
+--   (1, '23:00', 'party-popper', 'Night Special',          'Night Special',         'Überraschung!',                        'Surprise!',                               70),
+--   (2, '08:00', 'coffee',       'Frühstücksbuffet',       'Breakfast Buffet',      'Energie für den Tag',                  'Energy for the day',                      10),
+--   (2, '10:00', 'presentation', 'Referate & Speeches',    'Talks & Speeches',      'Inspirierende Vorträge',               'Inspiring talks',                         20),
+--   (2, '12:00', 'utensils',     'Lunchbuffet',            'Lunch Buffet',          'Mittagspause',                         'Lunch break',                             30),
+--   (2, '16:00', 'coffee',       'Nachmittagssnack',       'Afternoon Snack',       'Letzte Energie',                       'Final energy boost',                      40),
+--   (2, '19:00', 'presentation', 'Abschlusspräsentationen','Final Presentations',   'Zeigt was ihr geschafft habt',         'Show what you have built',                50),
+--   (2, '22:00', 'party-popper', 'Ende & Preisverleihung', 'Closing & Awards',      'Feier mit uns!',                       'Celebrate with us!',                      60)
+-- ON CONFLICT DO NOTHING;
+-- 
+-- INSERT INTO site_settings (key, value) VALUES (
+--   'about_stats',
+--   '[
+--     {"value": 24,  "suffix": "",  "label_de": "Stunden",        "label_en": "Hours"},
+--     {"value": 4,   "suffix": "",  "label_de": "Kategorien",     "label_en": "Categories"},
+--     {"value": 200, "suffix": "+", "label_de": "Teilnehmende",   "label_en": "Participants"},
+--     {"value": 1,   "suffix": "",  "label_de": "Ziel",           "label_en": "Goal"}
+--   ]'::jsonb
+-- ) ON CONFLICT (key) DO NOTHING;
+-- 
+-- INSERT INTO partner_logos (name, logo_url, website_url, logo_size, sort_order) VALUES
+--   ('HSLU',                         '/partners/hslu-logo.png',         'https://hslu.ch/informatik', 'large',  10),
+--   ('ICT Berufsbildung Zentralschweiz', '/partners/ict-bz-logo.png',  'https://ict-bz.ch',          'medium', 20),
+--   ('UMB AG',                       '/partners/umb-logo.png',          'https://umb.ch',             'medium', 30),
+--   ('Digital & AI Community',       '/partners/ai-community-logo.png', 'https://ai-community.ch',   'medium', 40),
+--   ('getAbstract',                  '/partners/getabstract-logo.png',  'https://getabstract.com',   'medium', 50),
+--   ('STAIR',                        '/partners/stair-logo.png',        'https://stair.ch',           'medium', 60),
+--   ('SchwyzNext',                   '/partners/schwyznext-logo.png',   'https://schwyz-next.ch',    'small',  70)
+-- ON CONFLICT DO NOTHING;
+-- 
+-- INSERT INTO sponsor_packages (name, display_order, description, color, benefits) VALUES
+--   ('Platin', 1,
+--     'Das Platin-Paket ist die engste Partnerschaft mit dem Zentral Hack und kombiniert maximale Sichtbarkeit mit aktiver Mitgestaltung.',
+--     '#530A5D', ARRAY[
+--       'Beteiligung an Organisation und Mitgestaltung der Eventplanung',
+--       'Lead-Partner einer Kategorie mit starker inhaltlicher Präsenz',
+--       'Prominentes Branding auf Website, Event-Plattform, Flyer, Give-aways und Social Media',
+--       'Sponsor-Porträt auf Social Media sowie zusätzliche Sichtbarkeit auf dem HSLU-Moodboard',
+--       'Grosse Präsenzfläche vor Ort inklusive Werbemittel, LED-Banner und Recruiting-Möglichkeiten',
+--       'Offizielle Erwähnung während des Events sowie Zugang zu Networking mit Jury, Departement und Talenten'
+--     ]
+--   ),
+--   ('Gold', 2,
+--     'Das Gold-Paket sorgt für eine starke Event-Präsenz mit hochwertigem Branding, Aktivierung vor Ort und direktem Austausch.',
+--     '#E6FF17', ARRAY[
+--       'Branding auf Website, Event-Plattform, Flyer und Social Media',
+--       'Sponsor-Porträt auf Social Media und zusätzliche Sichtbarkeit über ausgewählte Eventflächen',
+--       'LED-Banner-Präsenz und Einbindung in Give-away-Aktivierungen',
+--       'Präsenzfläche vor Ort für Austausch, Interaktion und Markeninszenierung',
+--       'Möglichkeit zur Platzierung eigener Werbemittel am Event',
+--       'Direkter Zugang zu Apéro, Networking und Recruiting im Eventumfeld'
+--     ]
+--   ),
+--   ('Silber', 3,
+--     'Das Silber-Paket bietet eine ausgewogene Mischung aus Sichtbarkeit, Event-Präsenz und wertvollen Kontaktpunkten.',
+--     '#C0C0C0', ARRAY[
+--       'Sichtbarkeit auf Website, Event-Plattform und ausgewählten Eventmedien',
+--       'Branding in Social-Media-Kommunikation und auf Sponsor-Übersichten',
+--       'Präsenz vor Ort mit kompakten Werbe- und Aktivierungsmöglichkeiten',
+--       'Einbindung in zentrale Eventmomente und Sponsorennennung',
+--       'Möglichkeit zur Platzierung eigener Werbemittel',
+--       'Zugang zu Networking mit Teilnehmenden und Partnern'
+--     ]
+--   ),
+--   ('Bronze', 4,
+--     'Das Bronze-Paket ist der kompakte Einstieg in das Sponsoring des Zentral Hack mit klarem, fokussiertem Auftritt.',
+--     '#CD7F32', ARRAY[
+--       'Branding auf Website und Event-Plattform',
+--       'Präsenz auf ausgewählten Kommunikations- und Übersichtsflächen',
+--       'Kompakte Sichtbarkeit vor Ort während des Events',
+--       'Möglichkeit zur Platzierung von Werbematerial im Rahmen des Events',
+--       'Einbindung in Sponsorennennung und Eventkommunikation',
+--       'Niederschwelliger Zugang zum Sponsoring-Netzwerk des Zentral Hack'
+--     ]
+--   )
+-- ON CONFLICT (name) DO UPDATE
+--   SET display_order = EXCLUDED.display_order,
+--       description   = EXCLUDED.description,
+--       color         = EXCLUDED.color,
+--       benefits      = EXCLUDED.benefits;
+-- 
+-- INSERT INTO faqs (question, question_en, answer, answer_en, order_position, is_active) VALUES
+--   ('Was ist der Zentral Hack?', 'What is Zentral Hack?',
+--     'Der Zentral Hack 2026 ist der grösste Hackathon der Zentralschweiz. 48 Stunden, in denen Studierende, Fachleute und Kreative zusammenkommen, um innovative Lösungen für reale Herausforderungen zu entwickeln.',
+--     'Zentral Hack 2026 is the largest hackathon in Central Switzerland. A 48-hour event where students, professionals, and creatives come together to build innovative solutions for real-world challenges.',
+--     1, true),
+--   ('Wer kann teilnehmen?', 'Who can participate?',
+--     'Alle sind willkommen! Ob Studierende, Berufstätige oder einfach technikbegeistert – jede:r kann sich registrieren und mitmachen.',
+--     'Everyone is welcome. Whether you are a student, professional, or simply excited about technology, you can sign up and join.',
+--     2, true),
+--   ('Brauche ich ein Team?', 'Do I need a team?',
+--     'Nein, du kannst dich auch alleine registrieren. Wir helfen dir, ein passendes Team zu finden. Alternativ kannst du auch bereits mit einem Team kommen.',
+--     'No. You can also register on your own. We can help you find a suitable team, or you can join with your existing team.',
+--     3, true),
+--   ('Brauche ich Vorkenntnisse?', 'Do I need prior experience?',
+--     'Grundlegende Programmierkenntnisse sind hilfreich, aber nicht zwingend. Es gibt Kategorien für verschiedene Erfahrungsstufen.',
+--     'Basic programming experience is helpful, but not required. There are challenge categories for different experience levels.',
+--     4, true),
+--   ('Gibt es Verpflegung?', 'Will food and drinks be provided?',
+--     'Ja! Während des gesamten Events gibt es Mahlzeiten, Snacks und Getränke. Bitte gib bei der Anmeldung Allergien und Unverträglichkeiten an.',
+--     'Yes. Meals, snacks, and drinks are provided throughout the event. Please include allergies and intolerances during registration.',
+--     5, true),
+--   ('Wo findet der Hackathon statt?', 'Where does the hackathon take place?',
+--     'Der Zentral Hack findet an der Hochschule Luzern (HSLU) statt. Der genaue Standort wird nach der Anmeldung bekannt gegeben.',
+--     'Zentral Hack takes place at Lucerne University of Applied Sciences and Arts (HSLU). The exact location is shared after registration.',
+--     6, true),
+--   ('Wie kann ich mich registrieren?', 'How can I register?',
+--     'Klicke einfach auf "Registrieren" und folge den Anweisungen. Du erhältst eine Bestätigungsemail mit allen Details.',
+--     'Click "Register now" and follow the instructions. You will receive a confirmation email with all details.',
+--     7, true)
+-- ON CONFLICT DO NOTHING;
