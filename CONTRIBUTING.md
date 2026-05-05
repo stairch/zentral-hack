@@ -67,6 +67,31 @@ npm run release
 
 ---
 
+## Database Changes
+
+All database changes are versioned as SQL scripts in the `/migrations` folder.
+
+### Creating a new migration script
+
+1. Create a new file in `/migrations` with an ascending prefix, e.g.:
+
+```
+migrations/004_add_products_table.sql
+```
+
+2. Run the script manually on your dev database
+3. Commit the script together with the related code
+
+On the next stable release the prod database is migrated during the production deployment (`prod.deploy.yaml`)
+
+### Rules for scripts
+
+- Always use `IF NOT EXISTS` / `IF EXISTS` -> scripts must be idempotent
+- Never edit an existing script -> create a new one for corrections
+- Only add scripts per PR, never delete them
+
+---
+
 ## Rule of Thumb
 
 If it should not be released yet → keep it in a branch  

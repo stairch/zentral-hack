@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --composite false --incremental false",
     "check": "npm run format && npm run typecheck",
     "lint": "eslint .",
-    "release": "node scripts/release.mjs"
+    "release": "node scripts/release.mjs",
+    "prod:migrate-db": "npx tsx --env-file=.env scripts/migrate.ts"
   },
   "dependencies": {
     "@flags-sdk/vercel": "^1.3.0",
