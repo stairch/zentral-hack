@@ -38,6 +38,7 @@ export interface CategoryRecord {
   challenge_description_en?: string | null
   show_challenge_description?: boolean | null
   prize?: string | null
+  prize_en?: string | null
   target_group?: string | null
   target_group_en?: string | null
   challenge_title?: string | null
@@ -224,6 +225,9 @@ export function getCategoryPresentationByLanguage(category: CategoryRecord, lang
       ? (category.challenge_title_en || category.challenge_title || localizedTitle).trim()
       : (category.challenge_title || localizedTitle).trim()
 
+  const localizedPrize =
+    language === "en" ? (category.prize_en || category.prize || "").trim() : (category.prize || "").trim()
+
   const publishedChallenges = Array.isArray(category.challenges) ? category.challenges : []
 
   return {
@@ -242,7 +246,7 @@ export function getCategoryPresentationByLanguage(category: CategoryRecord, lang
     challengeStatus: category.challenge_status || null,
     challengeData: category.challenge_data || null,
     challenges: publishedChallenges,
-    prize: category.prize || null,
+    prize: localizedPrize || null,
     targetGroup:
       language === "en"
         ? category.target_group_en || category.target_group || null

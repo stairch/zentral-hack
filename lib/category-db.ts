@@ -11,6 +11,7 @@ const optionalCategoryColumns = [
   "challenge_description_en",
   "show_challenge_description",
   "prize",
+  "prize_en",
   "target_group",
   "target_group_en"
 ] as const
@@ -53,6 +54,7 @@ export function buildCategorySelectClause(availableColumns: Set<OptionalCategory
       ? "show_challenge_description"
       : "false::boolean AS show_challenge_description",
     availableColumns.has("prize") ? "prize" : "NULL::text AS prize",
+    availableColumns.has("prize_en") ? "prize_en" : "NULL::text AS prize",
     availableColumns.has("target_group") ? "target_group" : "NULL::text AS target_group",
     availableColumns.has("target_group_en") ? "target_group_en" : "NULL::text AS target_group_en",
     "is_active",

@@ -109,6 +109,7 @@ async function putHandler(req: AuthenticatedRequest) {
       challengeDescriptionEn,
       showChallengeDescription,
       prize,
+      prizeEn,
       targetGroup,
       targetGroupEn
     } = await req.json()
@@ -233,6 +234,11 @@ async function putHandler(req: AuthenticatedRequest) {
     if (availableColumns.has("prize") && (typeof prize === "string" || prize === null)) {
       values.push(typeof prize === "string" ? prize.trim() || null : null)
       fieldAssignments.push(`prize = $${values.length}`)
+    }
+
+    if (availableColumns.has("prize_en") && (typeof prizeEn === "string" || prizeEn === null)) {
+      values.push(typeof prizeEn === "string" ? prizeEn.trim() || null : null)
+      fieldAssignments.push(`prize_en = $${values.length}`)
     }
 
     if (availableColumns.has("target_group") && (typeof targetGroup === "string" || targetGroup === null)) {
