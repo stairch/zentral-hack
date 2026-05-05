@@ -1,5 +1,9 @@
 # LEGAL NOTICE
 
+**As of: May 2026**
+
+<div class="spacer-lg"></div>
+
 ### Responsible Entity
 
 Lucerne School of Computer Science and Information Technology \
@@ -7,44 +11,42 @@ Suurstoffi 1 \
 6343 Rotkreuz \
 Switzerland
 
-<div className="spacer"></div>
-
 **Email:** [{{email-contact-hslu}}]({{email-url-contact-hslu}}) \
 **Phone:** [{{phone-contact-hslu}}]({{phone-url-contact-hslu}}) \
 **Website:** [{{website-contact-hslu}}]({{url-contact-hslu}})
 
-<div className="spacer-lg"></div>
+<div class="spacer-lg"></div>
 
 ### Disclaimer
 
-The author assumes no responsibility for the correctness, accuracy, timeliness,
-reliability, or completeness of the information. Liability claims against the author for
-material or immaterial damages arising from access to, use or non-use of the published
-information, from misuse of the connection, or from technical issues are excluded.
+Lucerne University of Applied Sciences and Arts assumes no responsibility for the correctness, completeness, timeliness, or reliability of information published on this website. Liability claims for material or immaterial damages arising from access to or use or non-use of the published information are excluded, unless there is evidence of intentional or grossly negligent misconduct.
 
-<div className="spacer"></div>
+All information is provided without obligation. Lucerne University of Applied Sciences and Arts reserves the right to modify, supplement, or remove parts of or the entire website at any time and without prior notice.
 
-All offers are non-binding. The author expressly reserves the right to
-change, supplement, delete parts of the pages or the entire offer without prior notice,
-or to temporarily or permanently discontinue publication.
+<div class="spacer-lg"></div>
 
-<div className="spacer-lg"></div>
+### Liability for Links
 
-### Liability for Content and Links
+This website may contain links to external third-party websites. We have no influence over their content and accept no liability for them. The respective provider is always responsible for the content of linked pages. Linked pages were checked for possible legal violations at the time of linking. No unlawful content was apparent at the time of linking. Permanent monitoring of linked pages without specific evidence of a legal violation is unreasonable.
 
-References and links to third-party websites are outside
-the author's area of responsibility. Any responsibility for such websites is declined.
-Access to and use of such websites is at the user's own risk.
+<div class="spacer-lg"></div>
 
-<div className="spacer-lg"></div>
+### Copyright
 
-### Copyright Notice
+The content, texts, graphics, logos, and other materials published on this website are protected by copyright and are the property of Lucerne University of Applied Sciences and Arts or the respectively named rights holders. Reproduction, editing, distribution, or any other use beyond the limits of copyright law requires the prior written consent of Lucerne University of Applied Sciences and Arts. Downloads and copies of these pages are permitted only for private, non-commercial use.
 
-The copyrights and all other rights to content, images, photos, or other
-files on this website belong exclusively to the aforementioned entity or the specifically
-named rights holders. Prior written consent of the copyright holder must be obtained
-for the reproduction of any elements.
+<div class="spacer-lg"></div>
 
-<div className="spacer-lg"></div>
+### Technical Implementation
+
+This website is operated by:
+
+**Zentral Hack Development Team** \
+c/o Lucerne School of Computer Science and Information Technology \
+Email: [{{email-contact-hslu}}]({{email-url-contact-hslu}})
+
+Hosting: Vercel Inc., 340 Pine Street, Suite 900, San Francisco, CA 94104, USA
+
+<div class="spacer-lg"></div>
 
 <p className="italic text-sm!">In case of doubt, the German version shall prevail.</p>
