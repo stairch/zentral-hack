@@ -201,6 +201,22 @@
   @apply font-semibold;
 }
 
+.md-content table {
+  @apply my-4 w-full border-collapse text-base;
+}
+
+.md-content th {
+  @apply bg-muted text-muted-foreground border border-border px-4 py-2 text-left font-semibold;
+}
+
+.md-content td {
+  @apply text-muted-foreground border border-border px-4 py-2;
+}
+
+.md-content tr:nth-child(even) td {
+  @apply bg-muted/30;
+}
+
 .content-numbered {
   counter-reset: h2 h3-top;
 }

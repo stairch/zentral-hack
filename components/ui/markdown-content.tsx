@@ -1,6 +1,7 @@
 import React from "react"
 import Markdown, { defaultUrlTransform } from "react-markdown"
 import rehypeRaw from "rehype-raw"
+import remarkGfm from "remark-gfm"
 import { Emails, PhoneNumbers, Urls } from "@/lib/constants"
 import { normalizeUrl } from "@/lib/helpers"
 
@@ -26,6 +27,7 @@ export default function MarkdownContent({ children }: MarkdownContentPropsType) 
   return (
     <div className="md-content">
       <Markdown
+        remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
         urlTransform={(url: string) => (url.startsWith("tel:") ? url : defaultUrlTransform(url))}
         components={{
