@@ -6,9 +6,11 @@
  *   2. Checks if flags in lib/flags.ts are available in production Vercel project
  *   3. Writes the new version to package.json
  *   4. Temporarily switches the local git user.email and remote URL with PAT to the release account
- *   5. Commits and pushes the version bump
- *   6. Creates an annotated git tag and pushes it
- *   7. Restores the previous local git user.email
+ *   5. Creates a release branch, commits and pushes the version bump
+ *   6. Opens a PR via GitHub API and merges it as soon as checks passed
+ *   7. Creates an annotated git tag on the merge commit and pushes it
+ *   8. Deletes the release branch (local + remote)
+ *   9. Restores the previous local git user.email
  */
 
 import { execSync } from "child_process"
@@ -146,6 +148,98 @@ async function checkFlagsOnProd(newVersion) {
   console.log(`   ✅ All ${localKeys.length} flags found on production project.`)
 }
 
+function getRepoOwnerAndName(remoteUrl) {
+  // Supports both https and ssh remote URLs
+  const match = remoteUrl.match(/github\.com[:/]([^/]+)\/(.+?)(?:\.git)?$/)
+  if (!match) throw new Error(`Could not parse GitHub owner/repo from remote URL: ${remoteUrl}`)
+  return { owner: match[1], repo: match[2] }
+}
+
+async function githubApi(path, method, body, token) {
+  const res = await fetch(`https://api.github.com${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28"
+    },
+    body: body ? JSON.stringify(body) : undefined
+  })
+
+  const data = await res.json()
+
+  if (!res.ok) {
+    throw new Error(
+      `GitHub API ${method} ${path} failed: ${res.status} — ${data.message ?? JSON.stringify(data)}`
+    )
+  }
+
+  return data
+}
+
+// ─── GitHub API helpers ──────────────────────────────────────────────────────
+
+async function ghCreatePR({ owner, repo, token, releaseBranch, newVersion, currentVersion }) {
+  return githubApi(
+    `/repos/${owner}/${repo}/pulls`,
+    "POST",
+    {
+      title: `Release v${newVersion}`,
+      head: releaseBranch,
+      base: "main",
+      body: `Automated version bump: \`${currentVersion}\` → \`${newVersion}\``
+    },
+    token
+  )
+}
+
+async function ghGetCommitStatus({ owner, repo, token, sha }) {
+  return githubApi(`/repos/${owner}/${repo}/commits/${sha}/status`, "GET", null, token)
+}
+
+async function ghGetCheckRuns({ owner, repo, token, sha }) {
+  return githubApi(`/repos/${owner}/${repo}/commits/${sha}/check-runs`, "GET", null, token)
+}
+
+async function ghMergePR({ owner, repo, token, prNumber, newVersion }) {
+  return githubApi(
+    `/repos/${owner}/${repo}/pulls/${prNumber}/merge`,
+    "PUT",
+    {
+      commit_title: `Release v${newVersion}`,
+      merge_method: "squash"
+    },
+    token
+  )
+}
+
+async function ghCreateTag({ owner, repo, token, tag, sha }) {
+  await githubApi(
+    `/repos/${owner}/${repo}/git/tags`,
+    "POST",
+    {
+      tag,
+      message: `Release ${tag}`,
+      object: sha,
+      type: "commit"
+    },
+    token
+  )
+
+  await githubApi(
+    `/repos/${owner}/${repo}/git/refs`,
+    "POST",
+    {
+      ref: `refs/tags/${tag}`,
+      sha
+    },
+    token
+  )
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+
 async function main() {
   if (!RELEASE_TOKEN) {
     console.error("❌ Error: RELEASE_TOKEN is not set. Add it to your .env file.")
@@ -183,12 +277,11 @@ async function main() {
     process.exit(0)
   }
 
-  // check feature flags on production project
+  // Check feature flags on production project
   await checkFlagsOnProd(newVersion)
 
-  pkg.version = newVersion
-  writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
-  console.log(`✅ Version bumped: ${currentVersion} ➡️  ${newVersion}`)
+  const releaseBranch = `release/v${newVersion}`
+  const tag = `v${newVersion}`
 
   let previousEmail
   try {
@@ -204,17 +297,109 @@ async function main() {
   const authedUrl = originalUrl.replace("https://", `https://x-access-token:${RELEASE_TOKEN}@`)
   run(`git remote set-url origin "${authedUrl}"`)
 
+  // Stash uncommitted changes so they don't end up on the release branch
+  let stashed = false
   try {
+    const stashOut = run("git stash push --include-untracked -m 'release-script: temp stash'")
+    stashed = !stashOut.includes("No local changes to save")
+    if (stashed) console.log("✅ Uncommitted changes stashed")
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    // Create and push release branch
+    run(`git checkout -b ${releaseBranch}`)
+
+    // Write version bump after checkout so it's not caught by the stash
+    pkg.version = newVersion
+    writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
+    console.log(`✅ Version bumped: ${currentVersion} ➡️  ${newVersion}`)
+
     run("git add package.json")
     run(`git commit -m "Bump version to v${newVersion}"`)
-    run("git push")
-    console.log(`✅ Commit pushed`)
+    run(`git push origin ${releaseBranch}`)
+    console.log(`✅ Branch ${releaseBranch} pushed`)
 
-    const tag = `v${newVersion}`
-    run(`git tag -a ${tag} -m "Release ${tag}"`)
-    run(`git push origin ${tag}`)
-    console.log(`✅ Tag ${tag} pushed`)
+    // Open PR and merge via GitHub API
+    const { owner, repo } = getRepoOwnerAndName(originalUrl)
+    const gh = { owner, repo, token: RELEASE_TOKEN }
+
+    console.log(`\n🔀 Creating pull request...`)
+    const pr = await ghCreatePR({ ...gh, releaseBranch, newVersion, currentVersion })
+    console.log(`✅ PR #${pr.number} created: ${pr.html_url}`)
+
+    // Poll until all required checks pass
+    console.log(`\n⏳ Waiting for required checks to pass...`)
+    const headSha = pr.head.sha
+    const POLL_INTERVAL_MS = 10_000
+    const TIMEOUT_MS = 10 * 60_000 // 10 minutes
+    const deadline = Date.now() + TIMEOUT_MS
+
+    while (true) {
+      if (Date.now() > deadline) {
+        throw new Error("Timed out waiting for required checks to pass.")
+      }
+
+      const { state } = await ghGetCommitStatus({ ...gh, sha: headSha })
+      const { check_runs: runs = [] } = await ghGetCheckRuns({ ...gh, sha: headSha })
+
+      const pending = runs.filter((r) => r.status !== "completed")
+      const failed = runs.filter(
+        (r) => r.status === "completed" && !["success", "skipped", "neutral"].includes(r.conclusion)
+      )
+
+      if (failed.length > 0) {
+        throw new Error(`Required check(s) failed: ${failed.map((r) => r.name).join(", ")}`)
+      }
+
+      if (pending.length === 0 && runs.length > 0 && state !== "failure") {
+        console.log(`✅ All checks passed`)
+        break
+      }
+
+      process.stdout.write(
+        `   ⏳ Still running: ${pending.map((r) => r.name).join(", ")} — retrying in ${POLL_INTERVAL_MS / 1000}s...\r`
+      )
+      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS))
+    }
+
+    const merge = await ghMergePR({ ...gh, prNumber: pr.number, newVersion })
+    console.log(`✅ PR #${pr.number} merged`)
+
+    await ghCreateTag({ ...gh, tag, sha: merge.sha })
+    console.log(`✅ Tag ${tag} created on merge commit`)
+  } catch (err) {
+    // Restore package.json version on failure (only if it was already written)
+    if (pkg.version === newVersion) {
+      pkg.version = currentVersion
+      writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
+    }
+    throw err
   } finally {
+    // Switch back to original branch, then delete release branch, then restore stash
+    try {
+      run("git checkout -")
+    } catch {
+      /* ignore */
+    }
+
+    try {
+      run(`git branch -D ${releaseBranch}`)
+      console.log(`✅ Local branch ${releaseBranch} deleted`)
+    } catch {
+      /* ignore */
+    }
+
+    if (stashed) {
+      try {
+        run("git stash pop")
+        console.log("✅ Uncommitted changes restored from stash")
+      } catch {
+        console.warn("⚠️  Could not restore stash automatically. Run 'git stash pop' manually.")
+      }
+    }
+
     run(`git remote set-url origin "${originalUrl}"`)
     console.log(`✅ Remote URL restored`)
 
