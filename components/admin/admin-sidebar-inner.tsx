@@ -24,11 +24,13 @@ import {
   Image,
   Trophy,
   Lock,
-  ShieldCheck
+  ShieldCheck,
+  Bug
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BrandMark } from "@/components/brand-mark"
 import { DEFAULT_CATEGORY_PARTNER_PERMISSIONS } from "@/lib/admin-permissions"
+import { Urls } from "@/lib/constants"
 
 const copy = {
   de: {
@@ -50,7 +52,9 @@ const copy = {
     adminPanel: "Admin Panel",
     categoryAdmin: "Kategorien-Admin",
     logout: "Abmelden",
-    home: "Zentral Hack Startseite"
+    home: "Zentral Hack Startseite",
+    bugReport: "Fehler melden",
+    featureRequest: "Feature anfragen"
   },
   en: {
     dashboard: "Dashboard",
@@ -71,7 +75,9 @@ const copy = {
     adminPanel: "Admin Panel",
     categoryAdmin: "Category Admin",
     logout: "Log Out",
-    home: "Zentral Hack Home"
+    home: "Zentral Hack Home",
+    bugReport: "Report bug",
+    featureRequest: "Request feature"
   }
 } as const
 
@@ -292,9 +298,34 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
           )
         })}
       </nav>
-
       {/* Footer */}
       <div className="border-border space-y-2 border-t p-4">
+        <div>
+          <Link
+            href={Urls.featureRequest}
+            target="_blank"
+            className="hover:text-primary transition-colors duration-300">
+            <Button
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground w-full justify-start gap-3">
+              <MessageSquare className="h-5 w-5" />
+              {text.featureRequest}
+            </Button>
+          </Link>
+        </div>
+        <div>
+          <Link
+            href={Urls.bugReport}
+            target="_blank"
+            className="hover:text-primary transition-colors duration-300">
+            <Button
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground w-full justify-start gap-3">
+              <Bug className="h-5 w-5" />
+              {text.bugReport}
+            </Button>
+          </Link>
+        </div>
         {/* Language toggle */}
         <div className="flex items-center gap-2 px-1">
           <select
