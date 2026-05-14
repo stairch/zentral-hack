@@ -73,10 +73,10 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(true)
 
   const statConfig = [
-    { key: "registrations", label: text.registrations, icon: Users, color: "#530A5D" },
-    { key: "newsletter", label: text.newsletter, icon: Mail, color: "#D5C2F7" },
-    { key: "teams", label: text.teams, icon: Users, color: "#E6FF17" },
-    { key: "documents", label: text.documents, icon: FolderOpen, color: "#530A5D" }
+    { key: "registrations", label: text.registrations, icon: Users },
+    { key: "newsletter", label: text.newsletter, icon: Mail },
+    { key: "teams", label: text.teams, icon: Users },
+    { key: "documents", label: text.documents, icon: FolderOpen }
   ]
 
   useEffect(() => {
@@ -124,10 +124,8 @@ export function AdminDashboard() {
                   <p className="text-muted-foreground text-sm">{stat.label}</p>
                   <p className="mt-1 text-3xl font-bold">{stats[stat.key as keyof Stats]}</p>
                 </div>
-                <div
-                  className="flex h-12 w-12 items-center justify-center rounded-lg"
-                  style={{ backgroundColor: stat.color + "20" }}>
-                  <stat.icon className="h-6 w-6" style={{ color: stat.color }} />
+                <div className="bg-secondary flex h-12 w-12 items-center justify-center rounded-lg">
+                  <stat.icon className="text-primary h-6 w-6" />
                 </div>
               </div>
             </CardContent>
