@@ -1,79 +1,46 @@
+import { Ratelimit } from "@upstash/ratelimit"
+import { Redis } from "@upstash/redis"
 import { NextRequest, NextResponse } from "next/server"
 
-interface RateLimitStore {
-  [key: string]: { count: number; resetTime: number }
-}
+const redis = new Redis({
+  url: process.env.UPSTASH_KV_REST_API_URL!,
+  token: process.env.UPSTASH_KV_REST_API_TOKEN!
+})
 
-const store: RateLimitStore = {}
+const env = process.env.NODE_ENV === "production" ? "prod" : "dev"
 
 const WINDOWS = {
-  auth: { windowMs: 15 * 60 * 1000, maxRequests: 5 }, // 5 requests per 15 minutes
-  twofa: { windowMs: 15 * 60 * 1000, maxRequests: 10 }, // 10 requests per 15 minutes
-  signup: { windowMs: 60 * 60 * 1000, maxRequests: 10 }, // 10 requests per hour
-  newsletter: { windowMs: 60 * 60 * 1000, maxRequests: 5 }, // 5 requests per hour
-  sponsor: { windowMs: 60 * 60 * 1000, maxRequests: 20 }, // 20 requests per hour
-  default: { windowMs: 60 * 1000, maxRequests: 100 } // 100 requests per minute
+  auth: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(5, "15 m"), prefix: `${env}:rl:auth` }),
+  twofa: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "15 m"), prefix: `${env}:rl:twofa` }),
+  signup: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "1 h"), prefix: `${env}:rl:signup` }),
+  newsletter: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(5, "1 h"),
+    prefix: `${env}:rl:newsletter`
+  }),
+  sponsor: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(20, "1 h"), prefix: `${env}:rl:sponsor` }),
+  default: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(100, "1 m"), prefix: `${env}:rl:default` })
 }
 
 export function getClientIp(request: NextRequest): string {
   const forwarded = request.headers.get("x-forwarded-for")
-  const ip = forwarded ? forwarded.split(", ")[0] : (request.headers.get("x-real-ip") ?? "unknown")
-  return ip
+  return forwarded ? forwarded.split(", ")[0] : (request.headers.get("x-real-ip") ?? "unknown")
 }
 
 export function createRateLimiter(windowType: keyof typeof WINDOWS = "default") {
-  const config = WINDOWS[windowType]
-
   return async (request: NextRequest) => {
     const clientIp = getClientIp(request)
-    const key = `${clientIp}-${request.nextUrl.pathname}`
-    const now = Date.now()
+    const key = `${clientIp}:${request.nextUrl.pathname}`
+    const { success, reset } = await WINDOWS[windowType].limit(key)
 
-    // Initialize or check store
-    if (!store[key]) {
-      store[key] = { count: 1, resetTime: now + config.windowMs }
-      return null // Allow request
-    }
-
-    // Check if window has reset
-    if (now > store[key].resetTime) {
-      store[key] = { count: 1, resetTime: now + config.windowMs }
-      return null // Allow request
-    }
-
-    // Increment counter
-    store[key].count++
-
-    // Check if limit exceeded
-    if (store[key].count > config.maxRequests) {
-      const retryAfter = Math.ceil((store[key].resetTime - now) / 1000)
+    if (!success) {
+      const retryAfter = Math.ceil((reset - Date.now()) / 1000)
       return NextResponse.json(
-        {
-          error: "Too many requests. Please try again later.",
-          retryAfter
-        },
-        {
-          status: 429,
-          headers: {
-            "Retry-After": retryAfter.toString()
-          }
-        }
+        { error: "Too many requests. Please try again later.", retryAfter },
+        { status: 429, headers: { "Retry-After": retryAfter.toString() } }
       )
     }
 
-    return null // Allow request
+    return null
   }
 }
-
-// Cleanup old entries every hour
-setInterval(
-  () => {
-    const now = Date.now()
-    Object.keys(store).forEach((key) => {
-      if (now > store[key].resetTime + 60 * 60 * 1000) {
-        delete store[key]
-      }
-    })
-  },
-  60 * 60 * 1000
-)
