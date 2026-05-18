@@ -1,12 +1,12 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Mail } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { Emails } from "@/lib/constants"
 import { BrandMark } from "@/components/brand-mark"
 import Instagram from "@/assets/icons/instagram.svg"
+import { Urls } from "@/lib/constants"
 
 const footerLinks = {
   event: {
@@ -35,10 +35,19 @@ const footerLinks = {
       { label: "Terms", href: "/agb" }
     ]
   },
-  social: [
-    { icon: Instagram, href: "https://www.instagram.com/zentralhack/", label: "Instagram" },
-    { icon: Mail, href: `mailto:${Emails.infoZentralHack}`, label: "E-Mail" }
-  ]
+  support: {
+    de: [
+      { label: "Kontakt", href: `mailto:${Emails.infoZentralHack}` },
+      { label: "Feature anfragen", href: Urls.featureRequest },
+      { label: "Fehler melden", href: Urls.bugReport }
+    ],
+    en: [
+      { label: "Contact", href: `mailto:${Emails.infoZentralHack}` },
+      { label: "Feature Request", href: Urls.featureRequest },
+      { label: "Bug Report", href: Urls.bugReport }
+    ]
+  },
+  social: [{ icon: Instagram, href: "https://www.instagram.com/zentralhack/", label: "Instagram" }]
 }
 
 const copy = {
@@ -47,6 +56,7 @@ const copy = {
       "Ein Hackathon für die Zentralschweiz. Verbindung von Bildung, Wirtschaft und Community für Innovation und Nachwuchsförderung.",
     event: "EVENT",
     legal: "RECHTLICHES",
+    support: "SUPPORT",
     rights: "© 2026 Zentral Hack. Alle Rechte vorbehalten.",
     madeWith: "Erstellt mit",
     by: "von",
@@ -58,6 +68,7 @@ const copy = {
       "A hackathon for Central Switzerland. Connecting education, business, and community for innovation and young talent.",
     event: "EVENT",
     legal: "LEGAL",
+    support: "SUPPORT",
     rights: "© 2026 Zentral Hack. All rights reserved.",
     madeWith: "Made with",
     by: "by",
@@ -71,11 +82,12 @@ export function Footer() {
   const text = copy[language]
   const eventLinks = footerLinks.event[language]
   const legalLinks = footerLinks.legal[language]
+  const supportLinks = footerLinks.support[language]
 
   return (
     <footer className="bg-foreground py-16">
       <div className="container mx-auto px-4">
-        <div className="mb-12 grid gap-12 md:grid-cols-4">
+        <div className="mb-12 grid gap-12 md:grid-cols-5">
           {/* Logo & Description */}
           <div className="md:col-span-2">
             <motion.a href="/" className="mb-4 inline-block" whileHover={{ scale: 1.05 }}>
@@ -122,6 +134,23 @@ export function Footer() {
             <h4 className="font-display text-light-violet mb-4 font-bold">{text.legal}</h4>
             <ul className="space-y-3">
               {legalLinks.map((link) => (
+                <li key={link.label}>
+                  <Link href={link.href}>
+                    <motion.span
+                      className="text-muted-foreground hover:text-yellow cursor-pointer transition-colors"
+                      whileHover={{ x: 5 }}>
+                      {link.label}
+                    </motion.span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          {/* Support Links */}
+          <div>
+            <h4 className="font-display text-light-violet mb-4 font-bold">{text.support}</h4>
+            <ul className="space-y-3">
+              {supportLinks.map((link) => (
                 <li key={link.label}>
                   <Link href={link.href}>
                     <motion.span

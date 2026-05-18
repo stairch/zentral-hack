@@ -20,7 +20,9 @@ import {
   ExternalLink,
   FolderOpen,
   Lock,
-  ShieldCogCorner
+  ShieldCogCorner,
+  Bug,
+  MessageSquare
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -30,6 +32,8 @@ import { SponsorChallengeEditor } from "@/components/dashboard/sponsor-challenge
 import { AccountSettings } from "@/components/dashboard/account-settings"
 import { type SponsorChallengeRecord } from "@/lib/sponsor-challenge"
 import ComingSoon from "../ui/coming-soon"
+import { Urls } from "@/lib/constants"
+import * as Tooltip from "@radix-ui/react-tooltip"
 
 interface DashboardData {
   profile: {
@@ -135,6 +139,8 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
   const t = {
     de: {
       adminPanel: "Admin",
+      bugReport: "Fehler melden",
+      featureRequest: "Feature anfragen",
       logout: "Abmelden",
       greeting: (name: string) => `Hallo, ${name}!`,
       welcomeSubtitle: "Willkommen in deinem Zentral Hack Dashboard",
@@ -185,6 +191,8 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
     },
     en: {
       adminPanel: "Admin",
+      bugReport: "Report bug",
+      featureRequest: "Request feature",
       logout: "Sign out",
       greeting: (name: string) => `Hello, ${name}!`,
       welcomeSubtitle: "Welcome to your Zentral Hack dashboard",
@@ -399,6 +407,47 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
               {loggingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
               <span className="hidden sm:inline">{t.logout}</span>
             </Button>
+            <Tooltip.Provider>
+              <div className="flex items-center gap-3">
+                <Tooltip.Root>
+                  <Tooltip.Trigger asChild>
+                    <Link
+                      href={Urls.featureRequest}
+                      target="_blank"
+                      className="hover:text-primary py-2 transition-colors duration-300">
+                      <MessageSquare className="size-4" />
+                    </Link>
+                  </Tooltip.Trigger>
+                  <Tooltip.Portal>
+                    <Tooltip.Content
+                      className="bg-popover text-popover-foreground rounded-md px-2 py-1 text-xs shadow-md"
+                      sideOffset={6}>
+                      {t.featureRequest}
+                      <Tooltip.Arrow className="fill-popover" />
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                </Tooltip.Root>
+
+                <Tooltip.Root>
+                  <Tooltip.Trigger asChild>
+                    <Link
+                      href={Urls.bugReport}
+                      target="_blank"
+                      className="hover:text-primary py-2 transition-colors duration-300">
+                      <Bug className="size-4" />
+                    </Link>
+                  </Tooltip.Trigger>
+                  <Tooltip.Portal>
+                    <Tooltip.Content
+                      className="bg-popover text-popover-foreground rounded-md px-2 py-1 text-xs shadow-md"
+                      sideOffset={6}>
+                      {t.bugReport}
+                      <Tooltip.Arrow className="fill-popover" />
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                </Tooltip.Root>
+              </div>
+            </Tooltip.Provider>
           </div>
         </div>
       </header>
