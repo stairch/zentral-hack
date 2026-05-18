@@ -8,7 +8,7 @@ const pool = new Pool(
         ssl: { rejectUnauthorized: false },
         max: parseInt(process.env.DB_POOL_MAX || "10"),
         idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 5000
+        connectionTimeoutMillis: 30000
       }
     : {
         user: process.env.DATABASE_USER || "postgres",
@@ -19,7 +19,7 @@ const pool = new Pool(
         max: parseInt(process.env.DB_POOL_MAX || "20"),
         min: parseInt(process.env.DB_POOL_MIN || "2"),
         idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 2000
+        connectionTimeoutMillis: 30000
       }
 )
 
