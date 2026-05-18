@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,7 +40,12 @@ const copy = {
     newLabelEn: "New",
     saved: "Gespeichert",
     saveError: "Fehler beim Speichern",
-    previewTitle: "Vorschau"
+    previewTitle: "Vorschau",
+    unsavedChanges: "Ungespeicherte Änderungen",
+    leaveTitle: "Seite verlassen?",
+    leaveDescription: "Du hast ungespeicherte Änderungen. Wenn du die Seite verlässt, gehen diese verloren.",
+    leaveConfirm: "Verlassen",
+    leaveCancel: "Abbrechen"
   },
   en: {
     heading: "ABOUT STATS",
@@ -55,18 +61,29 @@ const copy = {
     newLabelEn: "New",
     saved: "Saved",
     saveError: "Failed to save",
-    previewTitle: "Preview"
+    previewTitle: "Preview",
+    unsavedChanges: "Unsaved changes",
+    leaveTitle: "Leave page?",
+    leaveDescription: "You have unsaved changes. If you leave, they will be lost.",
+    leaveConfirm: "Leave",
+    leaveCancel: "Cancel"
   }
 } as const
 
 export function AboutStatsPage() {
   const { language } = useLanguage()
   const text = copy[language]
+  const router = useRouter()
 
   const [stats, setStats] = useState<Stat[]>(defaultStats)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null)
+  const [leaveHref, setLeaveHref] = useState<string | null>(null)
+  // Tracks the last persisted state to compare against
+  const savedStats = useRef<Stat[]>(defaultStats)
+
+  const isDirty = JSON.stringify(stats) !== JSON.stringify(savedStats.current)
 
   useEffect(() => {
     const load = async () => {
@@ -76,7 +93,10 @@ export function AboutStatsPage() {
         const data = await res.json()
         const settings = data.data?.settings || []
         const aboutStats = settings.find((s: { key: string; value: unknown }) => s.key === "about_stats")
-        if (aboutStats?.value) setStats(aboutStats.value)
+        if (aboutStats?.value) {
+          setStats(aboutStats.value)
+          savedStats.current = aboutStats.value
+        }
       } catch {
         // use defaults
       } finally {
@@ -85,6 +105,40 @@ export function AboutStatsPage() {
     }
     void load()
   }, [])
+
+  // Warn on browser refresh / tab close
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isDirty) return
+      e.preventDefault()
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [isDirty])
+
+  // Intercept Next.js link navigations
+  useEffect(() => {
+    if (!isDirty) return
+
+    const handleClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest("a[href]") as HTMLAnchorElement | null
+      if (!anchor) return
+      const href = anchor.getAttribute("href")
+      if (!href || href.startsWith("#") || href.startsWith("mailto:")) return
+
+      e.preventDefault()
+      setLeaveHref(href)
+    }
+
+    document.addEventListener("click", handleClick, true)
+    return () => document.removeEventListener("click", handleClick, true)
+  }, [isDirty])
+
+  const confirmLeave = () => {
+    if (!leaveHref) return
+    router.push(leaveHref)
+    setLeaveHref(null)
+  }
 
   const update = (index: number, field: keyof Stat, value: string | number) => {
     setStats((prev) => prev.map((s, i) => (i === index ? { ...s, [field]: value } : s)))
@@ -113,6 +167,8 @@ export function AboutStatsPage() {
         body: JSON.stringify({ key: "about_stats", value: stats })
       })
       if (!res.ok) throw new Error()
+      // Update the saved baseline so isDirty resets to false
+      savedStats.current = stats
       toast.success(text.saved)
     } catch {
       toast.error(text.saveError)
@@ -136,12 +192,17 @@ export function AboutStatsPage() {
           <h1 className="font-display text-3xl font-bold">{text.heading}</h1>
           <p className="text-muted-foreground mt-2">{text.subtitle}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {isDirty && (
+            <span className="rounded-lg border border-yellow-400 bg-yellow-100 px-2 text-sm text-yellow-800">
+              {text.unsavedChanges}
+            </span>
+          )}
           <Button variant="outline" onClick={add}>
             <Plus className="mr-2 h-4 w-4" />
             {text.add}
           </Button>
-          <Button onClick={save} disabled={saving}>
+          <Button onClick={save} disabled={saving || !isDirty}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {text.save}
           </Button>
@@ -222,6 +283,7 @@ export function AboutStatsPage() {
           </Card>
         ))}
       </div>
+      {/* Delete confirmation */}
       <ConfirmDialog
         open={deleteIndex !== null}
         onOpenChange={(open) => !open && setDeleteIndex(null)}
@@ -234,6 +296,16 @@ export function AboutStatsPage() {
         confirmLabel={language === "en" ? "Delete" : "Löschen"}
         cancelLabel={language === "en" ? "Cancel" : "Abbrechen"}
         onConfirm={remove}
+      />
+      {/* Leave page confirmation */}
+      <ConfirmDialog
+        open={leaveHref !== null}
+        onOpenChange={(open) => !open && setLeaveHref(null)}
+        title={text.leaveTitle}
+        description={text.leaveDescription}
+        confirmLabel={text.leaveConfirm}
+        cancelLabel={text.leaveCancel}
+        onConfirm={confirmLeave}
       />
     </div>
   )

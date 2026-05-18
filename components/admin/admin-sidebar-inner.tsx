@@ -25,7 +25,8 @@ import {
   Trophy,
   Lock,
   ShieldCheck,
-  Bug
+  Bug,
+  ArrowLeft
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BrandMark } from "@/components/brand-mark"
@@ -52,6 +53,7 @@ const copy = {
     adminPanel: "Admin Panel",
     categoryAdmin: "Kategorien-Admin",
     logout: "Abmelden",
+    backToDashboard: "Zurück",
     home: "Zentral Hack Startseite",
     bugReport: "Fehler melden",
     featureRequest: "Feature anfragen"
@@ -75,6 +77,7 @@ const copy = {
     adminPanel: "Admin Panel",
     categoryAdmin: "Category Admin",
     logout: "Log Out",
+    backToDashboard: "Back",
     home: "Zentral Hack Home",
     bugReport: "Report bug",
     featureRequest: "Request feature"
@@ -251,6 +254,10 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
     router.refresh()
   }
 
+  const handleBackToDashboard = async () => {
+    router.push("/dashboard")
+  }
+
   const NavContent = () => (
     <>
       {/* Logo */}
@@ -336,6 +343,15 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
             <option value="en">English</option>
           </select>
         </div>
+        {/* Back to dashboard */}
+        <Button
+          variant="ghost"
+          className="text-muted-foreground hover:text-foreground w-full justify-start gap-3"
+          onClick={handleBackToDashboard}>
+          <ArrowLeft className="h-5 w-5" />
+          {text.backToDashboard}
+        </Button>
+        {/* Logout */}
         <Button
           variant="ghost"
           className="text-muted-foreground hover:text-foreground w-full justify-start gap-3"
