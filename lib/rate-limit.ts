@@ -7,13 +7,19 @@ const redis = new Redis({
   token: process.env.UPSTASH_KV_REST_API_TOKEN!
 })
 
+const env = process.env.NODE_ENV === "production" ? "prod" : "dev"
+
 const WINDOWS = {
-  auth: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(5, "15 m"), prefix: "rl:auth" }),
-  twofa: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "15 m"), prefix: "rl:twofa" }),
-  signup: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "1 h"), prefix: "rl:signup" }),
-  newsletter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(5, "1 h"), prefix: "rl:newsletter" }),
-  sponsor: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(20, "1 h"), prefix: "rl:sponsor" }),
-  default: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(100, "1 m"), prefix: "rl:default" })
+  auth: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(5, "15 m"), prefix: `${env}:rl:auth` }),
+  twofa: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "15 m"), prefix: `${env}:rl:twofa` }),
+  signup: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "1 h"), prefix: `${env}:rl:signup` }),
+  newsletter: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(5, "1 h"),
+    prefix: `${env}:rl:newsletter`
+  }),
+  sponsor: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(20, "1 h"), prefix: `${env}:rl:sponsor` }),
+  default: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(100, "1 m"), prefix: `${env}:rl:default` })
 }
 
 export function getClientIp(request: NextRequest): string {
