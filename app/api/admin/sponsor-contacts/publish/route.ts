@@ -16,10 +16,10 @@ async function handlePost(req: AuthenticatedRequest) {
     if (!logoSize) return validationError("Sponsor logo size required")
     if (!tier) return validationError("Sponsor tier required")
 
-    // Delete existing blob if a logo already exists
+    // Delete existing blob if a logo already exists and differs from current logo
     const existing = await query(`SELECT logo_url FROM sponsor_contacts WHERE id = $1`, [String(id)])
     const oldUrl = existing.rows[0]?.logo_url
-    if (oldUrl) {
+    if (oldUrl && oldUrl !== logoUrl) {
       try {
         await del(oldUrl)
       } catch (e) {
