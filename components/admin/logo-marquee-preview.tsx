@@ -17,13 +17,13 @@ export default function LogoMarqueePreview({
 }: {
   currentLogo: string
   currentBgColor: string | null
-  currentLogoSize: "small" | "medium" | "large"
+  currentLogoSize: number
   currentWebsite: string
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
 
-  const logoSizeClass = currentLogoSize === "small" ? "w-20" : currentLogoSize === "medium" ? "w-28" : "w-36"
+  const logoWidthPx = currentLogoSize * 2 + 20
 
   const allItems = [
     ...PLACEHOLDER_SPONSORS,
@@ -71,7 +71,8 @@ export default function LogoMarqueePreview({
                     alt="Preview logo"
                     width={100}
                     height={100}
-                    className={`h-auto ${logoSizeClass}`}
+                    style={{ width: `${logoWidthPx}px` }}
+                    className="h-auto"
                     onError={(e) => (e.currentTarget.style.display = "none")}
                   />
                 </a>

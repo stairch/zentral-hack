@@ -28,7 +28,7 @@ interface OrganiserOrSponsor {
   logo: string
   link: string | null
   bgColor: string
-  logoWidth: string
+  logoWidthPx: number
   updatedAt: number
 }
 
@@ -92,7 +92,8 @@ function MarqueeRow({
                     alt={item.name}
                     width={1000}
                     height={1000}
-                    className={`h-auto ${item.logoWidth}`}
+                    style={{ width: `${item.logoWidthPx}px` }}
+                    className="h-auto"
                   />
                 </a>
               </div>
@@ -117,7 +118,8 @@ function MarqueeRow({
                     alt={item.name}
                     width={1000}
                     height={1000}
-                    className={`h-auto ${item.logoWidth}`}
+                    style={{ width: `${item.logoWidthPx}px` }}
+                    className="h-auto"
                   />
                 </a>
               </div>
@@ -249,7 +251,7 @@ export function Partners() {
             list.map((l) => ({
               name: l.name,
               logo: `/api/partner-logo?id=${l.id}`,
-              logoWidth: l.logo_size === "small" ? "w-20" : l.logo_size === "large" ? "w-36" : "w-28",
+              logoWidthPx: (Number(l.logo_size) || 50) * 2 + 20,
               link: l.website_url,
               bgColor: "transparent",
               updatedAt: l.updated_at
@@ -267,22 +269,13 @@ export function Partners() {
   }, [])
 
   function mapSponsor(e: Sponsor): OrganiserOrSponsor {
-    let logoWidth = ""
-    if (e.logo_size === "small") {
-      logoWidth = "w-20"
-    } else if (e.logo_size === "medium") {
-      logoWidth = "w-28"
-    } else if (e.logo_size === "large") {
-      logoWidth = "w-36"
-    }
-
     return {
       name: e.company_name,
       logo:
         e.logo_url && e.logo_url.startsWith("https://")
           ? `/api/sponsor-logo?id=${e.id}`
           : (e.logo_url as string),
-      logoWidth,
+      logoWidthPx: (Number(e.logo_size) || 50) * 2 + 20,
       bgColor: e.logo_bg_color === null ? "transparent" : e.logo_bg_color,
       link: e.website_url,
       updatedAt: e.updated_at

@@ -28,6 +28,9 @@ async function handlePost(req: AuthenticatedRequest) {
     const { name, logo_url, website_url, logo_size, sort_order } = await req.json()
     if (!name || !logo_url) return validationError("name and logo_url are required")
 
+    const sizeNum = Number(logo_size)
+    const validSize = Number.isInteger(sizeNum) && sizeNum >= 5 && sizeNum <= 100 && sizeNum % 5 === 0
+
     const result = await query(
       `INSERT INTO partner_logos (name, logo_url, website_url, logo_size, sort_order)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
@@ -35,7 +38,7 @@ async function handlePost(req: AuthenticatedRequest) {
         String(name).trim(),
         String(logo_url).trim(),
         website_url ? String(website_url).trim() : null,
-        ["small", "medium", "large"].includes(logo_size) ? logo_size : "medium",
+        validSize ? sizeNum : 50,
         Number(sort_order) || 0
       ]
     )
@@ -79,7 +82,9 @@ async function handlePut(req: AuthenticatedRequest) {
       fields.push(`website_url = $${values.length}`)
     }
     if (logo_size !== undefined) {
-      values.push(["small", "medium", "large"].includes(logo_size) ? logo_size : "medium")
+      const sizeNum = Number(logo_size)
+      const validSize = Number.isInteger(sizeNum) && sizeNum >= 5 && sizeNum <= 100 && sizeNum % 5 === 0
+      values.push(validSize ? sizeNum : 50)
       fields.push(`logo_size = $${values.length}`)
     }
     if (sort_order !== undefined) {

@@ -27,8 +27,6 @@ async function handlePost(req: AuthenticatedRequest) {
       }
     }
 
-    const ALLOWED_LOGO_SIZES = ["small", "medium", "large"]
-
     const fields: string[] = []
     const values: (string | number | boolean)[] = []
     let idx = 1
@@ -55,11 +53,13 @@ async function handlePost(req: AuthenticatedRequest) {
     values.push(logoBgColor)
     idx++
 
-    if (!ALLOWED_LOGO_SIZES.includes(logoSize)) {
-      return validationError(`Invalid logo size. Allowed: ${ALLOWED_LOGO_SIZES.join(", ")}`)
+    const sizeNum = Number(logoSize)
+    const validSize = Number.isInteger(sizeNum) && sizeNum >= 5 && sizeNum <= 100 && sizeNum % 5 === 0
+    if (!validSize) {
+      return validationError(`Invalid logo size. Must be an integer between 5 and 100 in steps of 5.`)
     }
     fields.push("logo_size = $" + idx)
-    values.push(logoSize)
+    values.push(sizeNum)
     idx++
 
     fields.push("tier = $" + idx)

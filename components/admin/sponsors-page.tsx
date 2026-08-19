@@ -74,7 +74,7 @@ type SponsorContact = {
   created_at: string
   logo_url: string | null
   website_url: string | null
-  logo_size: "small" | "medium" | "large" | null
+  logo_size: number | null
   tier: string | null
   logo_bg_color: string | null
   updated_at: number
@@ -117,7 +117,7 @@ interface PublishFormData {
   logoUrl: string
   websiteUrl: string
   logoBgColor: string | null
-  logoSize: "small" | "medium" | "large"
+  logoSize: number
   tier: string
 }
 
@@ -236,13 +236,6 @@ const copy = {
       sponsorSavedUpdate: "Sponsor-Anfrage aktualisiert",
       sponsorPublish: "Sponsor veröffentlicht",
       logoUploadSuccess: "Logo hochgeladen"
-    },
-    publishLabels: {
-      logoSize: {
-        small: "Klein",
-        medium: "Mittel",
-        large: "Gross"
-      }
     }
   },
   en: {
@@ -351,13 +344,6 @@ const copy = {
       sponsorSavedUpdate: "Sponsor contact updated",
       sponsorPublish: "Sponsor contact published",
       logoUploadSuccess: "Logo uploaded"
-    },
-    publishLabels: {
-      logoSize: {
-        small: "Small",
-        medium: "Medium",
-        large: "Large"
-      }
     }
   }
 }
@@ -382,7 +368,7 @@ function PublishDialog({
     logoUrl: "",
     websiteUrl: "",
     logoBgColor: null,
-    logoSize: "medium",
+    logoSize: 50,
     tier: contact.interested_in || ""
   })
   const { language } = useLanguage()
@@ -403,7 +389,7 @@ function PublishDialog({
         logoUrl: contact.logo_url || "",
         websiteUrl: contact.website_url || "",
         logoBgColor: contact.logo_bg_color || null,
-        logoSize: contact.logo_size || "medium",
+        logoSize: contact.logo_size ?? 50,
         tier: contact.tier || contact.interested_in || ""
       })
       setIsUnsavedLogo(false)
@@ -602,25 +588,25 @@ function PublishDialog({
             </div>
 
             {/* Logo Size + Package */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
-                <Label>{text.publishDialog.logoSizeLabel}</Label>
-                <Select
+                <Label className="flex items-center justify-between">
+                  <span>{text.publishDialog.logoSizeLabel}</span>
+                  <span className="text-muted-foreground font-normal">{form.logoSize * 2 + 20}px</span>
+                </Label>
+                <input
+                  type="range"
+                  min={5}
+                  max={100}
+                  step={5}
                   value={form.logoSize}
-                  onValueChange={(v) =>
-                    setForm((f) => ({ ...f, logoSize: v as PublishFormData["logoSize"] }))
-                  }>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(text.publishLabels.logoSize).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>
-                        {v}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => setForm((f) => ({ ...f, logoSize: Number(e.target.value) }))}
+                  className="accent-primary w-full"
+                />
+                <div className="text-muted-foreground flex justify-between text-xs">
+                  <span>5</span>
+                  <span>100</span>
+                </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
