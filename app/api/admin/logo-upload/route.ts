@@ -31,7 +31,7 @@ async function handlePost(req: AuthenticatedRequest) {
     // Raster images: resize to max dimensions, keep aspect ratio, convert to WebP
     uploadBuffer = await sharp(buffer)
       .resize(LOGO_MAX_WIDTH, LOGO_MAX_HEIGHT, { fit: "inside", withoutEnlargement: false })
-      .webp({ quality: 90 })
+      .webp({ quality: 100 })
       .toBuffer()
     uploadName = file.name.replace(/\.[^.]+$/, "") + ".webp"
     contentType = "image/webp"
