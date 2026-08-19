@@ -272,10 +272,6 @@ function TierCard({
       className="group relative flex min-h-28 w-56 cursor-pointer items-center justify-center rounded-2xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
       style={{ backgroundColor: tierColor, borderColor: tierColor, color: textColor }}>
       <div className="flex items-center gap-2.5">
-        <span
-          className="block h-2.5 w-2.5 shrink-0 rounded-full"
-          style={{ backgroundColor: textColor, opacity: 0.85 }}
-        />
         <span className="font-display text-2xl font-semibold tracking-wide">{localizedTier.name}</span>
       </div>
     </motion.div>
