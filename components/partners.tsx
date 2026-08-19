@@ -305,7 +305,7 @@ export function CoOrganisers() {
             list.map((l) => ({
               name: l.name,
               logo: `/api/partner-logo?id=${l.id}`,
-              logoWidthPx: (Number(l.logo_size) || 50) * 2 + 20,
+              logoWidthPx: (Number(l.logo_size) || 50) * 3,
               link: l.website_url,
               bgColor: "transparent",
               updatedAt: l.updated_at
@@ -391,7 +391,7 @@ export function Partners() {
         e.logo_url && e.logo_url.startsWith("https://")
           ? `/api/sponsor-logo?id=${e.id}`
           : (e.logo_url as string),
-      logoWidthPx: (Number(e.logo_size) || 50) * 2 + 20,
+      logoWidthPx: (Number(e.logo_size) || 50) * 3,
       bgColor: e.logo_bg_color === null ? "transparent" : e.logo_bg_color,
       link: e.website_url,
       updatedAt: e.updated_at
