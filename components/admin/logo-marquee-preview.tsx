@@ -23,7 +23,7 @@ export default function LogoMarqueePreview({
   const ref = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
 
-  const logoWidthPx = currentLogoSize * 2 + 20
+  const logoWidthPx = currentLogoSize * 3
 
   const allItems = [
     ...PLACEHOLDER_SPONSORS,

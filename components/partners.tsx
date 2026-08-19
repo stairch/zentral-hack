@@ -6,10 +6,11 @@ import { SponsorshipModal } from "./sponsorship-modal"
 import { useLanguage } from "@/lib/language-context"
 import { Emails } from "@/lib/constants"
 import { getSponsorPackageByLanguage } from "@/lib/sponsorship-packages"
-import { getContrastForegroundColor } from "@/lib/helpers"
 import { type SponsorPackage } from "@/lib/sponsorship-packages"
 import Image from "next/image"
 import { srcWithVersion } from "@/lib/helpers"
+import { getContrastForegroundColor } from "@/lib/helpers"
+import { cn } from "@/lib/utils"
 
 interface Sponsor {
   id: string
@@ -30,6 +31,117 @@ interface OrganiserOrSponsor {
   bgColor: string
   logoWidthPx: number
   updatedAt: number
+}
+
+// Tier-specific cell heights (Platin tallest -> Bronze shortest)
+const TIER_MIN_H = ["min-h-48", "min-h-40", "min-h-28", "min-h-24"] as const
+
+function getTierMinH(tierIndex: number) {
+  return TIER_MIN_H[Math.min(tierIndex, TIER_MIN_H.length - 1)]
+}
+
+// Responsive grid classes per tier: Platin max 2, Gold max 3, Silber max 4, Bronze max 5
+const TIER_GRID_COLS = [
+  "grid-cols-1 sm:grid-cols-2",
+  "grid-cols-1 sm:grid-cols-2 md:grid-cols-3",
+  "grid-cols-2 sm:grid-cols-3 md:grid-cols-4",
+  "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+] as const
+
+// Breakpoints per tier matching the Tailwind classes above (ascending, min-width in px)
+const TIER_BREAKPOINTS = [
+  [
+    { min: 0, cols: 1 },
+    { min: 640, cols: 2 }
+  ],
+  [
+    { min: 0, cols: 1 },
+    { min: 640, cols: 2 },
+    { min: 768, cols: 3 }
+  ],
+  [
+    { min: 0, cols: 2 },
+    { min: 640, cols: 3 },
+    { min: 768, cols: 4 }
+  ],
+  [
+    { min: 0, cols: 2 },
+    { min: 640, cols: 3 },
+    { min: 768, cols: 4 },
+    { min: 1024, cols: 5 }
+  ]
+] as const
+
+function getColsForWidth(tierIndex: number, width: number): number {
+  const bps = TIER_BREAKPOINTS[Math.min(tierIndex, TIER_BREAKPOINTS.length - 1)]
+  let cols: 1 | 2 | 3 | 4 | 5 = bps[0].cols
+  for (const bp of bps) {
+    if (width >= bp.min) cols = bp.cols
+  }
+  return cols
+}
+
+function SponsorGrid({
+  sponsors,
+  tierIndex,
+  minH
+}: {
+  sponsors: OrganiserOrSponsor[]
+  tierIndex: number
+  minH: string
+}) {
+  const gridColsClass = TIER_GRID_COLS[Math.min(tierIndex, TIER_GRID_COLS.length - 1)]
+  const [activeCols, setActiveCols] = useState(() =>
+    typeof window !== "undefined" ? getColsForWidth(tierIndex, window.innerWidth) : 2
+  )
+
+  useEffect(() => {
+    function update() {
+      setActiveCols(getColsForWidth(tierIndex, window.innerWidth))
+    }
+    update()
+    window.addEventListener("resize", update)
+    return () => window.removeEventListener("resize", update)
+  }, [tierIndex])
+
+  const trailingEmpty = (activeCols - (sponsors.length % activeCols)) % activeCols
+
+  return (
+    <div className={cn("border-border bg-border grid gap-px border", gridColsClass)}>
+      {sponsors.map((sponsor) => (
+        <div key={sponsor.name} className={cn("bg-background flex items-center justify-center p-6", minH)}>
+          <SponsorLogo item={sponsor} />
+        </div>
+      ))}
+      {Array.from({ length: trailingEmpty }).map((_, i) => (
+        <div key={`empty-${i}`} className={cn("bg-background", minH)} />
+      ))}
+    </div>
+  )
+}
+
+function SponsorLogo({ item }: { item: OrganiserOrSponsor }) {
+  const img = (
+    <Image
+      src={srcWithVersion(item.logo, item.updatedAt)}
+      alt={item.name}
+      width={1000}
+      height={1000}
+      style={{
+        width: `${item.logoWidthPx}px`,
+        background: item.bgColor !== "transparent" ? item.bgColor : undefined
+      }}
+      className="h-auto object-contain"
+    />
+  )
+  if (item.link) {
+    return (
+      <a href={item.link} target="_blank" rel="noopener noreferrer">
+        {img}
+      </a>
+    )
+  }
+  return img
 }
 
 function MarqueeRow({
@@ -55,35 +167,21 @@ function MarqueeRow({
     <div className="relative overflow-hidden py-4">
       {items.length > 4 ? (
         <>
-          {/* fade left */}
           <div className="from-background pointer-events-none absolute top-0 left-0 z-10 h-full w-12 bg-linear-to-r to-transparent sm:w-28" />
-          {/* fade right */}
           <div className="from-background pointer-events-none absolute top-0 right-0 z-10 h-full w-12 bg-linear-to-l to-transparent sm:w-28" />
-
           <motion.div
             ref={ref}
             className="flex gap-8 whitespace-nowrap"
             animate={
-              containerWidth
-                ? {
-                    x: direction === "left" ? [0, -containerWidth] : [-containerWidth, 0]
-                  }
-                : {}
+              containerWidth ? { x: direction === "left" ? [0, -containerWidth] : [-containerWidth, 0] } : {}
             }
-            transition={{
-              x: {
-                duration: speed,
-                repeat: Infinity,
-                ease: "linear",
-                repeatType: "loop"
-              }
-            }}>
+            transition={{ x: { duration: speed, repeat: Infinity, ease: "linear", repeatType: "loop" } }}>
             {duplicatedItems.map((item, index) => (
               <div
                 key={`partners-item-${item.name}-${index}`}
                 className="flex shrink-0 items-center rounded-lg px-8 py-4">
                 <a
-                  className={`rounded-xs p-1`}
+                  className="rounded-xs p-1"
                   style={{ background: item.bgColor }}
                   href={item.link === null ? undefined : item.link}
                   target="_blank">
@@ -102,29 +200,26 @@ function MarqueeRow({
         </>
       ) : (
         <div className="flex flex-wrap justify-center gap-8">
-          {items.map((item, index) => {
-            srcWithVersion(item.logo, item.updatedAt)
-            return (
-              <div
-                key={`partners-item-${item.name}-${index}`}
-                className="flex shrink-0 items-center rounded-lg px-8 py-4">
-                <a
-                  className={`rounded-xs p-1`}
-                  style={{ background: item.bgColor }}
-                  href={item.link === null ? undefined : item.link}
-                  target="_blank">
-                  <Image
-                    src={srcWithVersion(item.logo, item.updatedAt)}
-                    alt={item.name}
-                    width={1000}
-                    height={1000}
-                    style={{ width: `${item.logoWidthPx}px` }}
-                    className="h-auto"
-                  />
-                </a>
-              </div>
-            )
-          })}
+          {items.map((item, index) => (
+            <div
+              key={`partners-item-${item.name}-${index}`}
+              className="flex shrink-0 items-center rounded-lg px-8 py-4">
+              <a
+                className="rounded-xs p-1"
+                style={{ background: item.bgColor }}
+                href={item.link === null ? undefined : item.link}
+                target="_blank">
+                <Image
+                  src={srcWithVersion(item.logo, item.updatedAt)}
+                  alt={item.name}
+                  width={1000}
+                  height={1000}
+                  style={{ width: `${item.logoWidthPx}px` }}
+                  className="h-auto"
+                />
+              </a>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -165,9 +260,7 @@ function TierCard({
       animate={isInView ? { opacity: isSpotlit ? 1 : 0.35 } : { opacity: 0, y: 24 }}
       transition={{ duration: 0.2, delay: isInView ? 0 : index * 0.1 }}
       onClick={onOpen}
-      onMouseEnter={() => {
-        onHover()
-      }}
+      onMouseEnter={onHover}
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
@@ -177,19 +270,70 @@ function TierCard({
           : `Request ${localizedTier.name} sponsorship package`
       }
       className="group relative flex min-h-28 w-56 cursor-pointer items-center justify-center rounded-2xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
-      style={{
-        backgroundColor: tierColor,
-        borderColor: tierColor,
-        color: textColor
-      }}>
+      style={{ backgroundColor: tierColor, borderColor: tierColor, color: textColor }}>
       <div className="flex items-center gap-2.5">
-        <span
-          className="block h-2.5 w-2.5 shrink-0 rounded-full"
-          style={{ backgroundColor: textColor, opacity: 0.85 }}
-        />
         <span className="font-display text-2xl font-semibold tracking-wide">{localizedTier.name}</span>
       </div>
     </motion.div>
+  )
+}
+
+export function CoOrganisers() {
+  const [organisers, setOrganisers] = useState<OrganiserOrSponsor[]>([])
+  const { language } = useLanguage()
+
+  useEffect(() => {
+    const fetchPartnerLogos = async () => {
+      try {
+        const res = await fetch("/api/partner-logos")
+        if (!res.ok) return
+        const json = await res.json()
+        const list = json.data?.logos as {
+          id: string
+          name: string
+          logo_url: string
+          website_url: string | null
+          logo_size: string
+          updated_at: number
+        }[]
+        if (list?.length > 0) {
+          setOrganisers(
+            list.map((l) => ({
+              name: l.name,
+              logo: `/api/partner-logo?id=${l.id}`,
+              logoWidthPx: (Number(l.logo_size) || 50) * 3,
+              link: l.website_url,
+              bgColor: "transparent",
+              updatedAt: l.updated_at
+            }))
+          )
+        }
+      } catch (err) {
+        console.error("Failed to fetch partners: ", err)
+      }
+    }
+    void fetchPartnerLogos()
+  }, [])
+
+  if (organisers.length === 0) return null
+
+  const title = language === "de" ? "ORGANISIERT VON" : "ORGANIZED BY"
+
+  return (
+    <section className="bg-background py-12">
+      <div className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.5 }}>
+          <p className="text-muted-foreground mb-8 text-center font-medium tracking-widest uppercase">
+            {title}
+          </p>
+          <MarqueeRow items={organisers} direction="left" speed={30} />
+        </motion.div>
+      </div>
+    </section>
   )
 }
 
@@ -200,7 +344,6 @@ export function Partners() {
   const [selectedPackage, setSelectedPackage] = useState<SponsorPackage | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const [sponsors, setSponsors] = useState<Sponsor[]>([])
-  const [dbOrganisers, setDbOrganisers] = useState<OrganiserOrSponsor[]>([])
   const [sponsorPackageItems, setSponsorPackageItems] = useState<SponsorPackage[]>([])
   const { language } = useLanguage()
 
@@ -233,39 +376,8 @@ export function Partners() {
       }
     }
 
-    const fetchPartnerLogos = async () => {
-      try {
-        const res = await fetch("/api/partner-logos")
-        if (!res.ok) return
-        const json = await res.json()
-        const list = json.data?.logos as {
-          id: string
-          name: string
-          logo_url: string
-          website_url: string | null
-          logo_size: string
-          updated_at: number
-        }[]
-        if (list?.length > 0) {
-          setDbOrganisers(
-            list.map((l) => ({
-              name: l.name,
-              logo: `/api/partner-logo?id=${l.id}`,
-              logoWidthPx: (Number(l.logo_size) || 50) * 2 + 20,
-              link: l.website_url,
-              bgColor: "transparent",
-              updatedAt: l.updated_at
-            }))
-          )
-        }
-      } catch (err) {
-        console.error("Failed to fetch partners: ", err)
-      }
-    }
-
     void fetchSponsorPackages()
     void fetchSponsorContacts()
-    void fetchPartnerLogos()
   }, [])
 
   function mapSponsor(e: Sponsor): OrganiserOrSponsor {
@@ -275,39 +387,42 @@ export function Partners() {
         e.logo_url && e.logo_url.startsWith("https://")
           ? `/api/sponsor-logo?id=${e.id}`
           : (e.logo_url as string),
-      logoWidthPx: (Number(e.logo_size) || 50) * 2 + 20,
+      logoWidthPx: (Number(e.logo_size) || 50) * 3,
       bgColor: e.logo_bg_color === null ? "transparent" : e.logo_bg_color,
       link: e.website_url,
       updatedAt: e.updated_at
     }
   }
 
-  const sponsorsByPackage: { package: SponsorPackage; sponsors: OrganiserOrSponsor[] }[] =
-    sponsorPackageItems.map((pkg) => ({
-      package: pkg,
-      sponsors: sponsors
-        .filter((s) => s.tier === pkg.id && s.status === "published" && s.logo_url)
-        .map(mapSponsor)
-    }))
+  const sponsorsByPackage = sponsorPackageItems.map((pkg, tierIndex) => ({
+    package: pkg,
+    tierIndex,
+    sponsors: sponsors
+      .filter((s) => s.tier === pkg.id && s.status === "published" && s.logo_url)
+      .map(mapSponsor)
+  }))
+
+  const tiersWithSponsors = sponsorsByPackage.filter(({ sponsors }) => sponsors.length > 0)
 
   const copy = {
     de: {
-      badge: "PARTNER & SPONSOREN",
+      badge: "SPONSOREN",
       heading: "GEMEINSAM",
       headingAccent: "STÄRKER",
-      description: "Unterstützt von führenden Unternehmen und Institutionen der Zentralschweiz.",
-      organisers: "CO-ORGANISATOREN",
+      description:
+        "Unterstützt von führenden Unternehmen und Institutionen aus der Zentralschweiz und darüber hinaus.",
       tierListsTitle: "Werden Sie ein Sponsor",
+      sponsoren: "SPONSOREN",
       ctaQuestion: "Noch unsicher welches Paket passt?",
       ctaAction: "Kontakt aufnehmen"
     },
     en: {
-      badge: "PARTNERS & SPONSORS",
+      badge: "SPONSORS",
       heading: "STRONGER",
       headingAccent: "TOGETHER",
-      description: "Supported by leading companies and institutions in Central Switzerland.",
-      organisers: "CO-ORGANIZERS",
+      description: "Supported by leading companies and institutions from Central Switzerland and beyond.",
       tierListsTitle: "Become a sponsor",
+      sponsoren: "SPONSORS",
       ctaQuestion: "Not sure which package fits?",
       ctaAction: "Get in touch"
     }
@@ -336,37 +451,31 @@ export function Partners() {
             <h2 className="font-display text-foreground mb-4 text-4xl font-bold md:text-5xl">
               {text.heading} <span className="text-violet">{text.headingAccent}</span>
             </h2>
-            <p className="text-muted-foreground mx-auto max-w-2xl text-lg">{text.description}</p>
+            <p className="text-muted-foreground mx-auto max-w-3xl text-lg">{text.description}</p>
           </motion.div>
 
-          <div className="mb-16">
-            {/* Co-Organisers Marquee */}
-            <h3 className="font-display text-foreground mb-4 flex justify-center text-center text-lg font-bold">
-              <div className="bg-primary w-fit rounded-md px-5 text-white">{text.organisers}</div>
-            </h3>
-            <MarqueeRow items={dbOrganisers} direction="left" speed={30} />
-            {sponsorsByPackage
-              .filter(({ sponsors }) => sponsors.length > 0)
-              .map(({ package: pkg, sponsors }, i) => {
-                const localizedPkg = getSponsorPackageByLanguage(pkg, language)
-                const label = localizedPkg.name.toUpperCase()
-                const direction = i % 2 === 0 ? "right" : "left"
-                return (
-                  <div key={pkg.id}>
-                    <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
-                      <div
-                        className="w-fit rounded-md px-5"
-                        style={{
-                          background: localizedPkg.color,
-                          color: getContrastForegroundColor(localizedPkg.color)
-                        }}>
-                        {label} SPONSOREN
-                      </div>
-                    </h3>
-                    <MarqueeRow items={sponsors} direction={direction} speed={20} />
-                  </div>
-                )
-              })}
+          {/* Sponsor grids */}
+          <div className="mx-auto mb-32 max-w-3xl">
+            {tiersWithSponsors.map(({ package: pkg, sponsors, tierIndex }) => {
+              const localizedPkg = getSponsorPackageByLanguage(pkg, language)
+              const label = localizedPkg.name.toUpperCase()
+              const bgColor = localizedPkg.color
+              const textColor = getContrastForegroundColor(bgColor)
+              const minH = getTierMinH(tierIndex)
+
+              return (
+                <div key={pkg.id}>
+                  {/* Title */}
+                  <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
+                    <div className="w-fit rounded-md px-5" style={{ background: bgColor, color: textColor }}>
+                      {label} {text.sponsoren}
+                    </div>
+                  </h3>
+
+                  <SponsorGrid sponsors={sponsors} tierIndex={tierIndex} minH={minH} />
+                </div>
+              )
+            })}
           </div>
 
           {/* Sponsor Tiers */}

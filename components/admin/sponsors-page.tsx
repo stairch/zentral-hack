@@ -592,11 +592,11 @@ function PublishDialog({
               <div className="flex flex-col gap-1.5">
                 <Label className="flex items-center justify-between">
                   <span>{text.publishDialog.logoSizeLabel}</span>
-                  <span className="text-muted-foreground font-normal">{form.logoSize * 2 + 20}px</span>
+                  <span className="text-muted-foreground font-normal">{form.logoSize * 3}px</span>
                 </Label>
                 <input
                   type="range"
-                  min={5}
+                  min={10}
                   max={100}
                   step={5}
                   value={form.logoSize}
@@ -604,7 +604,7 @@ function PublishDialog({
                   className="accent-primary w-full"
                 />
                 <div className="text-muted-foreground flex justify-between text-xs">
-                  <span>5</span>
+                  <span>10</span>
                   <span>100</span>
                 </div>
               </div>

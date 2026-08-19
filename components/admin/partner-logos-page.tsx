@@ -356,7 +356,7 @@ export function AdminPartnerLogosPage() {
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{logo.name}</p>
                 <p className="text-muted-foreground text-xs">
-                  {logo.website_url || text.noLink} · {logo.logo_size * 2 + 20}px
+                  {logo.website_url || text.noLink} · {logo.logo_size * 3}px
                 </p>
               </div>
               <div className="flex shrink-0 gap-1">
@@ -456,11 +456,11 @@ export function AdminPartnerLogosPage() {
               <div>
                 <Label className="mb-1 flex items-center justify-between">
                   <span>{text.sizeLabel}</span>
-                  <span className="text-muted-foreground font-normal">{form.logo_size * 2 + 20}px</span>
+                  <span className="text-muted-foreground font-normal">{form.logo_size * 3}px</span>
                 </Label>
                 <input
                   type="range"
-                  min={5}
+                  min={10}
                   max={100}
                   step={5}
                   value={form.logo_size}
@@ -468,7 +468,7 @@ export function AdminPartnerLogosPage() {
                   className="accent-primary w-full"
                 />
                 <div className="text-muted-foreground mt-1 flex justify-between text-xs">
-                  <span>5</span>
+                  <span>10</span>
                   <span>100</span>
                 </div>
               </div>
