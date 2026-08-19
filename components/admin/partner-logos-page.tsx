@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Loader2, Plus, Trash2, Edit2, Upload, ChevronUp, ChevronDown, Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
@@ -19,14 +18,11 @@ interface PartnerLogo {
   name: string
   logo_url: string
   website_url: string | null
-  logo_size: "small" | "medium" | "large"
+  logo_size: number
   sort_order: number
   is_active: boolean
   updated_at: number
 }
-
-const SIZE_LABELS_DE = { small: "Klein", medium: "Mittel", large: "Gross" }
-const SIZE_LABELS_EN = { small: "Small", medium: "Medium", large: "Large" }
 
 const copy = {
   de: {
@@ -108,7 +104,6 @@ const copy = {
 export function AdminPartnerLogosPage() {
   const { language } = useLanguage()
   const text = copy[language]
-  const SIZE_LABELS = language === "en" ? SIZE_LABELS_EN : SIZE_LABELS_DE
 
   const [logos, setLogos] = useState<PartnerLogo[]>([])
   const [loading, setLoading] = useState(true)
@@ -118,7 +113,7 @@ export function AdminPartnerLogosPage() {
     name: "",
     logo_url: "",
     website_url: "",
-    logo_size: "medium" as "small" | "medium" | "large",
+    logo_size: 50,
     sort_order: 0,
     is_active: true
   })
@@ -174,7 +169,7 @@ export function AdminPartnerLogosPage() {
       name: "",
       logo_url: "",
       website_url: "",
-      logo_size: "medium",
+      logo_size: 50,
       sort_order: maxOrder + 10,
       is_active: true
     })
@@ -361,7 +356,7 @@ export function AdminPartnerLogosPage() {
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{logo.name}</p>
                 <p className="text-muted-foreground text-xs">
-                  {logo.website_url || text.noLink} · {SIZE_LABELS[logo.logo_size]}
+                  {logo.website_url || text.noLink} · {logo.logo_size * 2 + 20}px
                 </p>
               </div>
               <div className="flex shrink-0 gap-1">
@@ -459,23 +454,23 @@ export function AdminPartnerLogosPage() {
                 />
               </div>
               <div>
-                <Label>{text.sizeLabel}</Label>
-                <Select
+                <Label className="mb-1 flex items-center justify-between">
+                  <span>{text.sizeLabel}</span>
+                  <span className="text-muted-foreground font-normal">{form.logo_size * 2 + 20}px</span>
+                </Label>
+                <input
+                  type="range"
+                  min={5}
+                  max={100}
+                  step={5}
                   value={form.logo_size}
-                  onValueChange={(v) =>
-                    setForm((f) => ({ ...f, logo_size: v as "small" | "medium" | "large" }))
-                  }>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(SIZE_LABELS).map(([val, label]) => (
-                      <SelectItem key={val} value={val}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => setForm((f) => ({ ...f, logo_size: Number(e.target.value) }))}
+                  className="accent-primary w-full"
+                />
+                <div className="text-muted-foreground mt-1 flex justify-between text-xs">
+                  <span>5</span>
+                  <span>100</span>
+                </div>
               </div>
               {/* Marquee Preview */}
               {previewUrl && (
