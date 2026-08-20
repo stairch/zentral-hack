@@ -44,7 +44,7 @@ import {
   type SponsorPackagePriceStatus
 } from "@/lib/sponsorship-packages"
 import Image from "next/image"
-import LogoMarqueePreview from "./logo-marquee-preview"
+import LogoGridPreview from "./logo-grid-preview"
 
 type SponsorPackage = {
   id: string
@@ -384,10 +384,12 @@ const copy = {
 function PublishDialog({
   contact,
   packages,
+  publishedSponsors,
   onPublish
 }: {
   contact: SponsorContact
   packages: SponsorPackage[]
+  publishedSponsors: SponsorContact[]
   onPublish: (id: string, data: PublishFormData) => Promise<void>
 }) {
   const [open, setOpen] = useState(false)
@@ -414,6 +416,24 @@ function PublishDialog({
         priceLabel: getSponsorPackagePriceLabel(getSponsorPackageByLanguage(pkg, language), language)
       })),
     [language, packages]
+  )
+
+  const tierIndex = useMemo(() => {
+    const idx = packages.findIndex((p) => p.id === form.tier)
+    return idx >= 0 ? idx : 1
+  }, [packages, form.tier])
+
+  const othersInTier = useMemo(
+    () =>
+      publishedSponsors
+        .filter((s) => s.tier === form.tier && s.id !== contact.id && s.logo_url)
+        .map((s) => ({
+          logo: srcWithVersion(`/api/sponsor-logo?id=${s.id}`, s.updated_at),
+          name: s.company_name,
+          bgColor: s.logo_bg_color,
+          width: (s.logo_size ?? 50) * 3
+        })),
+    [publishedSponsors, form.tier, contact.id]
   )
 
   useEffect(() => {
@@ -658,18 +678,23 @@ function PublishDialog({
                 </Select>
               </div>
             </div>
-            {/* Marquee Preview */}
+            {/* Grid Preview */}
             {previewUrl && (
               <div className="flex flex-col gap-1.5">
                 <Label className="text-muted-foreground text-xs">{text.publishDialog.previewLabel}</Label>
-                <div className="rounded-lg border">
-                  <LogoMarqueePreview
-                    currentLogo={previewUrl}
-                    currentBgColor={form.logoBgColor}
-                    currentLogoSize={form.logoSize}
-                    currentWebsite={form.websiteUrl}
-                  />
-                </div>
+                <LogoGridPreview
+                  tierIndex={tierIndex}
+                  items={[
+                    ...othersInTier,
+                    {
+                      logo: previewUrl,
+                      name: contact.company_name,
+                      bgColor: form.logoBgColor,
+                      width: form.logoSize * 3,
+                      isCurrent: true
+                    }
+                  ]}
+                />
               </div>
             )}
           </div>
@@ -1316,6 +1341,7 @@ export function AdminSponsorsPage() {
                             <PublishDialog
                               contact={contact}
                               packages={sortedPackages}
+                              publishedSponsors={publishedSponsors}
                               onPublish={handleContactPublish}
                             />
                           )}

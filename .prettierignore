@@ -3,3 +3,4 @@ dist
 LICENSE
 tsconfig.json
 tsconfig.*.json
+.claude
