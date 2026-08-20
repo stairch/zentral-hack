@@ -10,7 +10,7 @@ import { Loader2, Plus, Trash2, Edit2, Upload, ChevronUp, ChevronDown, Eye, EyeO
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import Image from "next/image"
-import LogoMarqueePreview from "./logo-marquee-preview"
+import LogoGridPreview from "./logo-grid-preview"
 import { srcWithVersion } from "@/lib/helpers"
 
 interface PartnerLogo {
@@ -472,18 +472,30 @@ export function AdminPartnerLogosPage() {
                   <span>100</span>
                 </div>
               </div>
-              {/* Marquee Preview */}
+              {/* Grid Preview */}
               {previewUrl && (
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-muted-foreground text-xs">{text.preview}</Label>
-                  <div className="rounded-lg border">
-                    <LogoMarqueePreview
-                      currentLogo={previewUrl}
-                      currentBgColor={null}
-                      currentLogoSize={form.logo_size}
-                      currentWebsite={form.website_url}
-                    />
-                  </div>
+                  <LogoGridPreview
+                    tierIndex={2}
+                    items={[
+                      ...sortedLogos
+                        .filter((l) => l.is_active && l.id !== editingLogo?.id)
+                        .map((l) => ({
+                          logo: srcWithVersion(`/api/partner-logo?id=${l.id}`, l.updated_at),
+                          name: l.name,
+                          bgColor: null,
+                          width: l.logo_size * 3
+                        })),
+                      {
+                        logo: previewUrl,
+                        name: form.name || "—",
+                        bgColor: null,
+                        width: form.logo_size * 3,
+                        isCurrent: true
+                      }
+                    ]}
+                  />
                 </div>
               )}
             </div>
