@@ -108,11 +108,28 @@ function SponsorGrid({
 
   return (
     <div className={cn("border-border bg-border grid gap-px border", gridColsClass)}>
-      {sponsors.map((sponsor) => (
-        <div key={sponsor.name} className={cn("bg-background flex items-center justify-center p-6", minH)}>
-          <SponsorLogo item={sponsor} />
-        </div>
-      ))}
+      {sponsors.map((sponsor) => {
+        const cellContent = <SponsorLogo item={sponsor} />
+        const cellClass = cn(
+          "bg-background hover:bg-muted/50 flex items-center justify-center p-6 transition-colors duration-300",
+          minH
+        )
+
+        return sponsor.link ? (
+          <a
+            key={sponsor.name}
+            href={sponsor.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cellClass}>
+            {cellContent}
+          </a>
+        ) : (
+          <div key={sponsor.name} className={cellClass}>
+            {cellContent}
+          </div>
+        )
+      })}
       {Array.from({ length: trailingEmpty }).map((_, i) => (
         <div key={`empty-${i}`} className={cn("bg-background", minH)} />
       ))}
@@ -121,7 +138,7 @@ function SponsorGrid({
 }
 
 function SponsorLogo({ item }: { item: OrganiserOrSponsor }) {
-  const img = (
+  return (
     <Image
       src={srcWithVersion(item.logo, item.updatedAt)}
       alt={item.name}
@@ -134,14 +151,6 @@ function SponsorLogo({ item }: { item: OrganiserOrSponsor }) {
       className="h-auto object-contain"
     />
   )
-  if (item.link) {
-    return (
-      <a href={item.link} target="_blank" rel="noopener noreferrer">
-        {img}
-      </a>
-    )
-  }
-  return img
 }
 
 function TierCard({
