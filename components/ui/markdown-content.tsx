@@ -7,9 +7,10 @@ import { normalizeUrl } from "@/lib/helpers"
 
 interface MarkdownContentPropsType {
   children: string
+  compact?: boolean
 }
 
-export default function MarkdownContent({ children }: MarkdownContentPropsType) {
+export default function MarkdownContent({ children, compact }: MarkdownContentPropsType) {
   const replaceList: Record<string, string> = {
     "email-contact-hslu": Emails.contactHSLU,
     "email-url-contact-hslu": `mailto:${Emails.contactHSLU}`,
@@ -25,7 +26,7 @@ export default function MarkdownContent({ children }: MarkdownContentPropsType) 
   })
 
   return (
-    <div className="md-content">
+    <div className={compact ? "md-content-sm" : "md-content"}>
       <Markdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}

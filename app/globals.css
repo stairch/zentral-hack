@@ -217,6 +217,19 @@
   @apply bg-muted/30;
 }
 
+/* Compact markdown for admin contexts */
+.md-content-sm h3 {
+  @apply pt-3 pb-1 text-sm font-semibold tracking-wider uppercase;
+}
+
+.md-content-sm p {
+  @apply text-foreground text-sm;
+}
+
+.md-content-sm ul {
+  @apply text-foreground my-1 ml-3 list-inside list-disc text-sm;
+}
+
 .content-numbered {
   counter-reset: h2 h3-top;
 }
