@@ -144,88 +144,6 @@ function SponsorLogo({ item }: { item: OrganiserOrSponsor }) {
   return img
 }
 
-function MarqueeRow({
-  items,
-  direction = "left",
-  speed = 30
-}: {
-  items: OrganiserOrSponsor[]
-  direction?: "left" | "right"
-  speed?: number
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [containerWidth, setContainerWidth] = useState(0)
-
-  const duplicatedItems = [...items, ...items, ...items]
-
-  useEffect(() => {
-    if (!ref.current) return
-    setContainerWidth(ref.current.scrollWidth / 3 + 10)
-  }, [items])
-
-  return (
-    <div className="relative overflow-hidden py-4">
-      {items.length > 4 ? (
-        <>
-          <div className="from-background pointer-events-none absolute top-0 left-0 z-10 h-full w-12 bg-linear-to-r to-transparent sm:w-28" />
-          <div className="from-background pointer-events-none absolute top-0 right-0 z-10 h-full w-12 bg-linear-to-l to-transparent sm:w-28" />
-          <motion.div
-            ref={ref}
-            className="flex gap-8 whitespace-nowrap"
-            animate={
-              containerWidth ? { x: direction === "left" ? [0, -containerWidth] : [-containerWidth, 0] } : {}
-            }
-            transition={{ x: { duration: speed, repeat: Infinity, ease: "linear", repeatType: "loop" } }}>
-            {duplicatedItems.map((item, index) => (
-              <div
-                key={`partners-item-${item.name}-${index}`}
-                className="flex shrink-0 items-center rounded-lg px-8 py-4">
-                <a
-                  className="rounded-xs p-1"
-                  style={{ background: item.bgColor }}
-                  href={item.link === null ? undefined : item.link}
-                  target="_blank">
-                  <Image
-                    src={srcWithVersion(item.logo, item.updatedAt)}
-                    alt={item.name}
-                    width={1000}
-                    height={1000}
-                    style={{ width: `${item.logoWidthPx}px` }}
-                    className="h-auto"
-                  />
-                </a>
-              </div>
-            ))}
-          </motion.div>
-        </>
-      ) : (
-        <div className="flex flex-wrap justify-center gap-8">
-          {items.map((item, index) => (
-            <div
-              key={`partners-item-${item.name}-${index}`}
-              className="flex shrink-0 items-center rounded-lg px-8 py-4">
-              <a
-                className="rounded-xs p-1"
-                style={{ background: item.bgColor }}
-                href={item.link === null ? undefined : item.link}
-                target="_blank">
-                <Image
-                  src={srcWithVersion(item.logo, item.updatedAt)}
-                  alt={item.name}
-                  width={1000}
-                  height={1000}
-                  style={{ width: `${item.logoWidthPx}px` }}
-                  className="h-auto"
-                />
-              </a>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 function TierCard({
   tier,
   index,
@@ -318,6 +236,7 @@ export function CoOrganisers() {
   if (organisers.length === 0) return null
 
   const title = language === "de" ? "ORGANISIERT VON" : "ORGANIZED BY"
+  const SILVER_TIER_INDEX = 2
 
   return (
     <section className="bg-background py-12">
@@ -330,7 +249,13 @@ export function CoOrganisers() {
           <p className="text-muted-foreground mb-8 text-center font-medium tracking-widest uppercase">
             {title}
           </p>
-          <MarqueeRow items={organisers} direction="left" speed={30} />
+          <div className="mx-auto max-w-3xl">
+            <SponsorGrid
+              sponsors={organisers}
+              tierIndex={SILVER_TIER_INDEX}
+              minH={getTierMinH(SILVER_TIER_INDEX)}
+            />
+          </div>
         </motion.div>
       </div>
     </section>
