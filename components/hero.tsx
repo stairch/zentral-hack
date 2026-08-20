@@ -3,35 +3,109 @@
 import { useEffect, useState, useRef } from "react"
 import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Calendar, MapPin } from "lucide-react"
+import { ArrowRight, Calendar, MapPin, HeartHandshake } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { BrandMark } from "@/components/brand-mark"
 import { BrandMountain } from "@/components/brand-mountain"
+import Image from "next/image"
+import { srcWithVersion } from "@/lib/helpers"
+import { getSponsorPackageByLanguage, type SponsorPackage } from "@/lib/sponsorship-packages"
+import { cn } from "@/lib/utils"
 
 const copy = {
   de: {
-    date: "23. - 24. OKTOBER 2026",
+    date: "23.–24. OKTOBER 2026",
     subtitleLinePre: "Ein Hackathon für",
     subtitleLineRotate: ["Innovation", "Talente", "Networking"],
     subtitleLinePost: "in der Zentralschweiz.",
     location: "Hochschule Luzern Informatik, Rotkreuz",
     primaryCta: "Jetzt Registrieren",
     primaryCtaLoggedIn: "Zum Dashboard",
-    secondaryCta: "Mehr Erfahren"
+    secondaryCta: "Mehr Erfahren",
+    sponsorsTitle: "Unterstützt von",
+    allSponsors: "und weiteren Sponsoren"
   },
   en: {
-    date: "23 - 24 OCTOBER 2026",
+    date: "23–24 OCTOBER 2026",
     subtitleLinePre: "A hackathon for",
     subtitleLineRotate: ["Innovation", "Talents", "Networking"],
     subtitleLinePost: "in Central Switzerland.",
     location: "Lucerne School of Computer Science, Rotkreuz",
     primaryCta: "Register Now",
     primaryCtaLoggedIn: "To Dashboard",
-    secondaryCta: "Learn More"
+    secondaryCta: "Learn More",
+    sponsorsTitle: "Supported by",
+    allSponsors: "and other sponsors"
   }
 } as const
+
+interface Sponsor {
+  id: string
+  company_name: string
+  status: string
+  logo_url: string | null
+  website_url: string | null
+  logo_size: string | null
+  tier: string | null
+  logo_bg_color: string | null
+  updated_at: number
+}
+
+type HeroSponsorSlot = { sponsorId: string | null; size: number }
+type HeroSponsorSettings = { slots: [HeroSponsorSlot, HeroSponsorSlot, HeroSponsorSlot] }
+
+// tierIndex: 0=Platin, 1=Gold, 2=Silber (first 3 tiers by display_order)
+type SlotDef = {
+  tierIndex: number
+  left: string
+  top: string
+  rotate: number
+  delay: number
+  widthPx: number
+  heightPx: number
+  floatRange: number // vertical travel in px
+  floatDuration: number // seconds per cycle
+}
+
+const SLOTS: SlotDef[] = [
+  {
+    tierIndex: 0,
+    left: "34%",
+    top: "2%",
+    rotate: 0,
+    delay: 0.8,
+    widthPx: 300,
+    heightPx: 120,
+    floatRange: 14,
+    floatDuration: 7
+  },
+  {
+    tierIndex: 1,
+    left: "12%",
+    top: "62%",
+    rotate: 0,
+    delay: 1.5,
+    widthPx: 170,
+    heightPx: 70,
+    floatRange: 12,
+    floatDuration: 6.2
+  },
+  {
+    tierIndex: 1,
+    left: "68%",
+    top: "62%",
+    rotate: 0,
+    delay: 1.5,
+    widthPx: 150,
+    heightPx: 50,
+    floatRange: 10,
+    floatDuration: 5.5
+  }
+]
+
+const TIER_FALLBACK_NAMES = ["PLATIN", "GOLD", "SILBER"]
 
 function FloatingParticle({ delay, duration, x }: { delay: number; duration: number; x: number }) {
   return (
@@ -45,12 +119,7 @@ function FloatingParticle({ delay, duration, x }: { delay: number; duration: num
         x: [x, x + 50, x - 30, x + 20, x - 10],
         y: [0, -100, -200, -300, -350]
       }}
-      transition={{
-        duration,
-        delay,
-        repeat: Infinity,
-        ease: "easeOut"
-      }}
+      transition={{ duration, delay, repeat: Infinity, ease: "easeOut" }}
     />
   )
 }
@@ -118,7 +187,7 @@ function RotatingText({ words }: { words: readonly string[] }) {
                 }
               }}
               className="text-primary inline-block font-semibold">
-              {letter === " " ? "\u00A0" : letter}
+              {letter === " " ? " " : letter}
             </motion.span>
           ))}
         </motion.span>
@@ -129,10 +198,108 @@ function RotatingText({ words }: { words: readonly string[] }) {
   )
 }
 
+function SponsorFloat({ slot, sponsor }: { slot: SlotDef; sponsor: Sponsor | null }) {
+  const hasLogo = sponsor?.logo_url
+
+  // Scale the logo with the slot, keeping the per-sponsor logo_size ratio intact
+  const logoWidth = sponsor
+    ? Math.min((Number(sponsor.logo_size) || 50) * 3 * (slot.widthPx / 150), slot.widthPx)
+    : slot.widthPx
+
+  return (
+    <motion.div
+      className="absolute"
+      style={{ left: slot.left, top: slot.top, rotate: slot.rotate }}
+      initial={{ opacity: 0, scale: 0.85, y: 16 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.8, delay: slot.delay, ease: "easeOut" }}>
+      <motion.div
+        animate={{ y: [0, -slot.floatRange, 0, slot.floatRange * 0.6, 0] }}
+        transition={{
+          duration: slot.floatDuration,
+          delay: slot.delay,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}>
+        {hasLogo && (
+          <div className="flex items-center justify-center overflow-hidden bg-transparent">
+            <Image
+              src={srcWithVersion(`/api/sponsor-logo?id=${sponsor.id}`, sponsor.updated_at)}
+              alt={sponsor.company_name}
+              width={slot.widthPx}
+              height={slot.heightPx}
+              style={{ width: `${logoWidth}px`, maxWidth: "100%", height: "auto" }}
+              className="object-contain"
+            />
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  )
+}
+
+function MobileSponsorTile({
+  sponsor,
+  tierName,
+  variant
+}: {
+  sponsor: Sponsor | null
+  tierName: string
+  variant: "platin" | "gold"
+}) {
+  const isPlatin = variant === "platin"
+  const boxWidth = isPlatin ? 220 : 130
+  const boxHeight = isPlatin ? 90 : 56
+
+  const logoWidth = sponsor
+    ? Math.min((Number(sponsor.logo_size) || 50) * 3 * (boxWidth / 150), boxWidth)
+    : boxWidth
+
+  return (
+    <div className={cn("flex items-center justify-center overflow-hidden")}>
+      {sponsor?.logo_url ? (
+        <a
+          href={sponsor.website_url ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(!sponsor.website_url && "pointer-events-none")}>
+          <Image
+            src={srcWithVersion(`/api/sponsor-logo?id=${sponsor.id}`, sponsor.updated_at)}
+            alt={sponsor.company_name}
+            width={boxWidth}
+            height={boxHeight}
+            style={{
+              width: `${logoWidth}px`,
+              maxWidth: "100%",
+              height: "auto",
+              background:
+                sponsor.logo_bg_color && sponsor.logo_bg_color !== "transparent"
+                  ? sponsor.logo_bg_color
+                  : undefined
+            }}
+            className="object-contain"
+          />
+        </a>
+      ) : (
+        <span
+          className={cn(
+            "text-muted-foreground/50 font-medium tracking-widest",
+            isPlatin ? "text-xs" : "text-[10px]"
+          )}>
+          {tierName}
+        </span>
+      )}
+    </div>
+  )
+}
+
 export function Hero() {
   const [particles, setParticles] = useState<
     Array<{ id: number; delay: number; duration: number; x: number }>
   >([])
+  const [sponsors, setSponsors] = useState<Sponsor[]>([])
+  const [packages, setPackages] = useState<SponsorPackage[]>([])
+  const [heroSponsorSettings, setHeroSponsorSettings] = useState<HeroSponsorSettings | null>(null)
   const { language } = useLanguage()
   const { user } = useAuth()
   const text = copy[language]
@@ -147,20 +314,87 @@ export function Hero() {
     setParticles(newParticles)
   }, [])
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [pkgRes, sponsorRes, heroRes] = await Promise.all([
+          fetch("/api/sponsor-contact"),
+          fetch("/api/sponsors"),
+          fetch("/api/site-settings?key=hero_sponsors")
+        ])
+        if (pkgRes.ok) {
+          const json = await pkgRes.json()
+          const list = (json.data?.packages || []) as SponsorPackage[]
+          setPackages([...list].sort((a, b) => a.display_order - b.display_order))
+        }
+        if (sponsorRes.ok) {
+          const json = await sponsorRes.json()
+          const list = (json.data?.sponsors || []) as Sponsor[]
+          setSponsors(list)
+        }
+        if (heroRes.ok) {
+          const json = await heroRes.json()
+          const val = json.data?.value as HeroSponsorSettings | null
+          if (val?.slots && Array.isArray(val.slots) && val.slots.length === 3) {
+            setHeroSponsorSettings(val)
+          }
+        }
+      } catch {
+        // ignore – show placeholder tiles
+      }
+    }
+    void fetchData()
+  }, [])
+
+  // Map each slot to a sponsor (or null for placeholder)
+  const sponsorsByTier = new Map<number, Sponsor[]>()
+  packages.slice(0, 3).forEach((pkg, tierIndex) => {
+    sponsorsByTier.set(
+      tierIndex,
+      sponsors.filter((s) => s.tier === pkg.id && s.status === "published" && s.logo_url)
+    )
+  })
+
+  const heroEnabled =
+    !!heroSponsorSettings?.slots?.some((s) => s.sponsorId) && heroSponsorSettings.slots.length === 3
+
+  const slotSponsors: (Sponsor | null)[] = (() => {
+    if (heroEnabled && heroSponsorSettings) {
+      return heroSponsorSettings.slots.map((slot) => {
+        if (!slot.sponsorId) return null
+        const sponsor =
+          sponsors.find((s) => s.id === slot.sponsorId && s.status === "published" && s.logo_url) ?? null
+        if (!sponsor) return null
+        return { ...sponsor, logo_size: String(slot.size) }
+      })
+    }
+    const tierSlotCount = [0, 0, 0]
+    return SLOTS.map((slot) => {
+      const count = tierSlotCount[slot.tierIndex]
+      tierSlotCount[slot.tierIndex] = count + 1
+      return (sponsorsByTier.get(slot.tierIndex) ?? [])[count] ?? null
+    })
+  })()
+
+  // Mobile tiers: platinum in the center column, gold on the outside (fallback only)
+  const platinum = sponsorsByTier.get(0) ?? []
+  const gold = sponsorsByTier.get(1) ?? []
+
+  const mobileRowCount = Math.max(platinum.length, Math.ceil(gold.length / 2), 1)
+  const mobileRows = Array.from({ length: mobileRowCount }, (_, row) => ({
+    left: gold[row * 2] ?? null,
+    center: platinum[row] ?? null,
+    right: gold[row * 2 + 1] ?? null
+  }))
+
+  function getTierName(tierIndex: number): string {
+    const pkg = packages[tierIndex]
+    if (pkg) return getSponsorPackageByLanguage(pkg, language).name.toUpperCase()
+    return TIER_FALLBACK_NAMES[tierIndex] ?? "LOGO"
+  }
+
   return (
-    <section className="bg-background relative isolate overflow-hidden pt-16 pb-32 sm:pb-96">
-      <motion.div
-        className="absolute inset-0 opacity-35"
-        style={{
-          background:
-            "radial-gradient(circle at 15% 20%, rgba(213, 194, 247, 0.7) 0%, transparent 36%), radial-gradient(circle at 85% 18%, rgba(230, 255, 23, 0.14) 0%, transparent 28%), radial-gradient(circle at 50% 60%, rgba(83, 10, 93, 0.12) 0%, transparent 48%)"
-        }}
-        animate={{ scale: [1, 1.08, 1] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      <div className="from-background via-background/90 absolute inset-x-0 top-0 h-24 bg-gradient-to-b to-transparent" />
-
+    <section className="bg-background relative isolate overflow-hidden pt-16 pb-40 sm:pb-96">
       {/* Floating particles */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {particles.map((particle) => (
@@ -169,90 +403,179 @@ export function Hero() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto mt-14 px-4 pb-16 text-center sm:mt-28">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-4 flex flex-col items-center gap-8 sm:gap-10">
-          <div className="bg-secondary/30 text-primary border-secondary inline-flex items-center gap-2 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2">
-            <Calendar className="h-4 w-4" />
-            <span className="text-sm font-medium">{text.date}</span>
-          </div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
+      <div className="relative z-10 container mx-auto mt-14 px-4 sm:mt-28">
+        <div className="mb-4 grid items-start gap-20 lg:grid-cols-2 lg:gap-8">
+          {/* Left: Text content */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="flex justify-center">
-            <BrandMark
-              className="h-fit w-52 sm:w-64 md:w-72 lg:w-80 xl:w-96"
-              imageClassName="mx-auto"
-              priority
-            />
-          </motion.h1>
-        </motion.div>
-
-        <motion.p
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          className="font-display text-violet/20 mb-8 text-6xl font-bold md:text-7xl lg:text-8xl">
-          2026
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          className="text-muted-foreground mx-auto mb-8 max-w-2xl text-center text-lg md:text-2xl">
-          {/* Subtitle Mobile */}
-          <span className="md:hidden">
-            <div className="leading-snug">{text.subtitleLinePre}</div>
-            <div className="my-1 flex justify-center leading-snug">
-              <RotatingText words={text.subtitleLineRotate} />
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex flex-col gap-8 sm:gap-12">
+            {/* Date badge */}
+            <div className="bg-secondary/30 text-primary border-secondary inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2">
+              <Calendar className="h-4 w-4" />
+              <span className="text-sm font-medium">{text.date}</span>
             </div>
-            <div className="leading-snug">{text.subtitleLinePost}</div>
-          </span>
-          {/* Subtitle Desktop */}
-          <span className="hidden md:inline-flex md:items-center md:gap-2 md:leading-relaxed">
-            <span>{text.subtitleLinePre}</span>
-            <RotatingText words={text.subtitleLineRotate} />
-            <span>{text.subtitleLinePost}</span>
-          </span>
-        </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.9 }}
-          className="text-muted-foreground mb-12 inline-flex items-center gap-2">
-          <MapPin className="h-5 w-5" />
-          <span>{text.location}</span>
-        </motion.div>
+            {/* Heading */}
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="flex flex-col gap-0">
+              <BrandMark className="h-fit w-52 sm:w-64 md:w-72 lg:w-80" priority />
+              <motion.span
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+                className="font-display text-violet/20 text-6xl font-bold md:text-7xl lg:text-8xl">
+                2026
+              </motion.span>
+            </motion.h1>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1 }}
-          className="flex flex-col justify-center gap-4 sm:flex-row">
-          <Link href={user ? "/dashboard" : "/anmeldung"}>
-            <Button
-              size="lg"
-              className="bg-violet hover:bg-violet/90 group px-8 py-6 text-lg font-semibold text-white">
-              {user ? text.primaryCtaLoggedIn : text.primaryCta}
-              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-            </Button>
-          </Link>
-          <a href="#about">
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-violet text-violet hover:bg-violet px-8 py-6 text-lg font-semibold duration-300 hover:text-white">
-              {text.secondaryCta}
-            </Button>
-          </a>
-        </motion.div>
+            {/* Subtitle */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.8 }}
+              className="text-muted-foreground max-w-2xl text-lg md:text-2xl">
+              <span>{text.subtitleLinePre}</span> <RotatingText words={text.subtitleLineRotate} />{" "}
+              <span>{text.subtitleLinePost}</span>
+            </motion.div>
+
+            {/* Location */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.9 }}
+              className="text-muted-foreground inline-flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              <span>{text.location}</span>
+            </motion.div>
+
+            {/* CTAs */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 1 }}
+              className="flex flex-col gap-4 sm:flex-row">
+              <Link href={user ? "/dashboard" : "/anmeldung"}>
+                <Button
+                  size="lg"
+                  className="bg-violet hover:bg-violet/90 group w-full px-8 py-6 text-lg font-semibold text-white sm:w-auto">
+                  {user ? text.primaryCtaLoggedIn : text.primaryCta}
+                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+              <a href="#about">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-violet text-violet hover:bg-violet w-full px-8 py-6 text-lg font-semibold duration-300 hover:text-white sm:w-auto">
+                  {text.secondaryCta}
+                </Button>
+              </a>
+            </motion.div>
+          </motion.div>
+
+          {/* Mobile sponsor grid*/}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "60px" }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="block lg:hidden">
+            <div className="flex h-full items-center justify-start">
+              <div className="text-primary/50 flex items-center text-center text-xs tracking-widest uppercase">
+                <HeartHandshake className="group mr-2 h-4 w-4" />
+                {text.sponsorsTitle}
+              </div>
+            </div>
+
+            <div className="mt-10 mb-16">
+              {heroEnabled ? (
+                <div className="grid grid-cols-3 items-center gap-5">
+                  {slotSponsors.map((s, i) => (
+                    <div key={i} className="flex items-center justify-center">
+                      {s?.logo_url ? (
+                        <a
+                          href={s.website_url ?? undefined}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cn(!s.website_url && "pointer-events-none")}>
+                          <Image
+                            src={srcWithVersion(`/api/sponsor-logo?id=${s.id}`, s.updated_at)}
+                            alt={s.company_name}
+                            width={130}
+                            height={52}
+                            style={{
+                              width: "130px",
+                              height: "auto",
+                              background:
+                                s.logo_bg_color && s.logo_bg_color !== "transparent"
+                                  ? s.logo_bg_color
+                                  : undefined
+                            }}
+                            className="object-contain"
+                          />
+                        </a>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                mobileRows.map((row, i) => (
+                  <div key={i} className="grid grid-cols-3 items-center gap-5">
+                    <MobileSponsorTile sponsor={row.center} tierName={getTierName(0)} variant="platin" />
+                    <MobileSponsorTile sponsor={row.left} tierName={getTierName(1)} variant="gold" />
+                    <MobileSponsorTile sponsor={row.right} tierName={getTierName(1)} variant="gold" />
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="flex h-full items-end justify-end">
+              <Link
+                href="/#partners"
+                className="group text-primary/50 hover:text-primary flex items-center text-center text-xs transition-colors duration-150">
+                {text.allSponsors}
+                <ArrowRight className="group group-hover:text-primary ml-1 h-3 w-3 transition-all group-hover:translate-x-1" />
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* Right: Floating sponsor logos */}
+          <div className="hidden h-full flex-col lg:flex">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+              className="flex h-full items-center justify-center">
+              <div className="text-primary/50 flex items-center text-center text-xs tracking-widest uppercase">
+                <HeartHandshake className="group mr-2 h-4 w-4" />
+                {text.sponsorsTitle}
+              </div>
+            </motion.div>
+            <div className="relative mt-30 min-h-[400px]">
+              {SLOTS.map((slot, i) => (
+                <SponsorFloat key={i} slot={slot} sponsor={slotSponsors[i]} />
+              ))}
+            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+              className="flex h-full items-end justify-end">
+              <Link
+                href="/#partners"
+                className="group text-primary/50 hover:text-primary flex items-center text-center text-xs transition-colors duration-150">
+                {text.allSponsors}
+                <ArrowRight className="group group-hover:text-primary ml-1 h-3 w-3 transition-all group-hover:translate-x-1" />
+              </Link>
+            </motion.div>
+          </div>
+        </div>
       </div>
 
       <motion.div
