@@ -13,4 +13,5 @@ export class Urls {
   static repository = "https://github.com/stairch/zentral-hack"
   static bugReport = `${Urls.repository}/issues/new?template=bug_report.md`
   static featureRequest = `${Urls.repository}/issues/new?template=feature_request.md`
+  static changelog = "/admin/changelog"
 }

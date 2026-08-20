@@ -26,7 +26,8 @@ import {
   Lock,
   ShieldCheck,
   Bug,
-  ArrowLeft
+  ArrowLeft,
+  ScrollText
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BrandMark } from "@/components/brand-mark"
@@ -56,7 +57,8 @@ const copy = {
     backToDashboard: "Zurück",
     home: "Zentral Hack Startseite",
     bugReport: "Fehler melden",
-    featureRequest: "Feature anfragen"
+    featureRequest: "Feature anfragen",
+    changelog: "Changelog"
   },
   en: {
     dashboard: "Dashboard",
@@ -80,7 +82,8 @@ const copy = {
     backToDashboard: "Back",
     home: "Zentral Hack Home",
     bugReport: "Report bug",
-    featureRequest: "Request feature"
+    featureRequest: "Request feature",
+    changelog: "Changelog"
   }
 } as const
 
@@ -307,6 +310,16 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       </nav>
       {/* Footer */}
       <div className="border-border space-y-2 border-t p-4">
+        <div>
+          <Link href={Urls.changelog} className="hover:text-primary transition-colors duration-300">
+            <Button
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground w-full justify-start gap-3">
+              <ScrollText className="h-5 w-5" />
+              {text.changelog}
+            </Button>
+          </Link>
+        </div>
         <div>
           <Link
             href={Urls.featureRequest}
