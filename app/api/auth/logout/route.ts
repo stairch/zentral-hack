@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
 import { successResponse } from "@/lib/api"
-import { verifyJWT } from "@/lib/auth"
+import { verifyJWT, revokeToken } from "@/lib/auth"
 import { query } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
@@ -39,7 +39,12 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const token = request.cookies.get("token")?.value
+  if (token) {
+    await revokeToken(token)
+  }
+
   const response = successResponse({ message: "Logged out successfully" })
   response.cookies.delete("token")
   return response
