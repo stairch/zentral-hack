@@ -23,8 +23,22 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Zentral Hack 2026 | Hackathon für die Zentralschweiz",
   description:
-    "Der grösste Hackathon der Zentralschweiz. 23.-24. Oktober 2026 an der HSLU. Innovation, Nachwuchs und Networking verbinden.",
-  keywords: ["Hackathon", "Zentralschweiz", "HSLU", "Innovation", "Tech", "AI", "Coding"],
+    "Der grösste Hackathon der Zentralschweiz. 23.-24. Oktober 2026 an der HSLU. Innovation, Nachwuchs und Networking verbinden. Unterstützt von Kanton Schwyz, OpenAI, Kanton Luzern und weiteren Sponsoren.",
+  keywords: [
+    "Hackathon",
+    "Zentralschweiz",
+    "HSLU",
+    "Kanton Schwyz",
+    "OpenAI",
+    "Kanton Luzern",
+    "Rotkreuz",
+    "HSLU Informatik",
+    "Informatik",
+    "Innovation",
+    "Tech",
+    "AI",
+    "Coding"
+  ],
   icons: {
     icon: [
       {
