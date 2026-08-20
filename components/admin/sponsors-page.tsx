@@ -32,7 +32,8 @@ import {
   Mail,
   Tag,
   Phone,
-  GlobeOff
+  GlobeOff,
+  Star
 } from "lucide-react"
 import { toast } from "sonner"
 import { isValidUrl, srcWithVersion } from "@/lib/helpers"
@@ -120,6 +121,8 @@ interface PublishFormData {
   logoSize: number
   tier: string
 }
+
+type HeroSlot = { sponsorId: string | null; size: number }
 
 const STATUS_CLASSES = {
   new: "bg-blue-100 text-blue-800",
@@ -236,6 +239,21 @@ const copy = {
       sponsorSavedUpdate: "Sponsor-Anfrage aktualisiert",
       sponsorPublish: "Sponsor veröffentlicht",
       logoUploadSuccess: "Logo hochgeladen"
+    },
+    heroSettings: {
+      title: "Hero Sponsoren",
+      description: "Welche Sponsoren in der Hero Section der Landing Page erscheinen und in welcher Grösse.",
+      sponsorLabel: "Sponsor",
+      slotLabels: [
+        "Position 1 - Gross (oben)",
+        "Position 2 - Links (unten)",
+        "Position 3 - Rechts (unten)"
+      ] as const,
+      noSponsor: "Kein Sponsor",
+      logoSizeLabel: "Logo-Grösse",
+      saveButton: "Speichern",
+      savedSuccess: "Hero-Einstellungen gespeichert",
+      saveError: "Fehler beim Speichern"
     }
   },
   en: {
@@ -344,6 +362,21 @@ const copy = {
       sponsorSavedUpdate: "Sponsor contact updated",
       sponsorPublish: "Sponsor contact published",
       logoUploadSuccess: "Logo uploaded"
+    },
+    heroSettings: {
+      title: "Hero Sponsors",
+      description: "Which sponsors appear in the hero section of the landing page and at what size.",
+      sponsorLabel: "Sponsor",
+      slotLabels: [
+        "Position 1 - Large (top)",
+        "Position 2 - Left (bottom)",
+        "Position 3 - Right (bottom)"
+      ] as const,
+      noSponsor: "No sponsor",
+      logoSizeLabel: "Logo size",
+      saveButton: "Save",
+      savedSuccess: "Hero settings saved",
+      saveError: "Error saving settings"
     }
   }
 }
@@ -665,6 +698,12 @@ export function AdminSponsorsPage() {
   const [form, setForm] = useState<EditForm>(emptyForm)
   const [deletePackageId, setDeletePackageId] = useState<string | null>(null)
   const [deletingPackage, setDeletingPackage] = useState(false)
+  const [heroSlots, setHeroSlots] = useState<HeroSlot[]>([
+    { sponsorId: null, size: 50 },
+    { sponsorId: null, size: 50 },
+    { sponsorId: null, size: 50 }
+  ])
+  const [savingHero, setSavingHero] = useState(false)
   const { language, isReady } = useLanguage()
   const hasDataFetched = useRef(false)
 
@@ -673,6 +712,10 @@ export function AdminSponsorsPage() {
     [packages]
   )
   const packageById = useMemo(() => new Map(sortedPackages.map((pkg) => [pkg.id, pkg])), [sortedPackages])
+  const publishedSponsors = useMemo(
+    () => contacts.filter((c) => c.status === "published" && c.logo_url),
+    [contacts]
+  )
 
   useEffect(() => {
     if (!isReady || hasDataFetched.current) return
@@ -690,9 +733,22 @@ export function AdminSponsorsPage() {
 
   async function fetchData() {
     setLoading(true)
-    await fetchSponsorPackages()
-    await fetchContacts()
+    await Promise.all([fetchSponsorPackages(), fetchContacts(), fetchHeroSettings()])
     setLoading(false)
+  }
+
+  async function fetchHeroSettings() {
+    try {
+      const res = await fetch("/api/site-settings?key=hero_sponsors")
+      if (!res.ok) return
+      const json = await res.json()
+      const val = json.data?.value as { slots: HeroSlot[] } | null
+      if (val?.slots && Array.isArray(val.slots) && val.slots.length === 3) {
+        setHeroSlots(val.slots)
+      }
+    } catch {
+      // ignore - keep default empty slots
+    }
   }
 
   async function fetchSponsorPackages() {
@@ -726,6 +782,28 @@ export function AdminSponsorsPage() {
     } catch (err) {
       console.error(err)
       toast.error(text.errors.fetchContacts)
+    }
+  }
+
+  function updateHeroSlot(index: number, patch: Partial<HeroSlot>) {
+    setHeroSlots((prev) => prev.map((slot, i) => (i === index ? { ...slot, ...patch } : slot)))
+  }
+
+  async function saveHeroSlots() {
+    setSavingHero(true)
+    try {
+      const res = await fetch("/api/admin/site-settings", {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "hero_sponsors", value: { slots: heroSlots } })
+      })
+      if (!res.ok) throw new Error()
+      toast.success(text.heroSettings.savedSuccess)
+    } catch {
+      toast.error(text.heroSettings.saveError)
+    } finally {
+      setSavingHero(false)
     }
   }
 
@@ -995,6 +1073,104 @@ export function AdminSponsorsPage() {
                 </Card>
               )
             })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Hero Sponsor Settings */}
+      <Card>
+        <CardHeader>
+          <div className="grid gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-[#530A5D]" />
+              {text.heroSettings.title}
+            </CardTitle>
+            <CardDescription>{text.heroSettings.description}</CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {heroSlots.map((slot, i) => {
+              const selectedSponsor = publishedSponsors.find((s) => s.id === slot.sponsorId) ?? null
+              return (
+                <div key={i} className="flex flex-col gap-4 rounded-lg border p-4">
+                  <p className="text-sm font-medium">{text.heroSettings.slotLabels[i]}</p>
+
+                  {/* Logo preview */}
+                  {selectedSponsor?.logo_url && (
+                    <div className="flex h-16 w-full items-center justify-center rounded-lg border bg-white p-2">
+                      <Image
+                        src={srcWithVersion(
+                          `/api/sponsor-logo?id=${selectedSponsor.id}`,
+                          selectedSponsor.updated_at
+                        )}
+                        alt={selectedSponsor.company_name}
+                        width={200}
+                        height={50}
+                        style={{
+                          background:
+                            selectedSponsor.logo_bg_color && selectedSponsor.logo_bg_color !== "transparent"
+                              ? selectedSponsor.logo_bg_color
+                              : undefined
+                        }}
+                        className="h-auto max-h-12 max-w-full object-contain"
+                      />
+                    </div>
+                  )}
+
+                  {/* Sponsor selector */}
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs">{text.heroSettings.sponsorLabel}</Label>
+                    <Select
+                      value={slot.sponsorId ?? "none"}
+                      onValueChange={(v) => updateHeroSlot(i, { sponsorId: v === "none" ? null : v })}>
+                      <SelectTrigger className="text-xs">
+                        <SelectValue placeholder={text.heroSettings.noSponsor} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">{text.heroSettings.noSponsor}</SelectItem>
+                        {publishedSponsors.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>
+                            {s.company_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Size slider */}
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="flex items-center justify-between text-xs">
+                      <span>{text.heroSettings.logoSizeLabel}</span>
+                      <span className="text-muted-foreground font-normal">{slot.size * 3}px</span>
+                    </Label>
+                    <input
+                      type="range"
+                      min={10}
+                      max={100}
+                      step={5}
+                      value={slot.size}
+                      onChange={(e) => updateHeroSlot(i, { size: Number(e.target.value) })}
+                      className="accent-primary w-full"
+                    />
+                    <div className="text-muted-foreground flex justify-between text-xs">
+                      <span>10</span>
+                      <span>100</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <Button
+              onClick={() => void saveHeroSlots()}
+              disabled={savingHero}
+              className="bg-[#530A5D] text-white hover:bg-[#3f0847]">
+              {savingHero ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {text.heroSettings.saveButton}
+            </Button>
           </div>
         </CardContent>
       </Card>

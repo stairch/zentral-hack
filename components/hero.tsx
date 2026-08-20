@@ -53,6 +53,9 @@ interface Sponsor {
   updated_at: number
 }
 
+type HeroSponsorSlot = { sponsorId: string | null; size: number }
+type HeroSponsorSettings = { slots: [HeroSponsorSlot, HeroSponsorSlot, HeroSponsorSlot] }
+
 // tierIndex: 0=Platin, 1=Gold, 2=Silber (first 3 tiers by display_order)
 type SlotDef = {
   tierIndex: number
@@ -219,16 +222,7 @@ function SponsorFloat({ slot, sponsor }: { slot: SlotDef; sponsor: Sponsor | nul
           ease: "easeInOut"
         }}>
         {hasLogo && (
-          <div
-            style={{
-              width: slot.widthPx,
-              height: slot.heightPx,
-              background: "transparent",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              overflow: "hidden"
-            }}>
+          <div className="flex items-center justify-center overflow-hidden bg-transparent">
             <Image
               src={srcWithVersion(`/api/sponsor-logo?id=${sponsor.id}`, sponsor.updated_at)}
               alt={sponsor.company_name}
@@ -305,6 +299,7 @@ export function Hero() {
   >([])
   const [sponsors, setSponsors] = useState<Sponsor[]>([])
   const [packages, setPackages] = useState<SponsorPackage[]>([])
+  const [heroSponsorSettings, setHeroSponsorSettings] = useState<HeroSponsorSettings | null>(null)
   const { language } = useLanguage()
   const { user } = useAuth()
   const text = copy[language]
@@ -322,9 +317,10 @@ export function Hero() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [pkgRes, sponsorRes] = await Promise.all([
+        const [pkgRes, sponsorRes, heroRes] = await Promise.all([
           fetch("/api/sponsor-contact"),
-          fetch("/api/sponsors")
+          fetch("/api/sponsors"),
+          fetch("/api/site-settings?key=hero_sponsors")
         ])
         if (pkgRes.ok) {
           const json = await pkgRes.json()
@@ -335,6 +331,13 @@ export function Hero() {
           const json = await sponsorRes.json()
           const list = (json.data?.sponsors || []) as Sponsor[]
           setSponsors(list)
+        }
+        if (heroRes.ok) {
+          const json = await heroRes.json()
+          const val = json.data?.value as HeroSponsorSettings | null
+          if (val?.slots && Array.isArray(val.slots) && val.slots.length === 3) {
+            setHeroSponsorSettings(val)
+          }
         }
       } catch {
         // ignore – show placeholder tiles
@@ -352,14 +355,28 @@ export function Hero() {
     )
   })
 
-  const tierSlotCount = [0, 0, 0]
-  const slotSponsors = SLOTS.map((slot) => {
-    const count = tierSlotCount[slot.tierIndex]
-    tierSlotCount[slot.tierIndex] = count + 1
-    return (sponsorsByTier.get(slot.tierIndex) ?? [])[count] ?? null
-  })
+  const heroEnabled =
+    !!heroSponsorSettings?.slots?.some((s) => s.sponsorId) && heroSponsorSettings.slots.length === 3
 
-  // Mobile tiers: platinum in the center column, gold on the outside
+  const slotSponsors: (Sponsor | null)[] = (() => {
+    if (heroEnabled && heroSponsorSettings) {
+      return heroSponsorSettings.slots.map((slot) => {
+        if (!slot.sponsorId) return null
+        const sponsor =
+          sponsors.find((s) => s.id === slot.sponsorId && s.status === "published" && s.logo_url) ?? null
+        if (!sponsor) return null
+        return { ...sponsor, logo_size: String(slot.size) }
+      })
+    }
+    const tierSlotCount = [0, 0, 0]
+    return SLOTS.map((slot) => {
+      const count = tierSlotCount[slot.tierIndex]
+      tierSlotCount[slot.tierIndex] = count + 1
+      return (sponsorsByTier.get(slot.tierIndex) ?? [])[count] ?? null
+    })
+  })()
+
+  // Mobile tiers: platinum in the center column, gold on the outside (fallback only)
   const platinum = sponsorsByTier.get(0) ?? []
   const gold = sponsorsByTier.get(1) ?? []
 
@@ -476,13 +493,45 @@ export function Hero() {
             </div>
 
             <div className="mt-10 mb-16">
-              {mobileRows.map((row, i) => (
-                <div key={i} className="grid grid-cols-3 items-center gap-5">
-                  <MobileSponsorTile sponsor={row.center} tierName={getTierName(0)} variant="platin" />
-                  <MobileSponsorTile sponsor={row.left} tierName={getTierName(1)} variant="gold" />
-                  <MobileSponsorTile sponsor={row.right} tierName={getTierName(1)} variant="gold" />
+              {heroEnabled ? (
+                <div className="grid grid-cols-3 items-center gap-5">
+                  {slotSponsors.map((s, i) => (
+                    <div key={i} className="flex items-center justify-center">
+                      {s?.logo_url ? (
+                        <a
+                          href={s.website_url ?? undefined}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cn(!s.website_url && "pointer-events-none")}>
+                          <Image
+                            src={srcWithVersion(`/api/sponsor-logo?id=${s.id}`, s.updated_at)}
+                            alt={s.company_name}
+                            width={130}
+                            height={52}
+                            style={{
+                              width: "130px",
+                              height: "auto",
+                              background:
+                                s.logo_bg_color && s.logo_bg_color !== "transparent"
+                                  ? s.logo_bg_color
+                                  : undefined
+                            }}
+                            className="object-contain"
+                          />
+                        </a>
+                      ) : null}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                mobileRows.map((row, i) => (
+                  <div key={i} className="grid grid-cols-3 items-center gap-5">
+                    <MobileSponsorTile sponsor={row.center} tierName={getTierName(0)} variant="platin" />
+                    <MobileSponsorTile sponsor={row.left} tierName={getTierName(1)} variant="gold" />
+                    <MobileSponsorTile sponsor={row.right} tierName={getTierName(1)} variant="gold" />
+                  </div>
+                ))
+              )}
             </div>
             <div className="flex h-full items-end justify-end">
               <Link
