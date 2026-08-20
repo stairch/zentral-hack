@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { verifyJWT, JWTPayload } from "./auth"
+import { verifyJWT, isTokenRevoked, JWTPayload } from "./auth"
 import { query } from "./db"
 
 export interface AuthenticatedRequest extends NextRequest {
@@ -27,6 +27,10 @@ export function withAuth(handler: (req: AuthenticatedRequest) => Promise<NextRes
     const payload = verifyJWT(token)
     if (!payload) {
       return NextResponse.json({ success: false, error: "Invalid or expired token" }, { status: 401 })
+    }
+
+    if (await isTokenRevoked(token)) {
+      return NextResponse.json({ success: false, error: "Session has been revoked" }, { status: 401 })
     }
 
     const userResult = await query(

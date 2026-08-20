@@ -1,6 +1,7 @@
 import jwt, { SignOptions } from "jsonwebtoken"
 import bcrypt from "bcrypt"
-import { randomBytes } from "crypto"
+import { createHash, randomBytes } from "crypto"
+import { query } from "@/lib/db"
 
 const JWT_EXPIRATION = (process.env.JWT_EXPIRATION || "24h") as SignOptions["expiresIn"]
 
@@ -62,4 +63,29 @@ function getJWTSecret(): string {
   }
 
   return process.env.JWT_SECRET as string
+}
+
+function hashToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex")
+}
+
+export async function revokeToken(token: string): Promise<void> {
+  let expiresAt: Date
+  try {
+    const decoded = jwt.verify(token, getJWTSecret()) as { exp?: number }
+    expiresAt = decoded.exp ? new Date(decoded.exp * 1000) : new Date(Date.now() + 24 * 60 * 60 * 1000)
+  } catch {
+    expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+  }
+
+  await query("DELETE FROM revoked_tokens WHERE expires_at < NOW()")
+  await query("INSERT INTO revoked_tokens (token_hash, expires_at) VALUES ($1, $2) ON CONFLICT DO NOTHING", [
+    hashToken(token),
+    expiresAt.toISOString()
+  ])
+}
+
+export async function isTokenRevoked(token: string): Promise<boolean> {
+  const result = await query("SELECT 1 FROM revoked_tokens WHERE token_hash = $1", [hashToken(token)])
+  return result.rows.length > 0
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { verifyJWT } from "@/lib/auth"
+import { verifyJWT, isTokenRevoked } from "@/lib/auth"
 import { query } from "@/lib/db"
 import { successResponse } from "@/lib/api"
 
@@ -20,6 +20,10 @@ export async function GET(request: NextRequest) {
 
     if (!payload) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 })
+    }
+
+    if (await isTokenRevoked(token)) {
+      return NextResponse.json({ success: false, error: "Session has been revoked" }, { status: 401 })
     }
 
     // Fetch user details and their custom role permissions
