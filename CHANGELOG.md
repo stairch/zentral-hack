@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.5.0] - 2026-08-25
+
+### Added
+
+- Changelog with version announcements in the admin panel
+- Sponsor logo description
+- Option to add sponsors manually in the admin panel
+- Pulsing dot indicator on new sponsor inquiries in the admin panel
+- Full width loading screen on the admin panel
+- New SEO keywords to page metadata
+
+### Changed
+
+- Partner and sponsor logo preview changed to a grid layout
+- Language dropdown moved higher in the admin sidebar
+
+### Fixed
+
+- Session token not invalidated on logout
+- Various security vulnerabilities from dependencies
+
 ## [1.4.0] - 2026-08-20
 
 ### Added
