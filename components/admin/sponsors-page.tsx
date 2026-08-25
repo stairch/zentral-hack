@@ -238,7 +238,8 @@ const copy = {
       packageDeleteFailed: "Fehler beim Löschen",
       sponsorUpdateFailed: "Fehler beim Aktualisieren der Sponsor-Anfrage",
       sponsorPublishFailed: "Fehler beim Veröffentlichen des Sponsors",
-      logoUploadFailed: "Logo-Upload fehlgeschlagen"
+      logoUploadFailed: "Logo-Upload fehlgeschlagen",
+      createSponsorFailed: "Fehler beim Erstellen des Sponsors"
     },
     success: {
       packageSavedCreate: "Sponsorpaket erstellt",
@@ -246,7 +247,8 @@ const copy = {
       packageDeleted: "Sponsorpaket gelöscht",
       sponsorSavedUpdate: "Sponsor-Anfrage aktualisiert",
       sponsorPublish: "Sponsor veröffentlicht",
-      logoUploadSuccess: "Logo hochgeladen"
+      logoUploadSuccess: "Logo hochgeladen",
+      createSponsor: "Sponsor hinzugefügt"
     },
     heroSettings: {
       title: "Hero Sponsoren",
@@ -262,6 +264,26 @@ const copy = {
       saveButton: "Speichern",
       savedSuccess: "Hero-Einstellungen gespeichert",
       saveError: "Fehler beim Speichern"
+    },
+    createDialog: {
+      title: "Sponsor manuell hinzufügen",
+      description: "Erstellt einen neuen Sponsor-Eintrag mit Status «Bestätigt».",
+      companyNameLabel: "Firmenname *",
+      companyNamePlaceholder: "Firmenname",
+      contactNameLabel: "Kontaktperson *",
+      contactNamePlaceholder: "Name",
+      emailLabel: "E-Mail *",
+      emailPlaceholder: "sponsor@example.com",
+      phoneLabel: "Telefon",
+      phonePlaceholder: "+41 XX XXX XX XX",
+      packageLabel: "Sponsorpaket",
+      packagePlaceholder: "Kein Paket",
+      messageLabel: "Nachricht",
+      messagePlaceholder: "Weitere Informationen...",
+      cancelButton: "Abbrechen",
+      createButton: "Hinzufügen",
+      createButtonLoading: "Hinzufügen",
+      buttonLabel: "Manuell hinzufügen"
     }
   },
   en: {
@@ -365,7 +387,8 @@ const copy = {
       packageDeleteFailed: "Error while deleting",
       sponsorUpdateFailed: "Error while updating sponsor inquiry",
       sponsorPublishFailed: "Error while publishing sponsor",
-      logoUploadFailed: "Logo upload failed"
+      logoUploadFailed: "Logo upload failed",
+      createSponsorFailed: "Error while creating sponsor"
     },
     success: {
       packageSavedCreate: "Sponsor package created",
@@ -373,7 +396,8 @@ const copy = {
       packageDeleted: "Sponsor package deleted",
       sponsorSavedUpdate: "Sponsor contact updated",
       sponsorPublish: "Sponsor contact published",
-      logoUploadSuccess: "Logo uploaded"
+      logoUploadSuccess: "Logo uploaded",
+      createSponsor: "Sponsor added"
     },
     heroSettings: {
       title: "Hero Sponsors",
@@ -389,8 +413,196 @@ const copy = {
       saveButton: "Save",
       savedSuccess: "Hero settings saved",
       saveError: "Error saving settings"
+    },
+    createDialog: {
+      title: "Add sponsor manually",
+      description: 'Creates a new sponsor entry with status "Confirmed".',
+      companyNameLabel: "Company name *",
+      companyNamePlaceholder: "Company name",
+      contactNameLabel: "Contact person *",
+      contactNamePlaceholder: "Name",
+      emailLabel: "E-Mail *",
+      emailPlaceholder: "sponsor@example.com",
+      phoneLabel: "Phone",
+      phonePlaceholder: "+41 XX XXX XX XX",
+      packageLabel: "Sponsor package",
+      packagePlaceholder: "No package",
+      messageLabel: "Message",
+      messagePlaceholder: "Additional information...",
+      cancelButton: "Cancel",
+      createButton: "Add",
+      createButtonLoading: "Add",
+      buttonLabel: "Add manually"
     }
   }
+}
+
+interface CreateSponsorForm {
+  companyName: string
+  contactName: string
+  email: string
+  phone: string
+  interestedIn: string
+  message: string
+}
+
+const emptyCreateForm: CreateSponsorForm = {
+  companyName: "",
+  contactName: "",
+  email: "",
+  phone: "",
+  interestedIn: "",
+  message: ""
+}
+
+function CreateSponsorDialog({
+  packages,
+  onCreate
+}: {
+  packages: SponsorPackage[]
+  onCreate: (contact: SponsorContact) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [form, setForm] = useState<CreateSponsorForm>(emptyCreateForm)
+  const { language } = useLanguage()
+  const text = copy[language]
+  const localizedPackages = useMemo(
+    () =>
+      packages.map((pkg) => ({
+        raw: pkg,
+        localized: getSponsorPackageByLanguage(pkg, language)
+      })),
+    [language, packages]
+  )
+
+  useEffect(() => {
+    if (!open) setForm(emptyCreateForm)
+  }, [open])
+
+  const handleCreate = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch("/api/admin/sponsor-contacts", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form)
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || text.errors.createSponsorFailed)
+      }
+
+      const data = await res.json()
+      onCreate(data.data?.contact as SponsorContact)
+      toast.success(text.success.createSponsor)
+      setOpen(false)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : text.errors.createSponsorFailed)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5">
+          <Plus className="h-3.5 w-3.5" />
+          {text.createDialog.buttonLabel}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{text.createDialog.title}</DialogTitle>
+          <DialogDescription>{text.createDialog.description}</DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-4 py-2">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label htmlFor="cs-company">{text.createDialog.companyNameLabel}</Label>
+              <Input
+                id="cs-company"
+                placeholder={text.createDialog.companyNamePlaceholder}
+                value={form.companyName}
+                onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
+              />
+            </div>
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label htmlFor="cs-contact">{text.createDialog.contactNameLabel}</Label>
+              <Input
+                id="cs-contact"
+                placeholder={text.createDialog.contactNamePlaceholder}
+                value={form.contactName}
+                onChange={(e) => setForm((f) => ({ ...f, contactName: e.target.value }))}
+              />
+            </div>
+            <div className="col-span-2 flex flex-col gap-1.5 sm:col-span-1">
+              <Label htmlFor="cs-email">{text.createDialog.emailLabel}</Label>
+              <Input
+                id="cs-email"
+                type="email"
+                placeholder={text.createDialog.emailPlaceholder}
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              />
+            </div>
+            <div className="col-span-2 flex flex-col gap-1.5 sm:col-span-1">
+              <Label htmlFor="cs-phone">{text.createDialog.phoneLabel}</Label>
+              <Input
+                id="cs-phone"
+                placeholder={text.createDialog.phonePlaceholder}
+                value={form.phone}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+              />
+            </div>
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label>{text.createDialog.packageLabel}</Label>
+              <Select
+                value={form.interestedIn || "none"}
+                onValueChange={(v) => setForm((f) => ({ ...f, interestedIn: v === "none" ? "" : v }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder={text.createDialog.packagePlaceholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{text.createDialog.packagePlaceholder}</SelectItem>
+                  {localizedPackages.map(({ raw, localized }) => (
+                    <SelectItem key={raw.id} value={raw.id}>
+                      {localized.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label htmlFor="cs-message">{text.createDialog.messageLabel}</Label>
+              <Textarea
+                id="cs-message"
+                rows={3}
+                placeholder={text.createDialog.messagePlaceholder}
+                value={form.message}
+                onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+              />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            {text.createDialog.cancelButton}
+          </Button>
+          <Button
+            onClick={() => void handleCreate()}
+            disabled={loading || !form.companyName.trim() || !form.contactName.trim() || !form.email.trim()}
+            className="gap-1.5 bg-[#530A5D] text-white hover:bg-[#3f0847]">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            {loading ? text.createDialog.createButtonLoading : text.createDialog.createButton}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 function PublishDialog({
@@ -1029,6 +1241,16 @@ export function AdminSponsorsPage() {
     }
   }
 
+  const handleSponsorCreate = (contact: SponsorContact) => {
+    setContacts((prev) =>
+      [...prev, contact].sort(
+        (a, b) =>
+          STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status) ||
+          b.created_at.localeCompare(a.created_at)
+      )
+    )
+  }
+
   const handleContactPublish = async (id: string, data: PublishFormData) => {
     try {
       const res = await fetch(`/api/admin/sponsor-contacts/publish`, {
@@ -1246,11 +1468,16 @@ export function AdminSponsorsPage() {
       <div className="space-y-8">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-[#530A5D]" />
-              {text.requestsTitle}
-            </CardTitle>
-            <CardDescription>{text.requestsCount(contacts.length)}</CardDescription>
+            <div className="flex items-center justify-between gap-4">
+              <div className="grid gap-2">
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-[#530A5D]" />
+                  {text.requestsTitle}
+                </CardTitle>
+                <CardDescription>{text.requestsCount(contacts.length)}</CardDescription>
+              </div>
+              <CreateSponsorDialog packages={sortedPackages} onCreate={handleSponsorCreate} />
+            </div>
           </CardHeader>
           <CardContent>
             {contacts.length === 0 ? (

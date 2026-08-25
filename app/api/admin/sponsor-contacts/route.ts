@@ -100,5 +100,35 @@ async function handlePatch(req: AuthenticatedRequest) {
   }
 }
 
+async function handlePost(req: AuthenticatedRequest) {
+  try {
+    const body = await req.json()
+    const { companyName, contactName, email, phone, message, interestedIn } = body
+
+    if (!companyName || !contactName || !email) {
+      return validationError("Company name, contact name and e-mail required")
+    }
+
+    const result = await query(
+      `INSERT INTO sponsor_contacts (company_name, contact_name, email, phone, message, interested_in, status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'confirmed')
+       RETURNING id, company_name, contact_name, email, phone, interested_in, message, status, created_at, logo_url, website_url, logo_size, tier, logo_bg_color, description, description_en, updated_at`,
+      [companyName, contactName, email, phone || null, message || null, interestedIn || null]
+    )
+
+    const row = result.rows[0]
+    return successResponse({
+      contact: {
+        ...row,
+        updated_at: new Date(row.updated_at).getTime()
+      }
+    })
+  } catch (error) {
+    console.error("[Admin Sponsors] POST Error:", error)
+    return serverError()
+  }
+}
+
 export const GET = withAdminAuth(handleGet)
 export const PATCH = withAdminAuth(handlePatch)
+export const POST = withAdminAuth(handlePost)
