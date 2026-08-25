@@ -20,6 +20,8 @@ async function handleGet() {
          logo_size,
          tier,
          logo_bg_color,
+         description,
+         description_en,
          updated_at
        FROM sponsor_contacts
        ORDER BY created_at ASC`
@@ -42,6 +44,8 @@ async function handleGet() {
           logo_size: row.logo_size,
           tier: row.tier,
           logo_bg_color: row.logo_bg_color,
+          description: row.description,
+          description_en: row.description_en,
           updated_at: new Date(row.updated_at).getTime()
         }
       })

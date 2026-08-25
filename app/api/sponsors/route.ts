@@ -13,6 +13,8 @@ export async function GET() {
          logo_size,
          tier,
          logo_bg_color,
+         description,
+         description_en,
          updated_at
        FROM sponsor_contacts
        ORDER BY created_at ASC`

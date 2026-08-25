@@ -21,6 +21,8 @@ interface Sponsor {
   logo_size: string | null
   tier: string | null
   logo_bg_color: string | null
+  description: string | null
+  description_en: string | null
   updated_at: number
 }
 
@@ -31,6 +33,7 @@ interface OrganiserOrSponsor {
   bgColor: string
   logoWidthPx: number
   updatedAt: number
+  description?: string | null
 }
 
 // Tier-specific cell heights (Platin tallest -> Bronze shortest)
@@ -109,9 +112,9 @@ function SponsorGrid({
   return (
     <div className={cn("border-border bg-border grid gap-px border", gridColsClass)}>
       {sponsors.map((sponsor) => {
-        const cellContent = <SponsorLogo item={sponsor} />
+        const cellContent = <SponsorLogo item={sponsor} tierIndex={tierIndex} />
         const cellClass = cn(
-          "bg-background hover:bg-muted/50 flex items-center justify-center p-6 transition-colors duration-300",
+          `bg-background hover:bg-muted/50 flex items-center justify-center ${sponsor.description ? "pb-0 px-6 pt-6" : "p-6"} transition-colors duration-300`,
           minH
         )
 
@@ -137,19 +140,27 @@ function SponsorGrid({
   )
 }
 
-function SponsorLogo({ item }: { item: OrganiserOrSponsor }) {
+function SponsorLogo({ item, tierIndex }: { item: OrganiserOrSponsor; tierIndex: number }) {
   return (
-    <Image
-      src={srcWithVersion(item.logo, item.updatedAt)}
-      alt={item.name}
-      width={1000}
-      height={1000}
-      style={{
-        width: `${item.logoWidthPx}px`,
-        background: item.bgColor !== "transparent" ? item.bgColor : undefined
-      }}
-      className="h-auto object-contain"
-    />
+    <div className="flex flex-col items-center gap-3">
+      <Image
+        src={srcWithVersion(item.logo, item.updatedAt)}
+        alt={item.name}
+        width={1000}
+        height={1000}
+        style={{
+          width: `${item.logoWidthPx}px`,
+          background: item.bgColor !== "transparent" ? item.bgColor : undefined
+        }}
+        className="h-auto object-contain"
+      />
+      {item.description && (
+        <p
+          className={`text-muted-foreground max-w-[180px] text-center ${tierIndex === 3 ? "text-[10px]" : "text-xs"} leading-snug`}>
+          {item.description}
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -324,7 +335,9 @@ export function Partners() {
       logoWidthPx: (Number(e.logo_size) || 50) * 3,
       bgColor: e.logo_bg_color === null ? "transparent" : e.logo_bg_color,
       link: e.website_url,
-      updatedAt: e.updated_at
+      updatedAt: e.updated_at,
+      description:
+        language === "en" ? (e.description_en ?? e.description) : (e.description ?? e.description_en)
     }
   }
 
