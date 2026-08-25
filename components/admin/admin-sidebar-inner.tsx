@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useUnseenChangelog } from "@/hooks/use-unseen-changelog"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -105,6 +106,7 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
 
   const isAdmin = user?.role === "admin"
   const text = copy[language]
+  const { hasUnseen, latestEntry, isMinorOrMajor } = useUnseenChangelog()
 
   // permissionKey: matches admin_roles.permissions entries to gate visibility for custom-role users
   const allNavItems = [
@@ -314,9 +316,24 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
           <Link href={Urls.changelog} className="hover:text-primary transition-colors duration-300">
             <Button
               variant="ghost"
-              className="text-muted-foreground hover:text-foreground w-full justify-start gap-3">
-              <ScrollText className="h-5 w-5" />
-              {text.changelog}
+              size="default"
+              // we need to add px-3 manually because svg is inside div
+              className="text-muted-foreground hover:text-foreground w-full justify-start gap-3 px-3">
+              <div className="relative">
+                <ScrollText className="h-5 w-5" />
+                {hasUnseen && (
+                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                  </span>
+                )}
+              </div>
+              <span className="flex-1 text-left">{text.changelog}</span>
+              {hasUnseen && isMinorOrMajor && latestEntry && (
+                <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-semibold">
+                  v{latestEntry.version}
+                </span>
+              )}
             </Button>
           </Link>
         </div>
