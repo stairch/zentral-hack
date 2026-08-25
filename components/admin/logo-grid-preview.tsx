@@ -9,6 +9,7 @@ export interface GridPreviewItem {
   bgColor?: string | null
   width: number
   isCurrent?: boolean
+  description?: string | null
 }
 
 const PREVIEW_GRID_COLS = ["grid-cols-1", "grid-cols-2", "grid-cols-2", "grid-cols-3"] as const
@@ -29,7 +30,8 @@ export default function LogoGridPreview({
         <div
           key={`${item.name}-${i}`}
           className={cn(
-            "bg-background flex min-h-16 items-center justify-center p-4",
+            "bg-background flex min-h-16 flex-col items-center justify-center gap-2",
+            item.description ? "px-4 pb-3 pt-4" : "p-4",
             item.isCurrent && "ring-primary ring-2 ring-inset"
           )}>
           <Image
@@ -44,6 +46,14 @@ export default function LogoGridPreview({
             }}
             className="h-auto object-contain"
           />
+          {item.description && (
+            <p className={cn(
+              "text-muted-foreground max-w-[160px] text-center leading-snug",
+              tierIndex === 3 ? "text-[10px]" : "text-xs"
+            )}>
+              {item.description}
+            </p>
+          )}
         </div>
       ))}
     </div>

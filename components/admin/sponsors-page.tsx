@@ -445,9 +445,10 @@ function PublishDialog({
           logo: srcWithVersion(`/api/sponsor-logo?id=${s.id}`, s.updated_at),
           name: s.company_name,
           bgColor: s.logo_bg_color,
-          width: (s.logo_size ?? 50) * 3
+          width: (s.logo_size ?? 50) * 3,
+          description: language === "en" ? (s.description_en ?? s.description) : (s.description ?? s.description_en)
         })),
-    [publishedSponsors, form.tier, contact.id]
+    [publishedSponsors, form.tier, contact.id, language]
   )
 
   useEffect(() => {
@@ -733,7 +734,8 @@ function PublishDialog({
                       name: contact.company_name,
                       bgColor: form.logoBgColor,
                       width: form.logoSize * 3,
-                      isCurrent: true
+                      isCurrent: true,
+                      description: language === "en" ? (form.descriptionEn || form.description || null) : (form.description || form.descriptionEn || null)
                     }
                   ]}
                 />
