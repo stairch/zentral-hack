@@ -34,7 +34,8 @@ export async function GET(request: NextRequest) {
               u.admin_role_id,
               ar.name AS admin_role_name,
               ar.permissions AS role_permissions,
-              u.updated_at
+              u.updated_at,
+              u.last_seen_changelog_version
        FROM users u
        LEFT JOIN admin_roles ar ON u.admin_role_id = ar.id
        WHERE u.id = $1`,
@@ -72,7 +73,8 @@ export async function GET(request: NextRequest) {
         categoryId: user.category_id || null,
         adminRoleId: user.admin_role_id || null,
         adminRoleName: user.admin_role_name || null,
-        permissions
+        permissions,
+        lastSeenChangelogVersion: user.last_seen_changelog_version || null
       },
       token
     })

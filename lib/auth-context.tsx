@@ -12,6 +12,7 @@ export interface User {
   adminRoleId?: string | null
   adminRoleName?: string | null
   permissions?: string[] | null
+  lastSeenChangelogVersion?: string | null
 }
 
 interface AuthContextType {

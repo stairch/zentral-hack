@@ -1,76 +1,11 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { BugOff, Pencil, Plus, X } from "lucide-react"
-import MdChangelog from "@/CHANGELOG.md"
 import { useLanguage } from "@/lib/language-context"
-
-interface ContentSection {
-  type: "Added" | "Fixed" | "Changed" | "Removed" | "Other"
-  title: string
-  items: string[]
-}
-
-interface ChangelogEntry {
-  version: string
-  date: string
-  sections: ContentSection[]
-}
-
-const SECTION_TYPE_MAP: Record<string, ContentSection["type"]> = {
-  Added: "Added",
-  Hinzugefügt: "Added",
-  Fixed: "Fixed",
-  Behoben: "Fixed",
-  Changed: "Changed",
-  Geändert: "Changed",
-  Removed: "Removed",
-  Entfernt: "Removed"
-}
-
-function parseSections(content: string): ContentSection[] {
-  const lines = content.split("\n")
-  const sections: ContentSection[] = []
-  let current: ContentSection | null = null
-
-  for (const line of lines) {
-    if (line.startsWith("### ")) {
-      const title = line.replace("### ", "").trim()
-      const type = SECTION_TYPE_MAP[title] ?? "Other"
-      current = { type, title, items: [] }
-      sections.push(current)
-    } else if (line.startsWith("- ") && current) {
-      current.items.push(line.replace(/^- /, "").trim())
-    } else if (line.startsWith("- ") && !current) {
-      // Top-level bullets without a ### heading (e.g. v1.0.0)
-      if (sections.length === 0 || sections[sections.length - 1].type !== "Other") {
-        current = { type: "Other", title: "", items: [] }
-        sections.push(current)
-      }
-      sections[sections.length - 1].items.push(line.replace(/^- /, "").trim())
-    }
-  }
-
-  return sections
-}
-
-function parseChangelog(raw: string): ChangelogEntry[] {
-  return raw
-    .split(/\n(?=## \[)/)
-    .filter((s) => s.startsWith("## ["))
-    .map((section) => {
-      const lines = section.split("\n")
-      const heading = lines[0]
-      const version = heading.match(/## \[(.+?)\]/)?.[1] ?? ""
-      const rawDate = heading.match(/\] - (\d{4}-\d{2}-\d{2})/)?.[1] ?? ""
-      const date = rawDate
-        ? new Intl.DateTimeFormat("de-CH", { year: "numeric", month: "long", day: "numeric" }).format(
-            new Date(rawDate + "T00:00:00")
-          )
-        : ""
-      const content = lines.slice(1).join("\n").trim()
-      return { version, date, sections: parseSections(content) }
-    })
-}
+import { allChangelogEntries, compareVersions } from "@/lib/changelog"
+import { useUnseenChangelog } from "@/hooks/use-unseen-changelog"
+import { useAuth } from "@/lib/auth-context"
 
 const sectionConfig = {
   Added: {
@@ -93,14 +28,26 @@ const sectionConfig = {
     icon: null,
     color: ""
   }
-} satisfies Record<
-  ContentSection["type"],
-  { icon: React.ComponentType<{ className?: string }> | null; color: string }
->
+}
 
 export default function AdminChangelogPage() {
-  const entries = parseChangelog(MdChangelog)
+  const entries = allChangelogEntries
   const { language } = useLanguage()
+  const { markAsSeen } = useUnseenChangelog()
+  const { user, isLoading } = useAuth()
+
+  // Freeze the last-seen version at page entry so dots keep pulsing
+  // even after markAsSeen() fires and updates the live user state.
+  const [snapshotLastSeen, setSnapshotLastSeen] = useState<string | null | undefined>(undefined)
+  useEffect(() => {
+    if (snapshotLastSeen === undefined && !isLoading) {
+      setSnapshotLastSeen(user?.lastSeenChangelogVersion ?? null)
+    }
+  }, [isLoading, user, snapshotLastSeen])
+
+  useEffect(() => {
+    markAsSeen()
+  }, [markAsSeen])
 
   const description =
     language === "de"
@@ -117,11 +64,20 @@ export default function AdminChangelogPage() {
       <div>
         {entries.map((entry, i) => {
           const isLast = i === entries.length - 1
+          const isUnseen =
+            snapshotLastSeen !== undefined && compareVersions(entry.version, snapshotLastSeen ?? "0.0.0") > 0
           return (
             <div key={entry.version} className="flex gap-6">
               {/* Timeline */}
               <div className="flex flex-col items-center">
-                <div className="bg-primary mt-2 h-3 w-3 shrink-0 rounded-full" />
+                <div className="relative mt-2 h-3 w-3 shrink-0">
+                  {isUnseen && (
+                    <span className="absolute inset-0 flex">
+                      <span className="bg-primary absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" />
+                    </span>
+                  )}
+                  <span className="bg-primary relative block h-3 w-3 rounded-full" />
+                </div>
                 {!isLast && <div className="bg-border mt-1 w-px flex-1" />}
               </div>
 
