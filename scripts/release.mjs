@@ -238,6 +238,50 @@ async function ghCreateTag({ owner, repo, token, tag, sha }) {
   )
 }
 
+// ─── Changelog helpers ───────────────────────────────────────────────────────
+
+function findChangelogEntry(content, version) {
+  const escaped = version.replace(/\./g, "\\.")
+  const regex = new RegExp(`## \\[${escaped}\\][^\\n]*\\n[\\s\\S]*?(?=\\n## \\[|$)`)
+  const match = content.match(regex)
+  return match ? match[0].trim() : null
+}
+
+async function prepareChangelog(newVersion) {
+  let content
+  try {
+    content = readFileSync("CHANGELOG.md", "utf-8")
+  } catch {
+    content = "# Changelog\n"
+  }
+
+  const existingEntry = findChangelogEntry(content, newVersion)
+
+  if (existingEntry) {
+    console.log(`\n📋 Existing changelog entry for v${newVersion}:\n`)
+    console.log(
+      existingEntry
+        .split("\n")
+        .map((l) => `   ${l}`)
+        .join("\n")
+    )
+    const keep = await ask("\nInclude this entry in the release commit? [Y/n]: ")
+    if (keep.toLowerCase() === "n") {
+      console.log("⏭️  Skipping changelog.")
+      return null
+    }
+    return content
+  }
+
+  console.warn(`\n⚠️  No changelog entry found for v${newVersion} in CHANGELOG.md.`)
+  const proceed = await ask("Continue without a changelog entry? [y/N]: ")
+  if (proceed.toLowerCase() !== "y") {
+    console.log("❌ Aborted. Add an entry to CHANGELOG.md and re-run.")
+    process.exit(0)
+  }
+  return null
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -276,6 +320,9 @@ async function main() {
     console.log("❌ Aborted.")
     process.exit(0)
   }
+
+  // Prepare changelog before stash so we can read the current working tree
+  const changelogContent = await prepareChangelog(newVersion)
 
   // Check feature flags on production project
   await checkFlagsOnProd(newVersion)
@@ -316,7 +363,13 @@ async function main() {
     writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
     console.log(`✅ Version bumped: ${currentVersion} ➡️  ${newVersion}`)
 
-    run("git add package.json")
+    if (changelogContent !== null) {
+      writeFileSync("CHANGELOG.md", changelogContent)
+      console.log(`✅ CHANGELOG.md updated`)
+      run("git add package.json CHANGELOG.md")
+    } else {
+      run("git add package.json")
+    }
     run(`git commit -m "Bump version to v${newVersion}"`)
     run(`git push origin ${releaseBranch}`)
     console.log(`✅ Branch ${releaseBranch} pushed`)
