@@ -7,7 +7,7 @@ import { isValidHex, isValidUrl } from "@/lib/helpers"
 async function handlePost(req: AuthenticatedRequest) {
   try {
     const body = await req.json()
-    const { id, logoUrl, websiteUrl, logoBgColor, logoSize, tier } = body
+    const { id, logoUrl, websiteUrl, logoBgColor, logoSize, tier, description, descriptionEn } = body
 
     if (!id) return validationError("Sponsor ID required")
     if (!logoUrl) return validationError("Sponsor logo URL required")
@@ -64,6 +64,14 @@ async function handlePost(req: AuthenticatedRequest) {
 
     fields.push("tier = $" + idx)
     values.push(tier)
+    idx++
+
+    fields.push("description = $" + idx)
+    values.push(description || null)
+    idx++
+
+    fields.push("description_en = $" + idx)
+    values.push(descriptionEn || null)
     idx++
 
     fields.push("status = 'published'")

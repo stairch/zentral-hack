@@ -78,6 +78,8 @@ type SponsorContact = {
   logo_size: number | null
   tier: string | null
   logo_bg_color: string | null
+  description: string | null
+  description_en: string | null
   updated_at: number
 }
 
@@ -120,6 +122,8 @@ interface PublishFormData {
   logoBgColor: string | null
   logoSize: number
   tier: string
+  description: string
+  descriptionEn: string
 }
 
 type HeroSlot = { sponsorId: string | null; size: number }
@@ -205,6 +209,10 @@ const copy = {
       logoUploadLoading: "Lädt hoch...",
       logoUploadHint: "PNG, JPG oder WEBP (max. 5 MB)",
       websiteUrlLabel: "Website",
+      descriptionLabel: "Beschreibung (DE)",
+      descriptionEnLabel: "Beschreibung (EN)",
+      descriptionPlaceholder: "Kurze Beschreibung unter dem Logo auf Deutsch",
+      descriptionEnPlaceholder: "Kurze Beschreibung unter dem Logo auf Englisch",
       backgroundColorLabel: "Hintergrundfarbe",
       resetButton: "Zurücksetzen",
       logoSizeLabel: "Logo-Grösse",
@@ -328,6 +336,10 @@ const copy = {
       logoUploadLoading: "Uploading...",
       logoUploadHint: "PNG, JPG, or WEBP (max. 5 MB)",
       websiteUrlLabel: "Website",
+      descriptionLabel: "Description (DE)",
+      descriptionEnLabel: "Description (EN)",
+      descriptionPlaceholder: "Short description below the logo in German",
+      descriptionEnPlaceholder: "Short description below the logo in English",
       backgroundColorLabel: "Background color",
       resetButton: "Reset",
       logoSizeLabel: "Logo size",
@@ -404,7 +416,9 @@ function PublishDialog({
     websiteUrl: "",
     logoBgColor: null,
     logoSize: 50,
-    tier: contact.interested_in || ""
+    tier: contact.interested_in || "",
+    description: "",
+    descriptionEn: ""
   })
   const { language } = useLanguage()
   const text = copy[language]
@@ -443,7 +457,9 @@ function PublishDialog({
         websiteUrl: contact.website_url || "",
         logoBgColor: contact.logo_bg_color || null,
         logoSize: contact.logo_size ?? 50,
-        tier: contact.tier || contact.interested_in || ""
+        tier: contact.tier || contact.interested_in || "",
+        description: contact.description || "",
+        descriptionEn: contact.description_en || ""
       })
       setIsUnsavedLogo(false)
       if (contact.logo_url) {
@@ -620,6 +636,32 @@ function PublishDialog({
                 }}
               />
               {errors.websiteUrl && <p className="text-destructive text-xs">{errors.websiteUrl}</p>}
+            </div>
+
+            {/* Description DE */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="description">{text.publishDialog.descriptionLabel}</Label>
+              <textarea
+                id="description"
+                rows={2}
+                placeholder={text.publishDialog.descriptionPlaceholder}
+                value={form.description}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+              />
+            </div>
+
+            {/* Description EN */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="descriptionEn">{text.publishDialog.descriptionEnLabel}</Label>
+              <textarea
+                id="descriptionEn"
+                rows={2}
+                placeholder={text.publishDialog.descriptionEnPlaceholder}
+                value={form.descriptionEn}
+                onChange={(e) => setForm((f) => ({ ...f, descriptionEn: e.target.value }))}
+                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+              />
             </div>
 
             {/* Background Color */}
