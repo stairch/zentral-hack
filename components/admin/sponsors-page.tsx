@@ -1240,6 +1240,7 @@ export function AdminSponsorsPage() {
       }
 
       setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c)))
+      window.dispatchEvent(new Event("sponsor-contacts-changed"))
       toast.success(text.success.sponsorSavedUpdate)
     } catch (err) {
       console.error(err)
@@ -1255,6 +1256,7 @@ export function AdminSponsorsPage() {
           b.created_at.localeCompare(a.created_at)
       )
     )
+    window.dispatchEvent(new Event("sponsor-contacts-changed"))
   }
 
   const handleContactPublish = async (id: string, data: PublishFormData) => {
@@ -1273,6 +1275,7 @@ export function AdminSponsorsPage() {
 
       const resData = await res.json()
       setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, ...resData.data?.sponsor } : c)))
+      window.dispatchEvent(new Event("sponsor-contacts-changed"))
       toast.success(text.success.sponsorPublish)
     } catch (err) {
       console.error(err)
@@ -1499,7 +1502,13 @@ export function AdminSponsorsPage() {
                   return (
                     <div
                       key={contact.id}
-                      className="border-border hover:bg-muted/50 flex flex-col gap-3 rounded-lg border p-4 transition-colors">
+                      className="border-border hover:bg-muted/50 relative flex flex-col gap-3 rounded-lg border p-4 transition-colors">
+                      {status === "new" && (
+                        <span className="absolute -top-1.5 -left-1.5 flex h-3 w-3">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                          <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" />
+                        </span>
+                      )}
                       {/* Header */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex min-w-0 items-center gap-2">
