@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useUnseenChangelog } from "@/hooks/use-unseen-changelog"
+import { useNewSponsors } from "@/hooks/use-new-sponsors"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -107,6 +108,7 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
   const isAdmin = user?.role === "admin"
   const text = copy[language]
   const { hasUnseen, latestEntry, isMinorOrMajor } = useUnseenChangelog()
+  const { hasNew: hasNewSponsors } = useNewSponsors()
 
   // permissionKey: matches admin_roles.permissions entries to gate visibility for custom-role users
   const allNavItems = [
@@ -297,7 +299,15 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}>
               <div className="flex items-center gap-3">
-                <item.icon className="h-5 w-5" />
+                <div className="relative">
+                  <item.icon className="h-5 w-5" />
+                  {item.id === "sponsors" && hasNewSponsors && (
+                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                    </span>
+                  )}
+                </div>
                 {item.label}
               </div>
               {!item.isReleased && (
