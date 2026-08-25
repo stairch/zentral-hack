@@ -446,7 +446,8 @@ function PublishDialog({
           name: s.company_name,
           bgColor: s.logo_bg_color,
           width: (s.logo_size ?? 50) * 3,
-          description: language === "en" ? (s.description_en ?? s.description) : (s.description ?? s.description_en)
+          description:
+            language === "en" ? (s.description_en ?? s.description) : (s.description ?? s.description_en)
         })),
     [publishedSponsors, form.tier, contact.id, language]
   )
@@ -735,7 +736,10 @@ function PublishDialog({
                       bgColor: form.logoBgColor,
                       width: form.logoSize * 3,
                       isCurrent: true,
-                      description: language === "en" ? (form.descriptionEn || form.description || null) : (form.description || form.descriptionEn || null)
+                      description:
+                        language === "en"
+                          ? form.descriptionEn || form.description || null
+                          : form.description || form.descriptionEn || null
                     }
                   ]}
                 />

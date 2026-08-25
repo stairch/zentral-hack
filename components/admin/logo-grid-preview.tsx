@@ -31,7 +31,7 @@ export default function LogoGridPreview({
           key={`${item.name}-${i}`}
           className={cn(
             "bg-background flex min-h-16 flex-col items-center justify-center gap-2",
-            item.description ? "px-4 pb-3 pt-4" : "p-4",
+            item.description ? "px-4 pt-4 pb-3" : "p-4",
             item.isCurrent && "ring-primary ring-2 ring-inset"
           )}>
           <Image
@@ -47,10 +47,11 @@ export default function LogoGridPreview({
             className="h-auto object-contain"
           />
           {item.description && (
-            <p className={cn(
-              "text-muted-foreground max-w-[160px] text-center leading-snug",
-              tierIndex === 3 ? "text-[10px]" : "text-xs"
-            )}>
+            <p
+              className={cn(
+                "text-muted-foreground max-w-[160px] text-center leading-snug",
+                tierIndex === 3 ? "text-[10px]" : "text-xs"
+              )}>
               {item.description}
             </p>
           )}
