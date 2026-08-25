@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { BugOff, Pencil, Plus, X } from "lucide-react"
 import { useLanguage } from "@/lib/language-context"
-import { allChangelogEntries, compareVersions, type ContentSection } from "@/lib/changelog"
+import { allChangelogEntries, compareVersions } from "@/lib/changelog"
 import { useUnseenChangelog } from "@/hooks/use-unseen-changelog"
 import { useAuth } from "@/lib/auth-context"
 
