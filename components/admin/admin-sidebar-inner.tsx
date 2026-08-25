@@ -312,6 +312,16 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       </nav>
       {/* Footer */}
       <div className="border-border space-y-2 border-t p-4">
+        {/* Language toggle */}
+        <div className="flex items-center gap-2 px-1">
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as "de" | "en")}
+            className="border-border bg-background text-muted-foreground w-full cursor-pointer rounded-md border px-3 py-2 text-sm">
+            <option value="de">Deutsch</option>
+            <option value="en">English</option>
+          </select>
+        </div>
         <div>
           <Link href={Urls.changelog} className="hover:text-primary transition-colors duration-300">
             <Button
@@ -362,16 +372,6 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
               {text.bugReport}
             </Button>
           </Link>
-        </div>
-        {/* Language toggle */}
-        <div className="flex items-center gap-2 px-1">
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value as "de" | "en")}
-            className="border-border bg-background text-muted-foreground w-full cursor-pointer rounded-md border px-3 py-2 text-sm">
-            <option value="de">Deutsch</option>
-            <option value="en">English</option>
-          </select>
         </div>
         {/* Back to dashboard */}
         <Button
