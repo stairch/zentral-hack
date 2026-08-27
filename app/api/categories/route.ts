@@ -25,7 +25,9 @@ export async function GET() {
                     jsonb_build_object(
                       'id', id,
                       'title', challenge_title,
+                      'title_en', challenge_title_en,
                       'short_description', short_description,
+                      'short_description_en', short_description_en,
                       'challenge_data', challenge_data,
                       'prize', prize,
                       'difficulty', difficulty,

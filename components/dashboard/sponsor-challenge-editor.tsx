@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { Eye, FileText, Gavel, Info, Loader2, Package, Plus, Save, Send, Trash2, Trophy } from "lucide-react"
+import { Eye, FileText, Gavel, Loader2, Package, Plus, Save, Send, Trash2, Trophy } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/language-context"
@@ -34,6 +34,7 @@ type SponsorChallengeEditorProps = {
 interface ChallengeListItem {
   id: string
   challenge_title: string | null
+  challenge_title_en: string | null
   status: "draft" | "published"
   updated_at: string
   category_id: string
@@ -233,14 +234,13 @@ export function SponsorChallengeEditor({
       websiteVisible: "Auf der Website sichtbar",
       websiteVisibleDesc:
         "Diese Felder werden direkt auf der Zentral Hack Website bei den Challenges angezeigt.",
-      challengeTitle: "Challenge-Titel",
-      shortDescription: "Kurzbeschreibung",
+      challengeTitleDe: "Challenge-Titel (Deutsch)",
+      challengeTitleEn: "Challenge-Titel (Englisch)",
+      shortDescriptionDe: "Kurzbeschreibung (Deutsch)",
+      shortDescriptionEn: "Kurzbeschreibung (Englisch)",
       shortDescriptionHint: "Max. 2–3 Sätze – wird als Teaser angezeigt",
       prize: "Preisgeld / Preis",
       prizeHint: "Wird als Preis-Highlight auf der Challenge-Karte angezeigt",
-      englishNotice: "Bitte alle Inhalte auf Englisch ausfüllen",
-      englishNoticeDetail:
-        "Die Challenge wird auf der Website und gegenüber den Teilnehmenden auf Englisch präsentiert.",
       challengeFormat: "Challenge-Format",
       difficulty: "Schwierigkeitsgrad",
       teamSize: "Empfohlene Teamgrösse",
@@ -359,13 +359,13 @@ export function SponsorChallengeEditor({
       publish: "Publish",
       websiteVisible: "Visible on website",
       websiteVisibleDesc: "These fields are displayed directly on the Zentral Hack website under Challenges.",
-      challengeTitle: "Challenge title",
-      shortDescription: "Short description",
+      challengeTitleDe: "Challenge title (German)",
+      challengeTitleEn: "Challenge title (English)",
+      shortDescriptionDe: "Short description (German)",
+      shortDescriptionEn: "Short description (English)",
       shortDescriptionHint: "Max. 2–3 sentences – shown as a teaser",
       prize: "Prize / Reward",
       prizeHint: "Shown as a prize highlight on the challenge card",
-      englishNotice: "Please fill in all content in English",
-      englishNoticeDetail: "The challenge will be presented in English on the website and to participants.",
       challengeFormat: "Challenge Format",
       difficulty: "Difficulty",
       teamSize: "Recommended team size",
@@ -509,6 +509,10 @@ export function SponsorChallengeEditor({
     const normalized = normalizeSponsorChallengeData(record.challenge_data)
     setFormData({
       ...normalized,
+      challengeTitle: record.challenge_title || normalized.challengeTitle,
+      challengeTitleEn: record.challenge_title_en || normalized.challengeTitleEn,
+      shortDescription: record.short_description || normalized.shortDescription,
+      shortDescriptionEn: record.short_description_en || normalized.shortDescriptionEn,
       difficulty: (record.difficulty as SponsorChallengeData["difficulty"]) || normalized.difficulty,
       teamSize: record.team_size || normalized.teamSize,
       challengeLanguage:
@@ -795,6 +799,7 @@ export function SponsorChallengeEditor({
             {
               id: challenge.id,
               challenge_title: challenge.challenge_title,
+              challenge_title_en: challenge.challenge_title_en,
               status: challenge.status,
               updated_at: challenge.updated_at,
               category_id: challenge.category_id
@@ -835,7 +840,7 @@ export function SponsorChallengeEditor({
                   <SelectContent>
                     {challengeList.map((c, i) => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.challenge_title || `Challenge ${i + 1}`}
+                        {c.challenge_title || c.challenge_title_en || `Challenge ${i + 1}`}
                         {c.status === "published" && (
                           <span className="ml-2 text-xs text-green-600">● {t.publishedLabel}</span>
                         )}
@@ -892,15 +897,6 @@ export function SponsorChallengeEditor({
         </CardHeader>
       </Card>
 
-      {/* ── English-only notice ── */}
-      <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950/30">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-        <div>
-          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">{t.englishNotice}</p>
-          <p className="text-muted-foreground text-xs">{t.englishNoticeDetail}</p>
-        </div>
-      </div>
-
       {/* ── Website-visible section ── */}
       <Card className="border-[#530A5D]/40 bg-gradient-to-br from-[#530A5D]/5 to-[#530A5D]/10 shadow-sm">
         <CardHeader className="border-b pb-4">
@@ -911,21 +907,40 @@ export function SponsorChallengeEditor({
           <p className="text-muted-foreground text-sm">{t.websiteVisibleDesc}</p>
         </CardHeader>
         <CardContent className="space-y-4 pt-6">
-          <Field label={t.challengeTitle} required>
-            <Input
-              value={formData.challengeTitle}
-              onChange={(e) => patch({ challengeTitle: e.target.value })}
-              placeholder="Short, punchy title in English"
-            />
-          </Field>
-          <Field label={t.shortDescription} required hint={t.shortDescriptionHint}>
-            <Textarea
-              value={formData.shortDescription}
-              onChange={(e) => patch({ shortDescription: e.target.value })}
-              placeholder="2–3 sentences in English shown as a teaser on the website"
-              rows={3}
-            />
-          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label={t.challengeTitleDe} required>
+              <Input
+                value={formData.challengeTitle}
+                onChange={(e) => patch({ challengeTitle: e.target.value })}
+                placeholder="Kurzer, prägnanter Titel auf Deutsch"
+              />
+            </Field>
+            <Field label={t.challengeTitleEn}>
+              <Input
+                value={formData.challengeTitleEn}
+                onChange={(e) => patch({ challengeTitleEn: e.target.value })}
+                placeholder="Short, punchy title in English"
+              />
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label={t.shortDescriptionDe} required hint={t.shortDescriptionHint}>
+              <Textarea
+                value={formData.shortDescription}
+                onChange={(e) => patch({ shortDescription: e.target.value })}
+                placeholder="2–3 Sätze auf Deutsch, die als Teaser auf der Website angezeigt werden"
+                rows={3}
+              />
+            </Field>
+            <Field label={t.shortDescriptionEn} hint={t.shortDescriptionHint}>
+              <Textarea
+                value={formData.shortDescriptionEn}
+                onChange={(e) => patch({ shortDescriptionEn: e.target.value })}
+                placeholder="2–3 sentences in English shown as a teaser on the website"
+                rows={3}
+              />
+            </Field>
+          </div>
           <Field label={t.prize} hint={t.prizeHint}>
             <div className="relative">
               <Trophy className="text-muted-foreground absolute top-2.5 left-3 h-4 w-4" />

@@ -34,7 +34,9 @@ interface DisplayCategory {
   challenges: Array<{
     id: string
     title: string | null
+    title_en: string | null
     short_description: string | null
+    short_description_en: string | null
     challenge_data: Record<string, unknown> | null
     difficulty: string | null
     team_size: string | null
@@ -226,6 +228,10 @@ export function Categories() {
 
   const text = mounted ? copy[language] : copy["de"]
 
+  // Pick the localized challenge text, falling back to the other language when one side is empty.
+  const pickLocale = (de: string | null | undefined, en: string | null | undefined) =>
+    (language === "en" ? en || de : de || en) || ""
+
   const closeDialog = () => {
     setSelectedCategory(null)
     setSelectedChallengeId("")
@@ -408,10 +414,18 @@ export function Categories() {
                                   className="border-border hover:border-opacity-60 group hover:bg-muted/40 flex w-full items-center justify-between rounded-xl border bg-transparent px-4 py-3.5 text-left transition-all"
                                   style={{ ["--hover-border" as string]: selectedCategory.color }}>
                                   <div className="min-w-0">
-                                    <p className="truncate font-semibold">{challenge.title}</p>
-                                    {challenge.short_description && (
+                                    <p className="truncate font-semibold">
+                                      {pickLocale(challenge.title, challenge.title_en)}
+                                    </p>
+                                    {pickLocale(
+                                      challenge.short_description,
+                                      challenge.short_description_en
+                                    ) && (
                                       <p className="text-muted-foreground mt-0.5 line-clamp-1 text-sm">
-                                        {challenge.short_description}
+                                        {pickLocale(
+                                          challenge.short_description,
+                                          challenge.short_description_en
+                                        )}
                                       </p>
                                     )}
                                   </div>
@@ -500,7 +514,7 @@ export function Categories() {
                                       }
                                     : {}
                                 }>
-                                {c.title}
+                                {pickLocale(c.title, c.title_en)}
                               </button>
                             )
                           })}
@@ -539,17 +553,23 @@ export function Categories() {
 
                           {/* Title */}
                           <h2 className="font-display mb-5 text-3xl leading-tight font-bold md:text-4xl">
-                            {selectedChallenge?.title}
+                            {pickLocale(selectedChallenge?.title, selectedChallenge?.title_en)}
                           </h2>
 
                           {/* Divider */}
                           <div className="border-border mb-6 border-t" />
 
                           {/* Description as flowing prose */}
-                          {(selectedChallenge?.short_description ||
+                          {(pickLocale(
+                            selectedChallenge?.short_description,
+                            selectedChallenge?.short_description_en
+                          ) ||
                             selectedCategory.challengeDescription) && (
                             <p className="text-foreground mb-8 text-base leading-[1.8]">
-                              {selectedChallenge?.short_description || selectedCategory.challengeDescription}
+                              {pickLocale(
+                                selectedChallenge?.short_description,
+                                selectedChallenge?.short_description_en
+                              ) || selectedCategory.challengeDescription}
                             </p>
                           )}
 

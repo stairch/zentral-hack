@@ -52,7 +52,9 @@ export interface SponsorChallengeData {
   website: string
   logoNote: string
   challengeTitle: string
+  challengeTitleEn: string
   shortDescription: string
+  shortDescriptionEn: string
   difficulty: SponsorChallengeDifficulty | ""
   teamSize: string
   challengeLanguage: SponsorChallengeLanguage | ""
@@ -153,7 +155,9 @@ export interface SponsorChallengeRecord {
   website: string | null
   logo_note: string | null
   challenge_title: string | null
+  challenge_title_en: string | null
   short_description: string | null
+  short_description_en: string | null
   difficulty: SponsorChallengeDifficulty | null
   team_size: string | null
   challenge_language: SponsorChallengeLanguage | null
@@ -175,7 +179,9 @@ export function createEmptySponsorChallengeData(): SponsorChallengeData {
     website: "",
     logoNote: "",
     challengeTitle: "",
+    challengeTitleEn: "",
     shortDescription: "",
+    shortDescriptionEn: "",
     difficulty: "",
     teamSize: "",
     challengeLanguage: "",

@@ -50,7 +50,9 @@ export interface CategoryRecord {
   challenges?: Array<{
     id: string
     title: string | null
+    title_en: string | null
     short_description: string | null
+    short_description_en: string | null
     challenge_data: Record<string, unknown> | null
     difficulty: string | null
     team_size: string | null

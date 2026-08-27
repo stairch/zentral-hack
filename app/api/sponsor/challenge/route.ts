@@ -31,7 +31,8 @@ async function loadChallengeRows(req: AuthenticatedRequest, categoryId: string) 
       `SELECT id, user_id, category_id, status,
               company_name, branch, contact_name, contact_function,
               contact_email, contact_phone, website, logo_note,
-              challenge_title, short_description, difficulty, team_size,
+              challenge_title, challenge_title_en, short_description, short_description_en,
+              difficulty, team_size,
               challenge_language, prize, challenge_data, published_at, created_at, updated_at
        FROM sponsor_challenges
        WHERE category_id = $1
@@ -44,7 +45,8 @@ async function loadChallengeRows(req: AuthenticatedRequest, categoryId: string) 
     `SELECT id, user_id, category_id, status,
             company_name, branch, contact_name, contact_function,
             contact_email, contact_phone, website, logo_note,
-            challenge_title, short_description, difficulty, team_size,
+            challenge_title, challenge_title_en, short_description, short_description_en,
+            difficulty, team_size,
             challenge_language, prize, challenge_data, published_at, created_at, updated_at
      FROM sponsor_challenges
      WHERE user_id = $1 AND category_id = $2
@@ -95,6 +97,7 @@ export const GET = withSponsorAuth(async (req: AuthenticatedRequest) => {
       challenges: rows.map((row) => ({
         id: row.id,
         challenge_title: row.challenge_title,
+        challenge_title_en: row.challenge_title_en,
         status: row.status,
         updated_at: row.updated_at,
         category_id: row.category_id
@@ -114,7 +117,9 @@ export const GET = withSponsorAuth(async (req: AuthenticatedRequest) => {
         website: "",
         logo_note: "",
         challenge_title: "",
+        challenge_title_en: "",
         short_description: "",
+        short_description_en: "",
         difficulty: "",
         team_size: "",
         challenge_language: "",
@@ -149,11 +154,11 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
     const prize = typeof body.prize === "string" ? body.prize.trim() || null : null
 
     if (!challengeData.challengeTitle.trim()) {
-      return validationError("Challenge title is required")
+      return validationError("German challenge title is required")
     }
 
     if (!challengeData.shortDescription.trim()) {
-      return validationError("Short description is required")
+      return validationError("German short description is required")
     }
 
     let result
@@ -171,7 +176,9 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
         challengeData.website || null,
         challengeData.logoNote || null,
         challengeData.challengeTitle || null,
+        challengeData.challengeTitleEn || null,
         challengeData.shortDescription || null,
+        challengeData.shortDescriptionEn || null,
         challengeData.difficulty || null,
         challengeData.teamSize || null,
         challengeData.challengeLanguage || null,
@@ -180,10 +187,13 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
       ]
 
       if (challengeId) {
+        // Non-privileged sponsors may only edit their own challenge (user_id = $1).
+        // Admins / category partners may edit any challenge in the category, but $1
+        // must still be referenced so Postgres can infer the parameter's type.
         const whereClause =
           req.user?.role === "admin" || req.user?.role === "category_partner"
-            ? "WHERE id = $19 AND category_id = $2"
-            : "WHERE id = $19 AND user_id = $1 AND category_id = $2"
+            ? "WHERE id = $21 AND category_id = $2 AND $1::text = $1::text"
+            : "WHERE id = $21 AND user_id = $1 AND category_id = $2"
 
         result = await query(
           `UPDATE sponsor_challenges
@@ -197,12 +207,14 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
                website = $10,
                logo_note = $11,
                challenge_title = $12,
-               short_description = $13,
-               difficulty = $14,
-               team_size = $15,
-               challenge_language = $16,
-               challenge_data = $17::jsonb,
-               prize = $18,
+               challenge_title_en = $13,
+               short_description = $14,
+               short_description_en = $15,
+               difficulty = $16,
+               team_size = $17,
+               challenge_language = $18,
+               challenge_data = $19::jsonb,
+               prize = $20,
                published_at = CASE
                  WHEN $3::text = 'published' AND sponsor_challenges.published_at IS NULL THEN NOW()
                  WHEN $3::text = 'published' THEN sponsor_challenges.published_at
@@ -213,7 +225,8 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
            RETURNING id, user_id, category_id, status,
                      company_name, branch, contact_name, contact_function,
                      contact_email, contact_phone, website, logo_note,
-                     challenge_title, short_description, difficulty, team_size,
+                     challenge_title, challenge_title_en, short_description, short_description_en,
+                     difficulty, team_size,
                      challenge_language, prize, challenge_data, published_at, created_at, updated_at`,
           [...payload, challengeId]
         )
@@ -227,21 +240,24 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
              user_id, category_id, status,
              company_name, branch, contact_name, contact_function,
              contact_email, contact_phone, website, logo_note,
-             challenge_title, short_description, difficulty, team_size,
+             challenge_title, challenge_title_en, short_description, short_description_en,
+             difficulty, team_size,
              challenge_language, challenge_data, prize, published_at, updated_at
            ) VALUES (
              $1, $2, $3,
              $4, $5, $6, $7,
              $8, $9, $10, $11,
              $12, $13, $14, $15,
-             $16, $17::jsonb, $18,
+             $16, $17,
+             $18, $19::jsonb, $20,
              CASE WHEN $3::text = 'published' THEN NOW() ELSE NULL END,
              NOW()
            )
            RETURNING id, user_id, category_id, status,
                      company_name, branch, contact_name, contact_function,
                      contact_email, contact_phone, website, logo_note,
-                     challenge_title, short_description, difficulty, team_size,
+                     challenge_title, challenge_title_en, short_description, short_description_en,
+                     difficulty, team_size,
                      challenge_language, prize, challenge_data, published_at, created_at, updated_at`,
           payload
         )
