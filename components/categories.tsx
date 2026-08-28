@@ -6,7 +6,8 @@ import { motion, useInView, useMotionValue, useSpring } from "framer-motion"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Trophy } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { ArrowLeft, ArrowRight, Trophy } from "lucide-react"
 import {
   categoryDisplayOrder,
   getCategoryPresentationByLanguage,
@@ -34,12 +35,15 @@ interface DisplayCategory {
   challenges: Array<{
     id: string
     title: string | null
+    title_en: string | null
     short_description: string | null
+    short_description_en: string | null
     challenge_data: Record<string, unknown> | null
     difficulty: string | null
     team_size: string | null
     challenge_language: string | null
     company_name: string | null
+    sponsor_name: string | null
     status: string | null
     updated_at: string | null
     prize: string | null
@@ -201,7 +205,8 @@ export function Categories() {
       prize: "Preisgeld",
       targetGroup: "Zielgruppe",
       difficulty: "Schwierigkeit",
-      teamSize: "Teamgrösse"
+      teamSize: "Teamgrösse",
+      poweredBy: (sponsor: string) => `Powered by ${sponsor}`
     },
     en: {
       badge: "CHALLENGES",
@@ -220,11 +225,16 @@ export function Categories() {
       prize: "Prize",
       targetGroup: "Target audience",
       difficulty: "Difficulty",
-      teamSize: "Team size"
+      teamSize: "Team size",
+      poweredBy: (sponsor: string) => `Powered by ${sponsor}`
     }
   } as const
 
   const text = mounted ? copy[language] : copy["de"]
+
+  // Pick the localized challenge text, falling back to the other language when one side is empty.
+  const pickLocale = (de: string | null | undefined, en: string | null | undefined) =>
+    (language === "en" ? en || de : de || en) || ""
 
   const closeDialog = () => {
     setSelectedCategory(null)
@@ -308,7 +318,7 @@ export function Categories() {
             <DialogContent
               className="h-[82vh] w-[92vw] max-w-none min-w-[360px] overflow-hidden border-0 p-0 sm:h-[86vh] sm:max-w-2xl sm:min-w-[600px]"
               closeButtonStyle={{ color: getContrastForegroundColor(selectedCategory.color) }}>
-              <div className="relative h-full min-h-0">
+              <div className="relative h-full min-h-0 overflow-hidden">
                 <div className="bg-background relative flex h-full min-h-0 flex-col overflow-hidden">
                   {!isChallengeBrowserOpen ? (
                     /* ── OVERVIEW ── */
@@ -405,20 +415,32 @@ export function Categories() {
                                     setSelectedChallengeId(challenge.id)
                                     setIsChallengeBrowserOpen(true)
                                   }}
-                                  className="border-border hover:border-opacity-60 group hover:bg-muted/40 flex w-full items-center justify-between rounded-xl border bg-transparent px-4 py-3.5 text-left transition-all"
+                                  className="border-border hover:border-opacity-60 group hover:bg-muted/40 flex w-full cursor-pointer items-center justify-between rounded-xl border bg-transparent px-4 py-3.5 text-left transition-all"
                                   style={{ ["--hover-border" as string]: selectedCategory.color }}>
                                   <div className="min-w-0">
-                                    <p className="truncate font-semibold">{challenge.title}</p>
-                                    {challenge.short_description && (
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <p className="truncate font-semibold">
+                                        {pickLocale(challenge.title, challenge.title_en)}
+                                      </p>
+                                      {challenge.sponsor_name && (
+                                        <Badge variant="secondary" className="shrink-0">
+                                          {text.poweredBy(challenge.sponsor_name)}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    {pickLocale(
+                                      challenge.short_description,
+                                      challenge.short_description_en
+                                    ) && (
                                       <p className="text-muted-foreground mt-0.5 line-clamp-1 text-sm">
-                                        {challenge.short_description}
+                                        {pickLocale(
+                                          challenge.short_description,
+                                          challenge.short_description_en
+                                        )}
                                       </p>
                                     )}
                                   </div>
-                                  <ArrowRight
-                                    className="text-muted-foreground ml-3 h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1"
-                                    style={{ color: getContrastForegroundColor(selectedCategory.color) }}
-                                  />
+                                  <ArrowRight className="text-muted-foreground ml-3 h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
                                 </button>
                               ))}
                             </div>
@@ -463,9 +485,7 @@ export function Categories() {
                       {/* Header */}
                       <div className="border-border flex shrink-0 items-center justify-between border-b px-6 py-4 md:px-8">
                         <div>
-                          <p
-                            className="text-[11px] font-bold tracking-widest uppercase"
-                            style={{ color: getContrastForegroundColor(selectedCategory.color) }}>
+                          <p className="text-[11px] font-bold tracking-widest uppercase">
                             {selectedCategory.title}
                           </p>
                         </div>
@@ -475,13 +495,13 @@ export function Categories() {
                           size="sm"
                           className="text-muted-foreground text-sm"
                           onClick={() => setIsChallengeBrowserOpen(false)}>
-                          ← {text.backToOverview}
+                          <ArrowLeft /> {text.backToOverview}
                         </Button>
                       </div>
 
                       {/* Challenge tabs (if multiple) */}
                       {availableChallenges.length > 1 && (
-                        <div className="border-border flex shrink-0 gap-2 overflow-x-auto border-b px-6 py-3 md:px-8">
+                        <div className="border-border flex shrink-0 gap-2 overflow-x-auto border-b px-6 py-3 [scrollbar-width:thin] md:px-8">
                           {availableChallenges.map((c) => {
                             const isActive = selectedChallenge?.id === c.id
                             return (
@@ -489,7 +509,7 @@ export function Categories() {
                                 key={c.id}
                                 type="button"
                                 onClick={() => setSelectedChallengeId(c.id)}
-                                className={`rounded-full px-4 py-1.5 text-sm font-medium whitespace-nowrap transition-all ${
+                                className={`cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium whitespace-nowrap transition-all ${
                                   isActive ? "" : "bg-muted text-muted-foreground hover:bg-muted/80"
                                 }`}
                                 style={
@@ -500,7 +520,7 @@ export function Categories() {
                                       }
                                     : {}
                                 }>
-                                {c.title}
+                                {pickLocale(c.title, c.title_en)}
                               </button>
                             )
                           })}
@@ -538,18 +558,31 @@ export function Categories() {
                           )}
 
                           {/* Title */}
-                          <h2 className="font-display mb-5 text-3xl leading-tight font-bold md:text-4xl">
-                            {selectedChallenge?.title}
-                          </h2>
+                          <div className="mb-5 flex flex-col items-start gap-3">
+                            <h2 className="font-display text-3xl leading-tight font-bold md:text-4xl">
+                              {pickLocale(selectedChallenge?.title, selectedChallenge?.title_en)}
+                            </h2>
+                            {selectedChallenge?.sponsor_name && (
+                              <Badge variant="secondary" className="mt-1.5 shrink-0">
+                                {text.poweredBy(selectedChallenge.sponsor_name)}
+                              </Badge>
+                            )}
+                          </div>
 
                           {/* Divider */}
                           <div className="border-border mb-6 border-t" />
 
                           {/* Description as flowing prose */}
-                          {(selectedChallenge?.short_description ||
+                          {(pickLocale(
+                            selectedChallenge?.short_description,
+                            selectedChallenge?.short_description_en
+                          ) ||
                             selectedCategory.challengeDescription) && (
                             <p className="text-foreground mb-8 text-base leading-[1.8]">
-                              {selectedChallenge?.short_description || selectedCategory.challengeDescription}
+                              {pickLocale(
+                                selectedChallenge?.short_description,
+                                selectedChallenge?.short_description_en
+                              ) || selectedCategory.challengeDescription}
                             </p>
                           )}
 
@@ -561,27 +594,26 @@ export function Categories() {
                             if (!prizeText || !prizeText.trim()) return null
                             return (
                               <div
-                                className="mb-8 rounded-2xl border p-5"
+                                className="mb-5 rounded-2xl border border-neutral-200 p-4"
                                 style={{
-                                  backgroundColor: selectedCategory.color + "0d",
-                                  borderColor: selectedCategory.color + "40"
+                                  backgroundColor: selectedCategory.color + "14"
                                 }}>
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-3">
                                   <div
-                                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
-                                    style={{ backgroundColor: selectedCategory.color + "20" }}>
+                                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                                    style={{ backgroundColor: selectedCategory.color }}>
                                     <Trophy
-                                      className="h-5 w-5"
-                                      style={{ color: getContrastForegroundColor(selectedCategory.color) }}
+                                      className="h-4 w-4"
+                                      style={{
+                                        color: `color-mix(in srgb, ${selectedCategory.color} 40%, ${isDarkContrastForegroundColor(selectedCategory.color) ? "black" : "white"} 100%)`
+                                      }}
                                     />
                                   </div>
                                   <div>
-                                    <p
-                                      className="mb-0.5 text-[11px] font-bold tracking-widest uppercase"
-                                      style={{ color: getContrastForegroundColor(selectedCategory.color) }}>
+                                    <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                                       {text.prize}
                                     </p>
-                                    <p className="text-foreground text-xl font-bold">{prizeText}</p>
+                                    <p className="text-foreground text-lg font-bold">{prizeText}</p>
                                   </div>
                                 </div>
                               </div>

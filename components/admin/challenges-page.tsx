@@ -19,13 +19,17 @@ interface Challenge {
   status: "draft" | "published"
   company_name: string | null
   challenge_title: string | null
+  challenge_title_en: string | null
   short_description: string | null
+  short_description_en: string | null
   difficulty: string | null
   team_size: string | null
   challenge_language: string | null
   contact_email: string | null
   challenge_data: Record<string, unknown> | null
   prize: string | null
+  sponsor_id: string | null
+  sponsor_company_name: string | null
   published_at: string | null
   created_at: string
   updated_at: string
@@ -72,9 +76,11 @@ const copy = {
     labelTeamSize: "Teamgrösse",
     labelLanguage: "Sprache",
     labelPrize: "Preisgeld",
+    labelSponsor: "Sponsor",
     labelStatus: "Status",
     labelSubmitted: "Eingereicht",
-    labelDescription: "Kurzbeschreibung",
+    labelDescription: "Kurzbeschreibung (DE)",
+    labelDescriptionEn: "Kurzbeschreibung (EN)",
     labelFullData: "Vollständige Challenge-Daten",
     deleteTitle: "Challenge löschen?",
     deleteWarning: "Diese Aktion kann nicht rückgängig gemacht werden.",
@@ -122,9 +128,11 @@ const copy = {
     labelTeamSize: "Team Size",
     labelLanguage: "Language",
     labelPrize: "Prize",
+    labelSponsor: "Sponsor",
     labelStatus: "Status",
     labelSubmitted: "Submitted",
-    labelDescription: "Short Description",
+    labelDescription: "Short Description (DE)",
+    labelDescriptionEn: "Short Description (EN)",
     labelFullData: "Full Challenge Data",
     deleteTitle: "Delete challenge?",
     deleteWarning: "This action cannot be undone.",
@@ -151,6 +159,10 @@ export function AdminChallengesPage() {
   const { user } = useAuth()
   const text = copy[language]
 
+  // Show the challenge text for the active admin language, falling back to the other language.
+  const pickLocale = (de: string | null | undefined, en: string | null | undefined) =>
+    (language === "en" ? en || de : de || en) || ""
+
   const isCategoryPartner = user?.role === "category_partner"
 
   const [challenges, setChallenges] = useState<Challenge[]>([])
@@ -166,6 +178,7 @@ export function AdminChallengesPage() {
   // Editor sheet state
   const [editorOpen, setEditorOpen] = useState(false)
   const [editorCategory, setEditorCategory] = useState<CategoryInfo | null>(null)
+  const [editorChallengeId, setEditorChallengeId] = useState<string | null>(null)
   const [allCategories, setAllCategories] = useState<CategoryInfo[]>([])
   const [categoryPickerOpen, setCategoryPickerOpen] = useState(false)
   const [pickedCategoryId, setPickedCategoryId] = useState<string>("")
@@ -237,14 +250,15 @@ export function AdminChallengesPage() {
       .catch(() => {})
   }, [isCategoryPartner, challenges, editorCategory, user?.categoryId])
 
-  const openEditor = (category: CategoryInfo) => {
+  const openEditor = (category: CategoryInfo, challengeId: string | null) => {
     setEditorCategory(category)
+    setEditorChallengeId(challengeId)
     setEditorOpen(true)
   }
 
   const handleNewChallenge = () => {
     if (isCategoryPartner) {
-      if (editorCategory) openEditor(editorCategory)
+      if (editorCategory) openEditor(editorCategory, null)
       return
     }
     // Admin: pick category first
@@ -253,7 +267,10 @@ export function AdminChallengesPage() {
   }
 
   const handleEditChallenge = (challenge: Challenge) => {
-    openEditor({ id: challenge.category_id, name: challenge.category_name, slug: challenge.category_slug })
+    openEditor(
+      { id: challenge.category_id, name: challenge.category_name, slug: challenge.category_slug },
+      challenge.id
+    )
   }
 
   const toggleStatus = async (challenge: Challenge) => {
@@ -394,7 +411,9 @@ export function AdminChallengesPage() {
 
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="font-semibold">{challenge.challenge_title || text.noTitle}</p>
+                <p className="font-semibold">
+                  {pickLocale(challenge.challenge_title, challenge.challenge_title_en) || text.noTitle}
+                </p>
                 <Badge variant={challenge.status === "published" ? "default" : "secondary"}>
                   {challenge.status === "published" ? text.published : text.draft}
                 </Badge>
@@ -402,9 +421,9 @@ export function AdminChallengesPage() {
               <p className="text-muted-foreground mt-0.5 text-sm">
                 {challenge.company_name} · {challenge.category_name} · {challenge.user_email}
               </p>
-              {challenge.short_description && (
+              {pickLocale(challenge.short_description, challenge.short_description_en) && (
                 <p className="text-muted-foreground mt-1 line-clamp-1 text-xs">
-                  {challenge.short_description}
+                  {pickLocale(challenge.short_description, challenge.short_description_en)}
                 </p>
               )}
             </div>
@@ -499,11 +518,13 @@ export function AdminChallengesPage() {
           <div className="flex-1 overflow-y-auto p-6">
             {editorCategory && (
               <SponsorChallengeEditor
-                key={editorCategory.id}
+                key={`${editorCategory.id}:${editorChallengeId ?? "new"}`}
                 categoryName={editorCategory.name}
                 categorySlug={editorCategory.slug}
                 categoryId={editorCategory.id}
                 initialChallenge={null}
+                initialChallengeId={editorChallengeId}
+                forceNew={editorChallengeId === null}
                 onSaved={() => {
                   void load()
                 }}
@@ -545,7 +566,7 @@ export function AdminChallengesPage() {
                   const cat = allCategories.find((c) => c.id === pickedCategoryId)
                   if (cat) {
                     setCategoryPickerOpen(false)
-                    openEditor(cat)
+                    openEditor(cat, null)
                   }
                 }}>
                 {text.newChallenge}
@@ -559,12 +580,16 @@ export function AdminChallengesPage() {
       <Dialog open={!!detailChallenge} onOpenChange={(open) => !open && setDetailChallenge(null)}>
         <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{detailChallenge?.challenge_title || text.detailsDialogDefaultTitle}</DialogTitle>
+            <DialogTitle>
+              {pickLocale(detailChallenge?.challenge_title, detailChallenge?.challenge_title_en) ||
+                text.detailsDialogDefaultTitle}
+            </DialogTitle>
           </DialogHeader>
           {detailChallenge && (
             <div className="space-y-4 text-sm">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Detail label={text.labelCompany} value={detailChallenge.company_name} />
+                <Detail label={text.labelSponsor} value={detailChallenge.sponsor_company_name} />
                 <Detail label={text.labelCategory} value={detailChallenge.category_name} />
                 <Detail label={text.labelContact} value={detailChallenge.contact_email} />
                 <Detail label={text.labelUser} value={detailChallenge.user_email} />
@@ -587,6 +612,14 @@ export function AdminChallengesPage() {
                     {text.labelDescription}
                   </p>
                   <p className="leading-relaxed">{detailChallenge.short_description}</p>
+                </div>
+              )}
+              {detailChallenge.short_description_en && (
+                <div>
+                  <p className="text-muted-foreground mb-1 text-xs font-semibold tracking-wider uppercase">
+                    {text.labelDescriptionEn}
+                  </p>
+                  <p className="leading-relaxed">{detailChallenge.short_description_en}</p>
                 </div>
               )}
               {detailChallenge.challenge_data && Object.keys(detailChallenge.challenge_data).length > 0 && (

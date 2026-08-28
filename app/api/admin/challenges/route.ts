@@ -15,14 +15,17 @@ async function handleGet(req: AuthenticatedRequest) {
       SELECT
         sc.id, sc.user_id, sc.status, sc.company_name, sc.branch,
         sc.contact_name, sc.contact_function, sc.contact_email, sc.contact_phone,
-        sc.website, sc.logo_note, sc.challenge_title, sc.short_description,
+        sc.website, sc.logo_note,
+        sc.challenge_title, sc.challenge_title_en, sc.short_description, sc.short_description_en,
         sc.difficulty, sc.team_size, sc.challenge_language,
-        sc.challenge_data, sc.prize, sc.published_at, sc.created_at, sc.updated_at,
+        sc.challenge_data, sc.prize, sc.sponsor_id, sc.published_at, sc.created_at, sc.updated_at,
         c.name AS category_name, c.id AS category_id, c.slug AS category_slug,
-        u.email AS user_email, u.first_name, u.last_name
+        u.email AS user_email, u.first_name, u.last_name,
+        sp.company_name AS sponsor_company_name
       FROM sponsor_challenges sc
       JOIN categories c ON sc.category_id = c.id
       JOIN users u ON sc.user_id = u.id
+      LEFT JOIN sponsor_contacts sp ON sc.sponsor_id = sp.id
       WHERE 1=1
     `
     const values: QueryValue[] = []

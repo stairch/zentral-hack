@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { Eye, FileText, Gavel, Info, Loader2, Package, Plus, Save, Send, Trash2, Trophy } from "lucide-react"
+import { Eye, FileText, Gavel, Loader2, Package, Plus, Save, Send, Trash2, Trophy } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/language-context"
@@ -28,16 +28,26 @@ type SponsorChallengeEditorProps = {
   categorySlug: string
   categoryId?: string
   initialChallenge: SponsorChallengeRecord | null
+  initialChallengeId?: string | null
+  forceNew?: boolean
   onSaved?: (challenge: SponsorChallengeRecord) => void
 }
 
 interface ChallengeListItem {
   id: string
   challenge_title: string | null
+  challenge_title_en: string | null
   status: "draft" | "published"
   updated_at: string
   category_id: string
 }
+
+interface SponsorOption {
+  id: string
+  company_name: string
+}
+
+const NO_SPONSOR = "none"
 
 function Field({
   label,
@@ -214,6 +224,8 @@ export function SponsorChallengeEditor({
   categorySlug,
   categoryId,
   initialChallenge,
+  initialChallengeId,
+  forceNew,
   onSaved
 }: SponsorChallengeEditorProps) {
   const { language } = useLanguage()
@@ -233,14 +245,16 @@ export function SponsorChallengeEditor({
       websiteVisible: "Auf der Website sichtbar",
       websiteVisibleDesc:
         "Diese Felder werden direkt auf der Zentral Hack Website bei den Challenges angezeigt.",
-      challengeTitle: "Challenge-Titel",
-      shortDescription: "Kurzbeschreibung",
+      challengeTitleDe: "Challenge-Titel (Deutsch)",
+      challengeTitleEn: "Challenge-Titel (Englisch)",
+      shortDescriptionDe: "Kurzbeschreibung (Deutsch)",
+      shortDescriptionEn: "Kurzbeschreibung (Englisch)",
       shortDescriptionHint: "Max. 2–3 Sätze – wird als Teaser angezeigt",
       prize: "Preisgeld / Preis",
       prizeHint: "Wird als Preis-Highlight auf der Challenge-Karte angezeigt",
-      englishNotice: "Bitte alle Inhalte auf Englisch ausfüllen",
-      englishNoticeDetail:
-        "Die Challenge wird auf der Website und gegenüber den Teilnehmenden auf Englisch präsentiert.",
+      sponsor: "Sponsor",
+      sponsorHint: "Verknüpft die Challenge mit einem bestätigten oder veröffentlichten Sponsor",
+      noSponsor: "Kein Sponsor",
       challengeFormat: "Challenge-Format",
       difficulty: "Schwierigkeitsgrad",
       teamSize: "Empfohlene Teamgrösse",
@@ -359,13 +373,16 @@ export function SponsorChallengeEditor({
       publish: "Publish",
       websiteVisible: "Visible on website",
       websiteVisibleDesc: "These fields are displayed directly on the Zentral Hack website under Challenges.",
-      challengeTitle: "Challenge title",
-      shortDescription: "Short description",
+      challengeTitleDe: "Challenge title (German)",
+      challengeTitleEn: "Challenge title (English)",
+      shortDescriptionDe: "Short description (German)",
+      shortDescriptionEn: "Short description (English)",
       shortDescriptionHint: "Max. 2–3 sentences – shown as a teaser",
       prize: "Prize / Reward",
       prizeHint: "Shown as a prize highlight on the challenge card",
-      englishNotice: "Please fill in all content in English",
-      englishNoticeDetail: "The challenge will be presented in English on the website and to participants.",
+      sponsor: "Sponsor",
+      sponsorHint: "Links the challenge to a confirmed or published sponsor",
+      noSponsor: "No sponsor",
       challengeFormat: "Challenge Format",
       difficulty: "Difficulty",
       teamSize: "Recommended team size",
@@ -477,6 +494,8 @@ export function SponsorChallengeEditor({
 
   const [formData, setFormData] = useState<SponsorChallengeData>(() => createEmptySponsorChallengeData())
   const [prize, setPrize] = useState("")
+  const [sponsorId, setSponsorId] = useState("")
+  const [sponsors, setSponsors] = useState<SponsorOption[]>([])
   const [status, setStatus] = useState<"draft" | "published">("draft")
   const [saving, setSaving] = useState<"draft" | "published" | null>(null)
   const [challengeList, setChallengeList] = useState<ChallengeListItem[]>([])
@@ -506,9 +525,14 @@ export function SponsorChallengeEditor({
   function applyRecord(record: SponsorChallengeRecord) {
     setStatus(record.status)
     setPrize(record.prize || "")
+    setSponsorId(record.sponsor_id || "")
     const normalized = normalizeSponsorChallengeData(record.challenge_data)
     setFormData({
       ...normalized,
+      challengeTitle: record.challenge_title || normalized.challengeTitle,
+      challengeTitleEn: record.challenge_title_en || normalized.challengeTitleEn,
+      shortDescription: record.short_description || normalized.shortDescription,
+      shortDescriptionEn: record.short_description_en || normalized.shortDescriptionEn,
       difficulty: (record.difficulty as SponsorChallengeData["difficulty"]) || normalized.difficulty,
       teamSize: record.team_size || normalized.teamSize,
       challengeLanguage:
@@ -517,7 +541,7 @@ export function SponsorChallengeEditor({
     })
   }
 
-  async function loadChallengeCollection(challengeId?: string) {
+  async function loadChallengeCollection(challengeId?: string, opts?: { startBlank?: boolean }) {
     if (!categoryId) return
     setLoadingList(true)
     try {
@@ -527,13 +551,23 @@ export function SponsorChallengeEditor({
       if (!res.ok) throw new Error()
       const json = await res.json()
       const list = (json.data?.challenges || []) as ChallengeListItem[]
-      const selected = (json.data?.challenge || null) as SponsorChallengeRecord | null
       setChallengeList(list)
-      setSelectedChallengeId(selected?.id || list[0]?.id || "")
+
+      // don't preselect a record for new challenge
+      if (opts?.startBlank) {
+        startNewChallenge()
+        return
+      }
+
+      const returned = (json.data?.challenge || null) as SponsorChallengeRecord | null
+      // When a specific challenge was requested, only accept an exact match
+      const selected = challengeId ? (returned?.id === challengeId ? returned : null) : returned
+      setSelectedChallengeId(selected?.id || "")
       if (selected) applyRecord(selected)
       else {
         setStatus("draft")
         setPrize("")
+        setSponsorId("")
         setFormData(createEmptySponsorChallengeData())
       }
     } catch {
@@ -547,21 +581,51 @@ export function SponsorChallengeEditor({
     setSelectedChallengeId("")
     setStatus("draft")
     setPrize("")
+    setSponsorId("")
     setFormData(createEmptySponsorChallengeData())
   }
 
   useEffect(() => {
     if (categoryId) {
-      void loadChallengeCollection()
+      if (forceNew) {
+        void loadChallengeCollection(undefined, { startBlank: true })
+      } else {
+        void loadChallengeCollection(initialChallengeId || undefined)
+      }
       return
     }
     if (!initialChallenge) {
       setStatus("draft")
+      setSponsorId("")
       setFormData(createEmptySponsorChallengeData())
       return
     }
     applyRecord(initialChallenge)
-  }, [initialChallenge, categoryId])
+  }, [initialChallenge, categoryId, initialChallengeId, forceNew])
+
+  // Sponsor list for the "visible on website" selector; sourced from the public sponsor list.
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/sponsors", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return
+        const list = (data.data?.sponsors || []) as Array<{
+          id: string
+          company_name: string
+          status: string
+        }>
+        setSponsors(
+          list
+            .filter((s) => s.status === "confirmed" || s.status === "published")
+            .map((s) => ({ id: s.id, company_name: s.company_name }))
+        )
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const isPublished = status === "published"
 
@@ -775,7 +839,8 @@ export function SponsorChallengeEditor({
           challengeId: selectedChallengeId || undefined,
           categoryId,
           challengeData: formData,
-          prize: prize.trim() || null
+          prize: prize.trim() || null,
+          sponsorId: sponsorId || null
         })
       })
       if (!res.ok) {
@@ -786,6 +851,7 @@ export function SponsorChallengeEditor({
       const challenge = json.data?.challenge as SponsorChallengeRecord
       setStatus(challenge.status)
       setPrize(challenge.prize || "")
+      setSponsorId(challenge.sponsor_id || "")
       setSelectedChallengeId(challenge.id)
       setFormData(normalizeSponsorChallengeData(challenge.challenge_data))
       if (categoryId) {
@@ -795,6 +861,7 @@ export function SponsorChallengeEditor({
             {
               id: challenge.id,
               challenge_title: challenge.challenge_title,
+              challenge_title_en: challenge.challenge_title_en,
               status: challenge.status,
               updated_at: challenge.updated_at,
               category_id: challenge.category_id
@@ -835,7 +902,7 @@ export function SponsorChallengeEditor({
                   <SelectContent>
                     {challengeList.map((c, i) => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.challenge_title || `Challenge ${i + 1}`}
+                        {c.challenge_title || c.challenge_title_en || `Challenge ${i + 1}`}
                         {c.status === "published" && (
                           <span className="ml-2 text-xs text-green-600">● {t.publishedLabel}</span>
                         )}
@@ -892,15 +959,6 @@ export function SponsorChallengeEditor({
         </CardHeader>
       </Card>
 
-      {/* ── English-only notice ── */}
-      <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950/30">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-        <div>
-          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">{t.englishNotice}</p>
-          <p className="text-muted-foreground text-xs">{t.englishNoticeDetail}</p>
-        </div>
-      </div>
-
       {/* ── Website-visible section ── */}
       <Card className="border-[#530A5D]/40 bg-gradient-to-br from-[#530A5D]/5 to-[#530A5D]/10 shadow-sm">
         <CardHeader className="border-b pb-4">
@@ -911,32 +969,70 @@ export function SponsorChallengeEditor({
           <p className="text-muted-foreground text-sm">{t.websiteVisibleDesc}</p>
         </CardHeader>
         <CardContent className="space-y-4 pt-6">
-          <Field label={t.challengeTitle} required>
-            <Input
-              value={formData.challengeTitle}
-              onChange={(e) => patch({ challengeTitle: e.target.value })}
-              placeholder="Short, punchy title in English"
-            />
-          </Field>
-          <Field label={t.shortDescription} required hint={t.shortDescriptionHint}>
-            <Textarea
-              value={formData.shortDescription}
-              onChange={(e) => patch({ shortDescription: e.target.value })}
-              placeholder="2–3 sentences in English shown as a teaser on the website"
-              rows={3}
-            />
-          </Field>
-          <Field label={t.prize} hint={t.prizeHint}>
-            <div className="relative">
-              <Trophy className="text-muted-foreground absolute top-2.5 left-3 h-4 w-4" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label={t.challengeTitleDe} required>
               <Input
-                value={prize}
-                onChange={(e) => setPrize(e.target.value)}
-                placeholder="e.g. CHF 1,000 voucher, iPad, internship offer"
-                className="pl-9"
+                value={formData.challengeTitle}
+                onChange={(e) => patch({ challengeTitle: e.target.value })}
+                placeholder="Kurzer, prägnanter Titel auf Deutsch"
               />
-            </div>
-          </Field>
+            </Field>
+            <Field label={t.challengeTitleEn}>
+              <Input
+                value={formData.challengeTitleEn}
+                onChange={(e) => patch({ challengeTitleEn: e.target.value })}
+                placeholder="Short, punchy title in English"
+              />
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label={t.shortDescriptionDe} required hint={t.shortDescriptionHint}>
+              <Textarea
+                value={formData.shortDescription}
+                onChange={(e) => patch({ shortDescription: e.target.value })}
+                placeholder="2–3 Sätze auf Deutsch, die als Teaser auf der Website angezeigt werden"
+                rows={3}
+              />
+            </Field>
+            <Field label={t.shortDescriptionEn} hint={t.shortDescriptionHint}>
+              <Textarea
+                value={formData.shortDescriptionEn}
+                onChange={(e) => patch({ shortDescriptionEn: e.target.value })}
+                placeholder="2–3 sentences in English shown as a teaser on the website"
+                rows={3}
+              />
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label={t.prize} hint={t.prizeHint}>
+              <div className="relative">
+                <Trophy className="text-muted-foreground absolute top-2.5 left-3 h-4 w-4" />
+                <Input
+                  value={prize}
+                  onChange={(e) => setPrize(e.target.value)}
+                  placeholder="e.g. CHF 1,000 voucher, iPad, internship offer"
+                  className="pl-9"
+                />
+              </div>
+            </Field>
+            <Field label={t.sponsor} hint={t.sponsorHint}>
+              <Select
+                value={sponsorId || NO_SPONSOR}
+                onValueChange={(v) => setSponsorId(v === NO_SPONSOR ? "" : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t.choose} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_SPONSOR}>{t.noSponsor}</SelectItem>
+                  {sponsors.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.company_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
         </CardContent>
       </Card>
 
