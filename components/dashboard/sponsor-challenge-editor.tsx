@@ -28,6 +28,8 @@ type SponsorChallengeEditorProps = {
   categorySlug: string
   categoryId?: string
   initialChallenge: SponsorChallengeRecord | null
+  initialChallengeId?: string | null
+  forceNew?: boolean
   onSaved?: (challenge: SponsorChallengeRecord) => void
 }
 
@@ -222,6 +224,8 @@ export function SponsorChallengeEditor({
   categorySlug,
   categoryId,
   initialChallenge,
+  initialChallengeId,
+  forceNew,
   onSaved
 }: SponsorChallengeEditorProps) {
   const { language } = useLanguage()
@@ -537,7 +541,7 @@ export function SponsorChallengeEditor({
     })
   }
 
-  async function loadChallengeCollection(challengeId?: string) {
+  async function loadChallengeCollection(challengeId?: string, opts?: { startBlank?: boolean }) {
     if (!categoryId) return
     setLoadingList(true)
     try {
@@ -547,9 +551,18 @@ export function SponsorChallengeEditor({
       if (!res.ok) throw new Error()
       const json = await res.json()
       const list = (json.data?.challenges || []) as ChallengeListItem[]
-      const selected = (json.data?.challenge || null) as SponsorChallengeRecord | null
       setChallengeList(list)
-      setSelectedChallengeId(selected?.id || list[0]?.id || "")
+
+      // don't preselect a record for new challenge
+      if (opts?.startBlank) {
+        startNewChallenge()
+        return
+      }
+
+      const returned = (json.data?.challenge || null) as SponsorChallengeRecord | null
+      // When a specific challenge was requested, only accept an exact match
+      const selected = challengeId ? (returned?.id === challengeId ? returned : null) : returned
+      setSelectedChallengeId(selected?.id || "")
       if (selected) applyRecord(selected)
       else {
         setStatus("draft")
@@ -574,7 +587,11 @@ export function SponsorChallengeEditor({
 
   useEffect(() => {
     if (categoryId) {
-      void loadChallengeCollection()
+      if (forceNew) {
+        void loadChallengeCollection(undefined, { startBlank: true })
+      } else {
+        void loadChallengeCollection(initialChallengeId || undefined)
+      }
       return
     }
     if (!initialChallenge) {
@@ -584,7 +601,7 @@ export function SponsorChallengeEditor({
       return
     }
     applyRecord(initialChallenge)
-  }, [initialChallenge, categoryId])
+  }, [initialChallenge, categoryId, initialChallengeId, forceNew])
 
   // Sponsor list for the "visible on website" selector; sourced from the public sponsor list.
   useEffect(() => {

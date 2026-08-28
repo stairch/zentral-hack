@@ -178,6 +178,7 @@ export function AdminChallengesPage() {
   // Editor sheet state
   const [editorOpen, setEditorOpen] = useState(false)
   const [editorCategory, setEditorCategory] = useState<CategoryInfo | null>(null)
+  const [editorChallengeId, setEditorChallengeId] = useState<string | null>(null)
   const [allCategories, setAllCategories] = useState<CategoryInfo[]>([])
   const [categoryPickerOpen, setCategoryPickerOpen] = useState(false)
   const [pickedCategoryId, setPickedCategoryId] = useState<string>("")
@@ -249,14 +250,15 @@ export function AdminChallengesPage() {
       .catch(() => {})
   }, [isCategoryPartner, challenges, editorCategory, user?.categoryId])
 
-  const openEditor = (category: CategoryInfo) => {
+  const openEditor = (category: CategoryInfo, challengeId: string | null) => {
     setEditorCategory(category)
+    setEditorChallengeId(challengeId)
     setEditorOpen(true)
   }
 
   const handleNewChallenge = () => {
     if (isCategoryPartner) {
-      if (editorCategory) openEditor(editorCategory)
+      if (editorCategory) openEditor(editorCategory, null)
       return
     }
     // Admin: pick category first
@@ -265,7 +267,10 @@ export function AdminChallengesPage() {
   }
 
   const handleEditChallenge = (challenge: Challenge) => {
-    openEditor({ id: challenge.category_id, name: challenge.category_name, slug: challenge.category_slug })
+    openEditor(
+      { id: challenge.category_id, name: challenge.category_name, slug: challenge.category_slug },
+      challenge.id
+    )
   }
 
   const toggleStatus = async (challenge: Challenge) => {
@@ -513,11 +518,13 @@ export function AdminChallengesPage() {
           <div className="flex-1 overflow-y-auto p-6">
             {editorCategory && (
               <SponsorChallengeEditor
-                key={editorCategory.id}
+                key={`${editorCategory.id}:${editorChallengeId ?? "new"}`}
                 categoryName={editorCategory.name}
                 categorySlug={editorCategory.slug}
                 categoryId={editorCategory.id}
                 initialChallenge={null}
+                initialChallengeId={editorChallengeId}
+                forceNew={editorChallengeId === null}
                 onSaved={() => {
                   void load()
                 }}
@@ -559,7 +566,7 @@ export function AdminChallengesPage() {
                   const cat = allCategories.find((c) => c.id === pickedCategoryId)
                   if (cat) {
                     setCategoryPickerOpen(false)
-                    openEditor(cat)
+                    openEditor(cat, null)
                   }
                 }}>
                 {text.newChallenge}
