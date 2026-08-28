@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.6.0] - 2026-08-28
+
+### Added
+
+- Separate German and English fields for challenge title and short description in the sponsor challenge editor
+- Sponsor selection in the challenge editor to link a challenge to a confirmed or published sponsor
+- "Powered by " badge on challenge cards on the landing page
+
+### Fixed
+
+- Changelog announcement shown on every first visit after login, even changelog already seen
+- Color and layout bugs on challenge cards
+
 ## [1.5.0] - 2026-08-25
 
 ### Added
