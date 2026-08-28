@@ -166,6 +166,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await res.json()
     setUser(data.data.user)
     setToken(data.data.token)
+    // Hydrate full profile since 2FA response only returns minimal user object
+    await refreshAuth()
     return data.data.user as User
   }
 
