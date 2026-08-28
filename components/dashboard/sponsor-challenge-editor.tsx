@@ -40,6 +40,13 @@ interface ChallengeListItem {
   category_id: string
 }
 
+interface SponsorOption {
+  id: string
+  company_name: string
+}
+
+const NO_SPONSOR = "none"
+
 function Field({
   label,
   hint,
@@ -241,6 +248,9 @@ export function SponsorChallengeEditor({
       shortDescriptionHint: "Max. 2–3 Sätze – wird als Teaser angezeigt",
       prize: "Preisgeld / Preis",
       prizeHint: "Wird als Preis-Highlight auf der Challenge-Karte angezeigt",
+      sponsor: "Sponsor",
+      sponsorHint: "Verknüpft die Challenge mit einem bestätigten oder veröffentlichten Sponsor",
+      noSponsor: "Kein Sponsor",
       challengeFormat: "Challenge-Format",
       difficulty: "Schwierigkeitsgrad",
       teamSize: "Empfohlene Teamgrösse",
@@ -366,6 +376,9 @@ export function SponsorChallengeEditor({
       shortDescriptionHint: "Max. 2–3 sentences – shown as a teaser",
       prize: "Prize / Reward",
       prizeHint: "Shown as a prize highlight on the challenge card",
+      sponsor: "Sponsor",
+      sponsorHint: "Links the challenge to a confirmed or published sponsor",
+      noSponsor: "No sponsor",
       challengeFormat: "Challenge Format",
       difficulty: "Difficulty",
       teamSize: "Recommended team size",
@@ -477,6 +490,8 @@ export function SponsorChallengeEditor({
 
   const [formData, setFormData] = useState<SponsorChallengeData>(() => createEmptySponsorChallengeData())
   const [prize, setPrize] = useState("")
+  const [sponsorId, setSponsorId] = useState("")
+  const [sponsors, setSponsors] = useState<SponsorOption[]>([])
   const [status, setStatus] = useState<"draft" | "published">("draft")
   const [saving, setSaving] = useState<"draft" | "published" | null>(null)
   const [challengeList, setChallengeList] = useState<ChallengeListItem[]>([])
@@ -506,6 +521,7 @@ export function SponsorChallengeEditor({
   function applyRecord(record: SponsorChallengeRecord) {
     setStatus(record.status)
     setPrize(record.prize || "")
+    setSponsorId(record.sponsor_id || "")
     const normalized = normalizeSponsorChallengeData(record.challenge_data)
     setFormData({
       ...normalized,
@@ -538,6 +554,7 @@ export function SponsorChallengeEditor({
       else {
         setStatus("draft")
         setPrize("")
+        setSponsorId("")
         setFormData(createEmptySponsorChallengeData())
       }
     } catch {
@@ -551,6 +568,7 @@ export function SponsorChallengeEditor({
     setSelectedChallengeId("")
     setStatus("draft")
     setPrize("")
+    setSponsorId("")
     setFormData(createEmptySponsorChallengeData())
   }
 
@@ -561,11 +579,36 @@ export function SponsorChallengeEditor({
     }
     if (!initialChallenge) {
       setStatus("draft")
+      setSponsorId("")
       setFormData(createEmptySponsorChallengeData())
       return
     }
     applyRecord(initialChallenge)
   }, [initialChallenge, categoryId])
+
+  // Sponsor list for the "visible on website" selector; sourced from the public sponsor list.
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/sponsors", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return
+        const list = (data.data?.sponsors || []) as Array<{
+          id: string
+          company_name: string
+          status: string
+        }>
+        setSponsors(
+          list
+            .filter((s) => s.status === "confirmed" || s.status === "published")
+            .map((s) => ({ id: s.id, company_name: s.company_name }))
+        )
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const isPublished = status === "published"
 
@@ -779,7 +822,8 @@ export function SponsorChallengeEditor({
           challengeId: selectedChallengeId || undefined,
           categoryId,
           challengeData: formData,
-          prize: prize.trim() || null
+          prize: prize.trim() || null,
+          sponsorId: sponsorId || null
         })
       })
       if (!res.ok) {
@@ -790,6 +834,7 @@ export function SponsorChallengeEditor({
       const challenge = json.data?.challenge as SponsorChallengeRecord
       setStatus(challenge.status)
       setPrize(challenge.prize || "")
+      setSponsorId(challenge.sponsor_id || "")
       setSelectedChallengeId(challenge.id)
       setFormData(normalizeSponsorChallengeData(challenge.challenge_data))
       if (categoryId) {
@@ -941,17 +986,36 @@ export function SponsorChallengeEditor({
               />
             </Field>
           </div>
-          <Field label={t.prize} hint={t.prizeHint}>
-            <div className="relative">
-              <Trophy className="text-muted-foreground absolute top-2.5 left-3 h-4 w-4" />
-              <Input
-                value={prize}
-                onChange={(e) => setPrize(e.target.value)}
-                placeholder="e.g. CHF 1,000 voucher, iPad, internship offer"
-                className="pl-9"
-              />
-            </div>
-          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label={t.prize} hint={t.prizeHint}>
+              <div className="relative">
+                <Trophy className="text-muted-foreground absolute top-2.5 left-3 h-4 w-4" />
+                <Input
+                  value={prize}
+                  onChange={(e) => setPrize(e.target.value)}
+                  placeholder="e.g. CHF 1,000 voucher, iPad, internship offer"
+                  className="pl-9"
+                />
+              </div>
+            </Field>
+            <Field label={t.sponsor} hint={t.sponsorHint}>
+              <Select
+                value={sponsorId || NO_SPONSOR}
+                onValueChange={(v) => setSponsorId(v === NO_SPONSOR ? "" : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t.choose} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_SPONSOR}>{t.noSponsor}</SelectItem>
+                  {sponsors.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.company_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
         </CardContent>
       </Card>
 

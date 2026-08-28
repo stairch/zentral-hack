@@ -28,6 +28,8 @@ interface Challenge {
   contact_email: string | null
   challenge_data: Record<string, unknown> | null
   prize: string | null
+  sponsor_id: string | null
+  sponsor_company_name: string | null
   published_at: string | null
   created_at: string
   updated_at: string
@@ -74,6 +76,7 @@ const copy = {
     labelTeamSize: "Teamgrösse",
     labelLanguage: "Sprache",
     labelPrize: "Preisgeld",
+    labelSponsor: "Sponsor",
     labelStatus: "Status",
     labelSubmitted: "Eingereicht",
     labelDescription: "Kurzbeschreibung (DE)",
@@ -125,6 +128,7 @@ const copy = {
     labelTeamSize: "Team Size",
     labelLanguage: "Language",
     labelPrize: "Prize",
+    labelSponsor: "Sponsor",
     labelStatus: "Status",
     labelSubmitted: "Submitted",
     labelDescription: "Short Description (DE)",
@@ -578,6 +582,7 @@ export function AdminChallengesPage() {
             <div className="space-y-4 text-sm">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Detail label={text.labelCompany} value={detailChallenge.company_name} />
+                <Detail label={text.labelSponsor} value={detailChallenge.sponsor_company_name} />
                 <Detail label={text.labelCategory} value={detailChallenge.category_name} />
                 <Detail label={text.labelContact} value={detailChallenge.contact_email} />
                 <Detail label={text.labelUser} value={detailChallenge.user_email} />

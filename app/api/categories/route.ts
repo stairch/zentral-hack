@@ -23,24 +23,26 @@ export async function GET() {
          LEFT JOIN LATERAL (
            SELECT jsonb_agg(
                     jsonb_build_object(
-                      'id', id,
-                      'title', challenge_title,
-                      'title_en', challenge_title_en,
-                      'short_description', short_description,
-                      'short_description_en', short_description_en,
-                      'challenge_data', challenge_data,
-                      'prize', prize,
-                      'difficulty', difficulty,
-                      'team_size', team_size,
-                      'challenge_language', challenge_language,
-                      'company_name', company_name,
-                      'status', status,
-                      'updated_at', updated_at
+                      'id', sch.id,
+                      'title', sch.challenge_title,
+                      'title_en', sch.challenge_title_en,
+                      'short_description', sch.short_description,
+                      'short_description_en', sch.short_description_en,
+                      'challenge_data', sch.challenge_data,
+                      'prize', sch.prize,
+                      'difficulty', sch.difficulty,
+                      'team_size', sch.team_size,
+                      'challenge_language', sch.challenge_language,
+                      'company_name', sch.company_name,
+                      'sponsor_name', sco.company_name,
+                      'status', sch.status,
+                      'updated_at', sch.updated_at
                     )
-                    ORDER BY COALESCE(published_at, updated_at) DESC, created_at DESC
+                    ORDER BY COALESCE(sch.published_at, sch.updated_at) DESC, sch.created_at DESC
                   ) AS challenges
-           FROM sponsor_challenges
-           WHERE category_id = c.id AND status = 'published'
+           FROM sponsor_challenges sch
+           LEFT JOIN sponsor_contacts sco ON sco.id = sch.sponsor_id
+           WHERE sch.category_id = c.id AND sch.status = 'published'
          ) sc ON TRUE
          ORDER BY c.name ASC`
       )

@@ -6,6 +6,7 @@ import { motion, useInView, useMotionValue, useSpring } from "framer-motion"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, ArrowRight, Trophy } from "lucide-react"
 import {
   categoryDisplayOrder,
@@ -42,6 +43,7 @@ interface DisplayCategory {
     team_size: string | null
     challenge_language: string | null
     company_name: string | null
+    sponsor_name: string | null
     status: string | null
     updated_at: string | null
     prize: string | null
@@ -203,7 +205,8 @@ export function Categories() {
       prize: "Preisgeld",
       targetGroup: "Zielgruppe",
       difficulty: "Schwierigkeit",
-      teamSize: "Teamgrösse"
+      teamSize: "Teamgrösse",
+      poweredBy: (sponsor: string) => `Powered by ${sponsor}`
     },
     en: {
       badge: "CHALLENGES",
@@ -222,7 +225,8 @@ export function Categories() {
       prize: "Prize",
       targetGroup: "Target audience",
       difficulty: "Difficulty",
-      teamSize: "Team size"
+      teamSize: "Team size",
+      poweredBy: (sponsor: string) => `Powered by ${sponsor}`
     }
   } as const
 
@@ -414,9 +418,16 @@ export function Categories() {
                                   className="border-border hover:border-opacity-60 group hover:bg-muted/40 flex w-full cursor-pointer items-center justify-between rounded-xl border bg-transparent px-4 py-3.5 text-left transition-all"
                                   style={{ ["--hover-border" as string]: selectedCategory.color }}>
                                   <div className="min-w-0">
-                                    <p className="truncate font-semibold">
-                                      {pickLocale(challenge.title, challenge.title_en)}
-                                    </p>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <p className="truncate font-semibold">
+                                        {pickLocale(challenge.title, challenge.title_en)}
+                                      </p>
+                                      {challenge.sponsor_name && (
+                                        <Badge variant="secondary" className="shrink-0">
+                                          {text.poweredBy(challenge.sponsor_name)}
+                                        </Badge>
+                                      )}
+                                    </div>
                                     {pickLocale(
                                       challenge.short_description,
                                       challenge.short_description_en
@@ -547,9 +558,16 @@ export function Categories() {
                           )}
 
                           {/* Title */}
-                          <h2 className="font-display mb-5 text-3xl leading-tight font-bold md:text-4xl">
-                            {pickLocale(selectedChallenge?.title, selectedChallenge?.title_en)}
-                          </h2>
+                          <div className="mb-5 flex flex-col items-start gap-3">
+                            <h2 className="font-display text-3xl leading-tight font-bold md:text-4xl">
+                              {pickLocale(selectedChallenge?.title, selectedChallenge?.title_en)}
+                            </h2>
+                            {selectedChallenge?.sponsor_name && (
+                              <Badge variant="secondary" className="mt-1.5 shrink-0">
+                                {text.poweredBy(selectedChallenge.sponsor_name)}
+                              </Badge>
+                            )}
+                          </div>
 
                           {/* Divider */}
                           <div className="border-border mb-6 border-t" />
