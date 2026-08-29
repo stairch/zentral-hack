@@ -32,13 +32,17 @@ The script will prompt for a new version number and validate it. Versions must f
 
 ### What the script does
 
-1. Prompts for a new version and validates it
-2. Writes the new version to `package.json`
-3. Temporarily sets the local git `user.email` to the release email (STAIR GitHub E-Mail)
-4. Temporarily authenticates as the STAIR release account via token
-5. Commits and pushes the version bump
-6. Creates an annotated git tag and pushes it
-7. Restores the previous local git `user.email` and remote URL
+1. Prompts for a new version and validates it against the current one
+2. Checks `CHANGELOG.md` for an entry matching the new version and asks for confirmation (or whether to proceed without one)
+3. Checks if the feature flags in `lib/flags.ts` exist in the production Vercel project (only for stable releases)
+4. Writes the new version to `package.json`
+5. Temporarily sets the local git `user.email` to the release email (STAIR GitHub E-Mail)
+6. Temporarily authenticates as the STAIR release account via token
+7. Creates a release branch, commits and pushes the version bump
+8. Opens a PR via the GitHub API, waits for required checks to pass, and merges it automatically
+9. Creates an annotated git tag on the merge commit and pushes it
+10. Deletes the release branch (local + remote)
+11. Restores the previous local git `user.email` and remote URL
 
 > [!NOTE]
 > The release email and token are only used temporarily during the script execution and never affect your global git configuration.
