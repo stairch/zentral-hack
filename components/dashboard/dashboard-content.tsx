@@ -8,28 +8,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import {
-  User as UserIcon,
-  LogOut,
-  Loader2,
-  FileText,
-  Users,
-  Download,
-  ExternalLink,
-  FolderOpen,
-  Lock,
-  ShieldCogCorner,
-  Bug,
-  MessageSquare
-} from "lucide-react"
+import { LogOut, Loader2, FileText, Users, Download, ShieldCogCorner, Bug, MessageSquare } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { TeamFilesComponent } from "@/components/team-files"
 import { BrandMark } from "@/components/brand-mark"
 import { SponsorChallengeEditor } from "@/components/dashboard/sponsor-challenge-editor"
 import { AccountSettings } from "@/components/dashboard/account-settings"
+import { ProfileSection } from "@/components/dashboard/profile-section"
 import { type SponsorChallengeRecord } from "@/lib/sponsor-challenge"
 import ComingSoon from "../ui/coming-soon"
 import { Urls } from "@/lib/constants"
@@ -109,12 +96,15 @@ interface DashboardContentProps {
   showChallenges: boolean
 }
 
+type NavKey = "profil" | "sicherheit" | "dokumente" | "team" | "challenge"
+
 export function DashboardContent({ showChallenges }: DashboardContentProps) {
-  const { user, logout, isLoading: isAuthLoading } = useAuth()
+  const { user, logout, refreshAuth, isLoading: isAuthLoading } = useAuth()
   const { language, setLanguage } = useLanguage()
   const router = useRouter()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [nav, setNav] = useState<NavKey>("profil")
   const [loggingOut, setLoggingOut] = useState(false)
   const [challengeCategories, setChallengeCategories] = useState<CategoryOption[]>([])
   const [selectedChallengeCategoryId, setSelectedChallengeCategoryId] = useState("")
@@ -149,6 +139,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       notRegistered: "Du hast dich noch nicht für eine Kategorie registriert.",
       registerNow: "Jetzt registrieren",
       tabProfile: "Profil",
+      tabSecurity: "Konto & Sicherheit",
       tabDocuments: "Dokumente",
       tabChallenges: "Challenges",
       tabTeam: "Team",
@@ -201,6 +192,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       notRegistered: "You haven't registered for a category yet.",
       registerNow: "Register now",
       tabProfile: "Profile",
+      tabSecurity: "Account & Security",
       tabDocuments: "Documents",
       tabChallenges: "Challenges",
       tabTeam: "Team",
@@ -255,6 +247,11 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function handleDataRefresh() {
+    await refreshAuth()
+    await fetchDashboardData()
   }
 
   async function initializeAdminChallengeEditor() {
@@ -372,10 +369,16 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
     isAdmin || isCategoryPartner
       ? selectedChallengeCategoryId || undefined
       : registration?.category?.id || profile?.category_id || undefined
-  const dashboardCategoryId = registration?.category?.id || profile?.category_id || null
   const dashboardCategoryName =
     registration?.category?.name || profile?.category_slug?.replace(/-/g, " ") || null
   const categoryLabel = dashboardCategoryName || t.categoryMissing
+
+  const navItems: Array<{ key: NavKey; label: string }> = [
+    { key: "profil", label: t.tabProfile },
+    { key: "sicherheit", label: t.tabSecurity },
+    { key: "dokumente", label: t.tabDocuments },
+    showChallengeTab ? { key: "challenge", label: t.tabChallenges } : { key: "team", label: t.tabTeam }
+  ]
 
   return (
     <main className="bg-background min-h-screen">
@@ -390,7 +393,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
               <Link href="/admin">
                 <Button variant="outline" className="gap-2">
                   <ShieldCogCorner className="h-5 w-5" />
-                  <span className="">{t.adminPanel}</span>
+                  <span className="hidden sm:block">{t.adminPanel}</span>
                 </Button>
               </Link>
             )}
@@ -497,123 +500,54 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
           </Card>
         ) : null}
 
-        {/* Main Tabs */}
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList
-            className={`grid w-full ${showTeamTab || showChallengeTab ? "grid-cols-3" : "grid-cols-2"} sm:inline-grid sm:w-auto`}>
-            <TabsTrigger value="profile" className="gap-2">
-              <UserIcon className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">{t.tabProfile}</span>
-            </TabsTrigger>
-            <TabsTrigger value="documents" className="gap-2">
-              <FileText className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">{t.tabDocuments}</span>
-            </TabsTrigger>
-            {showChallengeTab && (
-              <TabsTrigger value="challenge" className="gap-1.5">
-                <FolderOpen className="h-4 w-4 shrink-0" />
-                <span className="hidden sm:inline">{t.tabChallenges}</span>
-                {!showChallenges && (
-                  <div className="text-muted-foreground flex items-center gap-1 rounded-sm border border-neutral-200 bg-neutral-50 px-1.5 py-0.5 text-xs">
-                    <Lock className="h-3 w-3" />
-                  </div>
-                )}
-              </TabsTrigger>
+        {/* Sidebar navigation + content */}
+        <div className="flex flex-col gap-7 md:flex-row">
+          <nav className="flex shrink-0 flex-col gap-1 overflow-x-auto md:w-44 md:overflow-visible">
+            {navItems.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setNav(item.key)}
+                className={`cursor-pointer rounded-lg px-3.5 py-2.5 text-left text-sm font-semibold whitespace-nowrap transition-colors ${
+                  nav === item.key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+                }`}>
+                {item.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="min-w-0 flex-1">
+            {/* Profil */}
+            {nav === "profil" && (
+              <ProfileSection
+                profile={profile ?? null}
+                categoryLabel={categoryLabel}
+                currentCategoryId={registration?.category?.id || profile?.category_id || null}
+                hasRegistration={!!registration}
+                allergies={registration?.allergies ?? null}
+                dietaryRestrictions={registration?.dietary_restrictions ?? null}
+                linkedinUrl={profile?.linkedin_url ?? null}
+                onUpdated={handleDataRefresh}
+              />
             )}
-            {showTeamTab && (
-              <TabsTrigger value="team" className="gap-2">
-                <Users className="h-4 w-4 shrink-0" />
-                <span className="hidden sm:inline">{t.tabTeam}</span>
-              </TabsTrigger>
-            )}
-          </TabsList>
 
-          {/* Profile Tab */}
-          <TabsContent value="profile">
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t.profileTitle}</CardTitle>
-                  <CardDescription>{t.profileSubtitle}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <Label className="text-muted-foreground text-sm">{t.labelEmail}</Label>
-                      <p className="font-medium">{user?.email}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground text-sm">{t.labelName}</Label>
-                      <p className="font-medium">
-                        {profile?.first_name} {profile?.last_name}
-                      </p>
-                    </div>
-                    {profile?.university && (
-                      <div>
-                        <Label className="text-muted-foreground text-sm">{t.labelUniversity}</Label>
-                        <p className="font-medium">{profile.university}</p>
-                      </div>
-                    )}
-                    {profile?.study_program && (
-                      <div>
-                        <Label className="text-muted-foreground text-sm">{t.labelStudyProgram}</Label>
-                        <p className="font-medium">{profile.study_program}</p>
-                      </div>
-                    )}
-                    {profile?.semester && (
-                      <div>
-                        <Label className="text-muted-foreground text-sm">{t.labelSemester}</Label>
-                        <p className="font-medium">
-                          {profile.semester}
-                          {t.semesterSuffix}
-                        </p>
-                      </div>
-                    )}
-                    <div>
-                      <Label className="text-muted-foreground text-sm">{t.currentCategory}</Label>
-                      <p className="font-medium">{categoryLabel}</p>
-                    </div>
-                    {profile?.linkedin_url && (
-                      <div>
-                        <Label className="text-muted-foreground text-sm">{t.labelLinkedIn}</Label>
-                        <a
-                          href={profile.linkedin_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 font-medium text-[#530A5D] hover:underline">
-                          {t.viewProfile}
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Konto & Sicherheit */}
+            {nav === "sicherheit" && <AccountSettings onUpdated={handleDataRefresh} />}
 
-              <AccountSettings currentCategoryId={dashboardCategoryId} onUpdated={fetchDashboardData} />
-            </div>
-          </TabsContent>
-
-          {/* Documents Tab */}
-          <TabsContent value="documents">
-            <div className="space-y-6">
-              {globalDocuments.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <FolderOpen className="h-5 w-5 text-[#530A5D]" />
-                      {t.globalDocsTitle}
-                    </CardTitle>
-                    <CardDescription>{t.globalDocsSubtitle}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
+            {/* Dokumente */}
+            {nav === "dokumente" && (
+              <div className="space-y-8">
+                {globalDocuments.length > 0 && (
+                  <section>
+                    <h2 className="text-base font-bold">{t.globalDocsTitle}</h2>
+                    <p className="text-muted-foreground mt-0.5 mb-3 text-[13px]">{t.globalDocsSubtitle}</p>
                     <div className="space-y-3">
                       {globalDocuments.map((doc) => (
                         <div
                           key={doc.id}
                           className="border-border hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors">
                           <div className="flex min-w-0 items-center gap-3">
-                            <FileText className="h-5 w-5 shrink-0 text-[#530A5D]" />
+                            <FileText className="text-primary h-5 w-5 shrink-0" />
                             <div className="min-w-0">
                               <p className="truncate font-medium">{doc.name}</p>
                               {doc.description && (
@@ -629,18 +563,14 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                         </div>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  </section>
+                )}
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t.categoryDocsTitle}</CardTitle>
-                  <CardDescription>
+                <section>
+                  <h2 className="text-base font-bold">{t.categoryDocsTitle}</h2>
+                  <p className="text-muted-foreground mt-0.5 mb-3 text-[13px]">
                     {t.categoryDocsSubtitle(registration?.category?.name || t.yourCategory)}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+                  </p>
                   {categoryDocuments.length > 0 ? (
                     <div className="space-y-3">
                       {categoryDocuments.map((doc) => (
@@ -648,7 +578,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                           key={doc.id}
                           className="border-border hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors">
                           <div className="flex min-w-0 items-center gap-3">
-                            <FileText className="h-5 w-5 shrink-0 text-[#530A5D]" />
+                            <FileText className="text-primary h-5 w-5 shrink-0" />
                             <div className="min-w-0">
                               <p className="truncate font-medium">{doc.name}</p>
                               {doc.description && (
@@ -669,99 +599,81 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                       {registration ? t.noDocsAvailable : t.registerForDocs}
                     </p>
                   )}
-                </CardContent>
-              </Card>
+                </section>
 
-              {team && <TeamFilesComponent teamId={team.id} />}
-            </div>
-          </TabsContent>
+                {team && <TeamFilesComponent teamId={team.id} />}
+              </div>
+            )}
 
-          {/* Team Tab */}
-          {showTeamTab && (
-            <TabsContent value="team">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t.teamTitle}</CardTitle>
-                  <CardDescription>{t.teamSubtitle}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {team ? (
-                    <div className="space-y-6">
-                      <div>
-                        <Label className="text-muted-foreground text-sm">{t.teamName}</Label>
-                        <p className="text-lg font-medium">{team.name}</p>
-                      </div>
-                      {team.description && (
-                        <div>
-                          <Label className="text-muted-foreground text-sm">{t.teamDescription}</Label>
-                          <p>{team.description}</p>
-                        </div>
-                      )}
-                      <div>
-                        <Label className="text-muted-foreground text-sm">{t.teamCategory}</Label>
-                        <p className="font-medium">{team.category.name}</p>
-                      </div>
-                      <div>
-                        <Label className="text-muted-foreground text-sm">{t.teamRole}</Label>
-                        <Badge variant="outline">
-                          {team.member_role === "leader" ? t.teamRoleLeader : t.teamRoleMember}
-                        </Badge>
-                      </div>
-                      <p className="text-muted-foreground text-sm">{t.teamDocsHint}</p>
+            {/* Team */}
+            {nav === "team" && (
+              <section>
+                <h2 className="text-base font-bold">{t.teamTitle}</h2>
+                <p className="text-muted-foreground mt-0.5 mb-3 text-[13px]">{t.teamSubtitle}</p>
+                {team ? (
+                  <div className="space-y-6">
+                    <div>
+                      <Label className="text-muted-foreground text-sm">{t.teamName}</Label>
+                      <p className="text-lg font-medium">{team.name}</p>
                     </div>
-                  ) : (
-                    <div className="py-8 text-center">
-                      <Users className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-                      <p className="text-muted-foreground mb-2">{t.noTeam}</p>
-                      <p className="text-muted-foreground text-sm">{t.noTeamNote}</p>
+                    {team.description && (
+                      <div>
+                        <Label className="text-muted-foreground text-sm">{t.teamDescription}</Label>
+                        <p>{team.description}</p>
+                      </div>
+                    )}
+                    <div>
+                      <Label className="text-muted-foreground text-sm">{t.teamCategory}</Label>
+                      <p className="font-medium">{team.category.name}</p>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
+                    <div>
+                      <Label className="text-muted-foreground text-sm">{t.teamRole}</Label>
+                      <Badge variant="outline">
+                        {team.member_role === "leader" ? t.teamRoleLeader : t.teamRoleMember}
+                      </Badge>
+                    </div>
+                    <p className="text-muted-foreground text-sm">{t.teamDocsHint}</p>
+                  </div>
+                ) : (
+                  <div className="py-8 text-center">
+                    <Users className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+                    <p className="text-muted-foreground mb-2">{t.noTeam}</p>
+                    <p className="text-muted-foreground text-sm">{t.noTeamNote}</p>
+                  </div>
+                )}
+              </section>
+            )}
 
-          {/* Challenge Tab */}
-          {showChallengeTab && (
-            <TabsContent value="challenge">
-              {showChallenges ? (
-                <div className="space-y-4">
+            {/* Challenge */}
+            {nav === "challenge" &&
+              (showChallenges ? (
+                <div className="space-y-6">
                   {isAdmin && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>{t.manageChallenge}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          <Label htmlFor="challenge-category-select">{t.selectCategory}</Label>
-                          <Select
-                            value={selectedChallengeCategoryId}
-                            onValueChange={(value) => {
-                              setSelectedChallengeCategoryId(value)
-                              void fetchAdminChallenge(value)
-                            }}>
-                            <SelectTrigger id="challenge-category-select">
-                              <SelectValue placeholder={t.selectCategoryPlaceholder} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {challengeCategories.map((category) => (
-                                <SelectItem key={category.id} value={category.id}>
-                                  {category.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <section>
+                      <h2 className="text-base font-bold">{t.manageChallenge}</h2>
+                      <p className="text-muted-foreground mt-0.5 mb-3 text-[13px]">{t.selectCategory}</p>
+                      <Select
+                        value={selectedChallengeCategoryId}
+                        onValueChange={(value) => {
+                          setSelectedChallengeCategoryId(value)
+                          void fetchAdminChallenge(value)
+                        }}>
+                        <SelectTrigger id="challenge-category-select" className="max-w-sm">
+                          <SelectValue placeholder={t.selectCategoryPlaceholder} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {challengeCategories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </section>
                   )}
 
                   {isAdmin && !selectedChallengeCategoryId ? (
-                    <Card>
-                      <CardContent className="pt-6">
-                        <p className="text-muted-foreground">{t.noCategorySelected}</p>
-                      </CardContent>
-                    </Card>
+                    <p className="text-muted-foreground">{t.noCategorySelected}</p>
                   ) : loadingAdminChallenge || (isCategoryPartner && !selectedChallengeCategoryId) ? (
                     <div className="flex min-h-[160px] items-center justify-center">
                       <Loader2 className="h-6 w-6 animate-spin text-[#530A5D]" />
@@ -780,10 +692,9 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                 </div>
               ) : (
                 <ComingSoon />
-              )}
-            </TabsContent>
-          )}
-        </Tabs>
+              ))}
+          </div>
+        </div>
       </div>
     </main>
   )
