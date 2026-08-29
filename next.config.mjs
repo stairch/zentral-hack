@@ -12,7 +12,10 @@ const nextConfig = {
       {
         pathname: "/api/partner-logo"
       }
-    ]
+    ],
+    // Reduces Image Optimization - Transformations on Vercel
+    // Images are compressed as WebP in Vercel Blob anyways
+    unoptimized: true
   },
   // Security headers
   async headers() {
