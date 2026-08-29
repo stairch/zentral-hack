@@ -30,17 +30,16 @@ export async function POST(request: NextRequest) {
     )
 
     if (result.rows.length === 0) {
-      return unauthorizedError()
     }
 
     const user = result.rows[0]
 
     if (!user.email_verified) {
-      return validationError("E-Mail not verified")
+      return unauthorizedError()
     }
 
     if (!user.is_active) {
-      return validationError("Account disabled")
+      return unauthorizedError()
     }
 
     const validPassword = await comparePassword(password, user.password_hash)

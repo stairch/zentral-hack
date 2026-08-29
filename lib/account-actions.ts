@@ -1,12 +1,7 @@
 import { query } from "@/lib/db"
 import { generateVerificationCode, hashCode } from "@/lib/auth"
 
-export type AccountAction =
-  | "email_change"
-  | "password_change"
-  | "category_change"
-  | "delete_account"
-  | "password_reset"
+export type AccountAction = "email_change" | "password_reset"
 
 export type AccountActionPayload = Record<string, string | null>
 
