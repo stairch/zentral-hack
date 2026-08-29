@@ -2,7 +2,7 @@
 
 ## [1.6.1] - 2026-08-29
 
-### Fixed
+### Fixed
 
 - Images not loaded due to Vercel Image Optimization limits
 
