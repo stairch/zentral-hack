@@ -43,7 +43,7 @@ const values = [
 const copy = {
   de: {
     badge: "ÜBER UNS",
-    headingPrefix: "EIN HACKATHON FÜR DIE",
+    headingPrefix: "DER HACKATHON FÜR DIE",
     headingAccent: "ZENTRALSCHWEIZ",
     description:
       "Zentral Hack vereint bestehende Events und Hackathons zu einem gemeinsamen Grossevent. Wir bringen Bildung, Wirtschaft und Community zusammen, um Innovation und Nachwuchsförderung in der Region voranzutreiben.",
@@ -51,7 +51,7 @@ const copy = {
   },
   en: {
     badge: "ABOUT",
-    headingPrefix: "A HACKATHON FOR",
+    headingPrefix: "THE HACKATHON FOR",
     headingAccent: "CENTRAL SWITZERLAND",
     description:
       "Zentral Hack unites existing events and hackathons into one large joint event. We bring education, business, and community together to advance innovation and young talent in the region.",
