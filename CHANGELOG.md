@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.0] - 2026-08-29
+
+### Added
+
+- Redesign of user profile
+- Support of editing user information
+- Vercel Analytics and Speed Insights (Performance Monitoring)
+
+### Fixed
+
+- Register abortion blocks unverified e-mail
+
 ## [1.6.2] - 2026-08-29
 
 ### Fixed
