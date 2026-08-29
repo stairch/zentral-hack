@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.1] - 2026-08-29
+
+### Fixed
+
+- Images not loaded due to Vercel Image Optimization limits
+
 ## [1.6.0] - 2026-08-28
 
 ### Added
