@@ -26,20 +26,43 @@ export async function POST(request: NextRequest) {
 
     const { email, password, firstName, lastName } = validation.data
 
-    // Check if email already exists
-    const existing = await query("SELECT id FROM users WHERE email = $1", [email.toLowerCase()])
-    if (existing.rows.length > 0) {
-      return validationError("Diese Email ist bereits registriert")
-    }
-
     const hash = await hashPassword(password)
-    const result = await query(
-      "INSERT INTO users (email, password_hash, first_name, last_name) VALUES ($1, $2, $3, $4) RETURNING id, email, role",
-      [email.toLowerCase(), hash, firstName, lastName]
-    )
 
-    const user = result.rows[0]
-    await query("INSERT INTO profiles (user_id) VALUES ($1)", [user.id])
+    // Check if email already exists
+    const existing = await query("SELECT id, email_verified FROM users WHERE email = $1", [
+      email.toLowerCase()
+    ])
+
+    let user: { id: string; email: string; role: string }
+
+    if (existing.rows.length > 0) {
+      // A verified account already owns this email
+      if (existing.rows[0].email_verified) {
+        return validationError("Diese Email ist bereits registriert")
+      }
+
+      // Otherwise unverified account (e.g. previous signup was abandoned)
+      // Nobody proved ownership of this address, so we let the new signup through
+      const updated = await query(
+        `UPDATE users
+         SET password_hash = $1, first_name = $2, last_name = $3, updated_at = NOW()
+         WHERE id = $4
+         RETURNING id, email, role`,
+        [hash, firstName, lastName, existing.rows[0].id]
+      )
+      user = updated.rows[0]
+
+      // Make sure a profile row exists and drop any stale unverified 2FA codes.
+      await query("INSERT INTO profiles (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING", [user.id])
+      await query("DELETE FROM two_fa_tokens WHERE user_id = $1 AND verified = false", [user.id])
+    } else {
+      const result = await query(
+        "INSERT INTO users (email, password_hash, first_name, last_name) VALUES ($1, $2, $3, $4) RETURNING id, email, role",
+        [email.toLowerCase(), hash, firstName, lastName]
+      )
+      user = result.rows[0]
+      await query("INSERT INTO profiles (user_id) VALUES ($1)", [user.id])
+    }
 
     // Generate 2FA code for ALL users
     const code = generateVerificationCode()
@@ -50,7 +73,7 @@ export async function POST(request: NextRequest) {
     await query("INSERT INTO two_fa_tokens (user_id, code, expires_at) VALUES ($1, $2, $3)", [
       user.id,
       codeHash,
-      expiresAt
+      expiresAt.toISOString()
     ])
 
     // Send 2FA code via email
