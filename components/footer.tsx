@@ -53,7 +53,7 @@ const footerLinks = {
 const copy = {
   de: {
     description:
-      "Ein Hackathon für die Zentralschweiz. Verbindung von Bildung, Wirtschaft und Community für Innovation und Nachwuchsförderung.",
+      "Der Hackathon für die Zentralschweiz. Verbindung von Bildung, Wirtschaft und Community für Innovation und Nachwuchsförderung.",
     event: "EVENT",
     legal: "RECHTLICHES",
     support: "SUPPORT",
@@ -65,7 +65,7 @@ const copy = {
   },
   en: {
     description:
-      "A hackathon for Central Switzerland. Connecting education, business, and community for innovation and young talent.",
+      "The hackathon for Central Switzerland. Connecting education, business, and community for innovation and young talent.",
     event: "EVENT",
     legal: "LEGAL",
     support: "SUPPORT",

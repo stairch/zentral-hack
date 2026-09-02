@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils"
 const copy = {
   de: {
     date: "23.–24. OKTOBER 2026",
-    subtitleLinePre: "Ein Hackathon für",
+    subtitleLinePre: "Der Hackathon für",
     subtitleLineRotate: ["Innovation", "Talente", "Networking"],
     subtitleLinePost: "in der Zentralschweiz.",
     location: "Hochschule Luzern Informatik, Rotkreuz",
@@ -29,7 +29,7 @@ const copy = {
   },
   en: {
     date: "23–24 OCTOBER 2026",
-    subtitleLinePre: "A hackathon for",
+    subtitleLinePre: "The hackathon for",
     subtitleLineRotate: ["Innovation", "Talents", "Networking"],
     subtitleLinePost: "in Central Switzerland.",
     location: "Lucerne School of Computer Science, Rotkreuz",
