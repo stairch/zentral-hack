@@ -6,6 +6,7 @@ import { useLanguage } from "@/lib/language-context"
 import { Emails } from "@/lib/constants"
 import { BrandMark } from "@/components/brand-mark"
 import Instagram from "@/assets/icons/instagram.svg"
+import GitHub from "@/assets/icons/github.svg"
 import { Urls } from "@/lib/constants"
 
 const footerLinks = {
@@ -47,7 +48,10 @@ const footerLinks = {
       { label: "Bug Report", href: Urls.bugReport }
     ]
   },
-  social: [{ icon: Instagram, href: "https://www.instagram.com/zentralhack/", label: "Instagram" }]
+  social: [
+    { icon: Instagram, href: "https://www.instagram.com/zentralhack/", label: "Instagram" },
+    { icon: GitHub, href: "https://github.com/stairch/zentral-hack/", label: "GitHub" }
+  ]
 }
 
 const copy = {
