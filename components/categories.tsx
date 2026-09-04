@@ -82,14 +82,24 @@ function CategoryCard({
   }
 
   const cardStyle = { x: xSpring, y: ySpring, backgroundColor: category.color, color: category.textColor }
+  const cardVariants = {
+    hidden: { opacity: 0, y: 50, rotateX: -15 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      rotateX: 0,
+      transition: { duration: 0.6, delay: i * 0.15 }
+    })
+  }
 
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 50, rotateX: -15 }}
-      animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
-      whileHover={{ scale: 1.02 }}
-      transition={{ duration: 0.6, delay: index * 0.15 }}
+      custom={index}
+      variants={cardVariants}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
+      whileHover={{ scale: 1.02, transition: { duration: 0.6 } }}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => {
         x.set(0)
