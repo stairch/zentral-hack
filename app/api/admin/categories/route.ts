@@ -12,7 +12,7 @@ export async function GET() {
       `SELECT ${buildCategorySelectClause(availableColumns)}
        FROM categories
        WHERE is_active = true
-       ORDER BY name`
+       ORDER BY display_order ASC, name ASC`
     )
     return successResponse({ categories: result.rows })
   } catch (error) {
@@ -111,7 +111,8 @@ async function putHandler(req: AuthenticatedRequest) {
       prize,
       prizeEn,
       targetGroup,
-      targetGroupEn
+      targetGroupEn,
+      displayOrder
     } = await req.json()
 
     if (!id) {
@@ -252,6 +253,15 @@ async function putHandler(req: AuthenticatedRequest) {
     ) {
       values.push(typeof targetGroupEn === "string" ? targetGroupEn.trim() || null : null)
       fieldAssignments.push(`target_group_en = $${values.length}`)
+    }
+
+    if (
+      availableColumns.has("display_order") &&
+      req.user?.role === "admin" &&
+      Number.isFinite(Number(displayOrder))
+    ) {
+      values.push(String(Math.trunc(Number(displayOrder))))
+      fieldAssignments.push(`display_order = $${values.length}::integer`)
     }
 
     if (fieldAssignments.length === 0) {

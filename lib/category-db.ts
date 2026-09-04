@@ -13,7 +13,8 @@ const optionalCategoryColumns = [
   "prize",
   "prize_en",
   "target_group",
-  "target_group_en"
+  "target_group_en",
+  "display_order"
 ] as const
 const optionalCategoryColumnsParam: string[] = [...optionalCategoryColumns]
 
@@ -57,6 +58,7 @@ export function buildCategorySelectClause(availableColumns: Set<OptionalCategory
     availableColumns.has("prize_en") ? "prize_en" : "NULL::text AS prize",
     availableColumns.has("target_group") ? "target_group" : "NULL::text AS target_group",
     availableColumns.has("target_group_en") ? "target_group_en" : "NULL::text AS target_group_en",
+    availableColumns.has("display_order") ? "display_order" : "0::integer AS display_order",
     "is_active",
     "created_at",
     "updated_at"

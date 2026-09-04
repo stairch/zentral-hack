@@ -55,13 +55,15 @@ function CategoryCard({
   index,
   onOpen,
   partnerLabel,
-  detailsLabel
+  detailsLabel,
+  className = ""
 }: {
   category: DisplayCategory
   index: number
   onOpen: () => void
   partnerLabel: string
   detailsLabel: string
+  className?: string
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
@@ -105,7 +107,7 @@ function CategoryCard({
         x.set(0)
         y.set(0)
       }}
-      className="group relative cursor-pointer overflow-hidden rounded-2xl p-8"
+      className={`group relative cursor-pointer overflow-hidden rounded-2xl p-8 ${className}`}
       style={cardStyle}
       onClick={onOpen}
       role="button"
@@ -146,6 +148,7 @@ export function Categories() {
   const [selectedChallengeId, setSelectedChallengeId] = useState<string>("")
   const [isChallengeBrowserOpen, setIsChallengeBrowserOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [layout, setLayout] = useState<"standard" | "bento">("standard")
   const { language, isReady } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -153,6 +156,17 @@ export function Categories() {
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    fetch("/api/site-settings?key=categories_layout")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.data?.value === "bento" || data?.data?.value === "standard") {
+          setLayout(data.data.value)
+        }
+      })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -164,14 +178,15 @@ export function Categories() {
         const data = await res.json()
         const dbCategories: CategoryRecord[] = data.data?.categories || []
 
-        const orderedSlugs = Array.from(
-          new Set([...categoryDisplayOrder, ...dbCategories.map((category) => category.slug)])
-        )
+        // The API already returns categories sorted by their admin-defined display_order.
+        // Keep that order, then append any hardcoded fallback slugs missing from the DB.
+        const dbSlugs = new Set(dbCategories.map((category) => category.slug))
+        const orderedRecords: CategoryRecord[] = [
+          ...dbCategories,
+          ...categoryDisplayOrder.filter((slug) => !dbSlugs.has(slug)).map((slug) => ({ slug }))
+        ]
 
-        const merged = orderedSlugs.map((slug) => {
-          const dbCategory = dbCategories.find((category) => category.slug === slug)
-          return getCategoryPresentationByLanguage(dbCategory || { slug }, language)
-        })
+        const merged = orderedRecords.map((record) => getCategoryPresentationByLanguage(record, language))
 
         setDisplayCategories(merged)
       } catch {
@@ -295,24 +310,31 @@ export function Categories() {
         </motion.div>
 
         {displayCategories.length > 0 ? (
-          <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-2">
-            {displayCategories.map((category, index) => (
-              <CategoryCard
-                key={category.slug}
-                category={category}
-                index={index}
-                onOpen={() => {
-                  setSelectedCategory(category)
-                  setSelectedChallengeId(category.challenges?.[0]?.id || "")
-                  setIsChallengeBrowserOpen(false)
-                  const params = new URLSearchParams(searchParams.toString())
-                  params.set("category", category.slug)
-                  router.replace(`?${params.toString()}`, { scroll: false })
-                }}
-                partnerLabel={text.partner}
-                detailsLabel={text.clickDetails}
-              />
-            ))}
+          <div
+            className={`mx-auto grid max-w-5xl gap-6 ${
+              layout === "bento" ? "auto-rows-fr md:grid-cols-6" : "md:grid-cols-2"
+            }`}>
+            {displayCategories.map((category, index) => {
+              const bentoSpans = ["md:col-span-4", "md:col-span-2", "md:col-span-3", "md:col-span-3"]
+              return (
+                <CategoryCard
+                  key={category.slug}
+                  category={category}
+                  index={index}
+                  className={layout === "bento" ? (bentoSpans[index] ?? "md:col-span-3") : ""}
+                  onOpen={() => {
+                    setSelectedCategory(category)
+                    setSelectedChallengeId(category.challenges?.[0]?.id || "")
+                    setIsChallengeBrowserOpen(false)
+                    const params = new URLSearchParams(searchParams.toString())
+                    params.set("category", category.slug)
+                    router.replace(`?${params.toString()}`, { scroll: false })
+                  }}
+                  partnerLabel={text.partner}
+                  detailsLabel={text.clickDetails}
+                />
+              )
+            })}
           </div>
         ) : (
           <div className="border-border bg-background/70 mx-auto max-w-2xl rounded-2xl border p-8 text-center">

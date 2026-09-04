@@ -41,6 +41,7 @@ export interface CategoryRecord {
   prize_en?: string | null
   target_group?: string | null
   target_group_en?: string | null
+  display_order?: number | null
   challenge_title?: string | null
   challenge_title_en?: string | null
   challenge_short_description?: string | null
@@ -236,6 +237,7 @@ export function getCategoryPresentationByLanguage(category: CategoryRecord, lang
   return {
     id: category.id,
     slug: category.slug,
+    displayOrder: typeof category.display_order === "number" ? category.display_order : 0,
     title: localizedTitle,
     challengeTitle,
     description: localizedDescription,
