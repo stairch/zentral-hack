@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.8.0] - 2026-09-05
+
+### Added
+
+- Add support for more focused category cards including short descriptions, editing order, and switching between uniform and focused cards layout
+- Add GitHub social link to footer
+
+### Changed
+
+- Change headline in hero section from "An hackathon" to "The hackathon"
+
+### Fixed
+
+- English labels not same as german in user profile section
+
 ## [1.7.0] - 2026-08-29
 
 ### Added
