@@ -3,6 +3,7 @@ import {
   Brain,
   Briefcase,
   Cpu,
+  Flag,
   GraduationCap,
   Lightbulb,
   MapPin,
@@ -22,6 +23,7 @@ export type CategoryIconName =
   | "briefcase"
   | "lightbulb"
   | "map-pin"
+  | "flag"
 
 export interface CategoryRecord {
   id?: string
@@ -77,7 +79,8 @@ export const categoryIconMap: Record<CategoryIconName, LucideIcon> = {
   cpu: Cpu,
   briefcase: Briefcase,
   lightbulb: Lightbulb,
-  "map-pin": MapPin
+  "map-pin": MapPin,
+  flag: Flag
 }
 
 export const categoryIconOptions: Array<{ value: CategoryIconName; label: string }> = [
@@ -89,7 +92,8 @@ export const categoryIconOptions: Array<{ value: CategoryIconName; label: string
   { value: "cpu", label: "CPU" },
   { value: "briefcase", label: "Briefcase" },
   { value: "lightbulb", label: "Lightbulb" },
-  { value: "map-pin", label: "Map Pin" }
+  { value: "map-pin", label: "Map Pin" },
+  { value: "flag", label: "Flag" }
 ]
 
 export const categoryDisplayOrder = [
