@@ -30,6 +30,8 @@ export interface CategoryRecord {
   slug: string
   description?: string | null
   description_en?: string | null
+  short_description?: string | null
+  short_description_en?: string | null
   partner_name?: string | null
   partner_name_en?: string | null
   color?: string | null
@@ -208,6 +210,18 @@ export function getCategoryPresentationByLanguage(category: CategoryRecord, lang
       ? (category.description_en || category.description || fallback.description).trim()
       : (category.description || fallback.description).trim()
 
+  // Short teaser shown on the card. Falls back to the full description when not set.
+  const localizedShortDescription =
+    language === "en"
+      ? (
+          category.short_description_en ||
+          category.short_description ||
+          category.description_en ||
+          category.description ||
+          fallback.description
+        ).trim()
+      : (category.short_description || category.description || fallback.description).trim()
+
   const localizedPartnerName =
     language === "en"
       ? (category.partner_name_en || category.partner_name || fallback.partnerName).trim()
@@ -241,6 +255,7 @@ export function getCategoryPresentationByLanguage(category: CategoryRecord, lang
     title: localizedTitle,
     challengeTitle,
     description: localizedDescription,
+    shortDescription: localizedShortDescription,
     partnerName: localizedPartnerName,
     color,
     textColor: getReadableTextColor(color),

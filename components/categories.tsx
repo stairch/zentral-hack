@@ -23,6 +23,7 @@ interface DisplayCategory {
   title: string
   challengeTitle: string
   description: string
+  shortDescription: string
   icon: React.ComponentType<{ className?: string }>
   color: string
   textColor: string
@@ -128,7 +129,7 @@ function CategoryCard({
 
       <div className="relative z-10">
         <h3 className="font-display mb-3 text-2xl font-bold">{category.title}</h3>
-        <p className="mb-4 leading-relaxed opacity-90">{category.description}</p>
+        <p className="mb-4 leading-relaxed opacity-90">{category.shortDescription}</p>
         <p className="text-sm opacity-70">
           {partnerLabel}: {category.partnerName}
         </p>

@@ -36,6 +36,8 @@ interface Category {
   slug: string
   description: string
   description_en?: string | null
+  short_description?: string | null
+  short_description_en?: string | null
   partner_name?: string | null
   partner_name_en?: string | null
   color?: string | null
@@ -52,6 +54,8 @@ interface EditFormState {
   nameEn: string
   description: string
   descriptionEn: string
+  shortDescription: string
+  shortDescriptionEn: string
   partnerName: string
   partnerNameEn: string
   color: string
@@ -76,6 +80,8 @@ export function AdminCategoriesPage() {
     nameEn: "",
     description: "",
     descriptionEn: "",
+    shortDescription: "",
+    shortDescriptionEn: "",
     partnerName: "",
     partnerNameEn: "",
     color: "#530A5D",
@@ -121,6 +127,10 @@ export function AdminCategoriesPage() {
           colorLabel: "Color",
           descriptionLabel: "Description",
           descriptionPlaceholder: "Describe this category and its challenge context...",
+          shortDescriptionLabel: "Short description",
+          shortDescriptionPlaceholder: "One or two sentences shown directly on the card...",
+          shortDescriptionHint:
+            "Shown on the category card. The full description above appears only when the card is opened. Leave empty to fall back to the full description.",
           challengeToggleLabel: "Show challenge description",
           challengeToggleHint:
             "If enabled, a challenge description is shown in the public category detail view.",
@@ -176,6 +186,10 @@ export function AdminCategoriesPage() {
           colorLabel: "Farbe",
           descriptionLabel: "Beschreibung",
           descriptionPlaceholder: "Beschreibe diese Kategorie und ihre Herausforderungen...",
+          shortDescriptionLabel: "Kurzbeschreibung",
+          shortDescriptionPlaceholder: "Ein bis zwei Sätze, die direkt auf der Karte erscheinen...",
+          shortDescriptionHint:
+            "Wird auf der Kategorie-Karte angezeigt. Die vollständige Beschreibung oben erscheint erst beim Öffnen der Karte. Leer lassen, um auf die vollständige Beschreibung zurückzufallen.",
           challengeToggleLabel: "Challenge-Beschrieb anzeigen",
           challengeToggleHint:
             "Wenn aktiv, wird auf der öffentlichen Kategorie-Detailansicht zusätzlich ein Challenge-Beschrieb angezeigt.",
@@ -361,6 +375,8 @@ export function AdminCategoriesPage() {
           nameEn: editForm.nameEn,
           description: editForm.description,
           descriptionEn: editForm.descriptionEn,
+          shortDescription: editForm.shortDescription || null,
+          shortDescriptionEn: editForm.shortDescriptionEn || null,
           partnerName: editForm.partnerName,
           partnerNameEn: editForm.partnerNameEn,
           color: normalizeHexColor(editForm.color),
@@ -389,6 +405,8 @@ export function AdminCategoriesPage() {
                 name_en: editForm.nameEn,
                 description: editForm.description,
                 description_en: editForm.descriptionEn,
+                short_description: editForm.shortDescription || null,
+                short_description_en: editForm.shortDescriptionEn || null,
                 partner_name: editForm.partnerName,
                 partner_name_en: editForm.partnerNameEn,
                 color: normalizeHexColor(editForm.color),
@@ -584,6 +602,8 @@ export function AdminCategoriesPage() {
                                 nameEn: category.name_en || "",
                                 description: category.description || "",
                                 descriptionEn: category.description_en || "",
+                                shortDescription: category.short_description || "",
+                                shortDescriptionEn: category.short_description_en || "",
                                 partnerName: category.partner_name || "",
                                 partnerNameEn: category.partner_name_en || "",
                                 color: presentation.color,
@@ -645,12 +665,26 @@ export function AdminCategoriesPage() {
                                       rows={6}
                                     />
                                   </div>
+
+                                  <div>
+                                    <Label htmlFor="shortDescription">{text.shortDescriptionLabel}</Label>
+                                    <Textarea
+                                      id="shortDescription"
+                                      value={editForm.shortDescription}
+                                      onChange={(e) => updateEditForm("shortDescription", e.target.value)}
+                                      placeholder={text.shortDescriptionPlaceholder}
+                                      rows={3}
+                                    />
+                                    <p className="text-muted-foreground mt-1 text-xs">
+                                      {text.shortDescriptionHint}
+                                    </p>
+                                  </div>
                                 </div>
 
                                 <div className="space-y-4 rounded-lg border p-4">
                                   <p className="text-sm font-semibold">{text.englishSection}</p>
                                   <div>
-                                    <Label htmlFor="nameEn">Title</Label>
+                                    <Label htmlFor="nameEn">{text.titleLabel}</Label>
                                     <Input
                                       id="nameEn"
                                       value={editForm.nameEn}
@@ -660,7 +694,7 @@ export function AdminCategoriesPage() {
                                   </div>
 
                                   <div>
-                                    <Label htmlFor="partnerNameEn">Partner</Label>
+                                    <Label htmlFor="partnerNameEn">{text.partnerLabel}</Label>
                                     <Input
                                       id="partnerNameEn"
                                       value={editForm.partnerNameEn}
@@ -670,7 +704,7 @@ export function AdminCategoriesPage() {
                                   </div>
 
                                   <div>
-                                    <Label htmlFor="descriptionEn">Description</Label>
+                                    <Label htmlFor="descriptionEn">{text.descriptionLabel}</Label>
                                     <Textarea
                                       id="descriptionEn"
                                       value={editForm.descriptionEn}
@@ -678,6 +712,20 @@ export function AdminCategoriesPage() {
                                       placeholder="Describe this category and its challenge context..."
                                       rows={6}
                                     />
+                                  </div>
+
+                                  <div>
+                                    <Label htmlFor="shortDescriptionEn">{text.shortDescriptionLabel}</Label>
+                                    <Textarea
+                                      id="shortDescriptionEn"
+                                      value={editForm.shortDescriptionEn}
+                                      onChange={(e) => updateEditForm("shortDescriptionEn", e.target.value)}
+                                      placeholder={text.shortDescriptionPlaceholder}
+                                      rows={3}
+                                    />
+                                    <p className="text-muted-foreground mt-1 text-xs">
+                                      {text.shortDescriptionHint}
+                                    </p>
                                   </div>
                                 </div>
                               </div>

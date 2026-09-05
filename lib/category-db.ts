@@ -4,6 +4,8 @@ const optionalCategoryColumns = [
   "partner_name",
   "name_en",
   "description_en",
+  "short_description",
+  "short_description_en",
   "partner_name_en",
   "color",
   "icon",
@@ -41,6 +43,10 @@ export function buildCategorySelectClause(availableColumns: Set<OptionalCategory
     "slug",
     "description",
     availableColumns.has("description_en") ? "description_en" : "NULL::text AS description_en",
+    availableColumns.has("short_description") ? "short_description" : "NULL::text AS short_description",
+    availableColumns.has("short_description_en")
+      ? "short_description_en"
+      : "NULL::text AS short_description_en",
     availableColumns.has("partner_name") ? "partner_name" : "NULL::text AS partner_name",
     availableColumns.has("partner_name_en") ? "partner_name_en" : "NULL::text AS partner_name_en",
     availableColumns.has("color") ? "color" : "NULL::text AS color",

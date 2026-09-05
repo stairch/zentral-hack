@@ -101,6 +101,8 @@ async function putHandler(req: AuthenticatedRequest) {
       nameEn,
       description,
       descriptionEn,
+      shortDescription,
+      shortDescriptionEn,
       partnerName,
       partnerNameEn,
       color,
@@ -183,6 +185,22 @@ async function putHandler(req: AuthenticatedRequest) {
     if (availableColumns.has("description_en") && typeof descriptionEn === "string") {
       values.push(descriptionEn.trim() || null)
       fieldAssignments.push(`description_en = $${values.length}`)
+    }
+
+    if (
+      availableColumns.has("short_description") &&
+      (typeof shortDescription === "string" || shortDescription === null)
+    ) {
+      values.push(typeof shortDescription === "string" ? shortDescription.trim() || null : null)
+      fieldAssignments.push(`short_description = $${values.length}`)
+    }
+
+    if (
+      availableColumns.has("short_description_en") &&
+      (typeof shortDescriptionEn === "string" || shortDescriptionEn === null)
+    ) {
+      values.push(typeof shortDescriptionEn === "string" ? shortDescriptionEn.trim() || null : null)
+      fieldAssignments.push(`short_description_en = $${values.length}`)
     }
 
     if (availableColumns.has("partner_name") && typeof partnerName === "string") {
