@@ -15,7 +15,8 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog"
-import { Edit2, Loader2, Plus } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { ArrowDown, ArrowUp, Edit2, Loader2, Plus } from "lucide-react"
 import { toast } from "sonner"
 import {
   categoryIconMap,
@@ -35,6 +36,8 @@ interface Category {
   slug: string
   description: string
   description_en?: string | null
+  short_description?: string | null
+  short_description_en?: string | null
   partner_name?: string | null
   partner_name_en?: string | null
   color?: string | null
@@ -43,6 +46,7 @@ interface Category {
   prize_en?: string | null
   target_group?: string | null
   target_group_en?: string | null
+  display_order?: number | null
 }
 
 interface EditFormState {
@@ -50,6 +54,8 @@ interface EditFormState {
   nameEn: string
   description: string
   descriptionEn: string
+  shortDescription: string
+  shortDescriptionEn: string
   partnerName: string
   partnerNameEn: string
   color: string
@@ -74,6 +80,8 @@ export function AdminCategoriesPage() {
     nameEn: "",
     description: "",
     descriptionEn: "",
+    shortDescription: "",
+    shortDescriptionEn: "",
     partnerName: "",
     partnerNameEn: "",
     color: "#530A5D",
@@ -85,6 +93,9 @@ export function AdminCategoriesPage() {
   })
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [layout, setLayout] = useState<"standard" | "bento">("standard")
+  const [layoutSaving, setLayoutSaving] = useState(false)
+  const [reorderingId, setReorderingId] = useState<string | null>(null)
   const [createForm, setCreateForm] = useState({
     name: "",
     nameEn: "",
@@ -116,6 +127,10 @@ export function AdminCategoriesPage() {
           colorLabel: "Color",
           descriptionLabel: "Description",
           descriptionPlaceholder: "Describe this category and its challenge context...",
+          shortDescriptionLabel: "Short description",
+          shortDescriptionPlaceholder: "One or two sentences shown directly on the card...",
+          shortDescriptionHint:
+            "Shown on the category card. The full description above appears only when the card is opened. Leave empty to fall back to the full description.",
           challengeToggleLabel: "Show challenge description",
           challengeToggleHint:
             "If enabled, a challenge description is shown in the public category detail view.",
@@ -141,7 +156,18 @@ export function AdminCategoriesPage() {
           loadError: "Failed to load categories",
           saveSuccess: "Category updated",
           saveError: "Failed to save",
-          noCategories: "No categories found"
+          noCategories: "No categories found",
+          layoutSectionTitle: "Landing page layout",
+          layoutSectionHint:
+            "Choose how the category cards are arranged in the “Choose your category” section.",
+          layoutStandardLabel: "Standard (uniform)",
+          layoutBentoLabel: "Featured",
+          layoutSaved: "Layout updated",
+          layoutSaveError: "Failed to update layout",
+          orderLabel: "Order",
+          moveUp: "Move up",
+          moveDown: "Move down",
+          orderSaveError: "Failed to change order"
         }
       : {
           heading: "KATEGORIEN",
@@ -160,6 +186,10 @@ export function AdminCategoriesPage() {
           colorLabel: "Farbe",
           descriptionLabel: "Beschreibung",
           descriptionPlaceholder: "Beschreibe diese Kategorie und ihre Herausforderungen...",
+          shortDescriptionLabel: "Kurzbeschreibung",
+          shortDescriptionPlaceholder: "Ein bis zwei Sätze, die direkt auf der Karte erscheinen...",
+          shortDescriptionHint:
+            "Wird auf der Kategorie-Karte angezeigt. Die vollständige Beschreibung oben erscheint erst beim Öffnen der Karte. Leer lassen, um auf die vollständige Beschreibung zurückzufallen.",
           challengeToggleLabel: "Challenge-Beschrieb anzeigen",
           challengeToggleHint:
             "Wenn aktiv, wird auf der öffentlichen Kategorie-Detailansicht zusätzlich ein Challenge-Beschrieb angezeigt.",
@@ -186,7 +216,18 @@ export function AdminCategoriesPage() {
           loadError: "Fehler beim Laden der Kategorien",
           saveSuccess: "Kategorie aktualisiert",
           saveError: "Fehler beim Speichern",
-          noCategories: "Keine Kategorien gefunden"
+          noCategories: "Keine Kategorien gefunden",
+          layoutSectionTitle: "Layout der Landing Page",
+          layoutSectionHint:
+            "Bestimme, wie die Kategorie-Karten im Bereich «Wähle deine Kategorie» angeordnet werden.",
+          layoutStandardLabel: "Standard (gleichmässig)",
+          layoutBentoLabel: "Hervorgehoben",
+          layoutSaved: "Layout aktualisiert",
+          layoutSaveError: "Layout konnte nicht aktualisiert werden",
+          orderLabel: "Reihenfolge",
+          moveUp: "Nach oben",
+          moveDown: "Nach unten",
+          orderSaveError: "Reihenfolge konnte nicht geändert werden"
         }
 
   const hasDataFetched = useRef(false)
@@ -205,6 +246,14 @@ export function AdminCategoriesPage() {
           const data = await res.json()
           setCategories(data.data?.categories || [])
         }
+
+        const layoutRes = await fetch("/api/site-settings?key=categories_layout")
+        if (layoutRes.ok) {
+          const layoutData = await layoutRes.json()
+          if (layoutData.data?.value === "bento" || layoutData.data?.value === "standard") {
+            setLayout(layoutData.data.value)
+          }
+        }
       } catch (error) {
         console.error("Failed to fetch categories:", error)
         toast.error(text.loadError)
@@ -218,6 +267,86 @@ export function AdminCategoriesPage() {
 
   const updateEditForm = (field: keyof EditFormState, value: string) => {
     setEditForm((current) => ({ ...current, [field]: value }))
+  }
+
+  // Persist the landing page layout choice into the shared site_settings store.
+  const handleLayoutChange = async (bento: boolean) => {
+    const next: "standard" | "bento" = bento ? "bento" : "standard"
+    const previous = layout
+    setLayout(next)
+    try {
+      setLayoutSaving(true)
+      const res = await fetch("/api/admin/site-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ key: "categories_layout", value: next })
+      })
+      if (!res.ok) throw new Error("failed")
+      toast.success(text.layoutSaved)
+    } catch {
+      setLayout(previous)
+      toast.error(text.layoutSaveError)
+    } finally {
+      setLayoutSaving(false)
+    }
+  }
+
+  // Swap the display_order of a category with its neighbour (admin only).
+  const handleMove = async (categoryId: string, direction: "up" | "down") => {
+    const ordered = [...categories].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+    const idx = ordered.findIndex((c) => c.id === categoryId)
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1
+    if (idx === -1 || swapIdx < 0 || swapIdx >= ordered.length) return
+
+    const current = ordered[idx]
+    const sibling = ordered[swapIdx]
+    const currentOrder = current.display_order ?? idx
+    const siblingOrder = sibling.display_order ?? swapIdx
+
+    // Optimistic reorder
+    setCategories((prev) =>
+      prev.map((c) =>
+        c.id === current.id
+          ? { ...c, display_order: siblingOrder }
+          : c.id === sibling.id
+            ? { ...c, display_order: currentOrder }
+            : c
+      )
+    )
+
+    try {
+      setReorderingId(categoryId)
+      const responses = await Promise.all([
+        fetch("/api/admin/categories", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ id: current.id, displayOrder: siblingOrder })
+        }),
+        fetch("/api/admin/categories", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ id: sibling.id, displayOrder: currentOrder })
+        })
+      ])
+      if (responses.some((r) => !r.ok)) throw new Error("failed")
+    } catch {
+      // Revert on failure
+      setCategories((prev) =>
+        prev.map((c) =>
+          c.id === current.id
+            ? { ...c, display_order: currentOrder }
+            : c.id === sibling.id
+              ? { ...c, display_order: siblingOrder }
+              : c
+        )
+      )
+      toast.error(text.orderSaveError)
+    } finally {
+      setReorderingId(null)
+    }
   }
 
   // Save category content
@@ -246,6 +375,8 @@ export function AdminCategoriesPage() {
           nameEn: editForm.nameEn,
           description: editForm.description,
           descriptionEn: editForm.descriptionEn,
+          shortDescription: editForm.shortDescription || null,
+          shortDescriptionEn: editForm.shortDescriptionEn || null,
           partnerName: editForm.partnerName,
           partnerNameEn: editForm.partnerNameEn,
           color: normalizeHexColor(editForm.color),
@@ -274,6 +405,8 @@ export function AdminCategoriesPage() {
                 name_en: editForm.nameEn,
                 description: editForm.description,
                 description_en: editForm.descriptionEn,
+                short_description: editForm.shortDescription || null,
+                short_description_en: editForm.shortDescriptionEn || null,
                 partner_name: editForm.partnerName,
                 partner_name_en: editForm.partnerNameEn,
                 color: normalizeHexColor(editForm.color),
@@ -373,11 +506,39 @@ export function AdminCategoriesPage() {
         )}
       </div>
 
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">{text.layoutSectionTitle}</CardTitle>
+            <CardDescription>{text.layoutSectionHint}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3">
+              <span
+                className={`text-sm ${layout === "standard" ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                {text.layoutStandardLabel}
+              </span>
+              <Switch
+                checked={layout === "bento"}
+                disabled={layoutSaving}
+                onCheckedChange={handleLayoutChange}
+                aria-label={text.layoutSectionTitle}
+              />
+              <span
+                className={`text-sm ${layout === "bento" ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                {text.layoutBentoLabel}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {categories?.length > 0 ? (
-          categories
+          [...categories]
+            .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
             .filter((category) => !isCategoryPartner || category.id === user?.categoryId)
-            .map((category) => (
+            .map((category, index, arr) => (
               <Card key={category.id} className="overflow-hidden">
                 <div className="h-2" style={{ backgroundColor: getCategoryPresentation(category).color }} />
                 <CardHeader>
@@ -406,213 +567,267 @@ export function AdminCategoriesPage() {
                         <CardDescription>{category.slug}</CardDescription>
                       </div>
                     </div>
-                    {(!isCategoryPartner || category.id === user?.categoryId) && (
-                      <Dialog
-                        open={editingId === category.id}
-                        onOpenChange={(open) => {
-                          if (open) {
-                            const presentation = getCategoryPresentation(category)
-                            setEditingId(category.id)
-                            setEditForm({
-                              name: category.name,
-                              nameEn: category.name_en || "",
-                              description: category.description || "",
-                              descriptionEn: category.description_en || "",
-                              partnerName: category.partner_name || "",
-                              partnerNameEn: category.partner_name_en || "",
-                              color: presentation.color,
-                              icon: presentation.iconName,
-                              prize: category.prize || "",
-                              prizeEn: category.prize_en || "",
-                              targetGroup: category.target_group || "",
-                              targetGroupEn: category.target_group_en || ""
-                            })
-                          } else {
-                            setEditingId(null)
-                          }
-                        }}>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Edit2 className="h-4 w-4" />
+                    <div className="flex items-center gap-1">
+                      {isAdmin && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            disabled={index === 0 || reorderingId === category.id}
+                            aria-label={text.moveUp}
+                            onClick={() => handleMove(category.id, "up")}>
+                            <ArrowUp className="h-4 w-4" />
                           </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-3xl">
-                          <DialogHeader>
-                            <DialogTitle>{text.editTitle}</DialogTitle>
-                            <DialogDescription>
-                              {text.editDescription} &quot;
-                              {getCategoryPresentationByLanguage(category, language).title}&quot;
-                            </DialogDescription>
-                          </DialogHeader>
-
-                          <div className="space-y-6 pr-1">
-                            <div className="grid gap-4 lg:grid-cols-2">
-                              <div className="space-y-4 rounded-lg border p-4">
-                                <p className="text-sm font-semibold">{text.germanSection}</p>
-                                <div>
-                                  <Label htmlFor="name">{text.titleLabel}</Label>
-                                  <Input
-                                    id="name"
-                                    value={editForm.name}
-                                    onChange={(e) => updateEditForm("name", e.target.value)}
-                                    placeholder="Name der Kategorie"
-                                  />
-                                </div>
-
-                                <div>
-                                  <Label htmlFor="partnerName">{text.partnerLabel}</Label>
-                                  <Input
-                                    id="partnerName"
-                                    value={editForm.partnerName}
-                                    onChange={(e) => updateEditForm("partnerName", e.target.value)}
-                                    placeholder="Partnername"
-                                  />
-                                </div>
-
-                                <div>
-                                  <Label htmlFor="description">{text.descriptionLabel}</Label>
-                                  <Textarea
-                                    id="description"
-                                    value={editForm.description}
-                                    onChange={(e) => updateEditForm("description", e.target.value)}
-                                    placeholder="Beschreibe diese Kategorie und ihre Herausforderungen..."
-                                    rows={6}
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="space-y-4 rounded-lg border p-4">
-                                <p className="text-sm font-semibold">{text.englishSection}</p>
-                                <div>
-                                  <Label htmlFor="nameEn">Title</Label>
-                                  <Input
-                                    id="nameEn"
-                                    value={editForm.nameEn}
-                                    onChange={(e) => updateEditForm("nameEn", e.target.value)}
-                                    placeholder="Category title"
-                                  />
-                                </div>
-
-                                <div>
-                                  <Label htmlFor="partnerNameEn">Partner</Label>
-                                  <Input
-                                    id="partnerNameEn"
-                                    value={editForm.partnerNameEn}
-                                    onChange={(e) => updateEditForm("partnerNameEn", e.target.value)}
-                                    placeholder="Partner name"
-                                  />
-                                </div>
-
-                                <div>
-                                  <Label htmlFor="descriptionEn">Description</Label>
-                                  <Textarea
-                                    id="descriptionEn"
-                                    value={editForm.descriptionEn}
-                                    onChange={(e) => updateEditForm("descriptionEn", e.target.value)}
-                                    placeholder="Describe this category and its challenge context..."
-                                    rows={6}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="grid gap-4 md:grid-cols-2">
-                              <div>
-                                <Label htmlFor="color">{text.colorLabel}</Label>
-                                <ColorPicker
-                                  current={normalizeHexColor(editForm.color)}
-                                  onChange={(color) => updateEditForm("color", color)}
-                                  onPresetClick={(color) => updateEditForm("color", color)}
-                                  withPresets
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="icon">{text.iconLabel}</Label>
-                                <Select
-                                  value={editForm.icon}
-                                  onValueChange={(value) => updateEditForm("icon", value)}>
-                                  <SelectTrigger id="icon">
-                                    <SelectValue placeholder={text.iconPlaceholder} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {categoryIconOptions.map((option) => {
-                                      const Icon = categoryIconMap[option.value]
-
-                                      return (
-                                        <SelectItem key={option.value} value={option.value}>
-                                          <span className="flex items-center gap-2">
-                                            <Icon className="h-4 w-4" />
-                                            <span>{option.label}</span>
-                                          </span>
-                                        </SelectItem>
-                                      )
-                                    })}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-
-                            <div className="grid gap-4 md:grid-cols-2">
-                              <div>
-                                <Label htmlFor="prize">{text.prizeLabel}</Label>
-                                <Input
-                                  id="prize"
-                                  value={editForm.prize}
-                                  onChange={(e) => updateEditForm("prize", e.target.value)}
-                                  placeholder={text.prizePlaceholder}
-                                />
-                                <p className="text-muted-foreground mt-1 text-xs">{text.prizeHint}</p>
-                              </div>
-                              <div>
-                                <Label htmlFor="prize">{text.prizeLabelEn}</Label>
-                                <Input
-                                  id="prize"
-                                  value={editForm.prizeEn}
-                                  onChange={(e) => updateEditForm("prizeEn", e.target.value)}
-                                  placeholder={text.prizePlaceholder}
-                                />
-                                <p className="text-muted-foreground mt-1 text-xs">{text.prizeHint}</p>
-                              </div>
-                              <div>
-                                <Label htmlFor="targetGroup">
-                                  {text.targetGroupLabel} ({text.germanSection})
-                                </Label>
-                                <Input
-                                  id="targetGroup"
-                                  value={editForm.targetGroup}
-                                  onChange={(e) => updateEditForm("targetGroup", e.target.value)}
-                                  placeholder={text.targetGroupPlaceholder}
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="targetGroupEn">
-                                  {text.targetGroupLabel} ({text.englishSection})
-                                </Label>
-                                <Input
-                                  id="targetGroupEn"
-                                  value={editForm.targetGroupEn}
-                                  onChange={(e) => updateEditForm("targetGroupEn", e.target.value)}
-                                  placeholder={text.targetGroupPlaceholderEn}
-                                />
-                              </div>
-                            </div>
-                            <Button
-                              onClick={() => handleSaveCategory(category.id)}
-                              disabled={saving}
-                              className="bg-violet hover:bg-violet/90 mt-5 w-full">
-                              {saving ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  {text.saving}
-                                </>
-                              ) : (
-                                text.save
-                              )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            disabled={index === arr.length - 1 || reorderingId === category.id}
+                            aria-label={text.moveDown}
+                            onClick={() => handleMove(category.id, "down")}>
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                      {(!isCategoryPartner || category.id === user?.categoryId) && (
+                        <Dialog
+                          open={editingId === category.id}
+                          onOpenChange={(open) => {
+                            if (open) {
+                              const presentation = getCategoryPresentation(category)
+                              setEditingId(category.id)
+                              setEditForm({
+                                name: category.name,
+                                nameEn: category.name_en || "",
+                                description: category.description || "",
+                                descriptionEn: category.description_en || "",
+                                shortDescription: category.short_description || "",
+                                shortDescriptionEn: category.short_description_en || "",
+                                partnerName: category.partner_name || "",
+                                partnerNameEn: category.partner_name_en || "",
+                                color: presentation.color,
+                                icon: presentation.iconName,
+                                prize: category.prize || "",
+                                prizeEn: category.prize_en || "",
+                                targetGroup: category.target_group || "",
+                                targetGroupEn: category.target_group_en || ""
+                              })
+                            } else {
+                              setEditingId(null)
+                            }
+                          }}>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Edit2 className="h-4 w-4" />
                             </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    )}
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-3xl">
+                            <DialogHeader>
+                              <DialogTitle>{text.editTitle}</DialogTitle>
+                              <DialogDescription>
+                                {text.editDescription} &quot;
+                                {getCategoryPresentationByLanguage(category, language).title}&quot;
+                              </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-6 pr-1">
+                              <div className="grid gap-4 lg:grid-cols-2">
+                                <div className="space-y-4 rounded-lg border p-4">
+                                  <p className="text-sm font-semibold">{text.germanSection}</p>
+                                  <div>
+                                    <Label htmlFor="name">{text.titleLabel}</Label>
+                                    <Input
+                                      id="name"
+                                      value={editForm.name}
+                                      onChange={(e) => updateEditForm("name", e.target.value)}
+                                      placeholder="Name der Kategorie"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <Label htmlFor="partnerName">{text.partnerLabel}</Label>
+                                    <Input
+                                      id="partnerName"
+                                      value={editForm.partnerName}
+                                      onChange={(e) => updateEditForm("partnerName", e.target.value)}
+                                      placeholder="Partnername"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <Label htmlFor="description">{text.descriptionLabel}</Label>
+                                    <Textarea
+                                      id="description"
+                                      value={editForm.description}
+                                      onChange={(e) => updateEditForm("description", e.target.value)}
+                                      placeholder="Beschreibe diese Kategorie und ihre Herausforderungen..."
+                                      rows={6}
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <Label htmlFor="shortDescription">{text.shortDescriptionLabel}</Label>
+                                    <Textarea
+                                      id="shortDescription"
+                                      value={editForm.shortDescription}
+                                      onChange={(e) => updateEditForm("shortDescription", e.target.value)}
+                                      placeholder={text.shortDescriptionPlaceholder}
+                                      rows={3}
+                                    />
+                                    <p className="text-muted-foreground mt-1 text-xs">
+                                      {text.shortDescriptionHint}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-4 rounded-lg border p-4">
+                                  <p className="text-sm font-semibold">{text.englishSection}</p>
+                                  <div>
+                                    <Label htmlFor="nameEn">{text.titleLabel}</Label>
+                                    <Input
+                                      id="nameEn"
+                                      value={editForm.nameEn}
+                                      onChange={(e) => updateEditForm("nameEn", e.target.value)}
+                                      placeholder="Category title"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <Label htmlFor="partnerNameEn">{text.partnerLabel}</Label>
+                                    <Input
+                                      id="partnerNameEn"
+                                      value={editForm.partnerNameEn}
+                                      onChange={(e) => updateEditForm("partnerNameEn", e.target.value)}
+                                      placeholder="Partner name"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <Label htmlFor="descriptionEn">{text.descriptionLabel}</Label>
+                                    <Textarea
+                                      id="descriptionEn"
+                                      value={editForm.descriptionEn}
+                                      onChange={(e) => updateEditForm("descriptionEn", e.target.value)}
+                                      placeholder="Describe this category and its challenge context..."
+                                      rows={6}
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <Label htmlFor="shortDescriptionEn">{text.shortDescriptionLabel}</Label>
+                                    <Textarea
+                                      id="shortDescriptionEn"
+                                      value={editForm.shortDescriptionEn}
+                                      onChange={(e) => updateEditForm("shortDescriptionEn", e.target.value)}
+                                      placeholder={text.shortDescriptionPlaceholder}
+                                      rows={3}
+                                    />
+                                    <p className="text-muted-foreground mt-1 text-xs">
+                                      {text.shortDescriptionHint}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <div>
+                                  <Label htmlFor="color">{text.colorLabel}</Label>
+                                  <ColorPicker
+                                    current={normalizeHexColor(editForm.color)}
+                                    onChange={(color) => updateEditForm("color", color)}
+                                    onPresetClick={(color) => updateEditForm("color", color)}
+                                    withPresets
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="icon">{text.iconLabel}</Label>
+                                  <Select
+                                    value={editForm.icon}
+                                    onValueChange={(value) => updateEditForm("icon", value)}>
+                                    <SelectTrigger id="icon">
+                                      <SelectValue placeholder={text.iconPlaceholder} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {categoryIconOptions.map((option) => {
+                                        const Icon = categoryIconMap[option.value]
+
+                                        return (
+                                          <SelectItem key={option.value} value={option.value}>
+                                            <span className="flex items-center gap-2">
+                                              <Icon className="h-4 w-4" />
+                                              <span>{option.label}</span>
+                                            </span>
+                                          </SelectItem>
+                                        )
+                                      })}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <div>
+                                  <Label htmlFor="prize">{text.prizeLabel}</Label>
+                                  <Input
+                                    id="prize"
+                                    value={editForm.prize}
+                                    onChange={(e) => updateEditForm("prize", e.target.value)}
+                                    placeholder={text.prizePlaceholder}
+                                  />
+                                  <p className="text-muted-foreground mt-1 text-xs">{text.prizeHint}</p>
+                                </div>
+                                <div>
+                                  <Label htmlFor="prize">{text.prizeLabelEn}</Label>
+                                  <Input
+                                    id="prize"
+                                    value={editForm.prizeEn}
+                                    onChange={(e) => updateEditForm("prizeEn", e.target.value)}
+                                    placeholder={text.prizePlaceholder}
+                                  />
+                                  <p className="text-muted-foreground mt-1 text-xs">{text.prizeHint}</p>
+                                </div>
+                                <div>
+                                  <Label htmlFor="targetGroup">
+                                    {text.targetGroupLabel} ({text.germanSection})
+                                  </Label>
+                                  <Input
+                                    id="targetGroup"
+                                    value={editForm.targetGroup}
+                                    onChange={(e) => updateEditForm("targetGroup", e.target.value)}
+                                    placeholder={text.targetGroupPlaceholder}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="targetGroupEn">
+                                    {text.targetGroupLabel} ({text.englishSection})
+                                  </Label>
+                                  <Input
+                                    id="targetGroupEn"
+                                    value={editForm.targetGroupEn}
+                                    onChange={(e) => updateEditForm("targetGroupEn", e.target.value)}
+                                    placeholder={text.targetGroupPlaceholderEn}
+                                  />
+                                </div>
+                              </div>
+                              <Button
+                                onClick={() => handleSaveCategory(category.id)}
+                                disabled={saving}
+                                className="bg-violet hover:bg-violet/90 mt-5 w-full">
+                                {saving ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    {text.saving}
+                                  </>
+                                ) : (
+                                  text.save
+                                )}
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>

@@ -44,7 +44,7 @@ export async function GET() {
            LEFT JOIN sponsor_contacts sco ON sco.id = sch.sponsor_id
            WHERE sch.category_id = c.id AND sch.status = 'published'
          ) sc ON TRUE
-         ORDER BY c.name ASC`
+         ORDER BY c.display_order ASC, c.name ASC`
       )
     } catch (error) {
       if (!isMissingTableError(error, "sponsor_challenges")) {
@@ -56,7 +56,7 @@ export async function GET() {
         `SELECT ${buildCategorySelectClause(availableColumns)},
                 '[]'::jsonb AS challenges
          FROM categories
-         ORDER BY name ASC`
+         ORDER BY display_order ASC, name ASC`
       )
     }
 

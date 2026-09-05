@@ -3,6 +3,7 @@ import {
   Brain,
   Briefcase,
   Cpu,
+  Flag,
   GraduationCap,
   Lightbulb,
   MapPin,
@@ -22,6 +23,7 @@ export type CategoryIconName =
   | "briefcase"
   | "lightbulb"
   | "map-pin"
+  | "flag"
 
 export interface CategoryRecord {
   id?: string
@@ -30,6 +32,8 @@ export interface CategoryRecord {
   slug: string
   description?: string | null
   description_en?: string | null
+  short_description?: string | null
+  short_description_en?: string | null
   partner_name?: string | null
   partner_name_en?: string | null
   color?: string | null
@@ -41,6 +45,7 @@ export interface CategoryRecord {
   prize_en?: string | null
   target_group?: string | null
   target_group_en?: string | null
+  display_order?: number | null
   challenge_title?: string | null
   challenge_title_en?: string | null
   challenge_short_description?: string | null
@@ -74,7 +79,8 @@ export const categoryIconMap: Record<CategoryIconName, LucideIcon> = {
   cpu: Cpu,
   briefcase: Briefcase,
   lightbulb: Lightbulb,
-  "map-pin": MapPin
+  "map-pin": MapPin,
+  flag: Flag
 }
 
 export const categoryIconOptions: Array<{ value: CategoryIconName; label: string }> = [
@@ -86,7 +92,8 @@ export const categoryIconOptions: Array<{ value: CategoryIconName; label: string
   { value: "cpu", label: "CPU" },
   { value: "briefcase", label: "Briefcase" },
   { value: "lightbulb", label: "Lightbulb" },
-  { value: "map-pin", label: "Map Pin" }
+  { value: "map-pin", label: "Map Pin" },
+  { value: "flag", label: "Flag" }
 ]
 
 export const categoryDisplayOrder = [
@@ -207,6 +214,18 @@ export function getCategoryPresentationByLanguage(category: CategoryRecord, lang
       ? (category.description_en || category.description || fallback.description).trim()
       : (category.description || fallback.description).trim()
 
+  // Short teaser shown on the card. Falls back to the full description when not set.
+  const localizedShortDescription =
+    language === "en"
+      ? (
+          category.short_description_en ||
+          category.short_description ||
+          category.description_en ||
+          category.description ||
+          fallback.description
+        ).trim()
+      : (category.short_description || category.description || fallback.description).trim()
+
   const localizedPartnerName =
     language === "en"
       ? (category.partner_name_en || category.partner_name || fallback.partnerName).trim()
@@ -236,9 +255,11 @@ export function getCategoryPresentationByLanguage(category: CategoryRecord, lang
   return {
     id: category.id,
     slug: category.slug,
+    displayOrder: typeof category.display_order === "number" ? category.display_order : 0,
     title: localizedTitle,
     challengeTitle,
     description: localizedDescription,
+    shortDescription: localizedShortDescription,
     partnerName: localizedPartnerName,
     color,
     textColor: getReadableTextColor(color),

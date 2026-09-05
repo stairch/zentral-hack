@@ -4,6 +4,8 @@ const optionalCategoryColumns = [
   "partner_name",
   "name_en",
   "description_en",
+  "short_description",
+  "short_description_en",
   "partner_name_en",
   "color",
   "icon",
@@ -13,7 +15,8 @@ const optionalCategoryColumns = [
   "prize",
   "prize_en",
   "target_group",
-  "target_group_en"
+  "target_group_en",
+  "display_order"
 ] as const
 const optionalCategoryColumnsParam: string[] = [...optionalCategoryColumns]
 
@@ -40,6 +43,10 @@ export function buildCategorySelectClause(availableColumns: Set<OptionalCategory
     "slug",
     "description",
     availableColumns.has("description_en") ? "description_en" : "NULL::text AS description_en",
+    availableColumns.has("short_description") ? "short_description" : "NULL::text AS short_description",
+    availableColumns.has("short_description_en")
+      ? "short_description_en"
+      : "NULL::text AS short_description_en",
     availableColumns.has("partner_name") ? "partner_name" : "NULL::text AS partner_name",
     availableColumns.has("partner_name_en") ? "partner_name_en" : "NULL::text AS partner_name_en",
     availableColumns.has("color") ? "color" : "NULL::text AS color",
@@ -57,6 +64,7 @@ export function buildCategorySelectClause(availableColumns: Set<OptionalCategory
     availableColumns.has("prize_en") ? "prize_en" : "NULL::text AS prize",
     availableColumns.has("target_group") ? "target_group" : "NULL::text AS target_group",
     availableColumns.has("target_group_en") ? "target_group_en" : "NULL::text AS target_group_en",
+    availableColumns.has("display_order") ? "display_order" : "0::integer AS display_order",
     "is_active",
     "created_at",
     "updated_at"

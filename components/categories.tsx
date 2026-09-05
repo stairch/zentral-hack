@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, ArrowRight, Trophy } from "lucide-react"
+import { ArrowLeft, ArrowRight, Check, Trophy } from "lucide-react"
 import {
   categoryDisplayOrder,
   getCategoryPresentationByLanguage,
@@ -16,6 +16,8 @@ import {
 import { useLanguage } from "@/lib/language-context"
 import { getContrastForegroundColor, isDarkContrastForegroundColor } from "@/lib/helpers"
 import { type SponsorChallengeData } from "@/lib/sponsor-challenge"
+import { BackgroundBeams } from "@/components/ui/background-beams"
+import PixelBlast from "@/components/ui/pixel-blast"
 
 interface DisplayCategory {
   id?: string
@@ -23,6 +25,7 @@ interface DisplayCategory {
   title: string
   challengeTitle: string
   description: string
+  shortDescription: string
   icon: React.ComponentType<{ className?: string }>
   color: string
   textColor: string
@@ -50,18 +53,34 @@ interface DisplayCategory {
   }>
 }
 
+const CHECKLIST_ITEM_REGEX = /^-\s*\[\s*\]\s*(.+)$/
+
+function parseDescription(text: string): { intro: string; items: string[] } | null {
+  const lines = text.split("\n").map((line) => line.trim())
+  const items = lines
+    .filter((line) => CHECKLIST_ITEM_REGEX.test(line))
+    .map((line) => line.match(CHECKLIST_ITEM_REGEX)![1].trim())
+  if (items.length === 0) return null
+  const intro = lines.filter((line) => line && !CHECKLIST_ITEM_REGEX.test(line)).join(" ")
+  return { intro, items }
+}
+
 function CategoryCard({
   category,
   index,
   onOpen,
   partnerLabel,
-  detailsLabel
+  buttonLabel,
+  layout = "standard",
+  className = ""
 }: {
   category: DisplayCategory
   index: number
   onOpen: () => void
   partnerLabel: string
-  detailsLabel: string
+  buttonLabel: string
+  layout?: string
+  className?: string
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
@@ -81,48 +100,174 @@ function CategoryCard({
     y.set((e.clientY - centerY) * 0.05)
   }
 
+  const isBentoHighlight = layout === "bento" && index < 2
+  const parsedDescription = isBentoHighlight ? parseDescription(category.shortDescription) : null
+
   const cardStyle = { x: xSpring, y: ySpring, backgroundColor: category.color, color: category.textColor }
+  const cardVariants = {
+    hidden: { opacity: 0, y: 50, rotateX: -15 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      rotateX: 0,
+      transition: { duration: 0.6, delay: i * 0.15 }
+    })
+  }
+
+  let cardHeight = ""
+  if (layout === "bento") {
+    cardHeight = "h-full"
+  }
 
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 50, rotateX: -15 }}
-      animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
-      whileHover={{ scale: 1.02 }}
-      transition={{ duration: 0.6, delay: index * 0.15 }}
+      custom={index}
+      variants={cardVariants}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
+      whileHover={{ scale: 1.02, transition: { duration: 0.6 } }}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => {
         x.set(0)
         y.set(0)
       }}
-      className="group relative cursor-pointer overflow-hidden rounded-2xl p-8"
+      className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl p-8 ${className} ${layout === "bento" && index === 0 && "border-accent border-2"} ${cardHeight}`}
       style={cardStyle}
       onClick={onOpen}
       role="button"
       tabIndex={0}>
-      <motion.div
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage: "radial-gradient(circle at 20% 20%, currentColor 1px, transparent 1px)",
-          backgroundSize: "20px 20px"
-        }}
-        animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-      />
+      {layout === "bento" && index === 0 ? (
+        <div className="absolute inset-0 overflow-hidden">
+          <BackgroundBeams
+            className="opacity-30"
+            colors={["var(--accent)", "var(--accent)", "var(--accent)"]}
+          />
+        </div>
+      ) : layout === "bento" && index === 1 ? (
+        <div className="absolute inset-0 overflow-hidden blur-[1px]">
+          <PixelBlast
+            className="opacity-50"
+            variant="square"
+            color="white"
+            pixelSize={3}
+            speed={0.4}
+            patternScale={6}
+            enableRipples={false}
+            edgeFade={0.2}
+          />
+        </div>
+      ) : (
+        layout === "standard" && (
+          <motion.div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage: "radial-gradient(circle at 20% 20%, currentColor 1px, transparent 1px)",
+              backgroundSize: "20px 20px"
+            }}
+            animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          />
+        )
+      )}
 
-      <div className="relative z-10 mb-6 w-fit">
-        <category.icon className="h-12 w-12" />
+      <div className={`${layout === "bento" && index > 1 && "hidden"} relative z-10 mb-6 w-full`}>
+        <category.icon className="h-8 w-8" />
       </div>
 
-      <div className="relative z-10">
-        <h3 className="font-display mb-3 text-2xl font-bold">{category.title}</h3>
-        <p className="mb-4 leading-relaxed opacity-90">{category.description}</p>
-        <p className="text-sm opacity-70">
-          {partnerLabel}: {category.partnerName}
-        </p>
-        <p className="mt-4 text-xs opacity-70">{detailsLabel}</p>
-      </div>
+      <div className={`relative z-10 flex-1`}>
+        {layout === "bento" && index > 1 ? (
+          <div className="mb-3 flex items-center gap-5">
+            <category.icon className="h-6 w-6" />
+            <h3 className={`font-display text-2xl font-bold`}>{category.title}</h3>
+          </div>
+        ) : (
+          <h3
+            className={`font-display ${layout === "bento" && index === 0 ? "mb-5 text-4xl font-semibold tracking-wider" : "mb-3 text-2xl font-bold"}`}>
+            {category.title}
+          </h3>
+        )}
 
+        {parsedDescription ? (
+          <div className="mb-4">
+            {parsedDescription.intro && (
+              <p
+                className={`mb-5 leading-relaxed ${layout === "bento" && index === 0 ? "font-light" : "opacity-90"}`}>
+                {parsedDescription.intro}
+              </p>
+            )}
+            <ul className="space-y-2">
+              {parsedDescription.items.map((item, itemIndex) => (
+                <li key={itemIndex} className="flex items-center gap-3">
+                  <span
+                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
+                    style={{
+                      backgroundColor: index === 0 ? "var(--accent)" : category.textColor
+                    }}>
+                    <Check
+                      className="h-2.5 w-2.5 text-black"
+                      strokeWidth={3}
+                      style={{ color: index === 0 ? "black" : category.color }}
+                    />
+                  </span>
+                  <span className={`${layout === "bento" && index === 0 && "font-light"}`}>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p
+            className={`mb-4 leading-relaxed ${layout === "bento" && index === 0 ? "font-light" : "opacity-90"}`}>
+            {category.shortDescription}
+          </p>
+        )}
+        {layout === "standard" && (
+          <p className="text-sm opacity-70">
+            {partnerLabel}: {category.partnerName}
+          </p>
+        )}
+      </div>
+      {layout === "bento" && index < 2 ? (
+        <div className="relative right-0 bottom-0 left-0 mt-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <p className="mb-4 text-sm opacity-70 sm:mb-0">
+              {partnerLabel}: {category.partnerName}
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              style={{
+                backgroundColor: index === 0 ? "var(--accent)" : category.textColor,
+                color: index === 0 ? "black" : category.color
+              }}
+              className="rounded-full px-3!"
+              onClick={(e) => {
+                e.stopPropagation()
+                onOpen()
+              }}>
+              <span>{buttonLabel}</span>
+              <ArrowRight className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      ) : layout === "bento" && index >= 2 ? (
+        <div className="relative right-0 bottom-0 left-0 mt-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <p className="mb-4 text-sm opacity-70 sm:mb-0">
+              {partnerLabel}: {category.partnerName}
+            </p>
+            <div className="flex items-center">
+              <p className="text-xs opacity-70">{buttonLabel}</p>
+              <ArrowRight className="ml-1 h-3 w-3 opacity-70" />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-4 flex items-center">
+          <p className="text-xs opacity-70">{buttonLabel}</p>
+          <ArrowRight className="ml-1 h-3 w-3 opacity-70" />
+        </div>
+      )}
       <div className="absolute inset-0 bg-white/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
     </motion.div>
   )
@@ -136,6 +281,7 @@ export function Categories() {
   const [selectedChallengeId, setSelectedChallengeId] = useState<string>("")
   const [isChallengeBrowserOpen, setIsChallengeBrowserOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [layout, setLayout] = useState<"standard" | "bento">("standard")
   const { language, isReady } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -143,6 +289,17 @@ export function Categories() {
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    fetch("/api/site-settings?key=categories_layout")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.data?.value === "bento" || data?.data?.value === "standard") {
+          setLayout(data.data.value)
+        }
+      })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -154,14 +311,15 @@ export function Categories() {
         const data = await res.json()
         const dbCategories: CategoryRecord[] = data.data?.categories || []
 
-        const orderedSlugs = Array.from(
-          new Set([...categoryDisplayOrder, ...dbCategories.map((category) => category.slug)])
-        )
+        // The API already returns categories sorted by their admin-defined display_order.
+        // Keep that order, then append any hardcoded fallback slugs missing from the DB.
+        const dbSlugs = new Set(dbCategories.map((category) => category.slug))
+        const orderedRecords: CategoryRecord[] = [
+          ...dbCategories,
+          ...categoryDisplayOrder.filter((slug) => !dbSlugs.has(slug)).map((slug) => ({ slug }))
+        ]
 
-        const merged = orderedSlugs.map((slug) => {
-          const dbCategory = dbCategories.find((category) => category.slug === slug)
-          return getCategoryPresentationByLanguage(dbCategory || { slug }, language)
-        })
+        const merged = orderedRecords.map((record) => getCategoryPresentationByLanguage(record, language))
 
         setDisplayCategories(merged)
       } catch {
@@ -195,7 +353,7 @@ export function Categories() {
       description:
         "Vier spannende Kategorien warten auf dich. Finde deine Passion und löse Challenges, die einen echten Unterschied machen.",
       partner: "Partner",
-      clickDetails: "Klicken für Details",
+      moreInfo: "Mehr erfahren",
       register: "Jetzt registrieren",
       challengeOverview: "Challenge-Übersicht",
       noChallengeAvailable: "Für diese Kategorie sind aktuell noch keine Challenges veröffentlicht.",
@@ -215,7 +373,7 @@ export function Categories() {
       description:
         "Four exciting categories are waiting for you. Find your passion and solve challenges that make a real impact.",
       partner: "Partner",
-      clickDetails: "Click for details",
+      moreInfo: "Learn more",
       register: "Register now",
       challengeOverview: "Challenge overview",
       noChallengeAvailable: "There are no published challenges available for this category yet.",
@@ -285,24 +443,30 @@ export function Categories() {
         </motion.div>
 
         {displayCategories.length > 0 ? (
-          <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-2">
-            {displayCategories.map((category, index) => (
-              <CategoryCard
-                key={category.slug}
-                category={category}
-                index={index}
-                onOpen={() => {
-                  setSelectedCategory(category)
-                  setSelectedChallengeId(category.challenges?.[0]?.id || "")
-                  setIsChallengeBrowserOpen(false)
-                  const params = new URLSearchParams(searchParams.toString())
-                  params.set("category", category.slug)
-                  router.replace(`?${params.toString()}`, { scroll: false })
-                }}
-                partnerLabel={text.partner}
-                detailsLabel={text.clickDetails}
-              />
-            ))}
+          <div
+            className={`mx-auto grid max-w-7xl gap-6 ${layout === "bento" ? "lg:grid-cols-8" : "lg:grid-cols-2"}`}>
+            {displayCategories.map((category, index) => {
+              const bentoSpans = ["lg:col-span-5", "lg:col-span-3", "lg:col-span-4", "lg:col-span-4"]
+              return (
+                <CategoryCard
+                  key={category.slug}
+                  category={category}
+                  index={index}
+                  className={layout === "bento" ? (bentoSpans[index] ?? "lg:col-span-3") : ""}
+                  layout={layout}
+                  onOpen={() => {
+                    setSelectedCategory(category)
+                    setSelectedChallengeId(category.challenges?.[0]?.id || "")
+                    setIsChallengeBrowserOpen(false)
+                    const params = new URLSearchParams(searchParams.toString())
+                    params.set("category", category.slug)
+                    router.replace(`?${params.toString()}`, { scroll: false })
+                  }}
+                  partnerLabel={text.partner}
+                  buttonLabel={text.moreInfo}
+                />
+              )
+            })}
           </div>
         ) : (
           <div className="border-border bg-background/70 mx-auto max-w-2xl rounded-2xl border p-8 text-center">
