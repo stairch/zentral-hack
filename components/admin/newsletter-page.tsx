@@ -46,6 +46,23 @@ const ALL_CONTACTS = "__all__"
 const RESEND_TEMPLATE_BASE = "https://resend.com/templates"
 const RESEND_BROADCAST_BASE = "https://resend.com/broadcasts"
 
+// Rendert Kurzanleitungs-Texte und ersetzt <code>…</code>-Abschnitte durch
+// echte <code>-Elemente, damit technische Teile im Text hervorgehoben werden.
+const GUIDE_CODE_SPLIT = /(<code>.*?<\/code>)/g
+
+function renderGuideItem(item: string) {
+  return item.split(GUIDE_CODE_SPLIT).map((part, i) => {
+    const match = part.match(/^<code>(.*)<\/code>$/)
+    return match ? (
+      <code key={i} className="bg-muted rounded px-1 py-0.5 text-xs">
+        {match[1]}
+      </code>
+    ) : (
+      part
+    )
+  })
+}
+
 interface Campaign {
   id: string
   name: string
@@ -161,31 +178,50 @@ const copy = {
       {
         title: "Überblick",
         items: [
-          "Die Tabelle listet alle Broadcasts aus Resend auf",
-          "Templates, Kontakte und Weiteres werden direkt in Resend verwaltet (siehe Navigation, links)."
+          "Diese Seite ist nur die Steuerung der Kampagnen. Inhalte, Empfänger, Templates und Statistiken leben in Resend (siehe Navigation links: Templates, Kontakte, bzw. 'Link zu Resend' in der Tabelle).",
+          "Alles was man auf dieser Seite machen kann, kann man auch direkt im Resend Dashboard tun. Diese Seite ermöglicht es sich auf das Wichtigste zu konzentrieren."
+        ]
+      },
+      {
+        title: "Status einer Kampagne",
+        items: [
+          "Entwurf: Kampagne erstellt, aber noch nicht versendet. Senden, Bearbeiten und Löschen möglich.",
+          "Geplant und In Warteschlange: Versand ist auf einen bestimmten Zeitpunkt geplant oder läuft gerade an. Versand abbrechen möglich (bei Geplant zusätzlich löschbar).",
+          "Gesendet: Kampagne abgeschlossen und unveränderlich.",
+          "Abgebrochen: Ein geplanter Versand wurde gestoppt."
         ]
       },
       {
         title: "Kampagne erstellen & bearbeiten",
         items: [
-          "'Neue Kampagne' legt einen Entwurf mit Name (intern), Betreff und optionalem Vorschautext an.",
-          "Über das Menü (3 Punkte) lassen sich Entwürfe bearbeiten oder löschen und geplante Sendungen abbrechen.",
-          "Nur Entwürfe und geplante Kampagnen können gelöscht werden."
+          "'Neue Kampagne' legt einen Entwurf an mit Name (intern), Betreff und optionalem Vorschautext.",
+          "Das E-Mail-Layout selbst wird nicht hier bearbeitet, sondern kommt beim Senden aus einem Template. Die Templates können über Resend verwaltet werden."
         ]
       },
       {
-        title: "Senden",
+        title: "Templates",
         items: [
-          "Beim Senden wählst du ein Template aus (verwaltet über Resend), füllst die Variablen aus (falls vorhanden) und legst Zielgruppe und Zeitpunkt fest.",
-          "Nur Variablen mit dem Präfix 'admin_' sind bearbeitbar. Technische Variablen (bspw. den Unsubscribe Link) werden automatisch ausgefüllt."
+          "Templates werden vollständig in Resend erstellt und gepflegt (siehe Navigation links: 'Templates').",
+          "Im Sende-Dialog wird in der Auswahl nur veröffentlichte Templates angezeigt.",
+          "Ein Template ist ein HTML-Layout mit Platzhaltern in der Form <code>{{{variablenname}}}</code>, optional mit Standardwert: <code>{{{variablenname|Standardwert}}}</code>.",
+          "Beim Auswählen eines Templates werden dessen Variablen geladen und können daraufhin ausgefüllt werden.",
+        ]
+      },
+      {
+        title: "Variablen in Templates",
+        items: [
+          "Jede Template-Variable hat einen Namen (key), einen Typ (Text oder Zahl) und einen Fallback-Wert (in Resend definiert).",
+          "Nur Variablen, deren Name mit <code>admin_</code> beginnt, sind hier bearbeitbar (z. B. <code>admin_titel</code>, <code>admin_intro_text</code>). Sie erscheinen als Eingabefelder, vorbelegt mit dem Fallback-Wert (falls vorhanden).",
+          "Alle anderen Variablen (ohne <code>admin_</code>-Präfix) gelten als technisch und werden automatisch befüllt",
+          "Eingebaute Resend-Tags wie <code>{{{RESEND_UNSUBSCRIBE_URL}}}</code> (Abmeldelink) oder <code>{{{contact.first_name}}}</code> (Kontaktfelder) sind keine Template-Variablen: sie werden von Resend automatisch eingesetzt.",
         ]
       },
       {
         title: "Gut zu wissen",
         items: [
-          "Template- und Variablenauswahl werden nicht gespeichert und müssen bei jedem Senden neu gewählt werden.",
-          "Bereits im Resend-Editor erstellte Broadcasts können hier nicht gesendet werden.",
-          "Mehr Informationen und Statistiken können über das Resend Dashboard eingesehen werden über den Link in der Tabelle."
+          "Jeder Broadcast gilt für sich und gilt nach dem Senden/Abbrechen als abgeschlossen.",
+          "Broadcasts, die direkt im Resend-E-Mail-Editor erstellt oder geöffnet wurden, können hier nicht gesendet werden.",
+          "Öffnungen, Klicks und weitere Statistiken gibt es im Resend-Dashboard über den 'Link zu Resend' in der Tabelle."
         ]
       }
     ]
@@ -263,31 +299,50 @@ const copy = {
       {
         title: "Overview",
         items: [
-          "The table lists all broadcasts from Resend",
-          "Templates, contacts, and other settings are managed directly in Resend (see navigation, left)."
+          "This page only controls campaigns. Content, recipients, templates, and statistics live in Resend (see navigation on the left: Templates, Contacts, or 'Link to Resend' in the table).",
+          "Everything you can do on this page can also be done directly in the Resend dashboard. This page lets you focus on the essentials."
         ]
       },
       {
-        title: "Create & Edit Campaign",
+        title: "Campaign status",
         items: [
-          "'New Campaign' creates a draft with name (internal), subject, and optional preview text.",
-          "The menu (3 dots) lets you edit or delete drafts and cancel scheduled sends.",
-          "Only drafts and scheduled campaigns can be deleted."
+          "Draft: Campaign created but not yet sent. Can be sent, edited, or deleted.",
+          "Scheduled and Queued: Sending is scheduled for a specific time or is currently starting. Sending can be canceled (Scheduled campaigns can also be deleted).",
+          "Sent: Campaign completed and unchangeable.",
+          "Canceled: A scheduled send was stopped."
         ]
       },
       {
-        title: "Sending",
+        title: "Creating & editing a campaign",
         items: [
-          "When sending, you select a template (managed via Resend), fill in the variables (if any), and set the target audience and time.",
-          "Only variables with the prefix 'admin_' are editable. Technical variables (e.g. the unsubscribe link) are filled in automatically."
+          "'New campaign' creates a draft with a name (internal), subject, and optional preview text.",
+          "The email layout itself isn't edited here — it comes from a template when sending. Templates can be managed via Resend."
+        ]
+      },
+      {
+        title: "Templates",
+        items: [
+          "Templates are created and maintained entirely in Resend (see navigation on the left: 'Templates').",
+          "In the send dialog, only published templates are shown in the selection.",
+          "A template is an HTML layout with placeholders in the form <code>{{{variableName}}}</code>, optionally with a default value: <code>{{{variableName|defaultValue}}}</code>.",
+          "When a template is selected, its variables are loaded and can then be filled in.",
+        ]
+      },
+      {
+        title: "Variables in templates",
+        items: [
+          "Each template variable has a name (key), a type (text or number), and a fallback value (defined in Resend).",
+          "Only variables whose name starts with <code>admin_</code> are editable here (e.g. <code>admin_title</code>, <code>admin_intro_text</code>). They appear as input fields, pre-filled with the fallback value (if one exists).",
+          "All other variables (without the <code>admin_</code> prefix) are considered technical and are filled in automatically",
+          "Built-in Resend tags such as <code>{{{RESEND_UNSUBSCRIBE_URL}}}</code> (unsubscribe link) or <code>{{{contact.first_name}}}</code> (contact fields) are not template variables: they're inserted automatically by Resend.",
         ]
       },
       {
         title: "Good to know",
         items: [
-          "Template and variable selection are not saved and must be chosen again each time you send.",
-          "Broadcasts already created in the Resend editor cannot be sent from here.",
-          "More information and statistics can be viewed via the Resend dashboard using the link in the table."
+          "Each broadcast stands on its own and is considered complete once sent/canceled.",
+          "Broadcasts created or opened directly in the Resend email editor can't be sent from here.",
+          "Opens, clicks, and other statistics are available in the Resend dashboard via the 'Link to Resend' in the table."
         ]
       }
     ]
@@ -576,7 +631,7 @@ export function NewsletterPage() {
                     <p className="text-foreground font-medium">{section.title}</p>
                     <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
                       {section.items.map((item) => (
-                        <li key={item}>{item}</li>
+                        <li key={item}>{renderGuideItem(item)}</li>
                       ))}
                     </ul>
                   </div>
@@ -642,42 +697,42 @@ export function NewsletterPage() {
                         {(campaign.status === "draft" ||
                           campaign.status === "queued" ||
                           campaign.status === "scheduled") && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button size="icon" variant="ghost" className="h-8 w-8">
-                                <MoreVertical className="h-4 w-4" />
-                                <span className="sr-only">{text.actions}</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {campaign.status === "draft" && (
-                                <>
-                                  <DropdownMenuItem onClick={() => openEdit(campaign)}>
-                                    <Pencil className="h-4 w-4" />
-                                    {text.edit}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button size="icon" variant="ghost" className="h-8 w-8">
+                                  <MoreVertical className="h-4 w-4" />
+                                  <span className="sr-only">{text.actions}</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {campaign.status === "draft" && (
+                                  <>
+                                    <DropdownMenuItem onClick={() => openEdit(campaign)}>
+                                      <Pencil className="h-4 w-4" />
+                                      {text.edit}
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {(campaign.status === "queued" || campaign.status === "scheduled") && (
+                                  <DropdownMenuItem onClick={() => setCancelId(campaign.id)}>
+                                    <Ban className="h-4 w-4" />
+                                    {text.cancelSend}
                                   </DropdownMenuItem>
-                                </>
-                              )}
-                              {(campaign.status === "queued" || campaign.status === "scheduled") && (
-                                <DropdownMenuItem onClick={() => setCancelId(campaign.id)}>
-                                  <Ban className="h-4 w-4" />
-                                  {text.cancelSend}
-                                </DropdownMenuItem>
-                              )}
-                              {(campaign.status === "draft" || campaign.status === "scheduled") && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    variant="destructive"
-                                    onClick={() => setDeleteId(campaign.id)}>
-                                    <Trash2 className="h-4 w-4" />
-                                    {text.delete}
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
+                                )}
+                                {(campaign.status === "draft" || campaign.status === "scheduled") && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      variant="destructive"
+                                      onClick={() => setDeleteId(campaign.id)}>
+                                      <Trash2 className="h-4 w-4" />
+                                      {text.delete}
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                       </TableCell>
                     </TableRow>
                   ))}
