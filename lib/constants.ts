@@ -14,4 +14,6 @@ export class Urls {
   static bugReport = `${Urls.repository}/issues/new?template=bug_report.md`
   static featureRequest = `${Urls.repository}/issues/new?template=feature_request.md`
   static changelog = "/admin/changelog"
+  static resendTemplates = "https://resend.com/templates"
+  static resendContacts = "https://resend.com/audience"
 }
