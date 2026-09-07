@@ -204,7 +204,7 @@ const copy = {
           "Templates werden vollständig in Resend erstellt und gepflegt (siehe Navigation links: 'Templates').",
           "Im Sende-Dialog wird in der Auswahl nur veröffentlichte Templates angezeigt.",
           "Ein Template ist ein HTML-Layout mit Platzhaltern in der Form <code>{{{variablenname}}}</code>, optional mit Standardwert: <code>{{{variablenname|Standardwert}}}</code>.",
-          "Beim Auswählen eines Templates werden dessen Variablen geladen und können daraufhin ausgefüllt werden.",
+          "Beim Auswählen eines Templates werden dessen Variablen geladen und können daraufhin ausgefüllt werden."
         ]
       },
       {
@@ -213,7 +213,7 @@ const copy = {
           "Jede Template-Variable hat einen Namen (key), einen Typ (Text oder Zahl) und einen Fallback-Wert (in Resend definiert).",
           "Nur Variablen, deren Name mit <code>admin_</code> beginnt, sind hier bearbeitbar (z. B. <code>admin_titel</code>, <code>admin_intro_text</code>). Sie erscheinen als Eingabefelder, vorbelegt mit dem Fallback-Wert (falls vorhanden).",
           "Alle anderen Variablen (ohne <code>admin_</code>-Präfix) gelten als technisch und werden automatisch befüllt",
-          "Eingebaute Resend-Tags wie <code>{{{RESEND_UNSUBSCRIBE_URL}}}</code> (Abmeldelink) oder <code>{{{contact.first_name}}}</code> (Kontaktfelder) sind keine Template-Variablen: sie werden von Resend automatisch eingesetzt.",
+          "Eingebaute Resend-Tags wie <code>{{{RESEND_UNSUBSCRIBE_URL}}}</code> (Abmeldelink) oder <code>{{{contact.first_name}}}</code> (Kontaktfelder) sind keine Template-Variablen: sie werden von Resend automatisch eingesetzt."
         ]
       },
       {
@@ -325,7 +325,7 @@ const copy = {
           "Templates are created and maintained entirely in Resend (see navigation on the left: 'Templates').",
           "In the send dialog, only published templates are shown in the selection.",
           "A template is an HTML layout with placeholders in the form <code>{{{variableName}}}</code>, optionally with a default value: <code>{{{variableName|defaultValue}}}</code>.",
-          "When a template is selected, its variables are loaded and can then be filled in.",
+          "When a template is selected, its variables are loaded and can then be filled in."
         ]
       },
       {
@@ -334,7 +334,7 @@ const copy = {
           "Each template variable has a name (key), a type (text or number), and a fallback value (defined in Resend).",
           "Only variables whose name starts with <code>admin_</code> are editable here (e.g. <code>admin_title</code>, <code>admin_intro_text</code>). They appear as input fields, pre-filled with the fallback value (if one exists).",
           "All other variables (without the <code>admin_</code> prefix) are considered technical and are filled in automatically",
-          "Built-in Resend tags such as <code>{{{RESEND_UNSUBSCRIBE_URL}}}</code> (unsubscribe link) or <code>{{{contact.first_name}}}</code> (contact fields) are not template variables: they're inserted automatically by Resend.",
+          "Built-in Resend tags such as <code>{{{RESEND_UNSUBSCRIBE_URL}}}</code> (unsubscribe link) or <code>{{{contact.first_name}}}</code> (contact fields) are not template variables: they're inserted automatically by Resend."
         ]
       },
       {
@@ -531,7 +531,7 @@ export function NewsletterPage() {
       const data = await api<{ template: { variables: TemplateVariable[] } }>(
         `/api/admin/newsletter/template?id=${encodeURIComponent(id)}`
       )
-      setTemplateVars(data.template.variables)
+      setTemplateVars(data.template.variables.toSorted((a, b) => a.key.localeCompare(b.key)))
       const initial: Record<string, string> = {}
       for (const v of data.template.variables) {
         if (v.editable) initial[v.key] = v.fallbackValue ?? ""
@@ -697,42 +697,42 @@ export function NewsletterPage() {
                         {(campaign.status === "draft" ||
                           campaign.status === "queued" ||
                           campaign.status === "scheduled") && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button size="icon" variant="ghost" className="h-8 w-8">
-                                  <MoreVertical className="h-4 w-4" />
-                                  <span className="sr-only">{text.actions}</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                {campaign.status === "draft" && (
-                                  <>
-                                    <DropdownMenuItem onClick={() => openEdit(campaign)}>
-                                      <Pencil className="h-4 w-4" />
-                                      {text.edit}
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
-                                {(campaign.status === "queued" || campaign.status === "scheduled") && (
-                                  <DropdownMenuItem onClick={() => setCancelId(campaign.id)}>
-                                    <Ban className="h-4 w-4" />
-                                    {text.cancelSend}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button size="icon" variant="ghost" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                                <span className="sr-only">{text.actions}</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {campaign.status === "draft" && (
+                                <>
+                                  <DropdownMenuItem onClick={() => openEdit(campaign)}>
+                                    <Pencil className="h-4 w-4" />
+                                    {text.edit}
                                   </DropdownMenuItem>
-                                )}
-                                {(campaign.status === "draft" || campaign.status === "scheduled") && (
-                                  <>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      variant="destructive"
-                                      onClick={() => setDeleteId(campaign.id)}>
-                                      <Trash2 className="h-4 w-4" />
-                                      {text.delete}
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
+                                </>
+                              )}
+                              {(campaign.status === "queued" || campaign.status === "scheduled") && (
+                                <DropdownMenuItem onClick={() => setCancelId(campaign.id)}>
+                                  <Ban className="h-4 w-4" />
+                                  {text.cancelSend}
+                                </DropdownMenuItem>
+                              )}
+                              {(campaign.status === "draft" || campaign.status === "scheduled") && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    variant="destructive"
+                                    onClick={() => setDeleteId(campaign.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                    {text.delete}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -790,7 +790,7 @@ export function NewsletterPage() {
 
       {/* Send dialog */}
       <Dialog open={sendCampaign !== null} onOpenChange={(open) => !open && setSendCampaign(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[85vh] overflow-x-hidden overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {text.sendTitle}
@@ -849,13 +849,36 @@ export function NewsletterPage() {
                       <Label htmlFor={`var-${v.key}`} className="font-mono text-xs">
                         {v.key}
                       </Label>
-                      <Input
-                        id={`var-${v.key}`}
-                        type={v.type === "number" ? "number" : "text"}
-                        placeholder={v.fallbackValue ?? ""}
-                        value={adminValues[v.key] ?? ""}
-                        onChange={(e) => setAdminValues((prev) => ({ ...prev, [v.key]: e.target.value }))}
-                      />
+                      {v.type === "number" ? (
+                        <Input
+                          id={`var-${v.key}`}
+                          type="number"
+                          placeholder={v.fallbackValue ?? ""}
+                          value={adminValues[v.key] ?? ""}
+                          onChange={(e) => setAdminValues((prev) => ({ ...prev, [v.key]: e.target.value }))}
+                        />
+                      ) : (
+                        <Textarea
+                          id={`var-${v.key}`}
+                          placeholder={v.fallbackValue ?? ""}
+                          value={adminValues[v.key] ?? ""}
+                          style={{ fieldSizing: "fixed" } as React.CSSProperties}
+                          onChange={(e) => setAdminValues((prev) => ({ ...prev, [v.key]: e.target.value }))}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") e.preventDefault()
+                          }}
+                          onPaste={(e) => {
+                            e.preventDefault()
+                            const text = e.clipboardData.getData("text").replace(/[\r\n]+/g, " ")
+                            const target = e.target as HTMLTextAreaElement
+                            const start = target.selectionStart
+                            const end = target.selectionEnd
+                            const currentValue = adminValues[v.key] ?? ""
+                            const newValue = currentValue.slice(0, start) + text + currentValue.slice(end)
+                            setAdminValues((prev) => ({ ...prev, [v.key]: newValue }))
+                          }}
+                        />
+                      )}
                     </div>
                   ))
                 )}
