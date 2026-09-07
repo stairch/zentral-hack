@@ -2,6 +2,7 @@ import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
 import { successResponse, serverError } from "@/lib/api"
 import { verifyJWT } from "@/lib/auth"
+import { getAllSubscribers } from "@/lib/resend"
 
 /**
  * GET /api/admin/dashboard-stats
@@ -21,14 +22,14 @@ export async function GET(request: NextRequest) {
 
     const [registrationsRes, newsletterRes, teamsRes, documentsRes] = await Promise.all([
       query("SELECT COUNT(*) as count FROM registrations"),
-      query("SELECT COUNT(*) as count FROM newsletter_subscribers WHERE subscribed = true"),
+      getAllSubscribers(),
       query("SELECT COUNT(*) as count FROM teams"),
       query("SELECT COUNT(*) as count FROM category_documents")
     ])
 
     const stats = {
       registrations: parseInt(registrationsRes.rows[0]?.count || 0),
-      newsletter: parseInt(newsletterRes.rows[0]?.count || 0),
+      newsletter: newsletterRes.length,
       teams: parseInt(teamsRes.rows[0]?.count || 0),
       documents: parseInt(documentsRes.rows[0]?.count || 0)
     }

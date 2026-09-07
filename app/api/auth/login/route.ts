@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
     )
 
     if (result.rows.length === 0) {
+      return unauthorizedError()
     }
 
     const user = result.rows[0]

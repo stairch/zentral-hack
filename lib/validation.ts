@@ -118,15 +118,6 @@ export const SponsorContactSchema = z.object({
   message: z.string().max(5000).optional()
 })
 
-// Email Campaign Schema
-export const EmailCampaignSchema = z.object({
-  subject: z.string().min(1, "Betreff erforderlich").max(200),
-  htmlContent: z.string().min(1, "E-Mail-Inhalt erforderlich"),
-  recipientType: z.enum(["all_registered", "newsletter_subscribers", "category_members"]),
-  categoryId: z.string().uuid().optional(),
-  sendAt: z.string().datetime().optional()
-})
-
 // File Upload Schema (validation in API, but schema for structure)
 export const FileUploadSchema = z.object({
   fileType: z.enum(["pdf", "image", "document"]),

@@ -29,7 +29,8 @@ import {
   ShieldCheck,
   Bug,
   ArrowLeft,
-  ScrollText
+  ScrollText,
+  SquareArrowOutUpRight
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BrandMark } from "@/components/brand-mark"
@@ -49,8 +50,7 @@ const copy = {
     schedule: "Zeitplan",
     partnerLogos: "Partner-Logos",
     faqs: "FAQs",
-    emails: "E-Mails & Kampagnen",
-    newsletter: "Newsletter",
+    emails: "Emails (Resend)",
     sponsors: "Sponsoren",
     roles: "Rollen",
     adminPanel: "Admin Panel",
@@ -74,8 +74,7 @@ const copy = {
     schedule: "Schedule",
     partnerLogos: "Partner Logos",
     faqs: "FAQs",
-    emails: "Emails & Campaigns",
-    newsletter: "Newsletter",
+    emails: "Emails (Resend)",
     sponsors: "Sponsors",
     roles: "Roles",
     adminPanel: "Admin Panel",
@@ -201,22 +200,6 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       adminOnly: true
     },
     {
-      id: "emails",
-      href: "/admin/emails",
-      label: text.emails,
-      icon: Mail,
-      permissionKey: "emails",
-      adminOnly: true
-    },
-    {
-      id: "newsletter",
-      href: "/admin/newsletter",
-      label: text.newsletter,
-      icon: Mail,
-      permissionKey: "newsletter",
-      adminOnly: true
-    },
-    {
       id: "sponsors",
       href: "/admin/sponsors",
       label: text.sponsors,
@@ -231,6 +214,15 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       icon: ShieldCheck,
       permissionKey: null,
       adminOnly: true
+    },
+    {
+      id: "emails",
+      href: "/admin/emails",
+      label: text.emails,
+      icon: Mail,
+      permissionKey: "emails",
+      adminOnly: true,
+      external: true
     }
   ]
 
@@ -287,6 +279,7 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       <nav className="flex-1 space-y-1 overflow-y-auto p-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href
+          const external = item.external
           return (
             <Link
               key={item.href}
@@ -310,7 +303,9 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
                 </div>
                 {item.label}
               </div>
-              {!item.isReleased && (
+              {item.isReleased ? (
+                external && <SquareArrowOutUpRight className="h-4 w-4" />
+              ) : (
                 <div
                   className={`border px-1.5 py-0.5 ${isActive ? "border-white text-white" : "text-muted-foreground border-neutral-200 bg-neutral-50"} flex items-center gap-1 rounded-sm text-xs`}>
                   <Lock className="h-3 w-3 stroke-[2.5px]" />

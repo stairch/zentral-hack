@@ -1,6 +1,6 @@
-import { EmailManagementPage } from "@/components/admin/email-management"
 import { adminEmailsFlag } from "@/lib/flags"
 import ComingSoon from "@/components/ui/coming-soon"
+import ResendRedirect from "./ResendRedirect"
 
 export default async function AdminEmailsPage() {
   const showEmails = await adminEmailsFlag()
@@ -9,5 +9,5 @@ export default async function AdminEmailsPage() {
     return <ComingSoon />
   }
 
-  return <EmailManagementPage />
+  return <ResendRedirect />
 }

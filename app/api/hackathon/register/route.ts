@@ -4,7 +4,7 @@ import { sendEmail } from "@/lib/email"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { RegistrationSchema, validateRequest } from "@/lib/validation"
 import { escapeHtml } from "@/lib/email-templates"
-import { getNewsletterColumnSupport } from "@/lib/newsletter-db"
+import { addSubscriber } from "@/lib/resend"
 
 export async function POST(request: NextRequest) {
   try {
@@ -99,25 +99,7 @@ export async function POST(request: NextRequest) {
     // Subscribe to newsletter if requested
     if (subscribeNewsletter) {
       try {
-        const columnSupport = await getNewsletterColumnSupport()
-        if (columnSupport.weeklyUpdatesSubscribed && columnSupport.updatedAt) {
-          await query(
-            `INSERT INTO newsletter_subscribers (email, subscribed, weekly_updates_subscribed)
-             VALUES ($1, true, true)
-             ON CONFLICT (email) DO UPDATE
-             SET subscribed = true,
-                 weekly_updates_subscribed = true,
-                 updated_at = NOW()`,
-            [email.toLowerCase()]
-          )
-        } else {
-          await query(
-            `INSERT INTO newsletter_subscribers (email, subscribed)
-             VALUES ($1, true)
-             ON CONFLICT (email) DO UPDATE SET subscribed = true`,
-            [email.toLowerCase()]
-          )
-        }
+        await addSubscriber(email)
       } catch (error) {
         console.error("Newsletter subscription failed:", error)
       }

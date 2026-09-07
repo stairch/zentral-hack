@@ -23,6 +23,5 @@ function makeFlag(key: string): Flag<boolean> {
 
 export const adminDocumentsFlag = makeFlag("admin-documents")
 export const adminEmailsFlag = makeFlag("admin-emails")
-export const adminNewsletterFlag = makeFlag("admin-newsletter")
 export const adminTeamsFlag = makeFlag("admin-teams")
 export const dashboardChallengesFlag = makeFlag("dashboard-challenges")

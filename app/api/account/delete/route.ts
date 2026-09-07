@@ -2,6 +2,7 @@ import { query } from "@/lib/db"
 import { withAuth, type AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { hashPassword } from "@/lib/auth"
+import { removeSubscriber } from "@/lib/resend"
 
 /**
  * POST /api/account/delete
@@ -29,10 +30,8 @@ async function handlePost(req: AuthenticatedRequest) {
     await query("DELETE FROM registrations WHERE user_id = $1", [user.id])
     await query("DELETE FROM team_members WHERE user_id = $1", [user.id])
     await query("DELETE FROM profiles WHERE user_id = $1", [user.id])
-    await query(
-      "UPDATE newsletter_subscribers SET subscribed = false WHERE email = (SELECT email FROM users WHERE id = $1)",
-      [user.id]
-    )
+    const emailResult = await query("SELECT email FROM users WHERE id = $1", [user.id])
+    await removeSubscriber(emailResult.rows[0].email)
     await query(
       `UPDATE users
        SET email = CONCAT('deleted+', id::text, '@deleted.local'),
