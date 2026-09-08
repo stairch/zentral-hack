@@ -202,11 +202,6 @@ export async function getNewsletterTemplateByAlias(alias: string): Promise<Newsl
   return getNewsletterTemplate(match.id)
 }
 
-export function renderConfirmUrl(html: string, confirmUrl: string): string {
-  const pattern = /\{\{\{\s*confirm_url\s*(\|[^}]*)?\}\}\}/g
-  return html.replace(pattern, escapeHtml(confirmUrl))
-}
-
 export async function getNewsletterTemplate(id: string): Promise<NewsletterTemplateDetail> {
   const template = unwrap(await resend.templates.get(id), "Failed to load template")
   return {

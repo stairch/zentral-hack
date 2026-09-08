@@ -1,6 +1,9 @@
 import nodemailer from "nodemailer"
-import { renderConfirmUrl } from "@/lib/resend"
-import { resolveTransactionalTemplate } from "@/lib/transactional-emails"
+import {
+  getTransactionalEmailDef,
+  renderTransactionalHtml,
+  resolveTransactionalTemplate
+} from "@/lib/transactional-emails"
 
 let transporter: nodemailer.Transporter | null = null
 
@@ -41,48 +44,38 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
   }
 }
 
-export async function sendNewsletterOptInEmail(to: string, confirmUrl: string): Promise<void> {
-  const template = await resolveTransactionalTemplate("newsletter-opt-in")
-  const html = renderConfirmUrl(template.html, confirmUrl)
+/**
+ * Resolves the Resend template an admin selected for a system message, renders it
+ * with the given merge values and sends it. When no template can be resolved the
+ * definition's built-in `fallbackHtml` is used so critical flows keep working.
+ */
+export async function sendTransactionalEmail(
+  key: string,
+  { to, values }: { to: string | string[]; values: Record<string, string> }
+): Promise<void> {
+  const def = getTransactionalEmailDef(key)
+  if (!def) throw new Error(`Unknown transactional email "${key}"`)
 
-  return sendEmail({
-    to,
-    subject: template.subject || "Bestätige deine Newsletter Anmeldung",
-    html,
-    text: `Bitte bestätige deine Newsletter-Anmeldung zum Zentral Hack: ${confirmUrl}`
-  })
+  let html: string
+  let subject: string
+  try {
+    const template = await resolveTransactionalTemplate(key)
+    html = renderTransactionalHtml(template, values)
+    subject = template.subject || def.defaultSubject
+  } catch (error) {
+    if (!def.fallbackHtml) throw error
+    console.warn(`[email] No Resend template for "${key}", using built-in fallback:`, error)
+    html = def.fallbackHtml(values)
+    subject = def.defaultSubject
+  }
+
+  return sendEmail({ to, subject, html, text: def.buildText?.(values) })
 }
 
-export async function send2FACodeEmail(to: string, code: string): Promise<void> {
-  const html = `
-    <h2>Dein 2FA-Code für Zentral Hack</h2>
-    <p>Um dich anzumelden, verwende bitte folgenden Verifizierungscode:</p>
-    <h1 style="letter-spacing: 0.1em; font-size: 36px; margin: 20px 0; font-family: monospace; color: #530A5D;">${code}</h1>
-    <p>Dieser Code verfällt in 15 Minuten.</p>
-    <p style="color: #666; font-size: 12px;">Falls du dich nicht angemeldet hast, ignoriere diese E-Mail und ändere dein Passwort.</p>
-  `
-
-  return sendEmail({
-    to,
-    subject: "Zentral Hack - Dein 2FA Code",
-    html,
-    text: `Dein 2FA Code: ${code}`
-  })
+export function sendNewsletterOptInEmail(to: string, confirmUrl: string): Promise<void> {
+  return sendTransactionalEmail("newsletter-opt-in", { to, values: { confirm_url: confirmUrl } })
 }
 
-export async function send2FAEmail(to: string, link: string): Promise<void> {
-  const html = `
-    <h2>Admin Zugang - Bestätige deine Identität</h2>
-    <p>Um auf das Admin-Modul zuzugreifen, bestätige bitte deine Identität:</p>
-    <p><a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: #530A5D; color: white; text-decoration: none; border-radius: 5px;">Bestätigen</a></p>
-    <p>Dieser Link verfällt in 15 Minuten.</p>
-    <p style="color: #666; font-size: 12px;">Falls du diesen Link nicht angefordert hast, ignoriere diese E-Mail.</p>
-  `
-
-  return sendEmail({
-    to,
-    subject: "Zentral Hack - Admin Zugang Bestätigung",
-    html,
-    text: `Bestätigung erforderlich: ${link}`
-  })
+export function send2FACodeEmail(to: string, code: string): Promise<void> {
+  return sendTransactionalEmail("2fa-code", { to, values: { code } })
 }

@@ -8,31 +8,64 @@ import {
 
 const SETTINGS_KEY = "transactional_email_templates"
 
+const PREVIEW_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://zentralhack.ch"
+
 export interface TransactionalEmailDef {
   key: string
   name: { de: string; en: string }
   description: { de: string; en: string }
+  /** Resend template alias used until an admin picks a template. */
   defaultAlias: string
+  /** Subject used when the resolved Resend template has none. */
+  defaultSubject: string
+  /**
+   * Merge tags this email fills at send time. The values here are only the
+   * samples rendered in the admin live preview.
+   */
   previewValues: Record<string, string>
+  /** Plain-text alternative. Receives the real merge values on send. */
+  buildText?: (values: Record<string, string>) => string
+  /**
+   * Fallback when no Resend template can be resolved. Keeps
+   * critical flows (e.g. 2FA login) working before a template is configured.
+   */
+  fallbackHtml?: (values: Record<string, string>) => string
 }
-
-const PREVIEW_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://zentralhack.ch"
 
 export const TRANSACTIONAL_EMAILS: TransactionalEmailDef[] = [
   {
     key: "newsletter-opt-in",
-    name: {
-      de: "Newsletter Bestätigung",
-      en: "Newsletter Confirmation"
-    },
+    name: { de: "Newsletter Bestätigung", en: "Newsletter Confirmation" },
     description: {
       de: "Double-Opt-In-Bestätigung, die nach der Anmeldung über den CTA-Bereich verschickt wird.",
       en: "Double opt-in confirmation sent after signing up via the CTA section."
     },
     defaultAlias: "newsletter-opt-in",
+    defaultSubject: "Bestätige deine Newsletter Anmeldung",
     previewValues: {
       confirm_url: `${PREVIEW_BASE_URL}/api/newsletter/confirm?token=preview-token`
-    }
+    },
+    buildText: (values) =>
+      `Bitte bestätige deine Newsletter-Anmeldung zum Zentral Hack: ${values.confirm_url}`
+  },
+  {
+    key: "2fa-code",
+    name: { de: "2FA-Code", en: "2FA code" },
+    description: {
+      de: "Verifizierungscode für die Anmeldung, wird bei jedem Login mit aktivierter 2FA gesendet.",
+      en: "Verification code for signing in, sent on every login when 2FA is enabled."
+    },
+    defaultAlias: "2fa-code",
+    defaultSubject: "Zentral Hack - Dein 2FA Code",
+    previewValues: { code: "123456" },
+    buildText: (values) => `Dein 2FA Code: ${values.code}`,
+    fallbackHtml: (values) => `
+    <h2>Dein 2FA-Code für Zentral Hack</h2>
+    <p>Um dich anzumelden, verwende bitte folgenden Verifizierungscode:</p>
+    <h1 style="letter-spacing: 0.1em; font-size: 36px; margin: 20px 0; font-family: monospace; color: #530A5D;">${values.code}</h1>
+    <p>Dieser Code verfällt in 15 Minuten.</p>
+    <p style="color: #666; font-size: 12px;">Falls du dich nicht angemeldet hast, ignoriere diese E-Mail und ändere dein Passwort.</p>
+  `
   }
 ]
 
@@ -86,8 +119,10 @@ export async function resolveTransactionalTemplate(key: string): Promise<Newslet
   return getNewsletterTemplateByAlias(def.defaultAlias)
 }
 
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+/** Matches a `{{{tag}}}` merge tag, optionally with a `{{{tag|default}}}` fallback. */
+function mergeTagPattern(tag: string, flags = ""): RegExp {
+  const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+  return new RegExp(`\\{\\{\\{\\s*${escaped}\\s*(\\|[^}]*)?\\}\\}\\}`, flags)
 }
 
 function escapeHtml(value: string): string {
@@ -99,6 +134,40 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;")
 }
 
+/** Replaces every `{{{tag}}}` occurrence for the given values (HTML-escaped). */
+export function renderMergeTags(html: string, values: Record<string, string>): string {
+  let out = html
+  for (const [tag, value] of Object.entries(values)) {
+    out = out.replace(mergeTagPattern(tag, "g"), escapeHtml(value))
+  }
+  return out
+}
+
+/**
+ * Renders the final HTML for a system message: template-declared variables get
+ * their fallback values, then the email's merge tags are replaced with `values`.
+ * The admin preview and the real send both go through here.
+ */
+export function renderTransactionalHtml(
+  template: NewsletterTemplateDetail,
+  values: Record<string, string>
+): string {
+  const filtered: NewsletterTemplateDetail = {
+    ...template,
+    variables: template.variables.filter((variable) => !(variable.key in values))
+  }
+  return renderMergeTags(renderNewsletterHtml(filtered, {}), values)
+}
+
+/** Admin live preview: the final render using the definition's sample values. */
+export function renderTransactionalPreview(
+  template: NewsletterTemplateDetail,
+  def: TransactionalEmailDef
+): string {
+  return renderTransactionalHtml(template, def.previewValues)
+}
+
+/** Merge tags a system message injects at send time and therefore requires in its template. */
 export function getRequiredTemplateVariables(def: TransactionalEmailDef): string[] {
   return Object.keys(def.previewValues)
 }
@@ -114,29 +183,7 @@ export function findMissingTemplateVariables(
   const html = template.html ?? ""
   return getRequiredTemplateVariables(def).filter((tag) => {
     const declared = template.variables.some((variable) => variable.key === tag)
-    const referenced = new RegExp(`\\{\\{\\{\\s*${escapeRegExp(tag)}\\s*(\\|[^}]*)?\\}\\}\\}`).test(html)
+    const referenced = mergeTagPattern(tag).test(html)
     return !declared && !referenced
   })
-}
-
-/**
- * Renders a template for the admin live preview: template-declared variables get
- * their fallback values, and the email's sample merge tags (e.g. `confirm_url`)
- * are substituted with realistic placeholder values.
- */
-export function renderTransactionalPreview(
-  template: NewsletterTemplateDetail,
-  def: TransactionalEmailDef
-): string {
-  // Keep merge tags that we fill ourselves out of the generic variable pass.
-  const filtered: NewsletterTemplateDetail = {
-    ...template,
-    variables: template.variables.filter((variable) => !(variable.key in def.previewValues))
-  }
-  let html = renderNewsletterHtml(filtered, {})
-  for (const [tag, value] of Object.entries(def.previewValues)) {
-    const pattern = new RegExp(`\\{\\{\\{\\s*${escapeRegExp(tag)}\\s*(\\|[^}]*)?\\}\\}\\}`, "g")
-    html = html.replace(pattern, escapeHtml(value))
-  }
-  return html
 }
