@@ -1,7 +1,6 @@
 import nodemailer from "nodemailer"
-import { getNewsletterTemplateByAlias, renderConfirmUrl } from "@/lib/resend"
-
-const NEWSLETTER_OPT_IN_TEMPLATE_ALIAS = "newsletter-opt-in"
+import { renderConfirmUrl } from "@/lib/resend"
+import { resolveTransactionalTemplate } from "@/lib/transactional-emails"
 
 let transporter: nodemailer.Transporter | null = null
 
@@ -43,7 +42,7 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
 }
 
 export async function sendNewsletterOptInEmail(to: string, confirmUrl: string): Promise<void> {
-  const template = await getNewsletterTemplateByAlias(NEWSLETTER_OPT_IN_TEMPLATE_ALIAS)
+  const template = await resolveTransactionalTemplate("newsletter-opt-in")
   const html = renderConfirmUrl(template.html, confirmUrl)
 
   return sendEmail({

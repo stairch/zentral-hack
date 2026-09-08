@@ -34,6 +34,7 @@ import {
   ChevronDown,
   Newspaper,
   LayoutTemplate,
+  MailCheck,
   Contact,
   type LucideIcon
 } from "lucide-react"
@@ -58,6 +59,7 @@ const copy = {
     emails: "Emails",
     emailsNotifications: "Benachrichtigungen",
     emailsNewsletter: "Newsletter",
+    emailsTransactional: "Systemnachrichten",
     emailsTemplates: "Templates",
     emailsContacts: "Kontakte",
     sponsors: "Sponsoren",
@@ -86,6 +88,7 @@ const copy = {
     emails: "Emails",
     emailsNotifications: "Notifications",
     emailsNewsletter: "Newsletter",
+    emailsTransactional: "System messages",
     emailsTemplates: "Templates",
     emailsContacts: "Contacts",
     sponsors: "Sponsors",
@@ -258,6 +261,14 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
           href: "/admin/emails/newsletter",
           label: text.emailsNewsletter,
           icon: Newspaper,
+          permissionKey: "emails",
+          adminOnly: true
+        },
+        {
+          id: "emails-transactional",
+          href: "/admin/emails/transactional",
+          label: text.emailsTransactional,
+          icon: MailCheck,
           permissionKey: "emails",
           adminOnly: true
         },
