@@ -154,6 +154,9 @@ const copy = {
     variables: "Variablen",
     variablesHint: "Nur Variablen mit dem Präfix „admin_“ sind bearbeitbar.",
     noEditableVars: "Dieses Template hat keine bearbeitbaren Variablen.",
+    preview: "Vorschau",
+    previewHint: "Live-Vorschau mit den oben eingegebenen Werten.",
+    previewLoadError: "Vorschau konnte nicht geladen werden",
     audience: "Zielgruppe",
     audienceAll: "Alle Kontakte",
     audienceSegment: "Bestimmtes Segment",
@@ -275,6 +278,9 @@ const copy = {
     variables: "Variables",
     variablesHint: "Only variables prefixed with “admin_” are editable.",
     noEditableVars: "This template has no editable variables.",
+    preview: "Preview",
+    previewHint: "Live preview using the values entered above.",
+    previewLoadError: "Failed to load preview",
     audience: "Audience",
     audienceAll: "All contacts",
     audienceSegment: "Specific segment",
@@ -392,6 +398,8 @@ export function NewsletterPage() {
   const [scheduleMode, setScheduleMode] = useState<"now" | "later">("now")
   const [scheduledAt, setScheduledAt] = useState("")
   const [sending, setSending] = useState(false)
+  const [previewHtml, setPreviewHtml] = useState("")
+  const [previewLoading, setPreviewLoading] = useState(false)
 
   const loadOverview = useCallback(async () => {
     setLoading(true)
@@ -519,12 +527,14 @@ export function NewsletterPage() {
     setSegmentId("")
     setScheduleMode("now")
     setScheduledAt("")
+    setPreviewHtml("")
   }
 
   const onPickTemplate = async (id: string) => {
     setTemplateId(id)
     setTemplateVars([])
     setAdminValues({})
+    setPreviewHtml("")
     if (!id) return
     setVarsLoading(true)
     try {
@@ -574,6 +584,36 @@ export function NewsletterPage() {
       setSending(false)
     }
   }
+
+  useEffect(() => {
+    if (!sendCampaign || !templateId) {
+      setPreviewHtml("")
+      return
+    }
+    let cancelled = false
+    setPreviewLoading(true)
+    const timer = setTimeout(async () => {
+      try {
+        const data = await api<{ html: string }>(`/api/admin/newsletter/preview`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateId, adminValues })
+        })
+        if (!cancelled) setPreviewHtml(data.html)
+      } catch (error) {
+        if (!cancelled) {
+          setPreviewHtml("")
+          toast.error(error instanceof Error ? error.message : text.previewLoadError)
+        }
+      } finally {
+        if (!cancelled) setPreviewLoading(false)
+      }
+    }, 500)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [sendCampaign, templateId, adminValues, text.previewLoadError])
 
   /* ------------------------------- helpers ------------------------------- */
 
@@ -790,7 +830,7 @@ export function NewsletterPage() {
 
       {/* Send dialog */}
       <Dialog open={sendCampaign !== null} onOpenChange={(open) => !open && setSendCampaign(null)}>
-        <DialogContent className="max-h-[85vh] overflow-x-hidden overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[85vh] overflow-x-hidden overflow-y-auto sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {text.sendTitle}
@@ -882,6 +922,29 @@ export function NewsletterPage() {
                     </div>
                   ))
                 )}
+              </div>
+            )}
+
+            {/* Preview */}
+            {templateId && (
+              <div className="space-y-2">
+                <div>
+                  <Label>{text.preview}</Label>
+                  <p className="text-muted-foreground mt-1 text-xs">{text.previewHint}</p>
+                </div>
+                <div className="bg-background relative overflow-hidden rounded-md border">
+                  {previewLoading && (
+                    <div className="bg-background/60 absolute inset-0 flex items-center justify-center">
+                      <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
+                    </div>
+                  )}
+                  <iframe
+                    title={text.preview}
+                    sandbox=""
+                    srcDoc={previewHtml}
+                    className="h-96 w-full border-0 bg-white"
+                  />
+                </div>
               </div>
             )}
 
