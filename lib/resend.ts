@@ -1,6 +1,24 @@
 import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let resendClient: Resend | null = null
+
+function getResend(): Resend {
+  if (resendClient) return resendClient
+
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY is not set")
+  }
+
+  resendClient = new Resend(apiKey)
+  return resendClient
+}
+
+const resend = new Proxy({} as Resend, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getResend(), prop, receiver)
+  }
+})
 
 const NEWSLETTER_FROM = process.env.RESEND_NEWSLETTER_FROM ?? "Zentral Hack <newsletter@zentralhack.ch>"
 const NEWSLETTER_DEFAULT_SEGMENT_ID = process.env.RESEND_NEWSLETTER_DEFAULT_SEGMENT_ID ?? null
