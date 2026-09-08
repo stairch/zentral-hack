@@ -2,7 +2,6 @@ import { query } from "@/lib/db"
 import {
   getNewsletterTemplate,
   getNewsletterTemplateByAlias,
-  renderNewsletterHtml,
   type NewsletterTemplateDetail
 } from "@/lib/resend"
 
@@ -119,71 +118,8 @@ export async function resolveTransactionalTemplate(key: string): Promise<Newslet
   return getNewsletterTemplateByAlias(def.defaultAlias)
 }
 
-/** Matches a `{{{tag}}}` merge tag, optionally with a `{{{tag|default}}}` fallback. */
-function mergeTagPattern(tag: string, flags = ""): RegExp {
-  const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-  return new RegExp(`\\{\\{\\{\\s*${escaped}\\s*(\\|[^}]*)?\\}\\}\\}`, flags)
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;")
-}
-
-/** Replaces every `{{{tag}}}` occurrence for the given values (HTML-escaped). */
-export function renderMergeTags(html: string, values: Record<string, string>): string {
-  let out = html
-  for (const [tag, value] of Object.entries(values)) {
-    out = out.replace(mergeTagPattern(tag, "g"), escapeHtml(value))
-  }
-  return out
-}
-
 /**
- * Renders the final HTML for a system message: template-declared variables get
- * their fallback values, then the email's merge tags are replaced with `values`.
- * The admin preview and the real send both go through here.
+ * Merge-tag rendering and template-variable validation live in
+ * `@/lib/email/render`. Import `renderTransactionalHtml`,
+ * `renderTransactionalPreview` and `findMissingTemplateVariables` from there.
  */
-export function renderTransactionalHtml(
-  template: NewsletterTemplateDetail,
-  values: Record<string, string>
-): string {
-  const filtered: NewsletterTemplateDetail = {
-    ...template,
-    variables: template.variables.filter((variable) => !(variable.key in values))
-  }
-  return renderMergeTags(renderNewsletterHtml(filtered, {}), values)
-}
-
-/** Admin live preview: the final render using the definition's sample values. */
-export function renderTransactionalPreview(
-  template: NewsletterTemplateDetail,
-  def: TransactionalEmailDef
-): string {
-  return renderTransactionalHtml(template, def.previewValues)
-}
-
-/** Merge tags a system message injects at send time and therefore requires in its template. */
-export function getRequiredTemplateVariables(def: TransactionalEmailDef): string[] {
-  return Object.keys(def.previewValues)
-}
-
-/**
- * Returns the required merge tags that the given template neither declares as a
- * variable nor references via a `{{{tag}}}` placeholder in its HTML.
- */
-export function findMissingTemplateVariables(
-  template: NewsletterTemplateDetail,
-  def: TransactionalEmailDef
-): string[] {
-  const html = template.html ?? ""
-  return getRequiredTemplateVariables(def).filter((tag) => {
-    const declared = template.variables.some((variable) => variable.key === tag)
-    const referenced = mergeTagPattern(tag).test(html)
-    return !declared && !referenced
-  })
-}

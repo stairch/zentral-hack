@@ -1,12 +1,8 @@
 import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { getNewsletterTemplate } from "@/lib/resend"
-import {
-  findMissingTemplateVariables,
-  getTransactionalEmailDef,
-  renderTransactionalPreview,
-  resolveTransactionalTemplate
-} from "@/lib/transactional-emails"
+import { findMissingTemplateVariables, renderTransactionalPreview } from "@/lib/email-render"
+import { getTransactionalEmailDef, resolveTransactionalTemplate } from "@/lib/transactional-emails"
 
 /**
  * Renders the live preview for a transactional email. When `templateId` is given

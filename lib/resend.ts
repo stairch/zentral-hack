@@ -1,4 +1,5 @@
 import { Resend } from "resend"
+import { renderHtml } from "@/lib/email-render"
 
 let resendClient: Resend | null = null
 
@@ -148,19 +149,6 @@ function unwrap<T>(result: { data: T | null; error: { message: string } | null }
   return result.data
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;")
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-}
-
 function isEditableVariableKey(key: string): boolean {
   return key.startsWith("admin_")
 }
@@ -303,22 +291,6 @@ export async function cancelNewsletterCampaign(id: string): Promise<void> {
   unwrap(await resend.broadcasts.cancel(id), "Failed to cancel broadcast")
 }
 
-export function renderNewsletterHtml(
-  template: NewsletterTemplateDetail,
-  adminValues: Record<string, string>
-): string {
-  let html = template.html ?? ""
-  for (const variable of template.variables) {
-    const raw = variable.editable
-      ? (adminValues[variable.key] ?? variable.fallbackValue ?? "")
-      : (variable.fallbackValue ?? "")
-    const replacement = escapeHtml(raw)
-    const pattern = new RegExp(`\\{\\{\\{\\s*${escapeRegExp(variable.key)}\\s*(\\|[^}]*)?\\}\\}\\}`, "g")
-    html = html.replace(pattern, replacement)
-  }
-  return html
-}
-
 /** Sentinel target meaning "all contacts" (resolved to the default segment). */
 export const NEWSLETTER_ALL_CONTACTS = "__all__"
 
@@ -328,7 +300,7 @@ export async function sendNewsletterCampaign(
   input: { templateId: string; segmentId: string; adminValues: Record<string, string>; scheduledAt?: string }
 ): Promise<void> {
   const template = await getNewsletterTemplate(input.templateId)
-  const body = renderNewsletterHtml(template, input.adminValues)
+  const body = renderHtml(template, input.adminValues)
   const html = `<!-- zh-template:${input.templateId} -->\n${body}`
   const segmentId =
     input.segmentId === NEWSLETTER_ALL_CONTACTS ? await resolveDefaultSegmentId() : input.segmentId

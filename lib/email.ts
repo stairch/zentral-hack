@@ -1,9 +1,6 @@
 import nodemailer from "nodemailer"
-import {
-  getTransactionalEmailDef,
-  renderTransactionalHtml,
-  resolveTransactionalTemplate
-} from "@/lib/transactional-emails"
+import { renderTransactionalHtml } from "@/lib/email-render"
+import { getTransactionalEmailDef, resolveTransactionalTemplate } from "@/lib/transactional-emails"
 
 let transporter: nodemailer.Transporter | null = null
 

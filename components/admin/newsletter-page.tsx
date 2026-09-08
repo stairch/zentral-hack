@@ -40,7 +40,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
-import { NewsletterCampaignStatus } from "@/lib/resend"
+import type { NewsletterCampaignStatus } from "@/lib/resend"
 
 const ALL_CONTACTS = "__all__"
 const RESEND_TEMPLATE_BASE = "https://resend.com/templates"

@@ -1,6 +1,7 @@
 import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
-import { getNewsletterTemplate, renderNewsletterHtml } from "@/lib/resend"
+import { getNewsletterTemplate } from "@/lib/resend"
+import { renderHtml } from "@/lib/email-render"
 
 /**
  * Renders a template with the current admin variable values and returns the
@@ -20,7 +21,7 @@ async function handlePost(req: AuthenticatedRequest) {
     }
 
     const template = await getNewsletterTemplate(templateId)
-    const html = renderNewsletterHtml(template, adminValues)
+    const html = renderHtml(template, adminValues)
     return successResponse({ html })
   } catch (error) {
     console.error("[Admin Newsletter] preview Error:", error)
