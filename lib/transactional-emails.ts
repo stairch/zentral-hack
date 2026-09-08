@@ -33,21 +33,6 @@ export const TRANSACTIONAL_EMAILS: TransactionalEmailDef[] = [
     previewValues: {
       confirm_url: `${PREVIEW_BASE_URL}/api/newsletter/confirm?token=preview-token`
     }
-  },
-  {
-    key: "2fa-verify",
-    name: {
-      de: "Newsletter Bestätigung",
-      en: "Newsletter Confirmation"
-    },
-    description: {
-      de: "Double-Opt-In-Bestätigung, die nach der Anmeldung über den CTA-Bereich verschickt wird.",
-      en: "Double opt-in confirmation sent after signing up via the CTA section."
-    },
-    defaultAlias: "newsletter-opt-in",
-    previewValues: {
-      confirm_url: `${PREVIEW_BASE_URL}/api/newsletter/confirm?token=preview-token`
-    }
   }
 ]
 
@@ -112,6 +97,26 @@ function escapeHtml(value: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;")
+}
+
+export function getRequiredTemplateVariables(def: TransactionalEmailDef): string[] {
+  return Object.keys(def.previewValues)
+}
+
+/**
+ * Returns the required merge tags that the given template neither declares as a
+ * variable nor references via a `{{{tag}}}` placeholder in its HTML.
+ */
+export function findMissingTemplateVariables(
+  template: NewsletterTemplateDetail,
+  def: TransactionalEmailDef
+): string[] {
+  const html = template.html ?? ""
+  return getRequiredTemplateVariables(def).filter((tag) => {
+    const declared = template.variables.some((variable) => variable.key === tag)
+    const referenced = new RegExp(`\\{\\{\\{\\s*${escapeRegExp(tag)}\\s*(\\|[^}]*)?\\}\\}\\}`).test(html)
+    return !declared && !referenced
+  })
 }
 
 /**

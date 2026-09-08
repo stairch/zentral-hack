@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, ExternalLink } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Loader2, ExternalLink, TriangleAlert } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/language-context"
@@ -41,6 +42,7 @@ const copy = {
     openInResend: "Template in Resend ansehen",
     preview: "Vorschau",
     previewHint: "Live-Vorschau mit Beispielwerten für die Platzhalter.",
+    missingVarsWarning: "Im ausgewählten Template fehlen benötigte Variablen:",
     loadError: "Konfiguration konnte nicht geladen werden",
     previewLoadError: "Vorschau konnte nicht geladen werden",
     saveSuccess: "Template gespeichert",
@@ -58,6 +60,7 @@ const copy = {
     openInResend: "View template in Resend",
     preview: "Preview",
     previewHint: "Live preview using sample values for the placeholders.",
+    missingVarsWarning: "The selected template is missing required variables:",
     loadError: "Failed to load configuration",
     previewLoadError: "Failed to load preview",
     saveSuccess: "Template saved",
@@ -95,6 +98,7 @@ function EmailDetail({
   const [saving, setSaving] = useState(false)
   const [previewHtml, setPreviewHtml] = useState("")
   const [previewLoading, setPreviewLoading] = useState(false)
+  const [missingVars, setMissingVars] = useState<string[]>([])
 
   const selectValue = templateId ?? DEFAULT_VALUE
 
@@ -123,15 +127,22 @@ function EmailDetail({
     setPreviewLoading(true)
     const timer = setTimeout(async () => {
       try {
-        const data = await api<{ html: string }>(`/api/admin/emails/transactional/preview`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: email.key, templateId: templateId ?? "" })
-        })
-        if (!cancelled) setPreviewHtml(data.html)
+        const data = await api<{ html: string; missingVariables: string[] }>(
+          `/api/admin/emails/transactional/preview`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key: email.key, templateId: templateId ?? "" })
+          }
+        )
+        if (!cancelled) {
+          setPreviewHtml(data.html)
+          setMissingVars(data.missingVariables ?? [])
+        }
       } catch (error) {
         if (!cancelled) {
           setPreviewHtml("")
+          setMissingVars([])
           toast.error(error instanceof Error ? error.message : text.previewLoadError)
         }
       } finally {
@@ -172,6 +183,27 @@ function EmailDetail({
               </SelectContent>
             </Select>
             {saving && <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />}
+            {missingVars.length > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    tabIndex={0}
+                    className="shrink-0 cursor-help rounded-sm text-amber-600 outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50">
+                    <TriangleAlert className="h-5 w-5" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="border border-amber-600">
+                  <p className="font-medium">{text.missingVarsWarning}</p>
+                  <ul className="mt-1 list-inside list-disc space-y-0.5">
+                    {missingVars.map((name) => (
+                      <li key={name} className="font-mono">
+                        <span className="bg-muted rounded px-1 py-0.5 text-xs">{`{{{${name}}}}`}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         )}
         {templateId && (
@@ -186,12 +218,14 @@ function EmailDetail({
         )}
       </div>
 
-      <div className="space-y-2">
-        <div>
-          <Label>{text.preview}</Label>
-          <p className="text-muted-foreground mt-1 text-xs">{text.previewHint}</p>
+      <div className="space-y-2 md:max-w-3xl">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <Label>{text.preview}</Label>
+            <p className="text-muted-foreground mt-1 text-xs">{text.previewHint}</p>
+          </div>
         </div>
-        <div className="bg-background relative overflow-hidden rounded-md border md:max-w-3xl">
+        <div className="bg-background relative overflow-hidden rounded-md border">
           {previewLoading && (
             <div className="bg-background/60 absolute inset-0 flex items-center justify-center">
               <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />

@@ -2,6 +2,7 @@ import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { getNewsletterTemplate } from "@/lib/resend"
 import {
+  findMissingTemplateVariables,
   getTransactionalEmailDef,
   renderTransactionalPreview,
   resolveTransactionalTemplate
@@ -24,7 +25,10 @@ async function handlePost(req: AuthenticatedRequest) {
       ? await getNewsletterTemplate(templateId)
       : await resolveTransactionalTemplate(key)
 
-    return successResponse({ html: renderTransactionalPreview(template, def) })
+    return successResponse({
+      html: renderTransactionalPreview(template, def),
+      missingVariables: findMissingTemplateVariables(template, def)
+    })
   } catch (error) {
     console.error("[Admin Transactional Emails] preview Error:", error)
     return serverError(error instanceof Error ? error.message : undefined)
