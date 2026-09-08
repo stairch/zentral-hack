@@ -20,7 +20,7 @@ const resend = new Proxy({} as Resend, {
   }
 })
 
-const NEWSLETTER_FROM = process.env.RESEND_NEWSLETTER_FROM ?? "Zentral Hack <newsletter@zentralhack.ch>"
+const NEWSLETTER_FROM = process.env.RESEND_NEWSLETTER_FROM ?? ""
 const NEWSLETTER_DEFAULT_SEGMENT_ID = process.env.RESEND_NEWSLETTER_DEFAULT_SEGMENT_ID ?? null
 
 export async function addSubscriber(email: string): Promise<string> {
