@@ -4,7 +4,7 @@ import { useRef, useState } from "react"
 import { motion, useInView } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowRight, CheckCircle, Calendar, Loader2 } from "lucide-react"
+import { ArrowRight, Calendar, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
@@ -21,7 +21,8 @@ const copy = {
     newsletterButton: "Abonnieren",
     newsletterPlaceholder: "deine@email.ch",
     wantsEmail: "Ich möchte Updates per E-Mail erhalten",
-    success: "Super! Du bist registriert.",
+    success:
+      "Fast geschafft! Bitte bestätige deine E-Mail-Adresse über den Link, den wir dir gerade geschickt haben.",
     noSpam: "Kein Spam, versprochen. Nur wichtige Updates zum Zentral Hack.",
     signupFailed: "Anmeldung fehlgeschlagen",
     genericError: "Ein Fehler ist aufgetreten. Bitte versuche es erneut."
@@ -37,7 +38,7 @@ const copy = {
     newsletterButton: "Subscribe",
     newsletterPlaceholder: "your@email.com",
     wantsEmail: "I want to receive updates by email",
-    success: "Great! You are subscribed.",
+    success: "Almost there! Please confirm your email address via the link we just sent you.",
     noSpam: "No spam, promised. Only important updates about Zentral Hack.",
     signupFailed: "Subscription failed",
     genericError: "An error occurred. Please try again."
@@ -90,7 +91,7 @@ export function CTA() {
     <section ref={sectionRef} className="relative overflow-hidden bg-[#530A5D] py-24">
       <div className="relative z-10 container mx-auto px-4">
         <motion.div
-          className="mx-auto max-w-3xl text-center"
+          className="mx-auto max-w-4xl text-center"
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}>
@@ -164,9 +165,8 @@ export function CTA() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center justify-center gap-3 text-[#E6FF17]">
-                <CheckCircle className="h-6 w-6" />
-                <span className="text-lg font-semibold">{text.success}</span>
+                className="text-accent flex items-center justify-center gap-3">
+                <span className="font-semibold">{text.success}</span>
               </motion.div>
             )}
           </motion.div>

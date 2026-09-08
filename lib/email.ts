@@ -1,4 +1,7 @@
 import nodemailer from "nodemailer"
+import { getNewsletterTemplateByAlias, renderConfirmUrl } from "@/lib/resend"
+
+const NEWSLETTER_OPT_IN_TEMPLATE_ALIAS = "newsletter-opt-in"
 
 let transporter: nodemailer.Transporter | null = null
 
@@ -37,6 +40,18 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
     console.error("Email sending failed:", error)
     throw new Error("Failed to send email")
   }
+}
+
+export async function sendNewsletterOptInEmail(to: string, confirmUrl: string): Promise<void> {
+  const template = await getNewsletterTemplateByAlias(NEWSLETTER_OPT_IN_TEMPLATE_ALIAS)
+  const html = renderConfirmUrl(template.html, confirmUrl)
+
+  return sendEmail({
+    to,
+    subject: template.subject || "Bestätige deine Newsletter Anmeldung",
+    html,
+    text: `Bitte bestätige deine Newsletter-Anmeldung zum Zentral Hack: ${confirmUrl}`
+  })
 }
 
 export async function send2FACodeEmail(to: string, code: string): Promise<void> {
