@@ -1,6 +1,7 @@
 import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
-import { listNewsletterTemplates } from "@/lib/resend"
+import { getNewsletterTemplate, listNewsletterTemplates } from "@/lib/resend"
+import { findMissingTemplateVariables } from "@/lib/email-render"
 import {
   TRANSACTIONAL_EMAILS,
   getTransactionalEmailDef,
@@ -14,13 +15,30 @@ async function handleGet() {
       listNewsletterTemplates(),
       getTransactionalTemplateMap()
     ])
-    const emails = TRANSACTIONAL_EMAILS.map((email) => ({
-      key: email.key,
-      name: email.name,
-      description: email.description,
-      defaultAlias: email.defaultAlias,
-      templateId: configured[email.key] ?? null
-    }))
+    const emails = await Promise.all(
+      TRANSACTIONAL_EMAILS.map(async (email) => {
+        const templateId = configured[email.key] ?? null
+        let missingVariables: string[] = []
+        if (templateId) {
+          try {
+            const template = await getNewsletterTemplate(templateId)
+            missingVariables = findMissingTemplateVariables(template, email)
+          } catch (error) {
+            console.error(
+              `[Admin Transactional Emails] failed to inspect template ${templateId} for ${email.key}:`,
+              error
+            )
+          }
+        }
+        return {
+          key: email.key,
+          name: email.name,
+          description: email.description,
+          templateId,
+          missingVariables
+        }
+      })
+    )
     return successResponse({ emails, templates })
   } catch (error) {
     console.error("[Admin Transactional Emails] GET Error:", error)

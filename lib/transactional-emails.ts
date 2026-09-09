@@ -1,9 +1,5 @@
 import { query } from "@/lib/db"
-import {
-  getNewsletterTemplate,
-  getNewsletterTemplateByAlias,
-  type NewsletterTemplateDetail
-} from "@/lib/resend"
+import { getNewsletterTemplate, type NewsletterTemplateDetail } from "@/lib/resend"
 
 const SETTINGS_KEY = "transactional_email_templates"
 
@@ -13,8 +9,6 @@ export interface TransactionalEmailDef {
   key: string
   name: { de: string; en: string }
   description: { de: string; en: string }
-  /** Resend template alias used until an admin picks a template. */
-  defaultAlias: string
   /** Subject used when the resolved Resend template has none. */
   defaultSubject: string
   /**
@@ -39,7 +33,6 @@ export const TRANSACTIONAL_EMAILS: TransactionalEmailDef[] = [
       de: "Double-Opt-In-Bestätigung, die nach der Anmeldung über den CTA-Bereich verschickt wird.",
       en: "Double opt-in confirmation sent after signing up via the CTA section."
     },
-    defaultAlias: "newsletter-opt-in",
     defaultSubject: "Bestätige deine Newsletter Anmeldung",
     previewValues: {
       confirm_url: `${PREVIEW_BASE_URL}/api/newsletter/confirm?token=preview-token`
@@ -54,7 +47,6 @@ export const TRANSACTIONAL_EMAILS: TransactionalEmailDef[] = [
       de: "E-Mail für allgemeine Verifizierungen (z.B. Anmeldungen).",
       en: "E-Mail for general verifications (e.g. logins)."
     },
-    defaultAlias: "2fa-code-general",
     defaultSubject: "Bitte bestätige deine E-Mail-Adresse",
     previewValues: { code: "1A2B3C" },
     buildText: (values) => `Dein 2FA Code: ${values.code}`,
@@ -73,7 +65,6 @@ export const TRANSACTIONAL_EMAILS: TransactionalEmailDef[] = [
       de: "E-Mail für die Verifizierung der neuen E-Mail-Adresse.",
       en: "E-Mail for the verification of the new e-mail address."
     },
-    defaultAlias: "2fa-code-new-e-mail-address-1",
     defaultSubject: "Bitte bestätige deine neue E-Mail-Adresse",
     previewValues: { code: "1A2B3C" },
     buildText: (values) => `Dein 2FA Code: ${values.code}`,
@@ -131,8 +122,8 @@ export async function resolveTransactionalTemplate(key: string): Promise<Newslet
   if (!def) throw new Error(`Unknown transactional email "${key}"`)
 
   const configuredId = await getTransactionalTemplateId(key)
-  if (configuredId) {
-    return getNewsletterTemplate(configuredId)
+  if (!configuredId) {
+    throw new Error(`No Resend template configured for transactional email "${key}"`)
   }
-  return getNewsletterTemplateByAlias(def.defaultAlias)
+  return getNewsletterTemplate(configuredId)
 }

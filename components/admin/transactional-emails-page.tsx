@@ -12,7 +12,6 @@ import { useLanguage } from "@/lib/language-context"
 const RESEND_TEMPLATE_BASE = "https://resend.com/templates"
 
 /** Sentinel Select value for the hardcoded fallback alias. */
-const DEFAULT_VALUE = "__default__"
 
 interface TemplateSummary {
   id: string
@@ -25,19 +24,18 @@ interface TransactionalEmail {
   key: string
   name: { de: string; en: string }
   description: { de: string; en: string }
-  defaultAlias: string
   templateId: string | null
+  missingVariables: string[]
 }
 
 const copy = {
   de: {
     heading: "SYSTEMNACHRICHTEN",
     subtitle:
-      "Eine Systemnachricht wird für ein bestimmtes Ereignis gesendet (z.B. 2FA, Newsletter-Bestätigung). Wähle für jede automatische E-Mail das Resend-Template.",
+      "Eine Systemnachricht wird für ein bestimmtes Ereignis gesendet (z.B. 2FA, Newsletter-Bestätigung). Wähle für jede automatische E-Mail das entsprechende Resend-Template.",
     empty: "Keine Systemnachrichten konfiguriert.",
     template: "Template",
     templatePlaceholder: "Template auswählen",
-    defaultOption: (alias: string) => `Standard (Alias „${alias}")`,
     noTemplates: "Keine veröffentlichten Templates in Resend gefunden.",
     openInResend: "Template in Resend ansehen",
     preview: "Vorschau",
@@ -51,11 +49,10 @@ const copy = {
   en: {
     heading: "SYSTEM MESSAGES",
     subtitle:
-      "A system message is sent on a certain event (e.g. 2FA, newsletter confirmation). Pick the Resend template for each automated email, with live preview.",
+      "A system message is sent on a certain event (e.g. 2FA, newsletter confirmation). Pick the corresponding Resend template for each automated email.",
     empty: "No system messages configured.",
     template: "Template",
     templatePlaceholder: "Select a template",
-    defaultOption: (alias: string) => `Default (alias "${alias}")`,
     noTemplates: "No published templates found in Resend.",
     openInResend: "View template in Resend",
     preview: "Preview",
@@ -81,29 +78,56 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
   return json.data as T
 }
 
+function WarningTooltip({ missingVars, text }: { missingVars: string[]; text: Copy }) {
+  if (missingVars.length === 0) return null
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          tabIndex={0}
+          className="shrink-0 cursor-help rounded-sm text-amber-600 outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50">
+          <TriangleAlert className="h-5 w-5" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="right" className="border border-amber-600">
+        <p className="font-medium">{text.missingVarsWarning}</p>
+        <ul className="mt-1 list-inside list-disc space-y-0.5">
+          {missingVars.map((name) => (
+            <li key={name} className="font-mono">
+              <span className="bg-muted rounded px-1 py-0.5 text-xs">{`{{{${name}}}}`}</span>
+            </li>
+          ))}
+        </ul>
+      </TooltipContent>
+    </Tooltip>
+  )
+}
 function EmailDetail({
   email,
   templates,
   text,
   language,
-  onSaved
+  missingVars,
+  onSaved,
+  onMissingVarsChange
 }: {
   email: TransactionalEmail
   templates: TemplateSummary[]
   text: Copy
   language: "de" | "en"
+  missingVars: string[]
   onSaved: (templateId: string | null) => void
+  onMissingVarsChange: (vars: string[]) => void
 }) {
   const [templateId, setTemplateId] = useState<string | null>(email.templateId)
   const [saving, setSaving] = useState(false)
   const [previewHtml, setPreviewHtml] = useState("")
   const [previewLoading, setPreviewLoading] = useState(false)
-  const [missingVars, setMissingVars] = useState<string[]>([])
 
-  const selectValue = templateId ?? DEFAULT_VALUE
+  const selectValue = templateId ?? ""
 
   const onPick = async (value: string) => {
-    const nextId = value === DEFAULT_VALUE ? null : value
+    const nextId = value || null
     setTemplateId(nextId)
     setSaving(true)
     try {
@@ -137,12 +161,12 @@ function EmailDetail({
         )
         if (!cancelled) {
           setPreviewHtml(data.html)
-          setMissingVars(data.missingVariables ?? [])
+          onMissingVarsChange(data.missingVariables ?? [])
         }
       } catch (error) {
         if (!cancelled) {
           setPreviewHtml("")
-          setMissingVars([])
+          onMissingVarsChange([])
           toast.error(error instanceof Error ? error.message : text.previewLoadError)
         }
       } finally {
@@ -173,7 +197,6 @@ function EmailDetail({
                 <SelectValue placeholder={text.templatePlaceholder} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={DEFAULT_VALUE}>{text.defaultOption(email.defaultAlias)}</SelectItem>
                 {templates.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.name}
@@ -183,27 +206,7 @@ function EmailDetail({
               </SelectContent>
             </Select>
             {saving && <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />}
-            {missingVars.length > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    tabIndex={0}
-                    className="shrink-0 cursor-help rounded-sm text-amber-600 outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50">
-                    <TriangleAlert className="h-5 w-5" />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="border border-amber-600">
-                  <p className="font-medium">{text.missingVarsWarning}</p>
-                  <ul className="mt-1 list-inside list-disc space-y-0.5">
-                    {missingVars.map((name) => (
-                      <li key={name} className="font-mono">
-                        <span className="bg-muted rounded px-1 py-0.5 text-xs">{`{{{${name}}}}`}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </TooltipContent>
-              </Tooltip>
-            )}
+            <WarningTooltip missingVars={missingVars} text={text} />
           </div>
         )}
         {templateId && (
@@ -252,6 +255,7 @@ export function TransactionalEmailsPage() {
   const [templates, setTemplates] = useState<TemplateSummary[]>([])
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const hasFetched = useRef(false)
+  const [missingVarsByKey, setMissingVarsByKey] = useState<Record<string, string[]>>({})
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -261,6 +265,7 @@ export function TransactionalEmailsPage() {
       )
       setEmails(data.emails)
       setTemplates(data.templates)
+      setMissingVarsByKey(Object.fromEntries(data.emails.map((email) => [email.key, email.missingVariables])))
       setSelectedKey((prev) => prev ?? data.emails[0]?.key ?? null)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : text.loadError)
@@ -291,7 +296,7 @@ export function TransactionalEmailsPage() {
       ) : emails.length === 0 ? (
         <p className="text-muted-foreground text-sm">{text.empty}</p>
       ) : (
-        <div className="grid gap-6 md:grid-cols-[18rem_minmax(0,1fr)] md:gap-8">
+        <div className="grid gap-6 md:grid-cols-[25rem_minmax(0,1fr)] md:gap-8">
           <nav className="flex flex-col gap-1 md:border-r md:pr-4">
             {emails.map((email) => {
               const active = email.key === selectedKey
@@ -304,9 +309,13 @@ export function TransactionalEmailsPage() {
                     "flex cursor-pointer flex-col rounded-lg border px-4 py-3 text-left transition-colors",
                     active ? "border-primary/30 bg-primary/5" : "hover:bg-muted border-transparent"
                   )}>
-                  <span className={cn("text-sm font-medium", active ? "text-primary" : "text-foreground")}>
-                    {email.name[language]}
-                  </span>
+                  <div className="flex w-full items-center gap-2">
+                    <span className={cn("text-sm font-medium", active ? "text-primary" : "text-foreground")}>
+                      {email.name[language]}
+                    </span>
+                    <WarningTooltip missingVars={missingVarsByKey[email.key] ?? []} text={text} />
+                  </div>
+
                   <span className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
                     {email.description[language]}
                   </span>
@@ -322,10 +331,14 @@ export function TransactionalEmailsPage() {
               templates={templates}
               text={text}
               language={language}
+              missingVars={missingVarsByKey[selected.key] ?? []}
               onSaved={(templateId) =>
                 setEmails((prev) =>
                   prev.map((email) => (email.key === selected.key ? { ...email, templateId } : email))
                 )
+              }
+              onMissingVarsChange={(vars) =>
+                setMissingVarsByKey((prev) => ({ ...prev, [selected.key]: vars }))
               }
             />
           )}
