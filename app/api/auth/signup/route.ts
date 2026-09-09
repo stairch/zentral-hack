@@ -5,7 +5,7 @@ import { successResponse, validationError, serverError } from "@/lib/api"
 import { SignupSchema, validateRequest } from "@/lib/validation"
 import { createRateLimiter } from "@/lib/rate-limit"
 import { generateVerificationCode, hashCode } from "@/lib/auth"
-import { send2FACodeEmail } from "@/lib/email"
+import { sendGeneral2FACodeEmail } from "@/lib/email"
 
 const rateLimiter = createRateLimiter("signup")
 
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     // Send 2FA code via email
     try {
-      await send2FACodeEmail(email, code)
+      await sendGeneral2FACodeEmail(email, code)
     } catch (emailError) {
       console.error("Failed to send 2FA email:", emailError)
       return serverError("Failed to send 2FA code")

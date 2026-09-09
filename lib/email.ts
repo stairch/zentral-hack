@@ -73,6 +73,10 @@ export function sendNewsletterOptInEmail(to: string, confirmUrl: string): Promis
   return sendTransactionalEmail("newsletter-opt-in", { to, values: { confirm_url: confirmUrl } })
 }
 
-export function send2FACodeEmail(to: string, code: string): Promise<void> {
-  return sendTransactionalEmail("2fa-code", { to, values: { code } })
+export function sendGeneral2FACodeEmail(to: string, code: string): Promise<void> {
+  return sendTransactionalEmail("2fa-code-general", { to, values: { code } })
+}
+
+export function sendNewEmail2FACodeEmail(to: string, code: string): Promise<void> {
+  return sendTransactionalEmail("2fa-code-new-e-mail-address", { to, values: { code } })
 }

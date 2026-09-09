@@ -48,15 +48,15 @@ export const TRANSACTIONAL_EMAILS: TransactionalEmailDef[] = [
       `Bitte bestätige deine Newsletter-Anmeldung zum Zentral Hack: ${values.confirm_url}`
   },
   {
-    key: "2fa-code",
-    name: { de: "2FA-Code", en: "2FA code" },
+    key: "2fa-code-general",
+    name: { de: "2FA-Code - Allgemein", en: "2FA code - General" },
     description: {
-      de: "Verifizierungscode für die Anmeldung, wird bei jedem Login mit aktivierter 2FA gesendet.",
-      en: "Verification code for signing in, sent on every login when 2FA is enabled."
+      de: "E-Mail für allgemeine Verifizierungen (z.B. Anmeldungen).",
+      en: "E-Mail for general verifications (e.g. logins)."
     },
-    defaultAlias: "2fa-code",
-    defaultSubject: "Zentral Hack - Dein 2FA Code",
-    previewValues: { code: "123456" },
+    defaultAlias: "2fa-code-general",
+    defaultSubject: "Bitte bestätige deine E-Mail-Adresse",
+    previewValues: { code: "1A2B3C" },
     buildText: (values) => `Dein 2FA Code: ${values.code}`,
     fallbackHtml: (values) => `
     <h2>Dein 2FA-Code für Zentral Hack</h2>
@@ -64,6 +64,25 @@ export const TRANSACTIONAL_EMAILS: TransactionalEmailDef[] = [
     <h1 style="letter-spacing: 0.1em; font-size: 36px; margin: 20px 0; font-family: monospace; color: #530A5D;">${values.code}</h1>
     <p>Dieser Code verfällt in 15 Minuten.</p>
     <p style="color: #666; font-size: 12px;">Falls du dich nicht angemeldet hast, ignoriere diese E-Mail und ändere dein Passwort.</p>
+  `
+  },
+  {
+    key: "2fa-code-new-e-mail-address",
+    name: { de: "2FA-Code - Neue E-Mail-Adresse", en: "2FA code - New e-mail address" },
+    description: {
+      de: "E-Mail für die Verifizierung der neuen E-Mail-Adresse.",
+      en: "E-Mail for the verification of the new e-mail address."
+    },
+    defaultAlias: "2fa-code-new-e-mail-address-1",
+    defaultSubject: "Bitte bestätige deine neue E-Mail-Adresse",
+    previewValues: { code: "1A2B3C" },
+    buildText: (values) => `Dein 2FA Code: ${values.code}`,
+    fallbackHtml: (values) => `
+    <h2>Neue E-Mail-Adresse bestätigen</h2>
+    <p>Du hast beantragt, deine E-Mail-Adresse für dein Zentral Hack Konto zu ändern. Verwende folgenden Code, um diese neue Adresse zu bestätigen:</p>
+    <h1 style="letter-spacing: 0.1em; font-size: 36px; margin: 20px 0; font-family: monospace; color: #530A5D;">${values.code}</h1>
+    <p>Dieser Code verfällt in 15 Minuten.</p>
+    <p style="color: #666; font-size: 12px;">Falls du diese Änderung nicht angefordert hast, ignoriere diese E-Mail – es wird nichts geändert.</p>
   `
   }
 ]
@@ -117,9 +136,3 @@ export async function resolveTransactionalTemplate(key: string): Promise<Newslet
   }
   return getNewsletterTemplateByAlias(def.defaultAlias)
 }
-
-/**
- * Merge-tag rendering and template-variable validation live in
- * `@/lib/email/render`. Import `renderTransactionalHtml`,
- * `renderTransactionalPreview` and `findMissingTemplateVariables` from there.
- */
