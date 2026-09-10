@@ -94,6 +94,44 @@ export const TRANSACTIONAL_EMAILS: TransactionalEmailDef[] = [
     <p>Dieser Code verfällt in 15 Minuten.</p>
     <p style="color: #666; font-size: 12px;">Falls du diese Anfrage nicht gestellt hast, ignoriere diese E-Mail.</p>
   `
+  },
+  {
+    key: "register-confirmation",
+    name: { de: "Registrierung Bestätigung", en: "Registration Confirmation" },
+    description: {
+      de: "E-Mail für die Bestätigung der Registrierung.",
+      en: "E-Mail for the confirmation of the registration."
+    },
+    defaultSubject: "Bestätigung deiner Registrierung",
+    previewValues: {
+      given_name: "Max",
+      family_name: "Mustermann",
+      category: "Campus Challenge",
+      university: "Hochschule Luzern (HSLU)",
+      study_program: "Informatik",
+      semester: "2",
+      allergies: "—",
+      dietary_restrictions: "Vegetarisch"
+    },
+    buildText: (_) => "Herzlich Willkommen zum Zentral Hack!",
+    fallbackHtml: (values) => `
+    <h2>Herzlich Willkommen zum Zentral Hack!</h2>
+    <p>Hallo ${escapeHtml(values.given_name ?? "")} ${escapeHtml(values.family_name ?? "")}</p>
+    <p>Gerne bestätigen wir deine Registrierung und freuen uns auf deine Teilnahme am Zentral Hack!</p>
+    <p><a href="https://zentralhack.ch/dashboard" style="color: #530A5D; font-weight: 600;">Zum Dashboard</a></p>
+    <p>Unten findest du eine Übersicht deiner Angaben.</p>
+    <table style="border-collapse: collapse; font-size: 14px;">
+      <tr><td style="padding: 4px 12px 4px 0; font-weight: 600; color: #530A5D;">Name</td><td style="padding: 4px 0;">${escapeHtml(values.given_name ?? "")} ${escapeHtml(values.family_name ?? "")}</td></tr>
+      <tr><td style="padding: 4px 12px 4px 0; font-weight: 600; color: #530A5D;">Kategorie</td><td style="padding: 4px 0;">${escapeHtml(values.category ?? "")}</td></tr>
+      <tr><td style="padding: 4px 12px 4px 0; font-weight: 600; color: #530A5D;">Universität / Schule / Firma</td><td style="padding: 4px 0;">${escapeHtml(values.university ?? "")}</td></tr>
+      <tr><td style="padding: 4px 12px 4px 0; font-weight: 600; color: #530A5D;">Studiengang / Ausbildung / Beruf</td><td style="padding: 4px 0;">${escapeHtml(values.study_program ?? "")}</td></tr>
+      <tr><td style="padding: 4px 12px 4px 0; font-weight: 600; color: #530A5D;">Studiensemester / Ausbildungsjahr / Berufsjahre</td><td style="padding: 4px 0;">${escapeHtml(values.semester ?? "")}</td></tr>
+      <tr><td style="padding: 4px 12px 4px 0; font-weight: 600; color: #530A5D;">Allergien</td><td style="padding: 4px 0;">${escapeHtml(values.allergies ?? "")}</td></tr>
+      <tr><td style="padding: 4px 12px 4px 0; font-weight: 600; color: #530A5D;">Diätetische Einschränkungen</td><td style="padding: 4px 0;">${escapeHtml(values.dietary_restrictions ?? "")}</td></tr>
+    </table>
+    <p>Fragen? Lies unser <a href="https://zentralhack.ch#faq" style="color: #530A5D; text-decoration: underline; font-weight: 600;">FAQ</a> oder antworte auf diese E-Mail.</p>
+    <p style="color: #666; font-size: 12px;">Beste Grüsse<br />Dein Zentral Hack Team</p>
+    `
   }
 ]
 

@@ -135,6 +135,7 @@ export interface NewsletterTemplateDetail extends NewsletterTemplateSummary {
   /** Raw template HTML with `{{{variable}}}` merge tags. Server-side only. */
   html: string
   variables: NewsletterTemplateVariable[]
+  reply_to: string[] | null
 }
 
 const TEMPLATE_MARKER = /^<!--\s*zh-template:([a-zA-Z0-9-]+)\s*-->/
@@ -204,7 +205,8 @@ export async function getNewsletterTemplate(id: string): Promise<NewsletterTempl
       type: variable.type,
       fallbackValue: variable.fallback_value === null ? null : String(variable.fallback_value),
       editable: isEditableVariableKey(variable.key)
-    }))
+    })),
+    reply_to: template.reply_to
   }
 }
 

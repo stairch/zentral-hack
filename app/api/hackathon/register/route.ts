@@ -1,9 +1,8 @@
 import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
-import { sendEmail } from "@/lib/email"
+import { sendRegisterConfirmationEmail } from "@/lib/email"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { RegistrationSchema, validateRequest } from "@/lib/validation"
-import { escapeHtml } from "@/lib/email-templates"
 import { addSubscriber } from "@/lib/resend"
 
 export async function POST(request: NextRequest) {
@@ -67,33 +66,15 @@ export async function POST(request: NextRequest) {
     const categoryName = catResult.rows[0]?.name || "Hackathon"
 
     // Send confirmation email
-    const confirmationHtml = `
-      <h2>Willkommen zum Zentral Hack 2026!</h2>
-      <p>Hallo ${escapeHtml(firstName)} ${escapeHtml(lastName)},</p>
-      
-      <p>Danke dass du dich registriert hast!</p>
-      
-      <div style="margin: 20px 0; padding: 15px; background-color: #f3f4f6; border-left: 4px solid #530A5D;">
-        <h3>Deine Registrierungsdaten:</h3>
-        <p><strong>Name:</strong> ${escapeHtml(firstName)} ${escapeHtml(lastName)}</p>
-        <p><strong>Kategorie:</strong> ${escapeHtml(categoryName)}</p>
-        ${university ? `<p><strong>Universität:</strong> ${escapeHtml(university)}</p>` : ""}
-        ${studyProgram ? `<p><strong>Studiengang:</strong> ${escapeHtml(studyProgram)}</p>` : ""}
-        ${semester ? `<p><strong>Semester:</strong> ${escapeHtml(String(semester))}</p>` : ""}
-        ${allergies ? `<p><strong>Allergien:</strong> ${escapeHtml(allergies)}</p>` : ""}
-        ${dietaryRestrictions ? `<p><strong>Diätetische Einschränkungen:</strong> ${escapeHtml(dietaryRestrictions)}</p>` : ""}
-      </div>
-      
-      <p>Du kannst jetzt auf dein Dashboard zugreifen: <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard">Dashboard</a></p>
-      
-      <p style="color: #666; font-size: 12px;">Falls du Fragen hast, antworte einfach auf diese E-Mail.</p>
-    `
-
-    await sendEmail({
-      to: email,
-      subject: `Bestätigung: Registrierung für ${escapeHtml(categoryName)}`,
-      html: confirmationHtml,
-      text: `Willkommen zum Zentral Hack 2026! Du hast dich für die Kategorie "${categoryName}" registriert.`
+    await sendRegisterConfirmationEmail(email, {
+      given_name: firstName,
+      family_name: lastName,
+      category: categoryName,
+      university: university || "—",
+      study_program: studyProgram || "—",
+      semester: semester || "—",
+      allergies: allergies || "—",
+      dietary_restrictions: dietaryRestrictions || "—"
     })
 
     // Subscribe to newsletter if requested

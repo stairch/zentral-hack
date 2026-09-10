@@ -25,6 +25,7 @@ export interface EmailOptions {
   subject: string
   html: string
   text?: string
+  replyTo?: string[] | undefined
 }
 
 export async function sendEmail(options: EmailOptions): Promise<void> {
@@ -55,18 +56,21 @@ export async function sendTransactionalEmail(
 
   let html: string
   let subject: string
+  let replyTo: string[]
   try {
     const template = await resolveTransactionalTemplate(key)
     html = renderTransactionalHtml(template, values)
     subject = template.subject || def.defaultSubject
+    replyTo = template.reply_to || []
   } catch (error) {
     if (!def.fallbackHtml) throw error
     console.warn(`[email] No Resend template for "${key}", using built-in fallback:`, error)
     html = def.fallbackHtml(values)
     subject = def.defaultSubject
+    replyTo = []
   }
 
-  return sendEmail({ to, subject, html, text: def.buildText?.(values) })
+  return sendEmail({ to, subject, html, text: def.buildText?.(values), replyTo })
 }
 
 export function sendNewsletterOptInEmail(to: string, confirmUrl: string): Promise<void> {
@@ -83,4 +87,20 @@ export function sendNewEmail2FACodeEmail(to: string, code: string): Promise<void
 
 export function sendPasswordReset2FACodeEmail(to: string, code: string): Promise<void> {
   return sendTransactionalEmail("2fa-code-password-reset", { to, values: { code } })
+}
+
+export function sendRegisterConfirmationEmail(
+  to: string,
+  values: {
+    given_name: string
+    family_name: string
+    category: string
+    university: string
+    study_program: string
+    semester: string
+    allergies: string
+    dietary_restrictions: string
+  }
+): Promise<void> {
+  return sendTransactionalEmail("register-confirmation", { to, values })
 }
