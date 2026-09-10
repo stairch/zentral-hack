@@ -315,33 +315,36 @@ export function TransactionalEmailsPage() {
       ) : (
         <div className="grid gap-6 md:grid-cols-[25rem_minmax(0,1fr)] md:gap-8">
           <nav className="flex flex-col gap-1 md:border-r md:pr-4">
-            {emails.map((email) => {
-              const active = email.key === selectedKey
-              return (
-                <button
-                  key={email.key}
-                  type="button"
-                  onClick={() => setSelectedKey(email.key)}
-                  className={cn(
-                    "flex cursor-pointer flex-col rounded-lg border px-4 py-3 text-left transition-colors",
-                    active ? "border-primary/30 bg-primary/5" : "hover:bg-muted border-transparent"
-                  )}>
-                  <div className="flex w-full items-center gap-2">
-                    <span className={cn("text-sm font-medium", active ? "text-primary" : "text-foreground")}>
-                      {email.name[language]}
+            {emails
+              .toSorted((a, b) => a.name[language].localeCompare(b.name[language]))
+              .map((email) => {
+                const active = email.key === selectedKey
+                return (
+                  <button
+                    key={email.key}
+                    type="button"
+                    onClick={() => setSelectedKey(email.key)}
+                    className={cn(
+                      "flex cursor-pointer flex-col rounded-lg border px-4 py-3 text-left transition-colors",
+                      active ? "border-primary/30 bg-primary/5" : "hover:bg-muted border-transparent"
+                    )}>
+                    <div className="flex w-full items-center gap-2">
+                      <span
+                        className={cn("text-sm font-medium", active ? "text-primary" : "text-foreground")}>
+                        {email.name[language]}
+                      </span>
+                      <WarningTooltip
+                        missingVars={missingVarsByKey[email.key] ?? []}
+                        description={!email.templateId ? text.missingTemplate : text.missingVarsWarning}
+                        show={missingVarsByKey[email.key].length > 0 || !email.templateId}
+                      />
+                    </div>
+                    <span className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
+                      {email.description[language]}
                     </span>
-                    <WarningTooltip
-                      missingVars={missingVarsByKey[email.key] ?? []}
-                      description={!email.templateId ? text.missingTemplate : text.missingVarsWarning}
-                      show={missingVarsByKey[email.key].length > 0 || !email.templateId}
-                    />
-                  </div>
-                  <span className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
-                    {email.description[language]}
-                  </span>
-                </button>
-              )
-            })}
+                  </button>
+                )
+              })}
           </nav>
 
           {selected && (
