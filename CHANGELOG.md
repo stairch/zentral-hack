@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.9.0] - 2026-09-10
+
+### Added
+
+- Support for creating and sending e-mail campaigns via Resend
+- Support for choosing Resend templates for each transactional e-mail (system messages)
+
+### Fixed
+
+- Various security vulnerabilities from dependencies
+
 ## [1.8.0] - 2026-09-05
 
 ### Added
