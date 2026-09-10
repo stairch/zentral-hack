@@ -80,3 +80,7 @@ export function sendGeneral2FACodeEmail(to: string, code: string): Promise<void>
 export function sendNewEmail2FACodeEmail(to: string, code: string): Promise<void> {
   return sendTransactionalEmail("2fa-code-new-e-mail-address", { to, values: { code } })
 }
+
+export function sendPasswordReset2FACodeEmail(to: string, code: string): Promise<void> {
+  return sendTransactionalEmail("2fa-code-password-reset", { to, values: { code } })
+}

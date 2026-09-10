@@ -75,6 +75,24 @@ export const TRANSACTIONAL_EMAILS: TransactionalEmailDef[] = [
     <p>Dieser Code verfällt in 15 Minuten.</p>
     <p style="color: #666; font-size: 12px;">Falls du diese Änderung nicht angefordert hast, ignoriere diese E-Mail – es wird nichts geändert.</p>
   `
+  },
+  {
+    key: "2fa-code-password-reset",
+    name: { de: "2FA-Code - Passwort zurücksetzen", en: "2FA code - Password reset" },
+    description: {
+      de: "E-Mail für die Verifizierung der E-Mail-Adresse zum Zurücksetzen des Passworts.",
+      en: "E-Mail for the verification of the e-mail address to reset the password."
+    },
+    defaultSubject: "Passwort zurücksetzen",
+    previewValues: { code: "1A2B3C" },
+    buildText: (values) => `Dein 2FA Code: ${values.code}`,
+    fallbackHtml: (values) => `
+    <h2>Passwort zurücksetzen</h2>
+    <p>Wir haben eine Anfrage erhalten, dein Passwort für dein Zentral Hack Konto zurückzusetzen. Verwende folgenden Code, um fortzufahren:</p>
+    <h1 style="letter-spacing: 0.1em; font-size: 36px; margin: 20px 0; font-family: monospace; color: #530A5D;">${values.code}</h1>
+    <p>Dieser Code verfällt in 15 Minuten.</p>
+    <p style="color: #666; font-size: 12px;">Falls du diese Anfrage nicht gestellt hast, ignoriere diese E-Mail – dein Passwort bleibt unverändert.</p>
+  `
   }
 ]
 
