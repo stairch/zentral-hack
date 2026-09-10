@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer"
-import { renderTransactionalHtml } from "@/lib/email-render"
+import { renderMergeTags, renderTransactionalHtml } from "@/lib/email-render"
 import { getTransactionalEmailDef, resolveTransactionalTemplate } from "@/lib/transactional-emails"
 
 let transporter: nodemailer.Transporter | null = null
@@ -60,7 +60,7 @@ export async function sendTransactionalEmail(
   try {
     const template = await resolveTransactionalTemplate(key)
     html = renderTransactionalHtml(template, values)
-    subject = template.subject || def.defaultSubject
+    subject = template.subject ? renderMergeTags(template.subject, values) : def.defaultSubject
     replyTo = template.reply_to || []
   } catch (error) {
     if (!def.fallbackHtml) throw error
@@ -103,4 +103,8 @@ export function sendRegisterConfirmationEmail(
   }
 ): Promise<void> {
   return sendTransactionalEmail("register-confirmation", { to, values })
+}
+
+export function sendNewSponsorEmail(to: string[], companyName: string): Promise<void> {
+  return sendTransactionalEmail("new-sponsoring-request", { to, values: { company_name: companyName } })
 }

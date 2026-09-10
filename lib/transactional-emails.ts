@@ -132,6 +132,23 @@ export const TRANSACTIONAL_EMAILS: TransactionalEmailDef[] = [
     <p>Fragen? Lies unser <a href="https://zentralhack.ch#faq" style="color: #530A5D; text-decoration: underline; font-weight: 600;">FAQ</a> oder antworte auf diese E-Mail.</p>
     <p style="color: #666; font-size: 12px;">Beste Grüsse<br />Dein Zentral Hack Team</p>
     `
+  },
+  {
+    key: "new-sponsoring-request",
+    name: { de: "Neue Sponsorenanfrage", en: "New Sponsoring Request" },
+    description: {
+      de: "E-Mail für die interne Benachrichtigung einer neuen Sponsorenanfrage.",
+      en: "E-Mail for the internal notification of a new sponsoring request."
+    },
+    defaultSubject: "Neue Sponsorenanfrage",
+    previewValues: { company_name: "Acme Inc." },
+    buildText: (values) => `Neue Sponsorenanfrage von ${values.company_name}`,
+    fallbackHtml: (values) => `
+    <h2>Es wurde eine neue Sponsorenanfrage eingereicht!</h2>
+    <p>Firma: ${values.company_name}</p>
+    <p>Siehe weitere Informationen im Admin Panel</p>
+    <a href="https://zentralhack.ch/admin/sponsors" style="display: inline-block; padding: 10px 20px; background: #530A5D; color: white; text-decoration: none; border-radius: 5px;">Zum Admin Panel</a>
+  `
   }
 ]
 
