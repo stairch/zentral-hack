@@ -1,4 +1,5 @@
 import { query } from "@/lib/db"
+import { escapeHtml } from "@/lib/email-render"
 import { getNewsletterTemplate, type NewsletterTemplateDetail } from "@/lib/resend"
 
 const SETTINGS_KEY = "transactional_email_templates"
@@ -53,7 +54,7 @@ export const TRANSACTIONAL_EMAILS: TransactionalEmailDef[] = [
     fallbackHtml: (values) => `
     <h2>Dein 2FA-Code für Zentral Hack</h2>
     <p>Um dich anzumelden, verwende bitte folgenden Verifizierungscode:</p>
-    <h1 style="letter-spacing: 0.1em; font-size: 36px; margin: 20px 0; font-family: monospace; color: #530A5D;">${values.code}</h1>
+    <h1 style="letter-spacing: 0.1em; font-size: 36px; margin: 20px 0; font-family: monospace; color: #530A5D;">${escapeHtml(values.code ?? "")}</h1>
     <p>Dieser Code verfällt in 15 Minuten.</p>
     <p style="color: #666; font-size: 12px;">Falls du dich nicht angemeldet hast, ignoriere diese E-Mail und ändere dein Passwort.</p>
   `
@@ -71,9 +72,9 @@ export const TRANSACTIONAL_EMAILS: TransactionalEmailDef[] = [
     fallbackHtml: (values) => `
     <h2>Neue E-Mail-Adresse bestätigen</h2>
     <p>Du hast beantragt, deine E-Mail-Adresse für dein Zentral Hack Konto zu ändern. Verwende folgenden Code, um diese neue Adresse zu bestätigen:</p>
-    <h1 style="letter-spacing: 0.1em; font-size: 36px; margin: 20px 0; font-family: monospace; color: #530A5D;">${values.code}</h1>
+    <h1 style="letter-spacing: 0.1em; font-size: 36px; margin: 20px 0; font-family: monospace; color: #530A5D;">${escapeHtml(values.code ?? "")}</h1>
     <p>Dieser Code verfällt in 15 Minuten.</p>
-    <p style="color: #666; font-size: 12px;">Falls du diese Änderung nicht angefordert hast, ignoriere diese E-Mail – es wird nichts geändert.</p>
+    <p style="color: #666; font-size: 12px;">Falls du diese Änderung nicht angefordert hast, ignoriere diese E-Mail.</p>
   `
   },
   {
@@ -89,9 +90,9 @@ export const TRANSACTIONAL_EMAILS: TransactionalEmailDef[] = [
     fallbackHtml: (values) => `
     <h2>Passwort zurücksetzen</h2>
     <p>Wir haben eine Anfrage erhalten, dein Passwort für dein Zentral Hack Konto zurückzusetzen. Verwende folgenden Code, um fortzufahren:</p>
-    <h1 style="letter-spacing: 0.1em; font-size: 36px; margin: 20px 0; font-family: monospace; color: #530A5D;">${values.code}</h1>
+    <h1 style="letter-spacing: 0.1em; font-size: 36px; margin: 20px 0; font-family: monospace; color: #530A5D;">${escapeHtml(values.code ?? "")}</h1>
     <p>Dieser Code verfällt in 15 Minuten.</p>
-    <p style="color: #666; font-size: 12px;">Falls du diese Anfrage nicht gestellt hast, ignoriere diese E-Mail – dein Passwort bleibt unverändert.</p>
+    <p style="color: #666; font-size: 12px;">Falls du diese Anfrage nicht gestellt hast, ignoriere diese E-Mail.</p>
   `
   }
 ]
