@@ -41,6 +41,7 @@ const copy = {
     preview: "Vorschau",
     previewHint: "Live-Vorschau mit Beispielwerten für die Platzhalter.",
     missingVarsWarning: "Im ausgewählten Template fehlen benötigte Variablen:",
+    missingTemplate: "Kein Template ausgewählt. Generisches E-Mail wird verwendet.",
     loadError: "Konfiguration konnte nicht geladen werden",
     previewLoadError: "Vorschau konnte nicht geladen werden",
     saveSuccess: "Template gespeichert",
@@ -58,6 +59,7 @@ const copy = {
     preview: "Preview",
     previewHint: "Live preview using sample values for the placeholders.",
     missingVarsWarning: "The selected template is missing required variables:",
+    missingTemplate: "No template selected. Generic e-mail is used.",
     loadError: "Failed to load configuration",
     previewLoadError: "Failed to load preview",
     saveSuccess: "Template saved",
@@ -78,8 +80,17 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
   return json.data as T
 }
 
-function WarningTooltip({ missingVars, text }: { missingVars: string[]; text: Copy }) {
-  if (missingVars.length === 0) return null
+function WarningTooltip({
+  missingVars,
+  description,
+  show
+}: {
+  missingVars: string[]
+  description: string
+  show: boolean
+}) {
+  if (!show) return null
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -90,14 +101,16 @@ function WarningTooltip({ missingVars, text }: { missingVars: string[]; text: Co
         </span>
       </TooltipTrigger>
       <TooltipContent side="right" className="border border-amber-600">
-        <p className="font-medium">{text.missingVarsWarning}</p>
-        <ul className="mt-1 list-inside list-disc space-y-0.5">
-          {missingVars.map((name) => (
-            <li key={name} className="font-mono">
-              <span className="bg-muted rounded px-1 py-0.5 text-xs">{`{{{${name}}}}`}</span>
-            </li>
-          ))}
-        </ul>
+        <p className="font-medium">{description}</p>
+        {missingVars.length > 0 && (
+          <ul className="mt-1 list-inside list-disc space-y-0.5">
+            {missingVars.map((name) => (
+              <li key={name} className="font-mono">
+                <span className="bg-muted rounded px-1 py-0.5 text-xs">{`{{{${name}}}}`}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </TooltipContent>
     </Tooltip>
   )
@@ -206,7 +219,11 @@ function EmailDetail({
               </SelectContent>
             </Select>
             {saving && <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />}
-            <WarningTooltip missingVars={missingVars} text={text} />
+            <WarningTooltip
+              missingVars={missingVars}
+              description={!templateId ? text.missingTemplate : text.missingVarsWarning}
+              show={missingVars.length > 0 || !templateId}
+            />
           </div>
         )}
         {templateId && (
@@ -313,9 +330,12 @@ export function TransactionalEmailsPage() {
                     <span className={cn("text-sm font-medium", active ? "text-primary" : "text-foreground")}>
                       {email.name[language]}
                     </span>
-                    <WarningTooltip missingVars={missingVarsByKey[email.key] ?? []} text={text} />
+                    <WarningTooltip
+                      missingVars={missingVarsByKey[email.key] ?? []}
+                      description={!email.templateId ? text.missingTemplate : text.missingVarsWarning}
+                      show={missingVarsByKey[email.key].length > 0 || !email.templateId}
+                    />
                   </div>
-
                   <span className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
                     {email.description[language]}
                   </span>
