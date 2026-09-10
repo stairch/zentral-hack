@@ -1,7 +1,7 @@
 import { query } from "@/lib/db"
 import { escapeHtml } from "@/lib/email-render"
 import { getEmailTemplate, type NewsletterTemplateDetail } from "@/lib/resend"
-import nodemailer from "nodemailer"
+import nodemailer, { Transporter } from "nodemailer"
 import { renderMergeTags, renderTransactionalHtml } from "@/lib/email-render"
 
 const SETTINGS_KEY = "transactional_email_templates"
@@ -204,7 +204,7 @@ export async function resolveTransactionalTemplate(key: string): Promise<Newslet
   return getEmailTemplate(configuredId)
 }
 
-let transporter: nodemailer.Transporter | null = null
+let transporter: Transporter | null = null
 
 function getTransporter() {
   if (transporter) return transporter
