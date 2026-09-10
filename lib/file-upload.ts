@@ -83,7 +83,7 @@ export function generateSecureFilename(originalFilename: string): string {
 /**
  * Sanitize filename to prevent directory traversal
  */
-export function sanitizeFilename(filename: string): string {
+function sanitizeFilename(filename: string): string {
   // Remove any path components
   const basename = path.basename(filename)
 
@@ -97,7 +97,7 @@ export function sanitizeFilename(filename: string): string {
 /**
  * Validate category-specific file paths to prevent unauthorized access
  */
-export function validateCategoryFilePath(categoryId: string, filePath: string): boolean {
+function validateCategoryFilePath(categoryId: string, filePath: string): boolean {
   // Ensure path contains the category ID
   if (!filePath.includes(categoryId)) {
     return false

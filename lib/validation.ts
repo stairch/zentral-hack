@@ -44,11 +44,11 @@ export const LoginSchema = z.object({
   password: z.string().min(1, "Passwort erforderlich")
 })
 
-export const ResetPasswordSchema = z.object({
+const ResetPasswordSchema = z.object({
   email: emailSchema
 })
 
-export const ChangePasswordSchema = z
+const ChangePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Aktuelles Passwort erforderlich"),
     newPassword: passwordSchema,
@@ -59,7 +59,7 @@ export const ChangePasswordSchema = z
     path: ["confirmPassword"]
   })
 
-export const TwoFAVerifySchema = z.object({
+const TwoFAVerifySchema = z.object({
   email: emailSchema,
   code: z
     .string()
@@ -82,30 +82,30 @@ export const RegistrationSchema = z.object({
   subscribeNewsletter: z.boolean().default(false)
 })
 
-export const TeamCreateSchema = z.object({
+const TeamCreateSchema = z.object({
   name: z.string().min(1, "Team-Name erforderlich").max(100),
   description: z.string().max(500).optional(),
   categoryId: z.string().uuid("Ungültige Kategorie")
 })
 
-export const TeamUpdateSchema = z.object({
+const TeamUpdateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional()
 })
 
-export const AddTeamMemberSchema = z.object({
+const AddTeamMemberSchema = z.object({
   userId: z.string().uuid("Ungültige Benutzer-ID"),
   teamId: z.string().uuid("Ungültige Team-ID")
 })
 
 // Newsletter Schemas
-export const NewsletterSubscribeSchema = z.object({
+const NewsletterSubscribeSchema = z.object({
   email: emailSchema,
   name: z.string().min(1).max(100).optional()
 })
 
 // Sponsor Contact Schema
-export const SponsorContactSchema = z.object({
+const SponsorContactSchema = z.object({
   companyName: z.string().min(1, "Firmenname erforderlich").max(255),
   contactName: z.string().min(1, "Kontaktperson erforderlich").max(255),
   email: emailSchema,
@@ -119,13 +119,13 @@ export const SponsorContactSchema = z.object({
 })
 
 // File Upload Schema (validation in API, but schema for structure)
-export const FileUploadSchema = z.object({
+const FileUploadSchema = z.object({
   fileType: z.enum(["pdf", "image", "document"]),
   maxSize: z.number().int().positive(),
   allowedMimeTypes: z.array(z.string())
 })
 
-export const ALLOWED_FILE_TYPES = {
+const ALLOWED_FILE_TYPES = {
   document: {
     mimeTypes: ["application/pdf"],
     extensions: [".pdf"],
@@ -144,7 +144,7 @@ export const ALLOWED_FILE_TYPES = {
 }
 
 // Category Description Update Schema
-export const CategoryDescriptionSchema = z.object({
+const CategoryDescriptionSchema = z.object({
   description: z.string().min(10, "Beschreibung muss mindestens 10 Zeichen lang sein").max(5000)
 })
 

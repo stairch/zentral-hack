@@ -61,5 +61,3 @@ export async function getClient() {
 export async function endPool() {
   return pool.end()
 }
-
-export default pool

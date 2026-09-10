@@ -12,12 +12,12 @@ export function escapeHtml(value: string): string {
 }
 
 /** Escapes a string for literal use inside a `RegExp`. */
-export function escapeRegExp(value: string): string {
+function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
 /** Matches a `{{{tag}}}` merge tag, optionally with a `{{{tag|default}}}` fallback. */
-export function mergeTagPattern(tag: string, flags = ""): RegExp {
+function mergeTagPattern(tag: string, flags = ""): RegExp {
   return new RegExp(`\\{\\{\\{\\s*${escapeRegExp(tag)}\\s*(\\|[^}]*)?\\}\\}\\}`, flags)
 }
 
@@ -71,7 +71,7 @@ export function renderTransactionalPreview(
 }
 
 /** Merge tags a system message injects at send time and therefore requires in its template. */
-export function getRequiredTemplateVariables(def: TransactionalEmailDef): string[] {
+function getRequiredTemplateVariables(def: TransactionalEmailDef): string[] {
   return Object.keys(def.previewValues)
 }
 

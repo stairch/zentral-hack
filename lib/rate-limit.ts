@@ -22,7 +22,7 @@ const WINDOWS = {
   default: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(100, "1 m"), prefix: `${env}:rl:default` })
 }
 
-export function getClientIp(request: NextRequest): string {
+function getClientIp(request: NextRequest): string {
   const forwarded = request.headers.get("x-forwarded-for")
   return forwarded ? forwarded.split(", ")[0] : (request.headers.get("x-real-ip") ?? "unknown")
 }

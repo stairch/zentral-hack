@@ -1,6 +1,6 @@
 import MdChangelog from "@/CHANGELOG.md"
 
-export interface ContentSection {
+interface ContentSection {
   type: "Added" | "Fixed" | "Changed" | "Removed" | "Other"
   title: string
   items: string[]
@@ -48,7 +48,7 @@ function parseSections(content: string): ContentSection[] {
   return sections
 }
 
-export function parseChangelog(raw: string): ChangelogEntry[] {
+function parseChangelog(raw: string): ChangelogEntry[] {
   return raw
     .split(/\n(?=## \[)/)
     .filter((s) => s.startsWith("## ["))

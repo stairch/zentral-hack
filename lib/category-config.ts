@@ -152,7 +152,7 @@ const iconAliases: Record<string, CategoryIconName> = {
   bot: "brain"
 }
 
-export function getReadableTextColor(backgroundHex: string): "#111111" | "#FFFFFF" {
+function getReadableTextColor(backgroundHex: string): "#111111" | "#FFFFFF" {
   const normalized = normalizeHexColor(backgroundHex)
   const red = Number.parseInt(normalized.slice(1, 3), 16)
   const green = Number.parseInt(normalized.slice(3, 5), 16)
@@ -162,7 +162,7 @@ export function getReadableTextColor(backgroundHex: string): "#111111" | "#FFFFF
   return brightness > 155 ? "#111111" : "#FFFFFF"
 }
 
-export function hexToRgba(hex: string, alpha: number): string {
+function hexToRgba(hex: string, alpha: number): string {
   const normalized = normalizeHexColor(hex)
   const red = Number.parseInt(normalized.slice(1, 3), 16)
   const green = Number.parseInt(normalized.slice(3, 5), 16)
@@ -171,7 +171,7 @@ export function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`
 }
 
-export function getCategoryFallback(slug: string) {
+function getCategoryFallback(slug: string) {
   return (
     categoryDefaults[slug] || {
       name: slug.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()),
@@ -183,7 +183,7 @@ export function getCategoryFallback(slug: string) {
   )
 }
 
-export function resolveCategoryIconName(icon?: string | null, slug?: string): CategoryIconName {
+function resolveCategoryIconName(icon?: string | null, slug?: string): CategoryIconName {
   if (icon && icon in categoryIconMap) {
     return icon as CategoryIconName
   }

@@ -115,7 +115,7 @@ export interface NewsletterSegment {
   name: string
 }
 
-export interface NewsletterTemplateVariable {
+interface NewsletterTemplateVariable {
   key: string
   type: "string" | "number"
   fallbackValue: string | null
@@ -285,7 +285,7 @@ export async function cancelNewsletterCampaign(id: string): Promise<void> {
 }
 
 /** Sentinel target meaning "all contacts" (resolved to the default segment). */
-export const NEWSLETTER_ALL_CONTACTS = "__all__"
+const NEWSLETTER_ALL_CONTACTS = "__all__"
 
 export async function sendNewsletterCampaign(
   id: string,
