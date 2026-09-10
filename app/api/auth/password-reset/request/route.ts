@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
 import { successResponse, serverError } from "@/lib/api"
-import { sendPasswordReset2FACodeEmail } from "@/lib/email"
+import { sendPasswordReset2FACodeEmail } from "@/lib/transactional-emails"
 import { createAccountActionChallenge } from "@/lib/account-actions"
 import { createRateLimiter } from "@/lib/rate-limit"
 import { emailSchema } from "@/lib/validation"

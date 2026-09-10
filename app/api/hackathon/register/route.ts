@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
-import { sendRegisterConfirmationEmail } from "@/lib/email"
+import { sendRegisterConfirmationEmail } from "@/lib/transactional-emails"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { RegistrationSchema, validateRequest } from "@/lib/validation"
 import { addSubscriber } from "@/lib/resend"

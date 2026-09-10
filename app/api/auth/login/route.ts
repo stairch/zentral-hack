@@ -4,7 +4,7 @@ import { comparePassword, generateVerificationCode, hashCode } from "@/lib/auth"
 import { successResponse, validationError, serverError, unauthorizedError } from "@/lib/api"
 import { LoginSchema, validateRequest } from "@/lib/validation"
 import { createRateLimiter } from "@/lib/rate-limit"
-import { sendGeneral2FACodeEmail } from "@/lib/email"
+import { sendGeneral2FACodeEmail } from "@/lib/transactional-emails"
 
 const rateLimiter = createRateLimiter("auth")
 

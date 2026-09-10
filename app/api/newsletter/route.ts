@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { emailSchema } from "@/lib/validation"
 import { createRateLimiter } from "@/lib/rate-limit"
 import { createOptInToken } from "@/lib/newsletter-opt-in"
-import { sendNewsletterOptInEmail } from "@/lib/email"
+import { sendNewsletterOptInEmail } from "@/lib/transactional-emails"
 
 const rateLimit = createRateLimiter("newsletter")
 

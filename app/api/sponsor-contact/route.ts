@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
 import { successResponse } from "@/lib/api"
-import { sendNewSponsorEmail } from "@/lib/email"
+import { sendNewSponsorEmail } from "@/lib/transactional-emails"
 import { Emails } from "@/lib/constants"
 
 export async function GET() {

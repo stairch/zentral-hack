@@ -2,7 +2,7 @@ import { z } from "zod"
 import { query } from "@/lib/db"
 import { withAuth, type AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
-import { sendNewEmail2FACodeEmail } from "@/lib/email"
+import { sendNewEmail2FACodeEmail } from "@/lib/transactional-emails"
 import { createAccountActionChallenge } from "@/lib/account-actions"
 
 const emailSchema = z

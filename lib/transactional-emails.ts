@@ -1,6 +1,8 @@
 import { query } from "@/lib/db"
 import { escapeHtml } from "@/lib/email-render"
 import { getNewsletterTemplate, type NewsletterTemplateDetail } from "@/lib/resend"
+import nodemailer from "nodemailer"
+import { renderMergeTags, renderTransactionalHtml } from "@/lib/email-render"
 
 const SETTINGS_KEY = "transactional_email_templates"
 
@@ -171,7 +173,7 @@ export async function getTransactionalTemplateMap(): Promise<TemplateMap> {
   return map
 }
 
-export async function getTransactionalTemplateId(key: string): Promise<string | null> {
+async function getTransactionalTemplateId(key: string): Promise<string | null> {
   const map = await getTransactionalTemplateMap()
   return map[key] ?? null
 }
@@ -200,4 +202,111 @@ export async function resolveTransactionalTemplate(key: string): Promise<Newslet
     throw new Error(`No Resend template configured for transactional email "${key}"`)
   }
   return getNewsletterTemplate(configuredId)
+}
+
+let transporter: nodemailer.Transporter | null = null
+
+function getTransporter() {
+  if (transporter) return transporter
+
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || "587"),
+    secure: process.env.SMTP_PORT === "465",
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD
+    }
+  })
+
+  return transporter
+}
+
+interface EmailOptions {
+  to: string | string[]
+  subject: string
+  html: string
+  text?: string
+  replyTo?: string[] | undefined
+}
+
+async function sendEmail(options: EmailOptions): Promise<void> {
+  try {
+    const transporter = getTransporter()
+
+    await transporter.sendMail({
+      from: `${process.env.SMTP_FROM_NAME || "Zentral Hack"} <${process.env.SMTP_FROM}>`,
+      ...options
+    })
+  } catch (error) {
+    console.error("Email sending failed:", error)
+    throw new Error("Failed to send email")
+  }
+}
+
+/**
+ * Resolves the Resend template an admin selected for a system message, renders it
+ * with the given merge values and sends it. When no template can be resolved the
+ * definition's built-in `fallbackHtml` is used so critical flows keep working.
+ */
+async function sendTransactionalEmail(
+  key: string,
+  { to, values }: { to: string | string[]; values: Record<string, string> }
+): Promise<void> {
+  const def = getTransactionalEmailDef(key)
+  if (!def) throw new Error(`Unknown transactional email "${key}"`)
+
+  let html: string
+  let subject: string
+  let replyTo: string[]
+  try {
+    const template = await resolveTransactionalTemplate(key)
+    html = renderTransactionalHtml(template, values)
+    subject = template.subject ? renderMergeTags(template.subject, values) : def.defaultSubject
+    replyTo = template.reply_to || []
+  } catch (error) {
+    if (!def.fallbackHtml) throw error
+    console.warn(`[email] No Resend template for "${key}", using built-in fallback:`, error)
+    html = def.fallbackHtml(values)
+    subject = def.defaultSubject
+    replyTo = []
+  }
+
+  return sendEmail({ to, subject, html, text: def.buildText?.(values), replyTo })
+}
+
+export function sendNewsletterOptInEmail(to: string, confirmUrl: string): Promise<void> {
+  return sendTransactionalEmail("newsletter-opt-in", { to, values: { confirm_url: confirmUrl } })
+}
+
+export function sendGeneral2FACodeEmail(to: string, code: string): Promise<void> {
+  return sendTransactionalEmail("2fa-code-general", { to, values: { code } })
+}
+
+export function sendNewEmail2FACodeEmail(to: string, code: string): Promise<void> {
+  return sendTransactionalEmail("2fa-code-new-e-mail-address", { to, values: { code } })
+}
+
+export function sendPasswordReset2FACodeEmail(to: string, code: string): Promise<void> {
+  return sendTransactionalEmail("2fa-code-password-reset", { to, values: { code } })
+}
+
+export function sendRegisterConfirmationEmail(
+  to: string,
+  values: {
+    given_name: string
+    family_name: string
+    category: string
+    university: string
+    study_program: string
+    semester: string
+    allergies: string
+    dietary_restrictions: string
+  }
+): Promise<void> {
+  return sendTransactionalEmail("register-confirmation", { to, values })
+}
+
+export function sendNewSponsorEmail(to: string[], companyName: string): Promise<void> {
+  return sendTransactionalEmail("new-sponsoring-request", { to, values: { company_name: companyName } })
 }

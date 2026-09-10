@@ -5,7 +5,7 @@ import { successResponse, validationError, serverError } from "@/lib/api"
 import { SignupSchema, validateRequest } from "@/lib/validation"
 import { createRateLimiter } from "@/lib/rate-limit"
 import { generateVerificationCode, hashCode } from "@/lib/auth"
-import { sendGeneral2FACodeEmail } from "@/lib/email"
+import { sendGeneral2FACodeEmail } from "@/lib/transactional-emails"
 
 const rateLimiter = createRateLimiter("signup")
 
