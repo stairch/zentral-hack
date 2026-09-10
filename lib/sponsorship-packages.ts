@@ -30,7 +30,7 @@ export type SponsorPackageLocale = {
   price_status: SponsorPackagePriceStatus
 }
 
-export function formatSponsorPackagePrice(price: number, language: "de" | "en"): string {
+function formatSponsorPackagePrice(price: number, language: "de" | "en"): string {
   return new Intl.NumberFormat(language === "en" ? "en-CH" : "de-CH", {
     style: "currency",
     currency: "CHF",

@@ -6,7 +6,7 @@ export interface AuthenticatedRequest extends NextRequest {
   user?: JWTPayload
 }
 
-export function getTokenFromRequest(request: NextRequest): string | null {
+function getTokenFromRequest(request: NextRequest): string | null {
   const authHeader = request.headers.get("authorization")
   if (authHeader?.startsWith("Bearer ")) {
     return authHeader.slice(7)

@@ -1,7 +1,5 @@
-export type SponsorRole = "user" | "category_partner" | "sponsor" | "admin"
-
-export type SponsorChallengeDifficulty = "Einsteiger" | "Fortgeschritten" | "Expert"
-export type SponsorChallengeLanguage = "Deutsch" | "Englisch" | "Beides"
+type SponsorChallengeDifficulty = "Einsteiger" | "Fortgeschritten" | "Expert"
+type SponsorChallengeLanguage = "Deutsch" | "Englisch" | "Beides"
 
 export interface EvaluationCriterion {
   name: string

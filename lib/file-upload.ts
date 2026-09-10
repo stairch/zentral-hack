@@ -83,30 +83,30 @@ export function generateSecureFilename(originalFilename: string): string {
 /**
  * Sanitize filename to prevent directory traversal
  */
-export function sanitizeFilename(filename: string): string {
-  // Remove any path components
-  const basename = path.basename(filename)
-
-  // Remove special characters except dots and dashes
-  return basename
-    .replace(/[^a-zA-Z0-9._-]/g, "_")
-    .replace(/^[\s.]+/, "") // Remove leading spaces and dots
-    .substring(0, 255) // Limit length
-}
+// function sanitizeFilename(filename: string): string {
+//   // Remove any path components
+//   const basename = path.basename(filename)
+//
+//   // Remove special characters except dots and dashes
+//   return basename
+//     .replace(/[^a-zA-Z0-9._-]/g, "_")
+//     .replace(/^[\s.]+/, "") // Remove leading spaces and dots
+//     .substring(0, 255) // Limit length
+// }
 
 /**
  * Validate category-specific file paths to prevent unauthorized access
  */
-export function validateCategoryFilePath(categoryId: string, filePath: string): boolean {
-  // Ensure path contains the category ID
-  if (!filePath.includes(categoryId)) {
-    return false
-  }
-
-  // Prevent directory traversal attempts
-  if (filePath.includes("..")) {
-    return false
-  }
-
-  return true
-}
+// function validateCategoryFilePath(categoryId: string, filePath: string): boolean {
+//   // Ensure path contains the category ID
+//   if (!filePath.includes(categoryId)) {
+//     return false
+//   }
+//
+//   // Prevent directory traversal attempts
+//   if (filePath.includes("..")) {
+//     return false
+//   }
+//
+//   return true
+// }
