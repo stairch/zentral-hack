@@ -25,12 +25,6 @@ export function isTwoFaBypassEnabled(): boolean {
   return process.env.NODE_ENV === "development" && process.env.BYPASS_2FA === "true"
 }
 
-function generateTwoFAToken(): string {
-  return jwt.sign({ type: "2fa" }, getJWTSecret(), {
-    expiresIn: (process.env.TWO_FA_EXPIRATION || "15m") as SignOptions["expiresIn"]
-  })
-}
-
 export function verifyJWT(token: string): JWTPayload | null {
   try {
     return jwt.verify(token, getJWTSecret()) as JWTPayload
@@ -57,7 +51,6 @@ export async function compareCode(code: string, hash: string): Promise<boolean> 
 
 // Cryptographically secure verification code generation
 export function generateVerificationCode(): string {
-  // Generate 3 bytes (24 bits) = 6 hex characters (0-9, A-F)
   return randomBytes(3).toString("hex").toUpperCase()
 }
 

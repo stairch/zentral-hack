@@ -44,29 +44,6 @@ export const LoginSchema = z.object({
   password: z.string().min(1, "Passwort erforderlich")
 })
 
-const ResetPasswordSchema = z.object({
-  email: emailSchema
-})
-
-const ChangePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, "Aktuelles Passwort erforderlich"),
-    newPassword: passwordSchema,
-    confirmPassword: z.string()
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Neue Passwörter stimmen nicht überein",
-    path: ["confirmPassword"]
-  })
-
-const TwoFAVerifySchema = z.object({
-  email: emailSchema,
-  code: z
-    .string()
-    .length(6, "Verificationscode muss 6 Zeichen lang sein")
-    .regex(/^[A-F0-9]+$/, "Ungültiger Verificationscode")
-})
-
 // Registration/Team Schemas
 export const RegistrationSchema = z.object({
   firstName: z.string().min(1).max(50),
@@ -82,71 +59,46 @@ export const RegistrationSchema = z.object({
   subscribeNewsletter: z.boolean().default(false)
 })
 
-const TeamCreateSchema = z.object({
-  name: z.string().min(1, "Team-Name erforderlich").max(100),
-  description: z.string().max(500).optional(),
-  categoryId: z.string().uuid("Ungültige Kategorie")
-})
-
-const TeamUpdateSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  description: z.string().max(500).optional()
-})
-
-const AddTeamMemberSchema = z.object({
-  userId: z.string().uuid("Ungültige Benutzer-ID"),
-  teamId: z.string().uuid("Ungültige Team-ID")
-})
-
-// Newsletter Schemas
-const NewsletterSubscribeSchema = z.object({
-  email: emailSchema,
-  name: z.string().min(1).max(100).optional()
-})
-
-// Sponsor Contact Schema
-const SponsorContactSchema = z.object({
-  companyName: z.string().min(1, "Firmenname erforderlich").max(255),
-  contactName: z.string().min(1, "Kontaktperson erforderlich").max(255),
-  email: emailSchema,
-  phone: z
-    .string()
-    .regex(/^[+\d\s\-()]+$/, "Ungültige Telefonnummer")
-    .max(20)
-    .optional(),
-  interestedIn: z.enum(["platin", "gold", "silber", "bronze", "other"]),
-  message: z.string().max(5000).optional()
-})
+// const TeamCreateSchema = z.object({
+//   name: z.string().min(1, "Team-Name erforderlich").max(100),
+//   description: z.string().max(500).optional(),
+//   categoryId: z.string().uuid("Ungültige Kategorie")
+// })
+//
+// const TeamUpdateSchema = z.object({
+//   name: z.string().min(1).max(100).optional(),
+//   description: z.string().max(500).optional()
+// })
+//
+// const AddTeamMemberSchema = z.object({
+//   userId: z.string().uuid("Ungültige Benutzer-ID"),
+//   teamId: z.string().uuid("Ungültige Team-ID")
+// })
 
 // File Upload Schema (validation in API, but schema for structure)
-const FileUploadSchema = z.object({
-  fileType: z.enum(["pdf", "image", "document"]),
-  maxSize: z.number().int().positive(),
-  allowedMimeTypes: z.array(z.string())
-})
+// const FileUploadSchema = z.object({
+//   fileType: z.enum(["pdf", "image", "document"]),
+//   maxSize: z.number().int().positive(),
+//   allowedMimeTypes: z.array(z.string())
+// })
 
-const ALLOWED_FILE_TYPES = {
-  document: {
-    mimeTypes: ["application/pdf"],
-    extensions: [".pdf"],
-    maxSize: 10 * 1024 * 1024 // 10MB
-  },
-  image: {
-    mimeTypes: ["image/jpeg", "image/png", "image/webp"],
-    extensions: [".jpg", ".jpeg", ".png", ".webp"],
-    maxSize: 5 * 1024 * 1024 // 5MB
-  },
-  spreadsheet: {
-    mimeTypes: ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv"],
-    extensions: [".xlsx", ".csv"],
-    maxSize: 20 * 1024 * 1024 // 20MB
-  }
-}
-
-// Category Description Update Schema
-const CategoryDescriptionSchema = z.object({
-  description: z.string().min(10, "Beschreibung muss mindestens 10 Zeichen lang sein").max(5000)
-})
+// const ALLOWED_FILE_TYPES = {
+//   document: {
+//     mimeTypes: ["application/pdf"],
+//     extensions: [".pdf"],
+//     maxSize: 10 * 1024 * 1024 // 10MB
+//   },
+//   image: {
+//     mimeTypes: ["image/jpeg", "image/png", "image/webp"],
+//     extensions: [".jpg", ".jpeg", ".png", ".webp"],
+//     maxSize: 5 * 1024 * 1024 // 5MB
+//   },
+//   spreadsheet: {
+//     mimeTypes: ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv"],
+//     extensions: [".xlsx", ".csv"],
+//     maxSize: 20 * 1024 * 1024 // 20MB
+//   }
+// }
 
 // Utility function to validate and parse
 export function validateRequest<T>(

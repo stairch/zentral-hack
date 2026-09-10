@@ -1,5 +1,3 @@
-type SponsorRole = "user" | "category_partner" | "sponsor" | "admin"
-
 type SponsorChallengeDifficulty = "Einsteiger" | "Fortgeschritten" | "Expert"
 type SponsorChallengeLanguage = "Deutsch" | "Englisch" | "Beides"
 

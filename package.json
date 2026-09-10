@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "format": "prettier --write --list-different .",
-    "typecheck": "tsc --noEmit --noUnusedParameters --composite false --incremental false",
+    "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters --composite false",
     "knip": "knip",
     "knip:fix": "knip --fix --allow-remove-files",
     "check": "npm run format && npm run typecheck && npm run knip",

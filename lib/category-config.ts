@@ -162,15 +162,6 @@ function getReadableTextColor(backgroundHex: string): "#111111" | "#FFFFFF" {
   return brightness > 155 ? "#111111" : "#FFFFFF"
 }
 
-function hexToRgba(hex: string, alpha: number): string {
-  const normalized = normalizeHexColor(hex)
-  const red = Number.parseInt(normalized.slice(1, 3), 16)
-  const green = Number.parseInt(normalized.slice(3, 5), 16)
-  const blue = Number.parseInt(normalized.slice(5, 7), 16)
-
-  return `rgba(${red}, ${green}, ${blue}, ${alpha})`
-}
-
 function getCategoryFallback(slug: string) {
   return (
     categoryDefaults[slug] || {
