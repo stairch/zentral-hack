@@ -1,6 +1,6 @@
 import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
-import { getNewsletterTemplate } from "@/lib/resend"
+import { getEmailTemplate } from "@/lib/resend"
 import { renderHtml } from "@/lib/email-render"
 
 /**
@@ -20,7 +20,7 @@ async function handlePost(req: AuthenticatedRequest) {
       }
     }
 
-    const template = await getNewsletterTemplate(templateId)
+    const template = await getEmailTemplate(templateId)
     const html = renderHtml(template, adminValues)
     return successResponse({ html })
   } catch (error) {

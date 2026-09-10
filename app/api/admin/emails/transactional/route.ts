@@ -1,6 +1,6 @@
 import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
-import { getNewsletterTemplate, listNewsletterTemplates } from "@/lib/resend"
+import { getEmailTemplate, listEmailTemplates } from "@/lib/resend"
 import { findMissingTemplateVariables } from "@/lib/email-render"
 import {
   TRANSACTIONAL_EMAILS,
@@ -11,17 +11,14 @@ import {
 
 async function handleGet() {
   try {
-    const [templates, configured] = await Promise.all([
-      listNewsletterTemplates(),
-      getTransactionalTemplateMap()
-    ])
+    const [templates, configured] = await Promise.all([listEmailTemplates(), getTransactionalTemplateMap()])
     const emails = await Promise.all(
       TRANSACTIONAL_EMAILS.map(async (email) => {
         const templateId = configured[email.key] ?? null
         let missingVariables: string[] = []
         if (templateId) {
           try {
-            const template = await getNewsletterTemplate(templateId)
+            const template = await getEmailTemplate(templateId)
             missingVariables = findMissingTemplateVariables(template, email)
           } catch (error) {
             console.error(
@@ -56,7 +53,7 @@ async function handlePut(req: AuthenticatedRequest) {
 
     const templateId = typeof body.templateId === "string" ? body.templateId.trim() : ""
     if (templateId) {
-      const templates = await listNewsletterTemplates()
+      const templates = await listEmailTemplates()
       if (!templates.some((template) => template.id === templateId)) {
         return validationError("Template not found or not published")
       }

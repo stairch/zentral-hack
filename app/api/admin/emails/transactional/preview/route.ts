@@ -1,6 +1,6 @@
 import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
-import { getNewsletterTemplate, type NewsletterTemplateDetail } from "@/lib/resend"
+import { getEmailTemplate, type NewsletterTemplateDetail } from "@/lib/resend"
 import { findMissingTemplateVariables, renderTransactionalPreview } from "@/lib/email-render"
 import { getTransactionalEmailDef, resolveTransactionalTemplate } from "@/lib/transactional-emails"
 
@@ -21,9 +21,7 @@ async function handlePost(req: AuthenticatedRequest) {
 
     let template: NewsletterTemplateDetail | null = null
     try {
-      template = templateId
-        ? await getNewsletterTemplate(templateId)
-        : await resolveTransactionalTemplate(key)
+      template = templateId ? await getEmailTemplate(templateId) : await resolveTransactionalTemplate(key)
     } catch (error) {
       if (templateId || !def.fallbackHtml) throw error
     }

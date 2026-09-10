@@ -1,6 +1,6 @@
 import { query } from "@/lib/db"
 import { escapeHtml } from "@/lib/email-render"
-import { getNewsletterTemplate, type NewsletterTemplateDetail } from "@/lib/resend"
+import { getEmailTemplate, type NewsletterTemplateDetail } from "@/lib/resend"
 import nodemailer from "nodemailer"
 import { renderMergeTags, renderTransactionalHtml } from "@/lib/email-render"
 
@@ -201,7 +201,7 @@ export async function resolveTransactionalTemplate(key: string): Promise<Newslet
   if (!configuredId) {
     throw new Error(`No Resend template configured for transactional email "${key}"`)
   }
-  return getNewsletterTemplate(configuredId)
+  return getEmailTemplate(configuredId)
 }
 
 let transporter: nodemailer.Transporter | null = null

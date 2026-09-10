@@ -1,6 +1,6 @@
 import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
-import { getNewsletterTemplate } from "@/lib/resend"
+import { getEmailTemplate } from "@/lib/resend"
 
 /**
  * Returns a template's editable variables for the send dialog. The raw template
@@ -11,7 +11,7 @@ async function handleGet(req: AuthenticatedRequest) {
   if (!id) return validationError("Template ID is required")
 
   try {
-    const template = await getNewsletterTemplate(id)
+    const template = await getEmailTemplate(id)
     return successResponse({
       template: {
         id: template.id,

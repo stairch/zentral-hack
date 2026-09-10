@@ -6,7 +6,7 @@ import {
   getNewsletterCampaign,
   listNewsletterCampaigns,
   listNewsletterSegments,
-  listNewsletterTemplates,
+  listEmailTemplates,
   updateNewsletterCampaign
 } from "@/lib/resend"
 
@@ -25,7 +25,7 @@ async function handleGet(req: AuthenticatedRequest) {
     const [campaigns, segments, templates] = await Promise.all([
       listNewsletterCampaigns(),
       listNewsletterSegments(),
-      listNewsletterTemplates()
+      listEmailTemplates()
     ])
     return successResponse({ campaigns, segments, templates })
   } catch (error) {

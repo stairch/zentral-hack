@@ -170,7 +170,7 @@ export async function listNewsletterSegments(): Promise<NewsletterSegment[]> {
   return data.data.map((segment) => ({ id: segment.id, name: segment.name }))
 }
 
-export async function listNewsletterTemplates(): Promise<NewsletterTemplateSummary[]> {
+export async function listEmailTemplates(): Promise<NewsletterTemplateSummary[]> {
   const data = unwrap(await resend.templates.list(), "Failed to list templates")
   return data.data
     .filter((template) => template.status === "published")
@@ -182,16 +182,7 @@ export async function listNewsletterTemplates(): Promise<NewsletterTemplateSumma
     }))
 }
 
-export async function getNewsletterTemplateByAlias(alias: string): Promise<NewsletterTemplateDetail> {
-  const templates = await listNewsletterTemplates()
-  const match = templates.find((template) => template.alias === alias)
-  if (!match) {
-    throw new Error(`No published Resend template with alias "${alias}" found`)
-  }
-  return getNewsletterTemplate(match.id)
-}
-
-export async function getNewsletterTemplate(id: string): Promise<NewsletterTemplateDetail> {
+export async function getEmailTemplate(id: string): Promise<NewsletterTemplateDetail> {
   const template = unwrap(await resend.templates.get(id), "Failed to load template")
   return {
     id: template.id,
@@ -301,7 +292,7 @@ export async function sendNewsletterCampaign(
   name: string,
   input: { templateId: string; segmentId: string; adminValues: Record<string, string>; scheduledAt?: string }
 ): Promise<void> {
-  const template = await getNewsletterTemplate(input.templateId)
+  const template = await getEmailTemplate(input.templateId)
   const body = renderHtml(template, input.adminValues)
   const html = `<!-- zh-template:${input.templateId} -->\n${body}`
   const segmentId =
