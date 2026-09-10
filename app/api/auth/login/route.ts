@@ -1,10 +1,17 @@
 import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
-import { comparePassword, generateVerificationCode, hashCode } from "@/lib/auth"
+import {
+  comparePassword,
+  generateVerificationCode,
+  hashCode,
+  generateJWT,
+  isTwoFaBypassEnabled,
+  JWTPayload
+} from "@/lib/auth"
 import { successResponse, validationError, serverError, unauthorizedError } from "@/lib/api"
 import { LoginSchema, validateRequest } from "@/lib/validation"
 import { createRateLimiter } from "@/lib/rate-limit"
-import { send2FACodeEmail } from "@/lib/email"
+import { sendGeneral2FACodeEmail } from "@/lib/transactional-emails"
 
 const rateLimiter = createRateLimiter("auth")
 
@@ -25,11 +32,12 @@ export async function POST(request: NextRequest) {
     const { email, password } = validation.data
 
     const result = await query(
-      "SELECT id, email, password_hash, role, is_active, email_verified FROM users WHERE email = $1",
+      "SELECT id, email, password_hash, role, category_id, is_active, email_verified FROM users WHERE email = $1",
       [email.toLowerCase()]
     )
 
     if (result.rows.length === 0) {
+      return unauthorizedError()
     }
 
     const user = result.rows[0]
@@ -45,6 +53,33 @@ export async function POST(request: NextRequest) {
     const validPassword = await comparePassword(password, user.password_hash)
     if (!validPassword) {
       return unauthorizedError()
+    }
+
+    // Development-only: skip the whole 2FA challenge and log the user in directly.
+    if (isTwoFaBypassEnabled()) {
+      const payload: JWTPayload = {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        categoryId: user.category_id || undefined,
+        twoFaVerified: true,
+        updatedAt: new Date().toISOString()
+      }
+      const authToken = generateJWT(payload)
+
+      const bypassResponse = successResponse({
+        token: authToken,
+        user: { id: user.id, email: user.email, role: user.role, categoryId: user.category_id || null },
+        message: "2FA bypassed (development)"
+      })
+      bypassResponse.cookies.set("token", authToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 86400,
+        path: "/"
+      })
+      return bypassResponse
     }
 
     // Generate 2FA code for ALL users
@@ -63,7 +98,7 @@ export async function POST(request: NextRequest) {
 
     // Send 2FA code via email
     try {
-      await send2FACodeEmail(user.email, code)
+      await sendGeneral2FACodeEmail(user.email, code)
     } catch (emailError) {
       console.error("Failed to send 2FA email:", emailError)
       return serverError("Failed to send 2FA code")

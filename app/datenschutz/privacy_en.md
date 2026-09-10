@@ -50,7 +50,7 @@ For login and access security, we use:
 
 ### Newsletter
 
-If you subscribe to the newsletter, we store your email address to send you event-related information.
+If you subscribe to the newsletter, we store your email address to send you event-related information. Delivery is handled by our service provider Resend, Inc. (USA).
 
 **Legal basis:** Consent (Art. 6 para. 6 FADP). Consent may be withdrawn at any time.
 
@@ -85,7 +85,8 @@ To provide our platform, we use the following service providers who may process 
 | ----------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------- |
 | **Vercel Inc.**               | Web application hosting, web analytics and performance monitoring (Vercel Analytics, Speed Insights) | USA (data in Frankfurt, EU) |
 | **Neon Inc.**                 | Database operations (PostgreSQL)                                                                     | USA (data in Frankfurt, EU) |
-| **Microsoft Corporation**     | Email delivery via Microsoft 365                                                                     | USA                         |
+| **Microsoft Corporation**     | Email delivery for transactional emails (2FA, registration, etc.) via Microsoft 365                  | USA                         |
+| **Resend, Inc.**              | Email delivery for newsletter                                                                        | USA                         |
 | **Vercel Blob (Vercel Inc.)** | Storage of uploaded files                                                                            | USA (data in Frankfurt, EU) |
 
 Contractual data protection agreements are in place with all data processors.

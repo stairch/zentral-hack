@@ -29,7 +29,14 @@ import {
   ShieldCheck,
   Bug,
   ArrowLeft,
-  ScrollText
+  ScrollText,
+  SquareArrowOutUpRight,
+  ChevronDown,
+  Newspaper,
+  LayoutTemplate,
+  MailCheck,
+  Contact,
+  type LucideIcon
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BrandMark } from "@/components/brand-mark"
@@ -49,8 +56,12 @@ const copy = {
     schedule: "Zeitplan",
     partnerLogos: "Partner-Logos",
     faqs: "FAQs",
-    emails: "E-Mails & Kampagnen",
-    newsletter: "Newsletter",
+    emails: "Emails",
+    emailsNotifications: "Benachrichtigungen",
+    emailsNewsletter: "Newsletter",
+    emailsTransactional: "Systemnachrichten",
+    emailsTemplates: "Templates",
+    emailsContacts: "Kontakte",
     sponsors: "Sponsoren",
     roles: "Rollen",
     adminPanel: "Admin Panel",
@@ -74,8 +85,12 @@ const copy = {
     schedule: "Schedule",
     partnerLogos: "Partner Logos",
     faqs: "FAQs",
-    emails: "Emails & Campaigns",
-    newsletter: "Newsletter",
+    emails: "Emails",
+    emailsNotifications: "Notifications",
+    emailsNewsletter: "Newsletter",
+    emailsTransactional: "System messages",
+    emailsTemplates: "Templates",
+    emailsContacts: "Contacts",
     sponsors: "Sponsors",
     roles: "Roles",
     adminPanel: "Admin Panel",
@@ -93,12 +108,30 @@ interface AdminSidebarPropsType {
   releasedItems: { id: string; isReleased: boolean }[]
 }
 
+// permissionKey: matches admin_roles.permissions entries to gate visibility for custom-role users.
+// children: optional one level of sub-navigation, rendered as a collapsible group.
+interface NavItemType {
+  id: string
+  href: string
+  label: string
+  icon: LucideIcon
+  permissionKey: string | null
+  adminOnly: boolean
+  external?: boolean
+  isReleased?: boolean
+  children?: NavItemType[]
+}
+
 export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsType) {
   const pathname = usePathname()
   const router = useRouter()
   const { logout, user } = useAuth()
   const { language, setLanguage } = useLanguage()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([])
+
+  const toggleGroup = (id: string) =>
+    setExpandedGroups((prev) => (prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]))
 
   // deactivate scroll when menu open
   useEffect(() => {
@@ -110,8 +143,7 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
   const { hasUnseen, latestEntry, isMinorOrMajor } = useUnseenChangelog()
   const { hasNew: hasNewSponsors } = useNewSponsors()
 
-  // permissionKey: matches admin_roles.permissions entries to gate visibility for custom-role users
-  const allNavItems = [
+  const allNavItems: NavItemType[] = [
     {
       id: "root",
       href: "/admin",
@@ -201,22 +233,6 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       adminOnly: true
     },
     {
-      id: "emails",
-      href: "/admin/emails",
-      label: text.emails,
-      icon: Mail,
-      permissionKey: "emails",
-      adminOnly: true
-    },
-    {
-      id: "newsletter",
-      href: "/admin/newsletter",
-      label: text.newsletter,
-      icon: Mail,
-      permissionKey: "newsletter",
-      adminOnly: true
-    },
-    {
       id: "sponsors",
       href: "/admin/sponsors",
       label: text.sponsors,
@@ -231,6 +247,50 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       icon: ShieldCheck,
       permissionKey: null,
       adminOnly: true
+    },
+    {
+      id: "emails",
+      href: "/admin/emails",
+      label: text.emails,
+      icon: Mail,
+      permissionKey: "emails",
+      adminOnly: true,
+      children: [
+        {
+          id: "emails-newsletter",
+          href: "/admin/emails/newsletter",
+          label: text.emailsNewsletter,
+          icon: Newspaper,
+          permissionKey: "emails",
+          adminOnly: true
+        },
+        {
+          id: "emails-transactional",
+          href: "/admin/emails/transactional",
+          label: text.emailsTransactional,
+          icon: MailCheck,
+          permissionKey: "emails",
+          adminOnly: true
+        },
+        {
+          id: "emails-templates",
+          href: Urls.resendTemplates,
+          label: text.emailsTemplates,
+          icon: LayoutTemplate,
+          permissionKey: "emails",
+          adminOnly: true,
+          external: true
+        },
+        {
+          id: "emails-contacts",
+          href: Urls.resendContacts,
+          label: text.emailsContacts,
+          icon: Contact,
+          permissionKey: "emails",
+          adminOnly: true,
+          external: true
+        }
+      ]
     }
   ]
 
@@ -265,6 +325,78 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
     router.push("/dashboard")
   }
 
+  const NavLeaf = ({ item, nested = false }: { item: NavItemType; nested?: boolean }) => {
+    const isActive = pathname === item.href
+    const external = item.external
+    const released = item.isReleased !== false
+    return (
+      <Link
+        href={item.href}
+        target={external ? "_blank" : undefined}
+        rel={external ? "noopener noreferrer" : undefined}
+        onClick={() => setMobileMenuOpen(false)}
+        className={cn(
+          "flex items-center justify-between rounded-lg text-sm font-medium transition-colors",
+          nested ? "px-4 py-2" : "px-4 py-3",
+          isActive
+            ? "bg-primary text-primary-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        )}>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <item.icon className={cn(nested ? "h-4 w-4" : "h-5 w-5")} />
+            {item.id === "sponsors" && hasNewSponsors && (
+              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+              </span>
+            )}
+          </div>
+          {item.label}
+        </div>
+        {released ? (
+          external && <SquareArrowOutUpRight className="h-4 w-4" />
+        ) : (
+          <div
+            className={`border px-1.5 py-0.5 ${isActive ? "border-white text-white" : "text-muted-foreground border-neutral-200 bg-neutral-50"} flex items-center gap-1 rounded-sm text-xs`}>
+            <Lock className="h-3 w-3 stroke-[2.5px]" />
+          </div>
+        )}
+      </Link>
+    )
+  }
+
+  const NavGroup = ({ item }: { item: NavItemType }) => {
+    const children = item.children ?? []
+    const hasActiveChild = children.some((child) => pathname === child.href)
+    const isOpen = expandedGroups.includes(item.id) || hasActiveChild
+    return (
+      <div>
+        <button
+          type="button"
+          aria-expanded={isOpen}
+          onClick={() => toggleGroup(item.id)}
+          className={cn(
+            "flex w-full cursor-pointer items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors",
+            hasActiveChild ? "text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}>
+          <div className="flex items-center gap-3">
+            <item.icon className="h-5 w-5" />
+            {item.label}
+          </div>
+          <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
+        </button>
+        {isOpen && (
+          <div className="border-border mt-1 ml-4 space-y-1 border-l pl-2">
+            {children.map((child) => (
+              <NavLeaf key={child.href} item={child} nested />
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const NavContent = () => (
     <>
       {/* Logo */}
@@ -285,40 +417,13 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 overflow-y-auto p-4">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMobileMenuOpen(false)}
-              className={cn(
-                "flex items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}>
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <item.icon className="h-5 w-5" />
-                  {item.id === "sponsors" && hasNewSponsors && (
-                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-                    </span>
-                  )}
-                </div>
-                {item.label}
-              </div>
-              {!item.isReleased && (
-                <div
-                  className={`border px-1.5 py-0.5 ${isActive ? "border-white text-white" : "text-muted-foreground border-neutral-200 bg-neutral-50"} flex items-center gap-1 rounded-sm text-xs`}>
-                  <Lock className="h-3 w-3 stroke-[2.5px]" />
-                </div>
-              )}
-            </Link>
+        {navItems.map((item) =>
+          item.children && item.children.length > 0 && item.isReleased ? (
+            <NavGroup key={item.id} item={item} />
+          ) : (
+            <NavLeaf key={item.href} item={item} />
           )
-        })}
+        )}
       </nav>
       {/* Footer */}
       <div className="border-border space-y-2 border-t p-4">

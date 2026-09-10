@@ -1,37 +1,33 @@
-import { NextResponse } from "next/server"
-import { query } from "@/lib/db"
-import { getNewsletterColumnSupport } from "@/lib/newsletter-db"
+import { NextRequest, NextResponse } from "next/server"
+import { emailSchema } from "@/lib/validation"
+import { createRateLimiter } from "@/lib/rate-limit"
+import { createOptInToken } from "@/lib/newsletter-opt-in"
+import { sendNewsletterOptInEmail } from "@/lib/transactional-emails"
 
-export async function POST(request: Request) {
+const rateLimit = createRateLimiter("newsletter")
+
+export async function POST(request: NextRequest) {
+  const limited = await rateLimit(request)
+  if (limited) return limited
+
   try {
     const body = await request.json()
-    const { email } = body
+    const parsed = emailSchema.safeParse(body?.email)
 
-    if (!email) {
-      return NextResponse.json({ error: "E-Mail ist erforderlich" }, { status: 400 })
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid e-mail address" }, { status: 400 })
     }
 
-    const columnSupport = await getNewsletterColumnSupport()
+    const email = parsed.data
+    const { token } = await createOptInToken(email)
 
-    if (columnSupport.weeklyUpdatesSubscribed && columnSupport.updatedAt) {
-      await query(
-        `INSERT INTO newsletter_subscribers (email, subscribed, weekly_updates_subscribed)
-         VALUES ($1, true, true)
-         ON CONFLICT (email) DO UPDATE
-         SET subscribed = true,
-             weekly_updates_subscribed = true,
-             updated_at = NOW()`,
-        [email]
-      )
-    } else {
-      await query(
-        `INSERT INTO newsletter_subscribers (email, subscribed)
-         VALUES ($1, true)
-         ON CONFLICT (email) DO UPDATE SET subscribed = true`,
-        [email]
-      )
-    }
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://zentralhack.ch"
+    const confirmUrl = `${baseUrl}/api/newsletter/confirm?token=${encodeURIComponent(token)}`
 
+    await sendNewsletterOptInEmail(email, confirmUrl)
+
+    // Always respond generically so the endpoint does not reveal whether an
+    // address is already subscribed.
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Newsletter subscription error:", error)

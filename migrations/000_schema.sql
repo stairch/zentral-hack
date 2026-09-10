@@ -85,15 +85,6 @@ CREATE TABLE IF NOT EXISTS registrations (
   UNIQUE (user_id, category_id)
 );
 
-CREATE TABLE IF NOT EXISTS newsletter_subscribers (
-  id                          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  email                       TEXT        NOT NULL UNIQUE,
-  subscribed                  BOOLEAN     NOT NULL DEFAULT true,
-  weekly_updates_subscribed   BOOLEAN     NOT NULL DEFAULT true,
-  created_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
 CREATE TABLE IF NOT EXISTS teams (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   name        TEXT        NOT NULL,
@@ -178,45 +169,6 @@ CREATE TABLE IF NOT EXISTS account_action_tokens (
   verified    BOOLEAN     NOT NULL DEFAULT false,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   expires_at  TIMESTAMPTZ NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS email_campaigns (
-  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  subject         TEXT        NOT NULL,
-  content         TEXT        NOT NULL,
-  html_content    TEXT        NOT NULL,
-  campaign_type   TEXT        NOT NULL DEFAULT 'participants'
-                              CHECK (campaign_type IN ('participants', 'central_updates', 'newsletter_subscribers')),
-  category_id     UUID        REFERENCES categories(id),
-  sent_at         TIMESTAMPTZ,
-  created_by      UUID        NOT NULL REFERENCES users(id) ON DELETE SET NULL,
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS email_logs (
-  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  campaign_id     UUID        REFERENCES email_campaigns(id) ON DELETE CASCADE,
-  recipient_email TEXT        NOT NULL,
-  status          TEXT        NOT NULL DEFAULT 'pending'
-                              CHECK (status IN ('pending', 'sent', 'failed', 'bounced')),
-  sent_at         TIMESTAMPTZ,
-  error_message   TEXT,
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS email_templates (
-  id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name              TEXT        NOT NULL,
-  description       TEXT,
-  base_template_id  TEXT        NOT NULL DEFAULT 'standard',
-  subject           TEXT        NOT NULL,
-  content           TEXT        NOT NULL,
-  cta_text          TEXT,
-  cta_url           TEXT,
-  footer_note       TEXT,
-  created_by        UUID        REFERENCES users(id) ON DELETE SET NULL,
-  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS faqs (
@@ -344,8 +296,6 @@ CREATE INDEX IF NOT EXISTS idx_team_github_repos_team_id      ON team_github_rep
 CREATE INDEX IF NOT EXISTS idx_two_fa_tokens_user_id          ON two_fa_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_account_action_tokens_user_id  ON account_action_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_account_action_tokens_action   ON account_action_tokens(action);
-CREATE INDEX IF NOT EXISTS idx_email_logs_campaign_id         ON email_logs(campaign_id);
-CREATE INDEX IF NOT EXISTS idx_email_templates_created_by     ON email_templates(created_by);
 CREATE INDEX IF NOT EXISTS idx_faqs_order                     ON faqs(order_position);
 CREATE INDEX IF NOT EXISTS idx_schedule_items_day             ON schedule_items(day, sort_order);
 CREATE INDEX IF NOT EXISTS idx_sponsor_challenges_user_id     ON sponsor_challenges(user_id);

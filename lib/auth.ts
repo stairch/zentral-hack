@@ -21,6 +21,10 @@ export function generateJWT(payload: JWTPayload): string {
   })
 }
 
+export function isTwoFaBypassEnabled(): boolean {
+  return process.env.NODE_ENV === "development" && process.env.BYPASS_2FA === "true"
+}
+
 export function generateTwoFAToken(): string {
   return jwt.sign({ type: "2fa" }, getJWTSecret(), {
     expiresIn: (process.env.TWO_FA_EXPIRATION || "15m") as SignOptions["expiresIn"]

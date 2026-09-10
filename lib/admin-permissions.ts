@@ -15,8 +15,6 @@ export const ADMIN_PERMISSIONS: AdminPermission[] = [
   { key: "schedule", labelDe: "Zeitplan", labelEn: "Schedule" },
   { key: "partner-logos", labelDe: "Partner-Logos", labelEn: "Partner Logos" },
   { key: "faqs", labelDe: "FAQs", labelEn: "FAQs" },
-  { key: "emails", labelDe: "E-Mails & Kampagnen", labelEn: "Emails & Campaigns" },
-  { key: "newsletter", labelDe: "Newsletter", labelEn: "Newsletter" },
   { key: "sponsors", labelDe: "Sponsoren", labelEn: "Sponsors" }
 ]
 

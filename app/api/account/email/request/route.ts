@@ -2,7 +2,7 @@ import { z } from "zod"
 import { query } from "@/lib/db"
 import { withAuth, type AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
-import { sendEmail } from "@/lib/email"
+import { sendNewEmail2FACodeEmail } from "@/lib/transactional-emails"
 import { createAccountActionChallenge } from "@/lib/account-actions"
 
 const emailSchema = z
@@ -46,19 +46,7 @@ async function handleRequest(req: AuthenticatedRequest) {
       expiresInMinutes: 15
     })
 
-    await sendEmail({
-      to: newEmail,
-      subject: "Zentral Hack - E-Mail-Änderung bestätigen",
-      html: `
-        <h2>Bitte bestätige deine neue E-Mail-Adresse</h2>
-        <p>Du hast eine Änderung auf <strong>${newEmail}</strong> angefordert.</p>
-        <p>Verwende den Bestätigungscode, um die neue Adresse zu aktivieren.</p>
-        <p style="color: #666; font-size: 12px;">Falls du das nicht warst, kannst du diese E-Mail ignorieren.</p>
-        <h1 style="letter-spacing: 0.1em; font-size: 32px; margin: 24px 0; color: #530A5D;">${challenge.code}</h1>
-        <p>Dieser Code verfällt in 15 Minuten.</p>
-      `,
-      text: `Dein Bestätigungscode lautet: ${challenge.code}`
-    })
+    await sendNewEmail2FACodeEmail(newEmail, challenge.code)
 
     return successResponse({
       destinationEmail: newEmail,

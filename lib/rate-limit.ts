@@ -10,7 +10,7 @@ const redis = new Redis({
 const env = process.env.NODE_ENV === "production" ? "prod" : "dev"
 
 const WINDOWS = {
-  auth: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(5, "15 m"), prefix: `${env}:rl:auth` }),
+  auth: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(50, "15 m"), prefix: `${env}:rl:auth` }),
   twofa: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "15 m"), prefix: `${env}:rl:twofa` }),
   signup: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "1 h"), prefix: `${env}:rl:signup` }),
   newsletter: new Ratelimit({

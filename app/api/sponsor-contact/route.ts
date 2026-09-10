@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
 import { successResponse } from "@/lib/api"
-import { sendEmail } from "@/lib/email"
+import { sendNewSponsorEmail } from "@/lib/transactional-emails"
 import { Emails } from "@/lib/constants"
 
 export async function GET() {
@@ -81,16 +81,7 @@ export async function POST(request: Request) {
     }
 
     if (emails.length > 0) {
-      await sendEmail({
-        to: emails,
-        subject: `Neue Sponsorenanfrage von ${companyName}`,
-        html: `
-        <h2>Es wurde eine neue Sponsorenanfrage eingereicht!</h2>
-        <p>Firma: ${companyName}</p>
-        <p>Siehe weitere Informationen im Admin Panel</p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/sponsors" style="display: inline-block; padding: 10px 20px; background: #530A5D; color: white; text-decoration: none; border-radius: 5px;">Zum Admin Panel</a>
-      `
-      })
+      await sendNewSponsorEmail(emails, companyName)
     }
 
     return NextResponse.json({ success: true })
