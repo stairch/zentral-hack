@@ -50,7 +50,7 @@ Zur Anmeldung und Zugangssicherung verwenden wir:
 
 ### Newsletter
 
-Falls Sie sich für den Newsletter anmelden, speichern wir Ihre E-Mail-Adresse für den Versand von Informationen zum Event.
+Falls Sie sich für den Newsletter anmelden, speichern wir Ihre E-Mail-Adresse für den Versand von Informationen zum Event. Der Versand erfolgt über unseren Dienstleister Resend, Inc. (USA).
 
 **Rechtsgrundlage:** Einwilligung (Art. 6 Abs. 6 DSG). Die Einwilligung kann jederzeit widerrufen werden.
 
@@ -85,7 +85,8 @@ Zur Bereitstellung unserer Plattform setzen wir folgende Dienstleister ein, welc
 | ----------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------- |
 | **Vercel Inc.**               | Hosting der Webanwendung, Web-Analytics und Performance-Monitoring (Vercel Analytics, Speed Insights) | USA (Daten in Frankfurt, EU) |
 | **Neon Inc.**                 | Betrieb der Datenbank (PostgreSQL)                                                                    | USA (Daten in Frankfurt, EU) |
-| **Microsoft Corporation**     | E-Mail-Versand via Microsoft 365                                                                      | USA                          |
+| **Microsoft Corporation**     | E-Mail-Versand für Transaktionale E-Mails (2FA, Registrierung, etc.) via Microsoft 365                | USA                          |
+| **Resend, Inc.**              | E-Mail-Versand für Newsletter                                                                         | USA                          |
 | **Vercel Blob (Vercel Inc.)** | Speicherung hochgeladener Dateien                                                                     | USA (Daten in Frankfurt, EU) |
 
 Mit allen Auftragsbearbeitern bestehen vertragliche Vereinbarungen zum Schutz Ihrer Personendaten.
