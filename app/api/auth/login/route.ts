@@ -1,6 +1,13 @@
 import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
-import { comparePassword, generateVerificationCode, hashCode } from "@/lib/auth"
+import {
+  comparePassword,
+  generateVerificationCode,
+  hashCode,
+  generateJWT,
+  isTwoFaBypassEnabled,
+  JWTPayload
+} from "@/lib/auth"
 import { successResponse, validationError, serverError, unauthorizedError } from "@/lib/api"
 import { LoginSchema, validateRequest } from "@/lib/validation"
 import { createRateLimiter } from "@/lib/rate-limit"
@@ -25,7 +32,7 @@ export async function POST(request: NextRequest) {
     const { email, password } = validation.data
 
     const result = await query(
-      "SELECT id, email, password_hash, role, is_active, email_verified FROM users WHERE email = $1",
+      "SELECT id, email, password_hash, role, category_id, is_active, email_verified FROM users WHERE email = $1",
       [email.toLowerCase()]
     )
 
@@ -46,6 +53,33 @@ export async function POST(request: NextRequest) {
     const validPassword = await comparePassword(password, user.password_hash)
     if (!validPassword) {
       return unauthorizedError()
+    }
+
+    // Development-only: skip the whole 2FA challenge and log the user in directly.
+    if (isTwoFaBypassEnabled()) {
+      const payload: JWTPayload = {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        categoryId: user.category_id || undefined,
+        twoFaVerified: true,
+        updatedAt: new Date().toISOString()
+      }
+      const authToken = generateJWT(payload)
+
+      const bypassResponse = successResponse({
+        token: authToken,
+        user: { id: user.id, email: user.email, role: user.role, categoryId: user.category_id || null },
+        message: "2FA bypassed (development)"
+      })
+      bypassResponse.cookies.set("token", authToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 86400,
+        path: "/"
+      })
+      return bypassResponse
     }
 
     // Generate 2FA code for ALL users
