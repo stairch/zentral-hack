@@ -166,14 +166,20 @@ const copy = {
     sendNow: "Sofort senden",
     scheduleLater: "Später planen",
     scheduleAt: "Sendezeitpunkt",
-    confirmSend: "Jetzt senden",
+    confirmSend: "Senden",
     confirmSchedule: "Planen",
+    finalConfirm: "Bestätigen",
     sendSuccess: "Kampagne gesendet",
     scheduleSuccess: "Kampagne geplant",
     sendError: "Senden fehlgeschlagen",
     pickTemplate: "Bitte ein Template auswählen",
     pickSegment: "Bitte ein Segment auswählen",
     pickTime: "Bitte einen Sendezeitpunkt wählen",
+    confirmSendTitle: "Kampagne wirklich senden?",
+    confirmSendNowDesc: (count: number) =>
+      `Die Kampagne wird jetzt an ${count} Kontakt${count === 1 ? "" : "e"} gesendet.`,
+    confirmSendLaterDesc: (count: number, when: string) =>
+      `Die Kampagne wird am ${when} an ${count} Kontakt${count === 1 ? "" : "e"} gesendet.`,
     openInResend: "Template ansehen",
     resendLinkText: "Link zu Resend",
     guideTrigger: "Kurzanleitung",
@@ -290,14 +296,20 @@ const copy = {
     sendNow: "Send now",
     scheduleLater: "Schedule for later",
     scheduleAt: "Send time",
-    confirmSend: "Send now",
+    confirmSend: "Send",
     confirmSchedule: "Schedule",
+    finalConfirm: "Confirm",
     sendSuccess: "Campaign sent",
     scheduleSuccess: "Campaign scheduled",
     sendError: "Failed to send",
     pickTemplate: "Please select a template",
     pickSegment: "Please select a segment",
     pickTime: "Please choose a send time",
+    confirmSendTitle: "Send campaign now?",
+    confirmSendNowDesc: (count: number) =>
+      `The campaign will be sent now to ${count} contact${count === 1 ? "" : "s"}.`,
+    confirmSendLaterDesc: (count: number, when: string) =>
+      `The campaign will be sent on ${when} to ${count} contact${count === 1 ? "" : "s"}.`,
     openInResend: "View template",
     resendLinkText: "Link to Resend",
     guideTrigger: "Quick guide",
@@ -400,6 +412,11 @@ export function NewsletterPage() {
   const [sending, setSending] = useState(false)
   const [previewHtml, setPreviewHtml] = useState("")
   const [previewLoading, setPreviewLoading] = useState(false)
+  const [audienceCounts, setAudienceCounts] = useState<{
+    all: number
+    segments: Record<string, number>
+  } | null>(null)
+  const [confirmSendOpen, setConfirmSendOpen] = useState(false)
 
   const loadOverview = useCallback(async () => {
     setLoading(true)
@@ -528,6 +545,10 @@ export function NewsletterPage() {
     setScheduleMode("now")
     setScheduledAt("")
     setPreviewHtml("")
+    setAudienceCounts(null)
+    api<{ all: number; segments: Record<string, number> }>("/api/admin/newsletter/audience")
+      .then(setAudienceCounts)
+      .catch(() => setAudienceCounts(null))
   }
 
   const onPickTemplate = async (id: string) => {
@@ -961,6 +982,13 @@ export function NewsletterPage() {
                     onChange={() => setTargetMode("all")}
                   />
                   {text.audienceAll}
+                  <span className="text-muted-foreground">
+                    {audienceCounts ? (
+                      `(${audienceCounts.all})`
+                    ) : (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    )}
+                  </span>
                 </label>
                 <label className="flex w-fit cursor-pointer items-center gap-2 text-sm">
                   <input
@@ -986,6 +1014,11 @@ export function NewsletterPage() {
                       {segments.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
                           {s.name}
+                          {audienceCounts && (
+                            <span className="text-muted-foreground">
+                              ({audienceCounts.segments[s.id] ?? 0})
+                            </span>
+                          )}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1032,7 +1065,14 @@ export function NewsletterPage() {
             <Button variant="outline" onClick={() => setSendCampaign(null)} disabled={sending}>
               {text.cancel}
             </Button>
-            <Button onClick={submitSend} disabled={sending || !templateId}>
+            <Button
+              onClick={() => {
+                if (!templateId) return toast.error(text.pickTemplate)
+                if (targetMode === "segment" && !segmentId) return toast.error(text.pickSegment)
+                if (scheduleMode === "later" && !scheduledAt) return toast.error(text.pickTime)
+                setConfirmSendOpen(true)
+              }}
+              disabled={sending || !templateId}>
               {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {scheduleMode === "later" ? text.confirmSchedule : text.confirmSend}
             </Button>
@@ -1059,6 +1099,31 @@ export function NewsletterPage() {
         cancelLabel={text.close}
         loading={mutating}
         onConfirm={confirmCancel}
+      />
+      <ConfirmDialog
+        open={confirmSendOpen}
+        onOpenChange={setConfirmSendOpen}
+        title={text.confirmSendTitle}
+        description={
+          scheduleMode === "later"
+            ? text.confirmSendLaterDesc(
+                targetMode === "all"
+                  ? (audienceCounts?.all ?? 0)
+                  : (audienceCounts?.segments[segmentId] ?? 0),
+                scheduledAt ? formatDate(new Date(scheduledAt).toISOString()) : ""
+              )
+            : text.confirmSendNowDesc(
+                targetMode === "all" ? (audienceCounts?.all ?? 0) : (audienceCounts?.segments[segmentId] ?? 0)
+              )
+        }
+        confirmLabel={text.finalConfirm}
+        cancelLabel={text.cancel}
+        confirmVariant="default"
+        loading={sending}
+        onConfirm={async () => {
+          await submitSend()
+          setConfirmSendOpen(false)
+        }}
       />
     </div>
   )
