@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.10.0] - 2026-09-11
+
+### Added
+
+- Confirmation dialog to newsletter send dialog
+- Contact count to newsletter send dialog
+- Support for newsletter test emails
+
 ## [1.9.0] - 2026-09-10
 
 ### Added
