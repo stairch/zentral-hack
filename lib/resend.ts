@@ -170,6 +170,56 @@ export async function listNewsletterSegments(): Promise<NewsletterSegment[]> {
   return data.data.map((segment) => ({ id: segment.id, name: segment.name }))
 }
 
+async function countContacts(segmentId?: string): Promise<number> {
+  let count = 0
+  let after: string | undefined = undefined
+
+  while (true) {
+    const { data, error } = await resend.contacts.list({
+      limit: 100,
+      ...(segmentId ? { segmentId } : {}),
+      ...(after ? { after } : {})
+    })
+
+    if (error) {
+      throw new Error(`Failed to count contacts: ${error.message}`)
+    }
+
+    if (!data || data.data.length === 0) {
+      break
+    }
+
+    for (const contact of data.data) {
+      if (!contact.unsubscribed) count++
+    }
+
+    if (!data.has_more) {
+      break
+    }
+
+    after = data.data[data.data.length - 1].id
+  }
+
+  return count
+}
+
+export interface NewsletterAudienceCounts {
+  all: number
+  segments: Record<string, number>
+}
+
+export async function getNewsletterAudienceCounts(): Promise<NewsletterAudienceCounts> {
+  const segments = await listNewsletterSegments()
+  const defaultSegmentId = await resolveDefaultSegmentId()
+
+  const [all, segmentEntries] = await Promise.all([
+    countContacts(defaultSegmentId),
+    Promise.all(segments.map(async (segment) => [segment.id, await countContacts(segment.id)] as const))
+  ])
+
+  return { all, segments: Object.fromEntries(segmentEntries) }
+}
+
 export async function listEmailTemplates(): Promise<NewsletterTemplateSummary[]> {
   const data = unwrap(await resend.templates.list(), "Failed to list templates")
   return data.data

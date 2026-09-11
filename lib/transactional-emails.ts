@@ -310,3 +310,8 @@ export function sendRegisterConfirmationEmail(
 export function sendNewSponsorEmail(to: string[], companyName: string): Promise<void> {
   return sendTransactionalEmail("new-sponsoring-request", { to, values: { company_name: companyName } })
 }
+
+/** Sends a rendered newsletter campaign HTML to a single address via SMTP, for testing before the real Resend send. */
+export function sendNewsletterTestEmail(to: string, subject: string, html: string): Promise<void> {
+  return sendEmail({ to, subject: `[TEST] ${subject}`, html })
+}
