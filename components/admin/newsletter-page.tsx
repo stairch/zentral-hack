@@ -36,10 +36,12 @@ import {
   ExternalLink,
   MoreVertical,
   Pencil,
-  HelpCircle
+  HelpCircle,
+  Mail
 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
+import { useAuth } from "@/lib/auth-context"
 import type { NewsletterCampaignStatus } from "@/lib/resend"
 
 const ALL_CONTACTS = "__all__"
@@ -180,6 +182,15 @@ const copy = {
       `Die Kampagne wird jetzt an ${count} Kontakt${count === 1 ? "" : "e"} gesendet.`,
     confirmSendLaterDesc: (count: number, when: string) =>
       `Die Kampagne wird am ${when} an ${count} Kontakt${count === 1 ? "" : "e"} gesendet.`,
+    // send test email
+    sendTestEmail: "Test-E-Mail senden",
+    testEmailDesc: "Sende eine Testversion dieser Kampagne an eine einzelne E-Mail-Adresse.",
+    testEmailField: "Empfänger-E-Mail",
+    testEmailPlaceholder: "name@example.com",
+    testEmailSend: "Test senden",
+    testEmailSuccess: "Test-E-Mail gesendet",
+    testEmailError: "Test-E-Mail konnte nicht gesendet werden",
+    pickTestEmail: "Bitte eine Empfänger-E-Mail-Adresse angeben",
     openInResend: "Template ansehen",
     resendLinkText: "Link zu Resend",
     guideTrigger: "Kurzanleitung",
@@ -310,6 +321,15 @@ const copy = {
       `The campaign will be sent now to ${count} contact${count === 1 ? "" : "s"}.`,
     confirmSendLaterDesc: (count: number, when: string) =>
       `The campaign will be sent on ${when} to ${count} contact${count === 1 ? "" : "s"}.`,
+    // send test email
+    sendTestEmail: "Send test email",
+    testEmailDesc: "Send a test version of this campaign to a single email address.",
+    testEmailField: "Recipient email",
+    testEmailPlaceholder: "name@example.com",
+    testEmailSend: "Send test",
+    testEmailSuccess: "Test email sent",
+    testEmailError: "Failed to send test email",
+    pickTestEmail: "Please enter a recipient email address",
     openInResend: "View template",
     resendLinkText: "Link to Resend",
     guideTrigger: "Quick guide",
@@ -380,6 +400,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 
 export function NewsletterPage() {
   const { language } = useLanguage()
+  const { user } = useAuth()
   const text = copy[language]
 
   const [loading, setLoading] = useState(true)
@@ -417,6 +438,18 @@ export function NewsletterPage() {
     segments: Record<string, number>
   } | null>(null)
   const [confirmSendOpen, setConfirmSendOpen] = useState(false)
+
+  // test email dialog
+  const [testCampaign, setTestCampaign] = useState<Campaign | null>(null)
+  const [testSubject, setTestSubject] = useState("")
+  const [testTemplateId, setTestTemplateId] = useState("")
+  const [testTemplateVars, setTestTemplateVars] = useState<TemplateVariable[]>([])
+  const [testVarsLoading, setTestVarsLoading] = useState(false)
+  const [testAdminValues, setTestAdminValues] = useState<Record<string, string>>({})
+  const [testEmail, setTestEmail] = useState("")
+  const [testSending, setTestSending] = useState(false)
+  const [testPreviewHtml, setTestPreviewHtml] = useState("")
+  const [testPreviewLoading, setTestPreviewLoading] = useState(false)
 
   const loadOverview = useCallback(async () => {
     setLoading(true)
@@ -606,6 +639,77 @@ export function NewsletterPage() {
     }
   }
 
+  /* ------------------------------ test email ------------------------------ */
+
+  const openTest = async (campaign: Campaign) => {
+    setTestCampaign(campaign)
+    setTestSubject("")
+    setTestTemplateId("")
+    setTestTemplateVars([])
+    setTestAdminValues({})
+    setTestEmail(user?.email ?? "")
+    setTestPreviewHtml("")
+    try {
+      const data = await api<{ campaign: CampaignDetail }>(
+        `/api/admin/newsletter?id=${encodeURIComponent(campaign.id)}`
+      )
+      setTestSubject(data.campaign.subject ?? "")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : text.loadError)
+    }
+  }
+
+  const onPickTestTemplate = async (id: string) => {
+    setTestTemplateId(id)
+    setTestTemplateVars([])
+    setTestAdminValues({})
+    setTestPreviewHtml("")
+    if (!id) return
+    setTestVarsLoading(true)
+    try {
+      const data = await api<{ template: { variables: TemplateVariable[] } }>(
+        `/api/admin/newsletter/template?id=${encodeURIComponent(id)}`
+      )
+      setTestTemplateVars(data.template.variables.toSorted((a, b) => a.key.localeCompare(b.key)))
+      const initial: Record<string, string> = {}
+      for (const v of data.template.variables) {
+        if (v.editable) initial[v.key] = v.fallbackValue ?? ""
+      }
+      setTestAdminValues(initial)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : text.templateLoadError)
+      setTestTemplateId("")
+    } finally {
+      setTestVarsLoading(false)
+    }
+  }
+
+  const submitTest = async () => {
+    if (!testCampaign) return
+    if (!testTemplateId) return toast.error(text.pickTemplate)
+    if (!testEmail.trim()) return toast.error(text.pickTestEmail)
+
+    setTestSending(true)
+    try {
+      await api(`/api/admin/newsletter/test`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: testEmail.trim(),
+          subject: testSubject,
+          templateId: testTemplateId,
+          adminValues: testAdminValues
+        })
+      })
+      toast.success(text.testEmailSuccess)
+      setTestCampaign(null)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : text.testEmailError)
+    } finally {
+      setTestSending(false)
+    }
+  }
+
   useEffect(() => {
     if (!sendCampaign || !templateId) {
       setPreviewHtml("")
@@ -635,6 +739,36 @@ export function NewsletterPage() {
       clearTimeout(timer)
     }
   }, [sendCampaign, templateId, adminValues, text.previewLoadError])
+
+  useEffect(() => {
+    if (!testCampaign || !testTemplateId) {
+      setTestPreviewHtml("")
+      return
+    }
+    let cancelled = false
+    setTestPreviewLoading(true)
+    const timer = setTimeout(async () => {
+      try {
+        const data = await api<{ html: string }>(`/api/admin/newsletter/preview`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateId: testTemplateId, adminValues: testAdminValues })
+        })
+        if (!cancelled) setTestPreviewHtml(data.html)
+      } catch (error) {
+        if (!cancelled) {
+          setTestPreviewHtml("")
+          toast.error(error instanceof Error ? error.message : text.previewLoadError)
+        }
+      } finally {
+        if (!cancelled) setTestPreviewLoading(false)
+      }
+    }, 500)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [testCampaign, testTemplateId, testAdminValues, text.previewLoadError])
 
   /* ------------------------------- helpers ------------------------------- */
 
@@ -771,6 +905,10 @@ export function NewsletterPage() {
                                   <DropdownMenuItem onClick={() => openEdit(campaign)}>
                                     <Pencil className="h-4 w-4" />
                                     {text.edit}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => openTest(campaign)}>
+                                    <Mail className="h-4 w-4" />
+                                    {text.sendTestEmail}
                                   </DropdownMenuItem>
                                 </>
                               )}
@@ -1075,6 +1213,133 @@ export function NewsletterPage() {
               disabled={sending || !templateId}>
               {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {scheduleMode === "later" ? text.confirmSchedule : text.confirmSend}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Test email dialog */}
+      <Dialog open={testCampaign !== null} onOpenChange={(open) => !open && setTestCampaign(null)}>
+        <DialogContent className="max-h-[85vh] overflow-x-hidden overflow-y-auto sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>
+              {text.sendTestEmail}
+              {testCampaign ? ` — ${testCampaign.name}` : ""}
+            </DialogTitle>
+            <DialogDescription>{text.testEmailDesc}</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="nl-test-email">{text.testEmailField}</Label>
+              <Input
+                id="nl-test-email"
+                type="email"
+                placeholder={text.testEmailPlaceholder}
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{text.template}</Label>
+              {templates.length === 0 ? (
+                <p className="text-muted-foreground text-sm">{text.noTemplates}</p>
+              ) : (
+                <Select value={testTemplateId} onValueChange={onPickTestTemplate}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={text.templatePlaceholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                        <code className="text-[10px]">{t.alias}</code>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {testTemplateId && (
+              <div className="space-y-3">
+                <div>
+                  <Label>{text.variables}</Label>
+                  <p className="text-muted-foreground mt-1 text-xs">{text.variablesHint}</p>
+                </div>
+                {testVarsLoading ? (
+                  <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
+                ) : testTemplateVars.filter((v) => v.editable).length === 0 ? (
+                  <p className="text-muted-foreground text-sm">{text.noEditableVars}</p>
+                ) : (
+                  testTemplateVars
+                    .filter((v) => v.editable)
+                    .map((v) => (
+                      <div key={v.key} className="space-y-1.5">
+                        <Label htmlFor={`test-var-${v.key}`} className="font-mono text-xs">
+                          {v.key}
+                        </Label>
+                        {v.type === "number" ? (
+                          <Input
+                            id={`test-var-${v.key}`}
+                            type="number"
+                            placeholder={v.fallbackValue ?? ""}
+                            value={testAdminValues[v.key] ?? ""}
+                            onChange={(e) =>
+                              setTestAdminValues((prev) => ({ ...prev, [v.key]: e.target.value }))
+                            }
+                          />
+                        ) : (
+                          <Textarea
+                            id={`test-var-${v.key}`}
+                            placeholder={v.fallbackValue ?? ""}
+                            value={testAdminValues[v.key] ?? ""}
+                            style={{ fieldSizing: "fixed" } as React.CSSProperties}
+                            onChange={(e) =>
+                              setTestAdminValues((prev) => ({ ...prev, [v.key]: e.target.value }))
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") e.preventDefault()
+                            }}
+                          />
+                        )}
+                      </div>
+                    ))
+                )}
+              </div>
+            )}
+
+            {testTemplateId && (
+              <div className="space-y-2">
+                <div>
+                  <Label>{text.preview}</Label>
+                  <p className="text-muted-foreground mt-1 text-xs">{text.previewHint}</p>
+                </div>
+                <div className="bg-background relative overflow-hidden rounded-md border">
+                  {testPreviewLoading && (
+                    <div className="bg-background/60 absolute inset-0 flex items-center justify-center">
+                      <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
+                    </div>
+                  )}
+                  <iframe
+                    title={text.preview}
+                    sandbox=""
+                    srcDoc={testPreviewHtml}
+                    className="h-96 w-full border-0 bg-white"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTestCampaign(null)} disabled={testSending}>
+              {text.cancel}
+            </Button>
+            <Button onClick={submitTest} disabled={testSending || !testTemplateId}>
+              {testSending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {text.testEmailSend}
             </Button>
           </DialogFooter>
         </DialogContent>
