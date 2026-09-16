@@ -15,11 +15,17 @@ export async function GET() {
     try {
       result = await query(
         `SELECT c.*,
-                COALESCE(sc.challenges, '[]'::jsonb) AS challenges
+                COALESCE(sc.challenges, '[]'::jsonb) AS challenges,
+                COALESCE(rc.registration_count, 0)::integer AS registration_count
          FROM (
            SELECT ${buildCategorySelectClause(availableColumns)}
            FROM categories
          ) c
+         LEFT JOIN LATERAL (
+           SELECT COUNT(*) AS registration_count
+           FROM registrations
+           WHERE category_id = c.id AND status != 'cancelled'
+         ) rc ON TRUE
          LEFT JOIN LATERAL (
            SELECT jsonb_agg(
                     jsonb_build_object(
@@ -54,8 +60,14 @@ export async function GET() {
       // Migration not yet applied: keep categories endpoint functional.
       result = await query(
         `SELECT ${buildCategorySelectClause(availableColumns)},
-                '[]'::jsonb AS challenges
-         FROM categories
+                '[]'::jsonb AS challenges,
+                COALESCE(rc.registration_count, 0)::integer AS registration_count
+         FROM categories c
+         LEFT JOIN LATERAL (
+           SELECT COUNT(*) AS registration_count
+           FROM registrations
+           WHERE category_id = c.id AND status != 'cancelled'
+         ) rc ON TRUE
          ORDER BY display_order ASC, name ASC`
       )
     }

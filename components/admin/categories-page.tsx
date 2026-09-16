@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -47,6 +48,9 @@ interface Category {
   target_group?: string | null
   target_group_en?: string | null
   display_order?: number | null
+  max_registrations?: number | null
+  registration_closed?: boolean | null
+  registration_count?: number | null
 }
 
 interface EditFormState {
@@ -64,6 +68,8 @@ interface EditFormState {
   prizeEn: string
   targetGroup: string
   targetGroupEn: string
+  maxRegistrations: string
+  registrationClosed: boolean
 }
 
 export function AdminCategoriesPage() {
@@ -89,7 +95,9 @@ export function AdminCategoriesPage() {
     prize: "",
     prizeEn: "",
     targetGroup: "",
-    targetGroupEn: ""
+    targetGroupEn: "",
+    maxRegistrations: "",
+    registrationClosed: false
   })
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -167,7 +175,18 @@ export function AdminCategoriesPage() {
           orderLabel: "Order",
           moveUp: "Move up",
           moveDown: "Move down",
-          orderSaveError: "Failed to change order"
+          orderSaveError: "Failed to change order",
+          registrationSectionTitle: "Registration limit",
+          maxRegistrationsLabel: "Maximum number of registrations",
+          maxRegistrationsPlaceholder: "Unlimited",
+          maxRegistrationsHint: "Leave empty for unlimited registrations.",
+          registrationClosedLabel: "Registration closed",
+          registrationClosedHint:
+            "No new registrations are accepted for this category, effective immediately.",
+          registeredCount: (count: number, max: number | null | undefined) =>
+            max ? `${count} / ${max} registered` : `${count} registered`,
+          statusClosed: "Closed",
+          statusFull: "Full"
         }
       : {
           heading: "KATEGORIEN",
@@ -227,7 +246,18 @@ export function AdminCategoriesPage() {
           orderLabel: "Reihenfolge",
           moveUp: "Nach oben",
           moveDown: "Nach unten",
-          orderSaveError: "Reihenfolge konnte nicht geändert werden"
+          orderSaveError: "Reihenfolge konnte nicht geändert werden",
+          registrationSectionTitle: "Anmeldelimit",
+          maxRegistrationsLabel: "Maximale Anzahl Anmeldungen",
+          maxRegistrationsPlaceholder: "Unbegrenzt",
+          maxRegistrationsHint: "Leer lassen für unbegrenzte Anmeldungen.",
+          registrationClosedLabel: "Anmeldung geschlossen",
+          registrationClosedHint:
+            "Es werden per sofort keine neuen Anmeldungen mehr für diese Kategorie akzeptiert.",
+          registeredCount: (count: number, max: number | null | undefined) =>
+            max ? `${count} / ${max} angemeldet` : `${count} angemeldet`,
+          statusClosed: "Geschlossen",
+          statusFull: "Ausgebucht"
         }
 
   const hasDataFetched = useRef(false)
@@ -266,6 +296,10 @@ export function AdminCategoriesPage() {
   }, [isReady])
 
   const updateEditForm = (field: keyof EditFormState, value: string) => {
+    setEditForm((current) => ({ ...current, [field]: value }))
+  }
+
+  const updateEditFormBoolean = (field: keyof EditFormState, value: boolean) => {
     setEditForm((current) => ({ ...current, [field]: value }))
   }
 
@@ -384,7 +418,10 @@ export function AdminCategoriesPage() {
           prize: editForm.prize || null,
           prizeEn: editForm.prizeEn || null,
           targetGroup: editForm.targetGroup || null,
-          targetGroupEn: editForm.targetGroupEn || null
+          targetGroupEn: editForm.targetGroupEn || null,
+          maxRegistrations:
+            editForm.maxRegistrations.trim() === "" ? null : Number(editForm.maxRegistrations),
+          registrationClosed: editForm.registrationClosed
         })
       })
 
@@ -414,7 +451,10 @@ export function AdminCategoriesPage() {
                 prize: editForm.prize || null,
                 prize_en: editForm.prizeEn || null,
                 target_group: editForm.targetGroup || null,
-                target_group_en: editForm.targetGroupEn || null
+                target_group_en: editForm.targetGroupEn || null,
+                max_registrations:
+                  editForm.maxRegistrations.trim() === "" ? null : Number(editForm.maxRegistrations),
+                registration_closed: editForm.registrationClosed
               }
             : category
         )
@@ -611,7 +651,12 @@ export function AdminCategoriesPage() {
                                 prize: category.prize || "",
                                 prizeEn: category.prize_en || "",
                                 targetGroup: category.target_group || "",
-                                targetGroupEn: category.target_group_en || ""
+                                targetGroupEn: category.target_group_en || "",
+                                maxRegistrations:
+                                  typeof category.max_registrations === "number"
+                                    ? String(category.max_registrations)
+                                    : "",
+                                registrationClosed: Boolean(category.registration_closed)
                               })
                             } else {
                               setEditingId(null)
@@ -810,6 +855,44 @@ export function AdminCategoriesPage() {
                                   />
                                 </div>
                               </div>
+
+                              <div className="space-y-4 rounded-lg border p-4">
+                                <p className="text-sm font-semibold">{text.registrationSectionTitle}</p>
+                                <div className="grid gap-4 md:grid-cols-2">
+                                  <div>
+                                    <Label htmlFor="maxRegistrations">{text.maxRegistrationsLabel}</Label>
+                                    <Input
+                                      id="maxRegistrations"
+                                      type="number"
+                                      min={0}
+                                      value={editForm.maxRegistrations}
+                                      onChange={(e) => updateEditForm("maxRegistrations", e.target.value)}
+                                      placeholder={text.maxRegistrationsPlaceholder}
+                                    />
+                                    <p className="text-muted-foreground mt-1 text-xs">
+                                      {text.maxRegistrationsHint}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-3 pt-6">
+                                    <Switch
+                                      id="registrationClosed"
+                                      checked={editForm.registrationClosed}
+                                      onCheckedChange={(checked) =>
+                                        updateEditFormBoolean("registrationClosed", checked)
+                                      }
+                                    />
+                                    <div>
+                                      <Label htmlFor="registrationClosed">
+                                        {text.registrationClosedLabel}
+                                      </Label>
+                                      <p className="text-muted-foreground mt-1 text-xs">
+                                        {text.registrationClosedHint}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
                               <Button
                                 onClick={() => handleSaveCategory(category.id)}
                                 disabled={saving}
@@ -831,6 +914,17 @@ export function AdminCategoriesPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    {category.registration_closed && <Badge variant="destructive">{text.statusClosed}</Badge>}
+                    {!category.registration_closed &&
+                      typeof category.max_registrations === "number" &&
+                      (category.registration_count ?? 0) >= category.max_registrations && (
+                        <Badge variant="destructive">{text.statusFull}</Badge>
+                      )}
+                    <Badge variant="secondary">
+                      {text.registeredCount(category.registration_count ?? 0, category.max_registrations)}
+                    </Badge>
+                  </div>
                   <p className="mb-2 text-sm font-medium">
                     {text.partnerPreviewLabel}:{" "}
                     {getCategoryPresentationByLanguage(category, language).partnerName}
