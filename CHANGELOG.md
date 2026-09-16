@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.11.0] - 2026-09-16
+
+### Added
+
+- Support for limiting registrations
+
+### Changed
+
+- Merged registration admin page to users page
+
 ## [1.10.0] - 2026-09-11
 
 ### Added
