@@ -3,38 +3,66 @@ import { withAdminAuth, withCategoryPartnerAuth, AuthenticatedRequest } from "@/
 import { successResponse, serverError, validationError, notFoundError } from "@/lib/api"
 import { hashPassword } from "@/lib/auth"
 
+// Builds the per-user registration detail array (category, status, profile info) shown in the user modal / CSV export.
+const REGISTRATIONS_SUBQUERY = `
+  (
+    SELECT json_agg(json_build_object(
+      'id', rr.id,
+      'category_id', rr.category_id,
+      'category_name', rc.name,
+      'status', rr.status,
+      'university', p.university,
+      'study_program', p.study_program,
+      'semester', p.semester,
+      'allergies', rr.allergies,
+      'dietary_restrictions', rr.dietary_restrictions,
+      'intolerances', rr.intolerances,
+      'created_at', rr.created_at
+    ) ORDER BY rr.created_at)
+    FROM registrations rr
+    JOIN categories rc ON rr.category_id = rc.id
+    LEFT JOIN profiles p ON p.user_id = u.id
+    WHERE rr.user_id = u.id
+  )
+`
+
 async function handleGet(req: AuthenticatedRequest) {
   try {
     if (req.user?.role === "category_partner") {
-      // Category partners only see users registered for their category
+      // Category partners only see users registered for their category, with a confirmed email
       const result = await query(
         `SELECT u.id, u.email, u.first_name, u.last_name, u.role,
                 u.is_active, u.created_at, u.admin_role_id,
-                rc.name as category_name,
-                ar.name as admin_role_name
+                u.email_verified, u.email_verified_at,
+                ar.name as admin_role_name,
+                ${REGISTRATIONS_SUBQUERY.replace(
+                  "WHERE rr.user_id = u.id",
+                  "WHERE rr.user_id = u.id AND rr.category_id = $1"
+                )} as registrations
          FROM users u
-         JOIN registrations r ON u.id = r.user_id
-         JOIN categories rc ON r.category_id = rc.id
          LEFT JOIN admin_roles ar ON u.admin_role_id = ar.id
-         WHERE rc.id = $1
+         WHERE u.email_verified = true
+           AND EXISTS (SELECT 1 FROM registrations rr2 WHERE rr2.user_id = u.id AND rr2.category_id = $1)
          ORDER BY u.created_at DESC`,
         [req.user.categoryId ?? null]
       )
       return successResponse({ users: result.rows })
     }
 
-    // Super admins see all users
+    // Super admins see all real users: email confirmed, and (for participants) actually registered
     const result = await query(
       `SELECT u.id, u.email, u.first_name, u.last_name, u.role,
               u.is_active, u.created_at, u.admin_role_id,
+              u.email_verified, u.email_verified_at,
               COALESCE(ar.name, '') as admin_role_name,
-              COALESCE(cat_role.name, c.name, rc.name) as category_name
+              COALESCE(cat_role.name, c.name) as category_name,
+              ${REGISTRATIONS_SUBQUERY} as registrations
        FROM users u
        LEFT JOIN categories c ON u.category_id = c.id
        LEFT JOIN admin_roles ar ON u.admin_role_id = ar.id
        LEFT JOIN categories cat_role ON ar.category_id = cat_role.id
-       LEFT JOIN registrations r ON u.id = r.user_id
-       LEFT JOIN categories rc ON r.category_id = rc.id
+       WHERE u.email_verified = true
+         AND (u.role != 'user' OR EXISTS (SELECT 1 FROM registrations rr2 WHERE rr2.user_id = u.id))
        ORDER BY u.created_at DESC`
     )
     return successResponse({ users: result.rows })
@@ -202,6 +230,8 @@ async function handlePost(req: AuthenticatedRequest) {
       ? (await query("SELECT name FROM admin_roles WHERE id = $1", [resolvedAdminRoleId])).rows[0]?.name ||
         null
       : null
+    created.email_verified = true
+    created.registrations = null
 
     return successResponse({ user: created })
   } catch (error) {

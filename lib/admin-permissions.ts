@@ -5,8 +5,7 @@ export interface AdminPermission {
 }
 
 export const ADMIN_PERMISSIONS: AdminPermission[] = [
-  { key: "registrations", labelDe: "Anmeldungen", labelEn: "Registrations" },
-  { key: "users", labelDe: "Benutzer", labelEn: "Users" },
+  { key: "users", labelDe: "Benutzer & Anmeldungen", labelEn: "Users & Registrations" },
   { key: "teams", labelDe: "Teams", labelEn: "Teams" },
   { key: "documents", labelDe: "Dokumente", labelEn: "Documents" },
   { key: "categories", labelDe: "Kategorien", labelEn: "Categories" },
@@ -20,7 +19,6 @@ export const ADMIN_PERMISSIONS: AdminPermission[] = [
 
 // Default permissions for category_partner users without a custom role
 export const DEFAULT_CATEGORY_PARTNER_PERMISSIONS = [
-  "registrations",
   "teams",
   "documents",
   "categories",
