@@ -153,14 +153,6 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       adminOnly: false
     },
     {
-      id: "registrations",
-      href: "/admin/registrations",
-      label: text.registrations,
-      icon: Users,
-      permissionKey: "registrations",
-      adminOnly: false
-    },
-    {
       id: "users",
       href: "/admin/users",
       label: text.users,
@@ -305,6 +297,10 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
     // Custom-role user: sidebar driven entirely by their permissions array
     if (user?.permissions) {
       if (item.permissionKey === null) return true // dashboard + admin-only items without a key never shown
+      // "registrations" was merged into "users", so keep working roles saved with the old key
+      if (item.id === "users") {
+        return user.permissions.includes("users") || user.permissions.includes("registrations")
+      }
       return user.permissions.includes(item.permissionKey)
     }
     // Legacy category_partner without custom role: use default permission set

@@ -8,11 +8,44 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
-import { Search, UserCog, Shield, Users, Loader2, Trash2, AlertTriangle, UserPlus } from "lucide-react"
+import {
+  Search,
+  UserCog,
+  Shield,
+  Users,
+  Loader2,
+  Trash2,
+  AlertTriangle,
+  UserPlus,
+  Eye,
+  Download,
+  MoreVertical
+} from "lucide-react"
 import { toast } from "sonner"
 import { useAuth } from "@/lib/auth-context"
 import { useLanguage } from "@/lib/language-context"
+
+interface Registration {
+  id: string
+  category_id: string
+  category_name: string
+  status: string
+  university: string | null
+  study_program: string | null
+  semester: string | null
+  allergies: string | null
+  dietary_restrictions: string | null
+  intolerances: string | null
+  created_at: string
+}
 
 interface User {
   id: string
@@ -24,6 +57,8 @@ interface User {
   category_name: string | null
   admin_role_id: string | null
   admin_role_name: string | null
+  email_verified: boolean
+  registrations: Registration[] | null
   created_at: string
 }
 
@@ -51,6 +86,25 @@ const copy = {
     participants: "Teilnehmer",
     searchPlaceholder: "Nach Name oder E-Mail suchen...",
     filterAllRoles: "Alle Rollen",
+    filterAllCategories: "Alle Kategorien",
+    exportCsv: "CSV Export",
+    exportEmpty: "Keine Daten zum Exportieren",
+    exportSuccess: "Benutzer exportiert",
+    viewRegistrations: "Anmeldedaten ansehen",
+    registrationDetails: "Anmeldedaten",
+    registrationDetailsDesc: "Anmeldungen von",
+    noRegistrations: "Keine Anmeldungen vorhanden",
+    university: "Hochschule",
+    studyProgram: "Studiengang",
+    semester: "Semester",
+    allergies: "Allergien",
+    dietaryRestrictions: "Diätetische Einschränkungen",
+    intolerances: "Unverträglichkeiten",
+    registeredOn: "Angemeldet am",
+    statusConfirmed: "Bestätigt",
+    statusPending: "Ausstehend",
+    statusCancelled: "Storniert",
+    close: "Schließen",
     roleSuperAdmin: "Super Admin",
     roleCategoryAdmin: "Kategorien-Admin",
     roleSponsor: "Sponsor",
@@ -66,10 +120,14 @@ const copy = {
     self: "(Du)",
     active: "Aktiv",
     deactivated: "Deaktiviert",
-    assignSponsor: "Sponsor zuweisen",
-    assignCategoryAdmin: "Kategorien-Admin zuweisen",
-    assignDialogDesc: "Wähle die Kategorie, für die",
-    assignDialogDesc2: "Rechte erhalten soll.",
+    changeRole: "Rolle ändern",
+    changeRoleDesc: "Wähle die neue Rolle für",
+    newRole: "Neue Rolle",
+    warningAdminTitle: "Achtung: Super Admin Rolle",
+    warningAdminText:
+      "Super Admins haben vollen Zugriff auf alle Bereiche des Admin-Panels, inklusive aller Benutzerdaten, Rollen und Einstellungen.",
+    warningElevatedText:
+      "Diese Rolle erhält Zugriff auf die Anmelde- und Teilnehmerdaten der gewählten Kategorie.",
     category: "Kategorie",
     categoryPlaceholder: "Kategorie wählen...",
     cancel: "Abbrechen",
@@ -78,8 +136,9 @@ const copy = {
     deleteConfirm1: "Bist du sicher, dass du",
     deleteConfirm2: "löschen möchtest?",
     deleteWarning:
-      "Diese Aktion kann nicht rückgängig gemacht werden. Alle Anmeldedaten des Benutzers werden ebenfalls gelöscht.",
-    deleteButton: "Endgültig löschen",
+      "Diese Aktion kann nicht rückgängig gemacht werden. Alle Anmeldedaten des Benutzers werden gelöscht. Hochgeladene Dokumente bleiben erhalten.",
+    deleteButton: "Löschen",
+    finalDeleteButton: "Endgültig löschen",
     categoryRequired: "Bitte wähle eine Kategorie aus",
     roleUpdated: "Rolle aktualisiert",
     roleUpdateError: "Fehler beim Aktualisieren",
@@ -108,6 +167,25 @@ const copy = {
     participants: "Participants",
     searchPlaceholder: "Search by name or email...",
     filterAllRoles: "All Roles",
+    filterAllCategories: "All Categories",
+    exportCsv: "Export as CSV",
+    exportEmpty: "No data to export",
+    exportSuccess: "Users exported",
+    viewRegistrations: "View registration data",
+    registrationDetails: "Registration data",
+    registrationDetailsDesc: "Registrations for",
+    noRegistrations: "No registrations available",
+    university: "University",
+    studyProgram: "Study program",
+    semester: "Semester",
+    allergies: "Allergies",
+    dietaryRestrictions: "Dietary restrictions",
+    intolerances: "Intolerances",
+    registeredOn: "Registered on",
+    statusConfirmed: "Confirmed",
+    statusPending: "Pending",
+    statusCancelled: "Cancelled",
+    close: "Close",
     roleSuperAdmin: "Super Admin",
     roleCategoryAdmin: "Category Admin",
     roleSponsor: "Sponsor",
@@ -123,10 +201,14 @@ const copy = {
     self: "(You)",
     active: "Active",
     deactivated: "Deactivated",
-    assignSponsor: "Assign Sponsor",
-    assignCategoryAdmin: "Assign Category Admin",
-    assignDialogDesc: "Select the category for which",
-    assignDialogDesc2: "should receive access.",
+    changeRole: "Change Role",
+    changeRoleDesc: "Select the new role for",
+    newRole: "New role",
+    warningAdminTitle: "Warning: Super Admin role",
+    warningAdminText:
+      "Super Admins have full access to all areas of the admin panel, including all user data, roles, and settings.",
+    warningElevatedText:
+      "This role grants access to the registration and participant data of the chosen category.",
     category: "Category",
     categoryPlaceholder: "Select category...",
     cancel: "Cancel",
@@ -134,8 +216,10 @@ const copy = {
     deleteUser: "Delete User",
     deleteConfirm1: "Are you sure you want to delete",
     deleteConfirm2: "?",
-    deleteWarning: "This action cannot be undone. All registration data for this user will also be deleted.",
-    deleteButton: "Delete permanently",
+    deleteWarning:
+      "This action cannot be undone. All registration data for this user will be deleted. Uploaded documents remain available.",
+    deleteButton: "Delete",
+    finalDeleteButton: "Delete permanently",
     categoryRequired: "Please select a category",
     roleUpdated: "Role updated",
     roleUpdateError: "Failed to update",
@@ -166,11 +250,15 @@ export function UsersAdminPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
+  const [categoryFilter, setCategoryFilter] = useState("all")
   const [updatingUser, setUpdatingUser] = useState<string | null>(null)
+
+  const [detailsUser, setDetailsUser] = useState<User | null>(null)
 
   const [roleDialogOpen, setRoleDialogOpen] = useState(false)
   const [pendingRoleChange, setPendingRoleChange] = useState<{
     userId: string
+    currentRole: string
     newRole: string
     userName: string
   } | null>(null)
@@ -232,31 +320,42 @@ export function UsersAdminPage() {
     }
   }
 
-  function handleRoleSelect(userId: string, newRole: string) {
-    const user = users.find((u) => u.id === userId)
-    if (!user) return
-    if (newRole === "category_partner" || newRole === "sponsor") {
-      setPendingRoleChange({ userId, newRole, userName: `${user.first_name} ${user.last_name}` })
-      setSelectedCategoryId("")
-      setSelectedAdminRoleId("")
-      setRoleDialogOpen(true)
-    } else {
-      updateRole(userId, newRole, null, null)
-    }
+  function openRoleChangeModal(user: User) {
+    setPendingRoleChange({
+      userId: user.id,
+      currentRole: user.role,
+      newRole: user.role,
+      userName: `${user.first_name} ${user.last_name}`
+    })
+    setSelectedCategoryId("")
+    setSelectedAdminRoleId("")
+    setRoleDialogOpen(true)
   }
 
-  async function confirmCategoryPartner() {
-    if (!pendingRoleChange) return
-    const isCategoryPartner = pendingRoleChange.newRole === "category_partner"
+  function selectNewRole(role: string) {
+    setPendingRoleChange((prev) => (prev ? { ...prev, newRole: role } : prev))
+    setSelectedCategoryId("")
+    setSelectedAdminRoleId("")
+  }
 
-    if (isCategoryPartner && selectedAdminRoleId) {
-      // Assign via custom role — category resolved server-side
-      await updateRole(pendingRoleChange.userId, pendingRoleChange.newRole, null, selectedAdminRoleId)
-    } else if (selectedCategoryId) {
-      await updateRole(pendingRoleChange.userId, pendingRoleChange.newRole, selectedCategoryId, null)
+  async function confirmRoleChange() {
+    if (!pendingRoleChange) return
+    const { userId, newRole } = pendingRoleChange
+    const needsAssignment = newRole === "category_partner" || newRole === "sponsor"
+
+    if (needsAssignment) {
+      const isCategoryPartner = newRole === "category_partner"
+      if (isCategoryPartner && selectedAdminRoleId) {
+        // Assign via custom role — category resolved server-side
+        await updateRole(userId, newRole, null, selectedAdminRoleId)
+      } else if (selectedCategoryId) {
+        await updateRole(userId, newRole, selectedCategoryId, null)
+      } else {
+        toast.error(text.categoryRequired)
+        return
+      }
     } else {
-      toast.error(text.categoryRequired)
-      return
+      await updateRole(userId, newRole, null, null)
     }
     setRoleDialogOpen(false)
     setPendingRoleChange(null)
@@ -399,8 +498,88 @@ export function UsersAdminPage() {
       `${u.first_name} ${u.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase())
     const matchesRole = roleFilter === "all" || u.role === roleFilter
-    return matchesSearch && matchesRole
+    const matchesCategory =
+      categoryFilter === "all" ||
+      (u.registrations?.some((r) => r.category_id === categoryFilter) ?? false) ||
+      categories.find((c) => c.id === categoryFilter)?.name === u.category_name
+    return matchesSearch && matchesRole && matchesCategory
   })
+
+  function statusLabel(status: string) {
+    if (status === "confirmed") return text.statusConfirmed
+    if (status === "pending") return text.statusPending
+    if (status === "cancelled") return text.statusCancelled
+    return status
+  }
+
+  function handleExport() {
+    if (filteredUsers.length === 0) {
+      toast.error(text.exportEmpty)
+      return
+    }
+
+    const headers = [
+      text.colName,
+      text.colEmail,
+      text.colRole,
+      text.category,
+      "Status",
+      text.university,
+      text.studyProgram,
+      text.semester,
+      text.allergies,
+      text.dietaryRestrictions,
+      text.intolerances,
+      text.colRegistered
+    ]
+
+    const rows = filteredUsers.flatMap((u) => {
+      const name = `${u.first_name} ${u.last_name}`.trim()
+      const roleLabel = (roleBadgeMap[u.role] || roleBadgeMap.user).label
+      if (u.registrations && u.registrations.length > 0) {
+        return u.registrations.map((r) => [
+          name,
+          u.email,
+          roleLabel,
+          r.category_name,
+          statusLabel(r.status),
+          r.university || "-",
+          r.study_program || "-",
+          r.semester || "-",
+          r.allergies || "-",
+          r.dietary_restrictions || "-",
+          r.intolerances || "-",
+          new Date(r.created_at).toLocaleDateString(dateLocale)
+        ])
+      }
+      return [
+        [
+          name,
+          u.email,
+          roleLabel,
+          u.admin_role_name || u.category_name || "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          new Date(u.created_at).toLocaleDateString(dateLocale)
+        ]
+      ]
+    })
+
+    const csv = [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n")
+    const blob = new Blob([csv], { type: "text/csv" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `benutzer-${new Date().toISOString().split("T")[0]}.csv`
+    a.click()
+    window.URL.revokeObjectURL(url)
+    toast.success(text.exportSuccess)
+  }
 
   const stats = {
     total: users.length,
@@ -489,7 +668,7 @@ export function UsersAdminPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4 md:flex-row">
         <div className="relative flex-1">
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
@@ -501,7 +680,7 @@ export function UsersAdminPage() {
         </div>
         {isAdmin && (
           <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full md:w-[200px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -513,6 +692,23 @@ export function UsersAdminPage() {
             </SelectContent>
           </Select>
         )}
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-full md:w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{text.filterAllCategories}</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat.id} value={cat.id}>
+                {cat.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button onClick={handleExport} variant="outline" className="gap-2">
+          <Download className="h-4 w-4" />
+          {text.exportCsv}
+        </Button>
       </div>
 
       {/* Table */}
@@ -556,6 +752,14 @@ export function UsersAdminPage() {
                           <span className="font-medium text-violet-700">{user.admin_role_name}</span>
                         ) : user.category_name ? (
                           user.category_name
+                        ) : user.registrations && user.registrations.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {user.registrations.map((r) => (
+                              <Badge key={r.id} variant="outline">
+                                {r.category_name}
+                              </Badge>
+                            ))}
+                          </div>
                         ) : (
                           "-"
                         )}
@@ -575,34 +779,51 @@ export function UsersAdminPage() {
                         {new Date(user.created_at).toLocaleDateString(dateLocale)}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          {isAdmin && (
-                            <Select
-                              value={user.role}
-                              onValueChange={(val) => handleRoleSelect(user.id, val)}
-                              disabled={updatingUser === user.id || isSelf}>
-                              <SelectTrigger className="w-[150px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="admin">{text.roleSuperAdmin}</SelectItem>
-                                <SelectItem value="category_partner">{text.roleCategoryAdmin}</SelectItem>
-                                <SelectItem value="sponsor">{text.roleSponsor}</SelectItem>
-                                <SelectItem value="user">{text.roleUser}</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                          {isAdmin && !isSelf && user.role !== "admin" && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="text-muted-foreground hover:text-destructive h-8 w-8"
-                              onClick={() => openDeleteDialog(user)}
+                              className="h-8 w-8"
                               disabled={updatingUser === user.id}>
-                              <Trash2 className="h-4 w-4" />
+                              {updatingUser === user.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <MoreVertical className="h-4 w-4" />
+                              )}
                             </Button>
-                          )}
-                        </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {user.registrations && user.registrations.length > 0 && (
+                              <DropdownMenuItem onClick={() => setDetailsUser(user)}>
+                                <Eye className="h-4 w-4" />
+                                {text.viewRegistrations}
+                              </DropdownMenuItem>
+                            )}
+                            {isAdmin && !isSelf && (
+                              <>
+                                {user.registrations && user.registrations.length > 0 && (
+                                  <DropdownMenuSeparator />
+                                )}
+                                <DropdownMenuItem onClick={() => openRoleChangeModal(user)}>
+                                  <UserCog className="h-4 w-4" />
+                                  {text.changeRole}
+                                </DropdownMenuItem>
+                                {user.role !== "admin" && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      variant="destructive"
+                                      onClick={() => openDeleteDialog(user)}>
+                                      <Trash2 className="h-4 w-4" />
+                                      {text.deleteButton}
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   )
@@ -740,21 +961,49 @@ export function UsersAdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Category assignment dialog */}
+      {/* Role change dialog */}
       <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
         <DialogContent
           onKeyDown={(e) => {
-            if (e.key === "Enter") confirmCategoryPartner()
+            if (e.key === "Enter") confirmRoleChange()
           }}>
           <DialogHeader>
-            <DialogTitle>
-              {pendingRoleChange?.newRole === "sponsor" ? text.assignSponsor : text.assignCategoryAdmin}
-            </DialogTitle>
+            <DialogTitle>{text.changeRole}</DialogTitle>
             <DialogDescription>
-              {text.assignDialogDesc} <strong>{pendingRoleChange?.userName}</strong> {text.assignDialogDesc2}
+              {text.changeRoleDesc} <strong>{pendingRoleChange?.userName}</strong>
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            <div>
+              <Label>{text.newRole}</Label>
+              <Select value={pendingRoleChange?.newRole} onValueChange={selectNewRole}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">{text.roleUser}</SelectItem>
+                  <SelectItem value="category_partner">{text.roleCategoryAdmin}</SelectItem>
+                  <SelectItem value="sponsor">{text.roleSponsor}</SelectItem>
+                  <SelectItem value="admin">{text.roleSuperAdmin}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {pendingRoleChange?.newRole === "admin" && (
+              <div className="border-destructive/50 bg-destructive/10 flex gap-2 rounded-md border p-3 text-sm">
+                <AlertTriangle className="text-destructive h-4 w-4 shrink-0" />
+                <div>
+                  <p className="text-destructive font-medium">{text.warningAdminTitle}</p>
+                  <p className="text-destructive/90">{text.warningAdminText}</p>
+                </div>
+              </div>
+            )}
+            {(pendingRoleChange?.newRole === "category_partner" ||
+              pendingRoleChange?.newRole === "sponsor") && (
+              <div className="flex gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+                <p className="text-amber-700">{text.warningElevatedText}</p>
+              </div>
+            )}
             {pendingRoleChange?.newRole === "category_partner" && adminRoles.length > 0 && (
               <div>
                 <Label>{language === "de" ? "Admin-Rolle (empfohlen)" : "Admin role (recommended)"}</Label>
@@ -779,31 +1028,45 @@ export function UsersAdminPage() {
                 </Select>
               </div>
             )}
-            {!selectedAdminRoleId && (
-              <div>
-                <Label>{text.category}</Label>
-                <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={text.categoryPlaceholder} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {(pendingRoleChange?.newRole === "category_partner" ||
+              pendingRoleChange?.newRole === "sponsor") &&
+              !selectedAdminRoleId && (
+                <div>
+                  <Label>{text.category}</Label>
+                  <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={text.categoryPlaceholder} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setRoleDialogOpen(false)}>
                 {text.cancel}
               </Button>
               <Button
-                onClick={confirmCategoryPartner}
-                disabled={(!selectedCategoryId && !selectedAdminRoleId) || updatingUser !== null}
-                className="bg-primary hover:bg-primary/90">
+                onClick={confirmRoleChange}
+                disabled={
+                  !pendingRoleChange ||
+                  pendingRoleChange.newRole === pendingRoleChange.currentRole ||
+                  ((pendingRoleChange.newRole === "category_partner" ||
+                    pendingRoleChange.newRole === "sponsor") &&
+                    !selectedCategoryId &&
+                    !selectedAdminRoleId) ||
+                  updatingUser !== null
+                }
+                className={
+                  pendingRoleChange?.newRole === "admin"
+                    ? "bg-destructive hover:bg-destructive/90"
+                    : "bg-primary hover:bg-primary/90"
+                }>
                 {updatingUser ? <Loader2 className="h-4 w-4 animate-spin" /> : text.assign}
               </Button>
             </div>
@@ -841,7 +1104,58 @@ export function UsersAdminPage() {
               ) : (
                 <Trash2 className="mr-2 h-4 w-4" />
               )}
-              {text.deleteButton}
+              {text.finalDeleteButton}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Registration details dialog */}
+      <Dialog open={detailsUser !== null} onOpenChange={(open) => !open && setDetailsUser(null)}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{text.registrationDetails}</DialogTitle>
+            <DialogDescription>
+              {text.registrationDetailsDesc} {detailsUser?.first_name} {detailsUser?.last_name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] space-y-4 overflow-y-auto">
+            {detailsUser?.registrations && detailsUser.registrations.length > 0 ? (
+              detailsUser.registrations.map((r) => (
+                <div key={r.id} className="space-y-2 rounded-md border p-4">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline">{r.category_name}</Badge>
+                    <Badge
+                      variant={r.status === "confirmed" ? "default" : "outline"}
+                      className={r.status === "confirmed" ? "bg-green-600" : ""}>
+                      {statusLabel(r.status)}
+                    </Badge>
+                  </div>
+                  <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                    <dt className="text-muted-foreground">{text.university}</dt>
+                    <dd>{r.university || "-"}</dd>
+                    <dt className="text-muted-foreground">{text.studyProgram}</dt>
+                    <dd>{r.study_program || "-"}</dd>
+                    <dt className="text-muted-foreground">{text.semester}</dt>
+                    <dd>{r.semester || "-"}</dd>
+                    <dt className="text-muted-foreground">{text.allergies}</dt>
+                    <dd>{r.allergies || "-"}</dd>
+                    <dt className="text-muted-foreground">{text.dietaryRestrictions}</dt>
+                    <dd>{r.dietary_restrictions || "-"}</dd>
+                    <dt className="text-muted-foreground">{text.intolerances}</dt>
+                    <dd>{r.intolerances || "-"}</dd>
+                    <dt className="text-muted-foreground">{text.registeredOn}</dt>
+                    <dd>{new Date(r.created_at).toLocaleDateString(dateLocale)}</dd>
+                  </dl>
+                </div>
+              ))
+            ) : (
+              <p className="text-muted-foreground py-8 text-center">{text.noRegistrations}</p>
+            )}
+          </div>
+          <div className="flex justify-end pt-2">
+            <Button variant="outline" onClick={() => setDetailsUser(null)}>
+              {text.close}
             </Button>
           </div>
         </DialogContent>
