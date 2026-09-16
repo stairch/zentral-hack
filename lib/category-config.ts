@@ -46,6 +46,9 @@ export interface CategoryRecord {
   target_group?: string | null
   target_group_en?: string | null
   display_order?: number | null
+  max_registrations?: number | null
+  registration_closed?: boolean | null
+  registration_count?: number | null
   challenge_title?: string | null
   challenge_title_en?: string | null
   challenge_short_description?: string | null
@@ -243,10 +246,26 @@ export function getCategoryPresentationByLanguage(category: CategoryRecord, lang
 
   const publishedChallenges = Array.isArray(category.challenges) ? category.challenges : []
 
+  const maxRegistrations = typeof category.max_registrations === "number" ? category.max_registrations : null
+  const registrationCount =
+    typeof category.registration_count === "number" ? category.registration_count : null
+  const registrationClosed = Boolean(category.registration_closed)
+  const isFull =
+    maxRegistrations !== null && registrationCount !== null && registrationCount >= maxRegistrations
+  const spotsLeft =
+    maxRegistrations !== null && registrationCount !== null
+      ? Math.max(0, maxRegistrations - registrationCount)
+      : null
+
   return {
     id: category.id,
     slug: category.slug,
     displayOrder: typeof category.display_order === "number" ? category.display_order : 0,
+    maxRegistrations,
+    registrationCount,
+    registrationClosed,
+    isRegistrationOpen: !registrationClosed && !isFull,
+    spotsLeft,
     title: localizedTitle,
     challengeTitle,
     description: localizedDescription,

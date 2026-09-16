@@ -51,6 +51,9 @@ interface DisplayCategory {
     updated_at: string | null
     prize: string | null
   }>
+  isRegistrationOpen: boolean
+  registrationClosed: boolean
+  spotsLeft: number | null
 }
 
 const CHECKLIST_ITEM_REGEX = /^-\s*\[\s*\]\s*(.+)$/
@@ -71,6 +74,8 @@ function CategoryCard({
   onOpen,
   partnerLabel,
   buttonLabel,
+  closedLabel,
+  spotsLeftLabel,
   layout = "standard",
   className = ""
 }: {
@@ -79,6 +84,8 @@ function CategoryCard({
   onOpen: () => void
   partnerLabel: string
   buttonLabel: string
+  closedLabel: string
+  spotsLeftLabel: (n: number) => string
   layout?: string
   className?: string
 }) {
@@ -137,6 +144,20 @@ function CategoryCard({
       onClick={onOpen}
       role="button"
       tabIndex={0}>
+      {!category.isRegistrationOpen && (
+        <Badge
+          variant="secondary"
+          className="absolute top-4 right-4 z-20 bg-white/90 text-black hover:bg-white/90">
+          {closedLabel}
+        </Badge>
+      )}
+      {category.isRegistrationOpen && category.spotsLeft !== null && category.spotsLeft <= 5 && (
+        <Badge
+          variant="secondary"
+          className="absolute top-4 right-4 z-20 bg-white/90 text-black hover:bg-white/90">
+          {spotsLeftLabel(category.spotsLeft)}
+        </Badge>
+      )}
       {layout === "bento" && index === 0 ? (
         <div className="absolute inset-0 overflow-hidden">
           <BackgroundBeams
@@ -364,7 +385,10 @@ export function Categories() {
       targetGroup: "Zielgruppe",
       difficulty: "Schwierigkeit",
       teamSize: "Teamgrösse",
-      poweredBy: (sponsor: string) => `Powered by ${sponsor}`
+      poweredBy: (sponsor: string) => `Powered by ${sponsor}`,
+      registrationClosedBadge: "Keine Plätze mehr verfügbar",
+      registrationClosedNotice: "Die Anmeldung für diese Kategorie ist geschlossen.",
+      spotsLeft: (n: number) => `Noch ${n} Platz${n === 1 ? "" : "e"} verfügbar`
     },
     en: {
       badge: "CHALLENGES",
@@ -384,7 +408,10 @@ export function Categories() {
       targetGroup: "Target audience",
       difficulty: "Difficulty",
       teamSize: "Team size",
-      poweredBy: (sponsor: string) => `Powered by ${sponsor}`
+      poweredBy: (sponsor: string) => `Powered by ${sponsor}`,
+      registrationClosedBadge: "Registration closed",
+      registrationClosedNotice: "Registration for this category is closed.",
+      spotsLeft: (n: number) => `Only ${n} spot${n === 1 ? "" : "s"} left`
     }
   } as const
 
@@ -464,6 +491,8 @@ export function Categories() {
                   }}
                   partnerLabel={text.partner}
                   buttonLabel={text.moreInfo}
+                  closedLabel={text.registrationClosedBadge}
+                  spotsLeftLabel={text.spotsLeft}
                 />
               )
             })}
@@ -629,6 +658,7 @@ export function Categories() {
                           <Button
                             type="button"
                             className="flex-1 text-sm font-semibold"
+                            disabled={!selectedCategory.isRegistrationOpen}
                             style={{
                               backgroundColor: selectedCategory.color,
                               color: selectedCategory.textColor
@@ -637,10 +667,24 @@ export function Categories() {
                               const categoryId = selectedCategory.id || selectedCategory.slug
                               window.location.href = `/anmeldung?category=${categoryId}`
                             }}>
-                            {text.register}
-                            <ArrowRight className="ml-2 h-4 w-4" />
+                            {selectedCategory.isRegistrationOpen
+                              ? text.register
+                              : text.registrationClosedBadge}
+                            {selectedCategory.isRegistrationOpen && <ArrowRight className="ml-2 h-4 w-4" />}
                           </Button>
                         </div>
+                        {!selectedCategory.isRegistrationOpen && (
+                          <p className="text-muted-foreground mt-2 text-center text-xs">
+                            {text.registrationClosedNotice}
+                          </p>
+                        )}
+                        {selectedCategory.isRegistrationOpen &&
+                          selectedCategory.spotsLeft !== null &&
+                          selectedCategory.spotsLeft <= 5 && (
+                            <p className="mt-2 text-center text-xs font-medium">
+                              {text.spotsLeft(selectedCategory.spotsLeft)}
+                            </p>
+                          )}
                       </div>
                     </div>
                   ) : (
@@ -788,6 +832,7 @@ export function Categories() {
                           <Button
                             type="button"
                             className="w-full py-6 text-base font-semibold"
+                            disabled={!selectedCategory.isRegistrationOpen}
                             style={{
                               backgroundColor: selectedCategory.color,
                               color: selectedCategory.textColor
@@ -796,9 +841,23 @@ export function Categories() {
                               const categoryId = selectedCategory.id || selectedCategory.slug
                               window.location.href = `/anmeldung?category=${categoryId}`
                             }}>
-                            {text.register}
-                            <ArrowRight className="ml-2 h-5 w-5" />
+                            {selectedCategory.isRegistrationOpen
+                              ? text.register
+                              : text.registrationClosedBadge}
+                            {selectedCategory.isRegistrationOpen && <ArrowRight className="ml-2 h-5 w-5" />}
                           </Button>
+                          {!selectedCategory.isRegistrationOpen && (
+                            <p className="text-muted-foreground mt-2 text-center text-xs">
+                              {text.registrationClosedNotice}
+                            </p>
+                          )}
+                          {selectedCategory.isRegistrationOpen &&
+                            selectedCategory.spotsLeft !== null &&
+                            selectedCategory.spotsLeft <= 5 && (
+                              <p className="mt-2 text-center text-xs font-medium">
+                                {text.spotsLeft(selectedCategory.spotsLeft)}
+                              </p>
+                            )}
                         </div>
                       ) : (
                         <div className="flex flex-1 items-center justify-center p-8">

@@ -25,6 +25,7 @@ interface DisplayCategory {
   textColor: string
   icon: React.ComponentType<{ className?: string; style?: Record<any, any> }>
   partnerName: string
+  isRegistrationOpen: boolean
 }
 
 const slideVariants = {
@@ -61,6 +62,8 @@ export function RegistrationForm() {
       studyRequired: "Angabe erforderlich, wenn Organisation angegeben ist",
       semesterRequired: "Angabe erforderlich, wenn Organisation angegeben ist",
       categoryRequired: "Bitte wähle eine Kategorie",
+      categoryClosed: "Die Anmeldung für diese Kategorie ist geschlossen",
+      categoryClosedBadge: "Geschlossen",
       signupFailed: "Registrierung fehlgeschlagen",
       twoFaSent: "2FA Code wurde an deine E-Mail gesendet",
       enter2faCode: "Bitte geben Sie den 2FA Code ein",
@@ -117,6 +120,8 @@ export function RegistrationForm() {
       studyRequired: "Field is required if organization is provided",
       semesterRequired: "Field is required if organization is provided",
       categoryRequired: "Please choose a category",
+      categoryClosed: "Registration for this category is closed",
+      categoryClosedBadge: "Closed",
       signupFailed: "Registration failed",
       twoFaSent: "2FA code was sent to your email",
       enter2faCode: "Please enter the 2FA code",
@@ -208,7 +213,8 @@ export function RegistrationForm() {
               color: p.color,
               textColor: p.textColor,
               icon: p.icon,
-              partnerName: p.partnerName
+              partnerName: p.partnerName,
+              isRegistrationOpen: p.isRegistrationOpen
             }
           })
         )
@@ -226,6 +232,11 @@ export function RegistrationForm() {
     if (step === 1) {
       if (!formData.categoryId) {
         toast.error(t.categoryRequired)
+        return false
+      }
+      const selected = categories.find((c) => c.id === formData.categoryId)
+      if (selected && !selected.isRegistrationOpen) {
+        toast.error(t.categoryClosed)
         return false
       }
     }
@@ -439,16 +450,20 @@ export function RegistrationForm() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   {categories.map((cat) => {
                     const isSelected = formData.categoryId === cat.id
+                    const isClosed = !cat.isRegistrationOpen
                     const Icon = cat.icon
                     return (
                       <button
                         key={cat.id}
                         type="button"
+                        disabled={isClosed}
                         onClick={() => handleInputChange("categoryId", cat.id)}
-                        className={`relative cursor-pointer overflow-hidden rounded-xl p-5 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#530A5D] focus-visible:ring-offset-2 ${
-                          isSelected
-                            ? "scale-[1.02] shadow-lg"
-                            : "opacity-90 hover:opacity-100 hover:shadow-md"
+                        className={`relative overflow-hidden rounded-xl p-5 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#530A5D] focus-visible:ring-offset-2 ${
+                          isClosed
+                            ? "cursor-not-allowed opacity-50"
+                            : isSelected
+                              ? "scale-[1.02] cursor-pointer shadow-lg"
+                              : "cursor-pointer opacity-90 hover:opacity-100 hover:shadow-md"
                         }`}
                         style={{ backgroundColor: cat.color, color: cat.textColor }}>
                         <div
@@ -459,6 +474,11 @@ export function RegistrationForm() {
                             backgroundSize: "18px 18px"
                           }}
                         />
+                        {isClosed && (
+                          <span className="absolute top-3 right-3 z-10 rounded-full bg-white/25 px-2 py-1 text-[10px] font-bold tracking-wide uppercase backdrop-blur-sm">
+                            {t.categoryClosedBadge}
+                          </span>
+                        )}
                         <div className="relative z-10 space-y-3">
                           <Icon className="h-8 w-8 opacity-90" />
                           <div>

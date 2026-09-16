@@ -9,8 +9,14 @@ export async function GET() {
   try {
     const availableColumns = await getAvailableCategoryColumns()
     const result = await query(
-      `SELECT ${buildCategorySelectClause(availableColumns)}
-       FROM categories
+      `SELECT ${buildCategorySelectClause(availableColumns)},
+              COALESCE(r.registration_count, 0)::integer AS registration_count
+       FROM categories c
+       LEFT JOIN LATERAL (
+         SELECT COUNT(*) AS registration_count
+         FROM registrations
+         WHERE category_id = c.id AND status != 'cancelled'
+       ) r ON TRUE
        WHERE is_active = true
        ORDER BY display_order ASC, name ASC`
     )
@@ -114,7 +120,9 @@ async function putHandler(req: AuthenticatedRequest) {
       prizeEn,
       targetGroup,
       targetGroupEn,
-      displayOrder
+      displayOrder,
+      maxRegistrations,
+      registrationClosed
     } = await req.json()
 
     if (!id) {
@@ -157,6 +165,14 @@ async function putHandler(req: AuthenticatedRequest) {
 
     if (typeof icon === "string" && !(icon in categoryIconMap)) {
       return validationError("Invalid category icon")
+    }
+
+    if (
+      maxRegistrations !== undefined &&
+      maxRegistrations !== null &&
+      (!Number.isFinite(Number(maxRegistrations)) || Number(maxRegistrations) < 0)
+    ) {
+      return validationError("Maximale Anzahl Anmeldungen muss eine positive Zahl sein")
     }
 
     if (req.user?.role === "category_partner" && req.user.categoryId !== id) {
@@ -280,6 +296,19 @@ async function putHandler(req: AuthenticatedRequest) {
     ) {
       values.push(String(Math.trunc(Number(displayOrder))))
       fieldAssignments.push(`display_order = $${values.length}::integer`)
+    }
+
+    if (
+      availableColumns.has("max_registrations") &&
+      (maxRegistrations === null || Number.isFinite(Number(maxRegistrations)))
+    ) {
+      values.push(maxRegistrations === null ? null : String(Math.trunc(Number(maxRegistrations))))
+      fieldAssignments.push(`max_registrations = $${values.length}::integer`)
+    }
+
+    if (availableColumns.has("registration_closed") && typeof registrationClosed === "boolean") {
+      values.push(registrationClosed ? "true" : "false")
+      fieldAssignments.push(`registration_closed = $${values.length}::boolean`)
     }
 
     if (fieldAssignments.length === 0) {
