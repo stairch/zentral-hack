@@ -23,8 +23,9 @@ export async function GET() {
          ) c
          LEFT JOIN LATERAL (
            SELECT COUNT(*) AS registration_count
-           FROM registrations
-           WHERE category_id = c.id AND status != 'cancelled'
+           FROM registrations reg
+           JOIN users u ON u.id = reg.user_id
+           WHERE reg.category_id = c.id AND reg.status != 'cancelled' AND u.role = 'user'
          ) rc ON TRUE
          LEFT JOIN LATERAL (
            SELECT jsonb_agg(
@@ -65,8 +66,9 @@ export async function GET() {
          FROM categories c
          LEFT JOIN LATERAL (
            SELECT COUNT(*) AS registration_count
-           FROM registrations
-           WHERE category_id = c.id AND status != 'cancelled'
+           FROM registrations reg
+           JOIN users u ON u.id = reg.user_id
+           WHERE reg.category_id = c.id AND reg.status != 'cancelled' AND u.role = 'user'
          ) rc ON TRUE
          ORDER BY display_order ASC, name ASC`
       )
