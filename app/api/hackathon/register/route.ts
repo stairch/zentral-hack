@@ -55,9 +55,10 @@ export async function POST(request: NextRequest) {
     }
 
     const categoryCapacity = await query(
-      `SELECT c.registration_closed, c.max_registrations, COUNT(r.id)::integer AS registration_count
+      `SELECT c.registration_closed, c.max_registrations, COUNT(u.id)::integer AS registration_count
        FROM categories c
        LEFT JOIN registrations r ON r.category_id = c.id AND r.status != 'cancelled'
+       LEFT JOIN users u ON u.id = r.user_id AND u.role = 'user'
        WHERE c.id = $1
        GROUP BY c.id, c.registration_closed, c.max_registrations`,
       [categoryId]
