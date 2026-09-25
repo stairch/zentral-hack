@@ -32,6 +32,7 @@ import {
 import { toast } from "sonner"
 import { useAuth } from "@/lib/auth-context"
 import { useLanguage } from "@/lib/language-context"
+import { getContrastForegroundColor, normalizeHexColor } from "@/lib/helpers"
 
 interface Registration {
   id: string
@@ -65,6 +66,7 @@ interface User {
 interface Category {
   id: string
   name: string
+  color?: string | null
 }
 
 interface AdminRole {
@@ -288,6 +290,13 @@ export function UsersAdminPage() {
     category_partner: { label: text.roleCategoryAdmin, className: "bg-violet-600 text-white" },
     sponsor: { label: text.roleSponsor, className: "bg-[#530A5D] text-white" },
     user: { label: text.roleUser, className: "bg-gray-500 text-white" }
+  }
+
+  function categoryBadgeStyle(categoryName: string | null | undefined) {
+    const category = categories.find((c) => c.name === categoryName)
+    if (!category?.color) return undefined
+    const color = normalizeHexColor(category.color)
+    return { backgroundColor: color, color: getContrastForegroundColor(color), borderColor: color }
   }
 
   useEffect(() => {
@@ -749,13 +758,17 @@ export function UsersAdminPage() {
                       </TableCell>
                       <TableCell className="text-sm">
                         {user.admin_role_name ? (
-                          <span className="font-medium text-violet-700">{user.admin_role_name}</span>
+                          <Badge variant="outline" style={categoryBadgeStyle(user.category_name)}>
+                            {user.admin_role_name}
+                          </Badge>
                         ) : user.category_name ? (
-                          user.category_name
+                          <Badge variant="outline" style={categoryBadgeStyle(user.category_name)}>
+                            {user.category_name}
+                          </Badge>
                         ) : user.registrations && user.registrations.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {user.registrations.map((r) => (
-                              <Badge key={r.id} variant="outline">
+                              <Badge key={r.id} variant="outline" style={categoryBadgeStyle(r.category_name)}>
                                 {r.category_name}
                               </Badge>
                             ))}
@@ -1124,7 +1137,9 @@ export function UsersAdminPage() {
               detailsUser.registrations.map((r) => (
                 <div key={r.id} className="space-y-2 rounded-md border p-4">
                   <div className="flex items-center justify-between">
-                    <Badge variant="outline">{r.category_name}</Badge>
+                    <Badge variant="outline" style={categoryBadgeStyle(r.category_name)}>
+                      {r.category_name}
+                    </Badge>
                     <Badge
                       variant={r.status === "confirmed" ? "default" : "outline"}
                       className={r.status === "confirmed" ? "bg-green-600" : ""}>
