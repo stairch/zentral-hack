@@ -67,7 +67,7 @@ export function AccountSettings({ onUpdated }: AccountSettingsProps) {
           passwordSpecial: "Neues Passwort muss mindestens ein Sonderzeichen enthalten (!@#$%^&*...)",
           deleteTitle: "Konto löschen",
           deleteWarning:
-            "Dein Konto und alle zugehörigen Daten werden unwiderruflich gelöscht. Bereits hochgeladene Dokumente bleiben erhalten.",
+            "Durch das Löschen deines Kontos werden alle zugehörigen Daten unwiderruflich gelöscht und du wirst vom Event abgemeldet. Bereits hochgeladene Dokumente bleiben erhalten.",
           deleteOpen: "Konto löschen",
           deleteConfirmLabel: (phrase: string) => `Gib zur Bestätigung „${phrase}“ ein`,
           deleteConfirmButton: "Konto endgültig löschen",
