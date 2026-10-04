@@ -35,7 +35,9 @@ async function loadChallengeRows(req: AuthenticatedRequest, categoryId: string) 
               contact_email, contact_phone, website, logo_note,
               challenge_title, challenge_title_en, short_description, short_description_en,
               difficulty, team_size,
-              challenge_language, prize, sponsor_id, challenge_data, published_at, created_at, updated_at
+              challenge_language, prize, sponsor_id, challenge_data,
+              submission_enabled, submission_description_required,
+              published_at, created_at, updated_at
        FROM sponsor_challenges
        WHERE category_id = $1
        ORDER BY updated_at DESC, created_at DESC`,
@@ -49,7 +51,9 @@ async function loadChallengeRows(req: AuthenticatedRequest, categoryId: string) 
             contact_email, contact_phone, website, logo_note,
             challenge_title, challenge_title_en, short_description, short_description_en,
             difficulty, team_size,
-            challenge_language, prize, sponsor_id, challenge_data, published_at, created_at, updated_at
+            challenge_language, prize, sponsor_id, challenge_data,
+            submission_enabled, submission_description_required,
+            published_at, created_at, updated_at
      FROM sponsor_challenges
      WHERE user_id = $1 AND category_id = $2
      ORDER BY updated_at DESC, created_at DESC`,
@@ -127,6 +131,8 @@ export const GET = withSponsorAuth(async (req: AuthenticatedRequest) => {
         challenge_language: "",
         sponsor_id: null,
         challenge_data: createEmptySponsorChallengeData(),
+        submission_enabled: false,
+        submission_description_required: false,
         published_at: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -157,6 +163,9 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
     const prize = typeof body.prize === "string" ? body.prize.trim() || null : null
     const sponsorId =
       typeof body.sponsorId === "string" && UUID_RE.test(body.sponsorId) ? body.sponsorId : null
+    // Only admins / category partners may toggle participant submissions; sponsors cannot.
+    const submissionEnabled = !isSponsorOnly && body.submissionEnabled === true
+    const submissionDescriptionRequired = !isSponsorOnly && body.submissionDescriptionRequired === true
 
     if (!challengeData.challengeTitle.trim()) {
       return validationError("German challenge title is required")
@@ -189,7 +198,9 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
         challengeData.challengeLanguage || null,
         JSON.stringify(challengeData),
         prize,
-        sponsorId
+        sponsorId,
+        submissionEnabled,
+        submissionDescriptionRequired
       ]
 
       if (challengeId) {
@@ -198,8 +209,8 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
         // must still be referenced so Postgres can infer the parameter's type.
         const whereClause =
           req.user?.role === "admin" || req.user?.role === "category_partner"
-            ? "WHERE id = $22 AND category_id = $2 AND $1::text = $1::text"
-            : "WHERE id = $22 AND user_id = $1 AND category_id = $2"
+            ? "WHERE id = $24 AND category_id = $2 AND $1::text = $1::text"
+            : "WHERE id = $24 AND user_id = $1 AND category_id = $2"
 
         result = await query(
           `UPDATE sponsor_challenges
@@ -222,6 +233,8 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
                challenge_data = $19::jsonb,
                prize = $20,
                sponsor_id = $21,
+               submission_enabled = $22,
+               submission_description_required = $23,
                published_at = CASE
                  WHEN $3::text = 'published' AND sponsor_challenges.published_at IS NULL THEN NOW()
                  WHEN $3::text = 'published' THEN sponsor_challenges.published_at
@@ -234,7 +247,9 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
                      contact_email, contact_phone, website, logo_note,
                      challenge_title, challenge_title_en, short_description, short_description_en,
                      difficulty, team_size,
-                     challenge_language, prize, sponsor_id, challenge_data, published_at, created_at, updated_at`,
+                     challenge_language, prize, sponsor_id, challenge_data,
+                     submission_enabled, submission_description_required,
+                     published_at, created_at, updated_at`,
           [...payload, challengeId]
         )
 
@@ -249,7 +264,9 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
              contact_email, contact_phone, website, logo_note,
              challenge_title, challenge_title_en, short_description, short_description_en,
              difficulty, team_size,
-             challenge_language, challenge_data, prize, sponsor_id, published_at, updated_at
+             challenge_language, challenge_data, prize, sponsor_id,
+             submission_enabled, submission_description_required,
+             published_at, updated_at
            ) VALUES (
              $1, $2, $3,
              $4, $5, $6, $7,
@@ -257,6 +274,7 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
              $12, $13, $14, $15,
              $16, $17,
              $18, $19::jsonb, $20, $21,
+             $22, $23,
              CASE WHEN $3::text = 'published' THEN NOW() ELSE NULL END,
              NOW()
            )
@@ -265,7 +283,9 @@ export const PUT = withSponsorAuth(async (req: AuthenticatedRequest) => {
                      contact_email, contact_phone, website, logo_note,
                      challenge_title, challenge_title_en, short_description, short_description_en,
                      difficulty, team_size,
-                     challenge_language, prize, sponsor_id, challenge_data, published_at, created_at, updated_at`,
+                     challenge_language, prize, sponsor_id, challenge_data,
+                     submission_enabled, submission_description_required,
+                     published_at, created_at, updated_at`,
           payload
         )
       }

@@ -25,6 +25,7 @@ import {
   BarChart3,
   Image,
   Trophy,
+  ClipboardCheck,
   Lock,
   ShieldCheck,
   Bug,
@@ -52,6 +53,7 @@ const copy = {
     documents: "Dokumente",
     categories: "Kategorien",
     challenges: "Challenges",
+    challengeSubmissions: "Challenge Submissions",
     about: "About Stats",
     schedule: "Zeitplan",
     partnerLogos: "Partner-Logos",
@@ -81,6 +83,7 @@ const copy = {
     documents: "Documents",
     categories: "Categories",
     challenges: "Challenges",
+    challengeSubmissions: "Challenge Submissions",
     about: "About Stats",
     schedule: "Schedule",
     partnerLogos: "Partner Logos",
@@ -190,6 +193,14 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       label: text.challenges,
       icon: Trophy,
       permissionKey: "challenges",
+      adminOnly: false
+    },
+    {
+      id: "challenge-submissions",
+      href: "/admin/challenge-submissions",
+      label: text.challengeSubmissions,
+      icon: ClipboardCheck,
+      permissionKey: "challenge-submissions",
       adminOnly: false
     },
     {

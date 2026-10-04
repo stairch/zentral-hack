@@ -162,6 +162,8 @@ export interface SponsorChallengeRecord {
   prize: string | null
   sponsor_id: string | null
   challenge_data: SponsorChallengeData | null
+  submission_enabled: boolean
+  submission_description_required: boolean
   published_at: string | null
   created_at: string
   updated_at: string

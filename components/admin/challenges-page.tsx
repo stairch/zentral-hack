@@ -29,6 +29,7 @@ interface Challenge {
   challenge_data: Record<string, unknown> | null
   prize: string | null
   sponsor_id: string | null
+  submission_enabled: boolean
   sponsor_company_name: string | null
   published_at: string | null
   created_at: string
@@ -56,6 +57,7 @@ const copy = {
     allStatus: "Alle Status",
     published: "Veröffentlicht",
     draft: "Entwurf",
+    submissionActive: "Submission aktiv",
     allCategories: "Alle Kategorien",
     of: "von",
     challenges: "Challenges",
@@ -108,6 +110,7 @@ const copy = {
     allStatus: "All Status",
     published: "Published",
     draft: "Draft",
+    submissionActive: "Submission active",
     allCategories: "All Categories",
     of: "of",
     challenges: "Challenges",
@@ -417,6 +420,11 @@ export function AdminChallengesPage() {
                 <Badge variant={challenge.status === "published" ? "default" : "secondary"}>
                   {challenge.status === "published" ? text.published : text.draft}
                 </Badge>
+                {challenge.submission_enabled && (
+                  <Badge variant="outline" className="border-green-600 text-green-600">
+                    {text.submissionActive}
+                  </Badge>
+                )}
               </div>
               <p className="text-muted-foreground mt-0.5 text-sm">
                 {challenge.company_name} · {challenge.category_name} · {challenge.user_email}
