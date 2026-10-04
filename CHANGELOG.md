@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.1] - 2026-10-04
+
+### Fixed
+
+- Admins and super admins being counted as participants
+- Category badges not consistent in users table
+
 ## [1.11.0] - 2026-09-16
 
 ### Added
