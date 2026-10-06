@@ -205,21 +205,23 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       currentCategory: "Aktuelle Kategorie",
       categoryMissing: "Keine Kategorie registriert",
       tabSubmission: "Challenge-Einreichung",
-      submissionTitle: "Für welche Challenge möchtest du dich entscheiden?",
-      submissionSubtitle: "Wähle eine Challenge aus und reiche optional eine kurze Beschreibung ein.",
+      submissionTitleSimple: "Bewirb dich für eine Challenge",
+      submissionSubtitleSimple: "Wähle die Challenge, die dich am meisten interessiert.",
+      submissionTitleWithDescription: "Bewirb dich mit deiner Challenge",
+      submissionSubtitleWithDescription: "Wähle eine Challenge und beschreibe kurz deine Idee dazu.",
+      submissionSelectLabel: "Deine Wunsch-Challenge",
       submissionSelectPlaceholder: "Challenge auswählen",
-      submissionDescriptionLabel: "Challengebeschreibung",
-      submissionDescriptionRequiredLabel: "Challengebeschreibung (erforderlich)",
-      submissionDescriptionPlaceholder: "Beschreibe kurz, wie ihr die Challenge angehen möchtet...",
-      submissionSubmit: "Einreichen",
-      submissionSaveSuccess: "Einreichung gespeichert",
-      submissionSaveError: "Fehler beim Einreichen",
+      submissionDescriptionRequiredLabel: "Deine Idee",
+      submissionDescriptionPlaceholder: "Wie würdest du die Challenge angehen? Beschreibe es kurz.",
+      submissionSubmit: "Jetzt bewerben",
+      submissionSaveSuccess: "Bewerbung gesendet",
+      submissionSaveError: "Bewerbung konnte nicht gesendet werden",
       submissionStatusPending: "Ausstehend",
       submissionStatusAccepted: "Angenommen",
       submissionStatusRejected: "Abgelehnt",
-      submissionAcceptedNote: "Deine Einreichung wurde angenommen und kann nicht mehr geändert werden.",
+      submissionAcceptedNote: "Deine Bewerbung wurde angenommen. Viel Erfolg!",
       submissionRejectedNote:
-        "Deine Einreichung wurde abgelehnt. Du kannst sie anpassen und erneut einreichen.",
+        "Deine Bewerbung wurde leider abgelehnt. Du kannst sie anpassen und erneut bewerben.",
       submissionReviewCommentLabel: "Kommentar"
     },
     en: {
@@ -275,20 +277,22 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       currentCategory: "Current category",
       categoryMissing: "No category registered",
       tabSubmission: "Challenge Submission",
-      submissionTitle: "Which challenge would you like to choose?",
-      submissionSubtitle: "Select a challenge and optionally submit a short description.",
-      submissionSelectPlaceholder: "Select challenge",
-      submissionDescriptionLabel: "Challenge description",
-      submissionDescriptionRequiredLabel: "Challenge description (required)",
-      submissionDescriptionPlaceholder: "Briefly describe how you plan to tackle the challenge...",
-      submissionSubmit: "Submit",
-      submissionSaveSuccess: "Submission saved",
-      submissionSaveError: "Failed to submit",
+      submissionTitleSimple: "Apply for a challenge",
+      submissionSubtitleSimple: "Choose the challenge that interests you most.",
+      submissionTitleWithDescription: "Apply with your challenge",
+      submissionSubtitleWithDescription: "Choose a challenge and briefly describe your idea for it.",
+      submissionSelectLabel: "Your preferred challenge",
+      submissionSelectPlaceholder: "Select a challenge",
+      submissionDescriptionRequiredLabel: "Your idea",
+      submissionDescriptionPlaceholder: "How would you tackle this challenge? Describe it briefly.",
+      submissionSubmit: "Apply now",
+      submissionSaveSuccess: "Application sent",
+      submissionSaveError: "Could not send application",
       submissionStatusPending: "Pending",
       submissionStatusAccepted: "Accepted",
       submissionStatusRejected: "Rejected",
-      submissionAcceptedNote: "Your submission has been accepted and can no longer be changed.",
-      submissionRejectedNote: "Your submission was rejected. You can adjust it and submit again.",
+      submissionAcceptedNote: "Your application has been accepted. Good luck!",
+      submissionRejectedNote: "Your application was declined. You can adjust it and apply again.",
       submissionReviewCommentLabel: "Comment"
     }
   }[language]
@@ -411,7 +415,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
         credentials: "include",
         body: JSON.stringify({
           challengeId: selectedSubmissionChallengeId,
-          description: submissionDescription
+          description: submissionDescriptionRequired ? submissionDescription : ""
         })
       })
       const json = await res.json()
@@ -805,8 +809,16 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
             {nav === "einreichung" && (
               <section className="max-w-xl space-y-6">
                 <div>
-                  <h2 className="text-base font-bold">{t.submissionTitle}</h2>
-                  <p className="text-muted-foreground mt-0.5 mb-3 text-[13px]">{t.submissionSubtitle}</p>
+                  <h2 className="text-base font-bold">
+                    {submissionDescriptionRequired
+                      ? t.submissionTitleWithDescription
+                      : t.submissionTitleSimple}
+                  </h2>
+                  <p className="text-muted-foreground mt-0.5 mb-3 text-[13px]">
+                    {submissionDescriptionRequired
+                      ? t.submissionSubtitleWithDescription
+                      : t.submissionSubtitleSimple}
+                  </p>
                 </div>
 
                 {loadingSubmission ? (
@@ -853,7 +865,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
 
                     <div className="space-y-4">
                       <div className="space-y-1.5">
-                        <Label>{t.submissionSelectPlaceholder}</Label>
+                        <Label>{t.submissionSelectLabel}</Label>
                         <Select
                           value={selectedSubmissionChallengeId}
                           onValueChange={setSelectedSubmissionChallengeId}
@@ -872,20 +884,18 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-1.5">
-                        <Label>
-                          {submissionDescriptionRequired
-                            ? t.submissionDescriptionRequiredLabel
-                            : t.submissionDescriptionLabel}
-                        </Label>
-                        <Textarea
-                          value={submissionDescription}
-                          onChange={(e) => setSubmissionDescription(e.target.value)}
-                          placeholder={t.submissionDescriptionPlaceholder}
-                          rows={4}
-                          disabled={submissionLocked}
-                        />
-                      </div>
+                      {submissionDescriptionRequired && (
+                        <div className="space-y-1.5">
+                          <Label>{t.submissionDescriptionRequiredLabel}</Label>
+                          <Textarea
+                            value={submissionDescription}
+                            onChange={(e) => setSubmissionDescription(e.target.value)}
+                            placeholder={t.submissionDescriptionPlaceholder}
+                            rows={4}
+                            disabled={submissionLocked}
+                          />
+                        </div>
+                      )}
                       <Button
                         onClick={() => void submitChallengeSubmission()}
                         disabled={submissionLocked || submittingSubmission || !selectedSubmissionChallengeId}
