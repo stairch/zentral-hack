@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0] - 2026-10-06
+
+### Added
+
+- Support for sending e-mails to all participants and by category
+- Support for challenge sign ups and submissions
+
 ## [1.11.1] - 2026-10-04
 
 ### Fixed
