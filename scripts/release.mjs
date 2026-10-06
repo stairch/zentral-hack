@@ -5,7 +5,7 @@
  *   1. Prompts for a new version and validates it against the current one
  *   2. Checks if flags in lib/flags.ts are available in production Vercel project
  *   3. Writes the new version to package.json
- *   4. Temporarily switches the local git user.email and remote URL with PAT to the release account
+ *   4. Temporarily switches the local git user.email to the release account
  *   5. Creates a release branch, commits and pushes the version bump
  *   6. Opens a PR via GitHub API and merges it as soon as checks passed
  *   7. Creates an annotated git tag on the merge commit and pushes it
@@ -25,6 +25,37 @@ const RELEASE_EMAIL = "45304902+ch-stair@users.noreply.github.com"
 const RELEASE_TOKEN = process.env.RELEASE_TOKEN
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN
 const VERCEL_PROD_PROJECT_ID = process.env.VERCEL_PROD_PROJECT_ID
+// ────────────────────────────────────────────────────────────────────────────
+
+// ─── Secret handling ────────────────────────────────────────────────────────
+
+// Mask every known secret (plain and base64-encoded) in any text that gets printed
+function redact(text) {
+  let out = String(text)
+  const needles = []
+  for (const s of [RELEASE_TOKEN, VERCEL_TOKEN]) {
+    if (!s) continue
+    needles.push(s)
+    needles.push(Buffer.from(s).toString("base64"))
+  }
+  if (RELEASE_TOKEN) {
+    needles.push(Buffer.from(`x-access-token:${RELEASE_TOKEN}`).toString("base64"))
+  }
+  for (const n of needles) out = out.split(n).join("***")
+  return out
+}
+
+// Auth for a single git command: passed via env, so it never lands in argv or .git/config
+function gitAuthEnv() {
+  const basic = Buffer.from(`x-access-token:${RELEASE_TOKEN}`).toString("base64")
+  return {
+    ...process.env,
+    GIT_CONFIG_COUNT: "1",
+    GIT_CONFIG_KEY_0: "http.https://github.com/.extraheader",
+    GIT_CONFIG_VALUE_0: `AUTHORIZATION: basic ${basic}`
+  }
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 
 function run(cmd, opts = {}) {
@@ -298,6 +329,13 @@ async function main() {
     process.exit(1)
   }
 
+  // PAT auth only works over https; fail early instead of silently pushing with other credentials
+  const originalUrl = run("git remote get-url origin")
+  if (!originalUrl.startsWith("https://")) {
+    console.error("❌ Error: origin must be an https URL (PAT auth is not possible over SSH).")
+    process.exit(1)
+  }
+
   const pkg = JSON.parse(readFileSync("package.json", "utf-8"))
   const currentVersion = pkg.version
 
@@ -337,26 +375,27 @@ async function main() {
     previousEmail = null
   }
 
-  run(`git config --local user.email "${RELEASE_EMAIL}"`)
-  console.log(`✅ Git email set to: ${RELEASE_EMAIL}`)
-
-  const originalUrl = run("git remote get-url origin")
-  const authedUrl = originalUrl.replace("https://", `https://x-access-token:${RELEASE_TOKEN}@`)
-  run(`git remote set-url origin "${authedUrl}"`)
-
-  // Stash uncommitted changes so they don't end up on the release branch
+  let emailChanged = false
   let stashed = false
-  try {
-    const stashOut = run("git stash push --include-untracked -m 'release-script: temp stash'")
-    stashed = !stashOut.includes("No local changes to save")
-    if (stashed) console.log("✅ Uncommitted changes stashed")
-  } catch {
-    /* ignore */
-  }
+  let branchCreated = false
 
   try {
+    run(`git config --local user.email "${RELEASE_EMAIL}"`)
+    emailChanged = true
+    console.log(`✅ Git email set to: ${RELEASE_EMAIL}`)
+
+    // Stash uncommitted changes so they don't end up on the release branch
+    try {
+      const stashOut = run("git stash push --include-untracked -m 'release-script: temp stash'")
+      stashed = !stashOut.includes("No local changes to save")
+      if (stashed) console.log("✅ Uncommitted changes stashed")
+    } catch {
+      /* ignore */
+    }
+
     // Create and push release branch
     run(`git checkout -b ${releaseBranch}`)
+    branchCreated = true
 
     // Write version bump after checkout so it's not caught by the stash
     pkg.version = newVersion
@@ -371,7 +410,8 @@ async function main() {
       run("git add package.json")
     }
     run(`git commit -m "Bump version to v${newVersion}"`)
-    run(`git push origin ${releaseBranch}`)
+    // Token is passed via env for this single command only
+    run(`git push origin ${releaseBranch}`, { env: gitAuthEnv() })
     console.log(`✅ Branch ${releaseBranch} pushed`)
 
     // Open PR and merge via GitHub API
@@ -431,17 +471,19 @@ async function main() {
     throw err
   } finally {
     // Switch back to original branch, then delete release branch, then restore stash
-    try {
-      run("git checkout -")
-    } catch {
-      /* ignore */
-    }
+    if (branchCreated) {
+      try {
+        run("git checkout -")
+      } catch {
+        /* ignore */
+      }
 
-    try {
-      run(`git branch -D ${releaseBranch}`)
-      console.log(`✅ Local branch ${releaseBranch} deleted`)
-    } catch {
-      /* ignore */
+      try {
+        run(`git branch -D ${releaseBranch}`)
+        console.log(`✅ Local branch ${releaseBranch} deleted`)
+      } catch {
+        /* ignore */
+      }
     }
 
     if (stashed) {
@@ -453,15 +495,18 @@ async function main() {
       }
     }
 
-    run(`git remote set-url origin "${originalUrl}"`)
-    console.log(`✅ Remote URL restored`)
-
-    if (previousEmail) {
-      run(`git config --local user.email "${previousEmail}"`)
-      console.log(`✅ Local git email restored (previous: ${previousEmail})`)
-    } else {
-      run("git config --local --unset user.email")
-      console.log(`✅ Local git email restored (previous: none)`)
+    if (emailChanged) {
+      try {
+        if (previousEmail) {
+          run(`git config --local user.email "${previousEmail}"`)
+          console.log(`✅ Local git email restored (previous: ${previousEmail})`)
+        } else {
+          run("git config --local --unset user.email")
+          console.log(`✅ Local git email restored (previous: none)`)
+        }
+      } catch {
+        console.warn("⚠️  Could not restore local git email. Check 'git config --local user.email'.")
+      }
     }
   }
 
@@ -469,6 +514,7 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("❌ Error:", err.message)
+  // Never print raw errors: execSync errors contain the full command and stderr
+  console.error("❌ Error:", redact(err.message))
   process.exit(1)
 })
