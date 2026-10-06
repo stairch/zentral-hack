@@ -42,8 +42,35 @@ async function handleGet(req: AuthenticatedRequest) {
 
     sql += " ORDER BY cs.created_at DESC"
 
-    const result = await query(sql, values)
-    return successResponse({ submissions: result.rows })
+    const statsValues: QueryValue[] = []
+    let statsSql = `
+      SELECT
+        sc.id AS challenge_id, sc.challenge_title, sc.challenge_title_en,
+        sc.submission_description_required,
+        c.name AS category_name, c.color AS category_color,
+        COUNT(cs.id)::integer AS total,
+        COUNT(cs.id) FILTER (WHERE cs.status = 'pending')::integer AS pending,
+        COUNT(cs.id) FILTER (WHERE cs.status = 'accepted')::integer AS accepted,
+        COUNT(cs.id) FILTER (WHERE cs.status = 'rejected')::integer AS rejected
+      FROM sponsor_challenges sc
+      JOIN categories c ON sc.category_id = c.id
+      LEFT JOIN challenge_submissions cs ON cs.challenge_id = sc.id
+      WHERE sc.submission_enabled = true
+    `
+    if (isCategoryPartner) {
+      statsValues.push(req.user?.categoryId ?? null)
+      statsSql += ` AND sc.category_id = $${statsValues.length}`
+    } else if (categoryId) {
+      statsValues.push(categoryId)
+      statsSql += ` AND sc.category_id = $${statsValues.length}`
+    }
+    statsSql += `
+      GROUP BY sc.id, sc.challenge_title, sc.challenge_title_en, sc.submission_description_required,
+               c.name, c.color
+      ORDER BY c.name ASC, sc.challenge_title ASC`
+
+    const [result, statsResult] = await Promise.all([query(sql, values), query(statsSql, statsValues)])
+    return successResponse({ submissions: result.rows, challengeStats: statsResult.rows })
   } catch (error) {
     console.error("[Admin Challenge Submissions] GET error:", error)
     return serverError("Failed to load challenge submissions")

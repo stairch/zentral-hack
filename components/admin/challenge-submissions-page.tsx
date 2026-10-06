@@ -33,6 +33,18 @@ interface Submission {
   challenge_title_en: string | null
 }
 
+interface ChallengeStat {
+  challenge_id: string
+  challenge_title: string | null
+  challenge_title_en: string | null
+  category_name: string
+  category_color: string | null
+  total: number
+  pending: number
+  accepted: number
+  rejected: number
+}
+
 const copy = {
   de: {
     heading: "CHALLENGE SUBMISSIONS",
@@ -57,6 +69,9 @@ const copy = {
     labelSubmitted: "Eingereicht",
     labelDescription: "Challengebeschreibung",
     labelReviewComment: "Kommentar",
+    overviewTitle: "Anmeldungen pro Challenge",
+    overviewEmpty: "Noch keine Challenge mit aktivierter Auswahl.",
+    signups: "Anmeldungen",
     changeDecision: "Entscheidung ändern",
     accept: "Annehmen",
     reject: "Ablehnen",
@@ -94,6 +109,9 @@ const copy = {
     labelSubmitted: "Submitted",
     labelDescription: "Challenge description",
     labelReviewComment: "Comment",
+    overviewTitle: "Sign-ups per challenge",
+    overviewEmpty: "No challenge with submissions enabled yet.",
+    signups: "sign-ups",
     changeDecision: "Change decision",
     accept: "Accept",
     reject: "Reject",
@@ -131,6 +149,7 @@ export function AdminChallengeSubmissionsPage() {
   const isCategoryPartner = user?.role === "category_partner"
 
   const [submissions, setSubmissions] = useState<Submission[]>([])
+  const [challengeStats, setChallengeStats] = useState<ChallengeStat[]>([])
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterCategory, setFilterCategory] = useState<string>("all")
@@ -146,13 +165,18 @@ export function AdminChallengeSubmissionsPage() {
     void load()
   }, [])
 
+  const fetchData = async () => {
+    const res = await fetch("/api/admin/challenge-submissions", { credentials: "include" })
+    if (!res.ok) return
+    const data = await res.json()
+    setSubmissions(data.data?.submissions || [])
+    setChallengeStats(data.data?.challengeStats || [])
+  }
+
   const load = async () => {
     try {
       setLoading(true)
-      const res = await fetch("/api/admin/challenge-submissions", { credentials: "include" })
-      if (!res.ok) return
-      const data = await res.json()
-      setSubmissions(data.data?.submissions || [])
+      await fetchData()
     } catch {
       toast.error(text.loadError)
     } finally {
@@ -177,6 +201,7 @@ export function AdminChallengeSubmissionsPage() {
       const updated = data.data?.submission as Submission
       setSubmissions((prev) => prev.map((s) => (s.id === id ? { ...s, ...updated } : s)))
       setReconsiderId(null)
+      void fetchData()
       toast.success(status === "accepted" ? text.acceptSuccess : text.rejectSuccess)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : text.updateError)
@@ -245,6 +270,47 @@ export function AdminChallengeSubmissionsPage() {
           {isCategoryPartner ? text.subtitleCategory : text.subtitle} ({submissions.length} {text.total})
         </p>
       </div>
+
+      {/* Overview per challenge */}
+      <section className="space-y-3">
+        <h2 className="text-base font-bold">{text.overviewTitle}</h2>
+        {challengeStats.length === 0 ? (
+          <p className="text-muted-foreground text-sm">{text.overviewEmpty}</p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {challengeStats.map((stat) => (
+              <div key={stat.challenge_id} className="bg-card border-border rounded-xl border p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="min-w-0 font-semibold">
+                    {pickLocale(stat.challenge_title, stat.challenge_title_en) || text.noTitle}
+                  </p>
+                  <Badge
+                    variant="outline"
+                    className="shrink-0"
+                    style={categoryBadgeStyle(stat.category_color)}>
+                    {stat.category_name}
+                  </Badge>
+                </div>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-3xl font-bold">{stat.total}</span>
+                  <span className="text-muted-foreground text-sm">{text.signups}</span>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                  <span className="text-muted-foreground">
+                    {text.pending}: <strong className="text-foreground">{stat.pending}</strong>
+                  </span>
+                  <span className="text-green-600">
+                    {text.accepted}: <strong>{stat.accepted}</strong>
+                  </span>
+                  <span className="text-destructive">
+                    {text.rejected}: <strong>{stat.rejected}</strong>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
