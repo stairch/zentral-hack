@@ -10,6 +10,7 @@ export const ADMIN_PERMISSIONS: AdminPermission[] = [
   { key: "documents", labelDe: "Dokumente", labelEn: "Documents" },
   { key: "categories", labelDe: "Kategorien", labelEn: "Categories" },
   { key: "challenges", labelDe: "Challenges", labelEn: "Challenges" },
+  { key: "challenge-submissions", labelDe: "Challenge Submissions", labelEn: "Challenge Submissions" },
   { key: "about", labelDe: "About Stats", labelEn: "About Stats" },
   { key: "schedule", labelDe: "Zeitplan", labelEn: "Schedule" },
   { key: "partner-logos", labelDe: "Partner-Logos", labelEn: "Partner Logos" },
@@ -23,5 +24,6 @@ export const DEFAULT_CATEGORY_PARTNER_PERMISSIONS = [
   "documents",
   "categories",
   "users",
-  "challenges"
+  "challenges",
+  "challenge-submissions"
 ]

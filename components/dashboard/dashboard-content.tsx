@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { LogOut, Loader2, FileText, Users, Download, ShieldCogCorner, Bug, MessageSquare } from "lucide-react"
+import { toast } from "sonner"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { TeamFilesComponent } from "@/components/team-files"
@@ -18,6 +20,7 @@ import { SponsorChallengeEditor } from "@/components/dashboard/sponsor-challenge
 import { AccountSettings } from "@/components/dashboard/account-settings"
 import { ProfileSection } from "@/components/dashboard/profile-section"
 import { type SponsorChallengeRecord } from "@/lib/sponsor-challenge"
+import { type ChallengeSubmissionRecord } from "@/lib/challenge-submission"
 import ComingSoon from "../ui/coming-soon"
 import { Urls } from "@/lib/constants"
 import * as Tooltip from "@radix-ui/react-tooltip"
@@ -92,11 +95,18 @@ interface CategoryOption {
   slug: string
 }
 
+interface SubmissionChallengeOption {
+  id: string
+  challenge_title: string | null
+  challenge_title_en: string | null
+  submission_description_required: boolean
+}
+
 interface DashboardContentProps {
   showChallenges: boolean
 }
 
-type NavKey = "profil" | "sicherheit" | "dokumente" | "team" | "challenge"
+type NavKey = "profil" | "sicherheit" | "dokumente" | "team" | "challenge" | "einreichung"
 
 export function DashboardContent({ showChallenges }: DashboardContentProps) {
   const { user, logout, refreshAuth, isLoading: isAuthLoading } = useAuth()
@@ -110,6 +120,13 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
   const [selectedChallengeCategoryId, setSelectedChallengeCategoryId] = useState("")
   const [adminChallenge, setAdminChallenge] = useState<SponsorChallengeRecord | null>(null)
   const [loadingAdminChallenge, setLoadingAdminChallenge] = useState(false)
+  const [submissionEligible, setSubmissionEligible] = useState(false)
+  const [submissionChallenges, setSubmissionChallenges] = useState<SubmissionChallengeOption[]>([])
+  const [mySubmission, setMySubmission] = useState<ChallengeSubmissionRecord | null>(null)
+  const [selectedSubmissionChallengeId, setSelectedSubmissionChallengeId] = useState("")
+  const [submissionDescription, setSubmissionDescription] = useState("")
+  const [loadingSubmission, setLoadingSubmission] = useState(true)
+  const [submittingSubmission, setSubmittingSubmission] = useState(false)
 
   useEffect(() => {
     if (isAuthLoading) return
@@ -125,6 +142,14 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       void initializeAdminChallengeEditor()
     }
   }, [user?.role, data?.profile?.category_id])
+
+  useEffect(() => {
+    if (user?.role === "user") {
+      void fetchChallengeSubmission()
+    } else {
+      setLoadingSubmission(false)
+    }
+  }, [user?.role])
 
   const t = {
     de: {
@@ -178,7 +203,24 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       category: "Kategorie",
       homeAriaLabel: "Zentral Hack Startseite",
       currentCategory: "Aktuelle Kategorie",
-      categoryMissing: "Keine Kategorie registriert"
+      categoryMissing: "Keine Kategorie registriert",
+      tabSubmission: "Challenge-Einreichung",
+      submissionTitle: "Für welche Challenge möchtest du dich entscheiden?",
+      submissionSubtitle: "Wähle eine Challenge aus und reiche optional eine kurze Beschreibung ein.",
+      submissionSelectPlaceholder: "Challenge auswählen",
+      submissionDescriptionLabel: "Challengebeschreibung",
+      submissionDescriptionRequiredLabel: "Challengebeschreibung (erforderlich)",
+      submissionDescriptionPlaceholder: "Beschreibe kurz, wie ihr die Challenge angehen möchtet...",
+      submissionSubmit: "Einreichen",
+      submissionSaveSuccess: "Einreichung gespeichert",
+      submissionSaveError: "Fehler beim Einreichen",
+      submissionStatusPending: "Ausstehend",
+      submissionStatusAccepted: "Angenommen",
+      submissionStatusRejected: "Abgelehnt",
+      submissionAcceptedNote: "Deine Einreichung wurde angenommen und kann nicht mehr geändert werden.",
+      submissionRejectedNote:
+        "Deine Einreichung wurde abgelehnt. Du kannst sie anpassen und erneut einreichen.",
+      submissionReviewCommentLabel: "Kommentar"
     },
     en: {
       adminPanel: "Admin",
@@ -231,7 +273,23 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       category: "Category",
       homeAriaLabel: "Zentral Hack Home",
       currentCategory: "Current category",
-      categoryMissing: "No category registered"
+      categoryMissing: "No category registered",
+      tabSubmission: "Challenge Submission",
+      submissionTitle: "Which challenge would you like to choose?",
+      submissionSubtitle: "Select a challenge and optionally submit a short description.",
+      submissionSelectPlaceholder: "Select challenge",
+      submissionDescriptionLabel: "Challenge description",
+      submissionDescriptionRequiredLabel: "Challenge description (required)",
+      submissionDescriptionPlaceholder: "Briefly describe how you plan to tackle the challenge...",
+      submissionSubmit: "Submit",
+      submissionSaveSuccess: "Submission saved",
+      submissionSaveError: "Failed to submit",
+      submissionStatusPending: "Pending",
+      submissionStatusAccepted: "Accepted",
+      submissionStatusRejected: "Rejected",
+      submissionAcceptedNote: "Your submission has been accepted and can no longer be changed.",
+      submissionRejectedNote: "Your submission was rejected. You can adjust it and submit again.",
+      submissionReviewCommentLabel: "Comment"
     }
   }[language]
 
@@ -323,6 +381,50 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
     }
   }
 
+  async function fetchChallengeSubmission() {
+    setLoadingSubmission(true)
+    try {
+      const res = await fetch("/api/challenge-submissions", { credentials: "include" })
+      if (!res.ok) return
+      const json = await res.json()
+      const eligible = Boolean(json.data?.eligible)
+      setSubmissionEligible(eligible)
+      setSubmissionChallenges((json.data?.challenges as SubmissionChallengeOption[]) || [])
+      const submission = (json.data?.submission as ChallengeSubmissionRecord | null) || null
+      setMySubmission(submission)
+      setSelectedSubmissionChallengeId(submission?.challenge_id || "")
+      setSubmissionDescription(submission?.description || "")
+    } catch (error) {
+      console.error("Failed to fetch challenge submission:", error)
+    } finally {
+      setLoadingSubmission(false)
+    }
+  }
+
+  async function submitChallengeSubmission() {
+    if (!selectedSubmissionChallengeId) return
+    setSubmittingSubmission(true)
+    try {
+      const res = await fetch("/api/challenge-submissions", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          challengeId: selectedSubmissionChallengeId,
+          description: submissionDescription
+        })
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || t.submissionSaveError)
+      setMySubmission(json.data?.submission as ChallengeSubmissionRecord)
+      toast.success(t.submissionSaveSuccess)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t.submissionSaveError)
+    } finally {
+      setSubmittingSubmission(false)
+    }
+  }
+
   const handleLogout = async () => {
     setLoggingOut(true)
     try {
@@ -377,8 +479,13 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
     { key: "profil", label: t.tabProfile },
     { key: "sicherheit", label: t.tabSecurity },
     { key: "dokumente", label: t.tabDocuments },
-    showChallengeTab ? { key: "challenge", label: t.tabChallenges } : { key: "team", label: t.tabTeam }
+    showChallengeTab ? { key: "challenge", label: t.tabChallenges } : { key: "team", label: t.tabTeam },
+    ...(submissionEligible ? [{ key: "einreichung" as const, label: t.tabSubmission }] : [])
   ]
+
+  const selectedSubmissionChallenge = submissionChallenges.find((c) => c.id === selectedSubmissionChallengeId)
+  const submissionDescriptionRequired = selectedSubmissionChallenge?.submission_description_required ?? false
+  const submissionLocked = mySubmission?.status === "accepted"
 
   return (
     <main className="bg-background min-h-screen">
@@ -693,6 +800,104 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
               ) : (
                 <ComingSoon />
               ))}
+
+            {/* Challenge-Einreichung */}
+            {nav === "einreichung" && (
+              <section className="max-w-xl space-y-6">
+                <div>
+                  <h2 className="text-base font-bold">{t.submissionTitle}</h2>
+                  <p className="text-muted-foreground mt-0.5 mb-3 text-[13px]">{t.submissionSubtitle}</p>
+                </div>
+
+                {loadingSubmission ? (
+                  <div className="flex min-h-[120px] items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-[#530A5D]" />
+                  </div>
+                ) : (
+                  <>
+                    {mySubmission && (
+                      <Badge
+                        variant={
+                          mySubmission.status === "accepted"
+                            ? "default"
+                            : mySubmission.status === "rejected"
+                              ? "destructive"
+                              : "secondary"
+                        }
+                        className={mySubmission.status === "accepted" ? "bg-green-600" : ""}>
+                        {mySubmission.status === "accepted"
+                          ? t.submissionStatusAccepted
+                          : mySubmission.status === "rejected"
+                            ? t.submissionStatusRejected
+                            : t.submissionStatusPending}
+                      </Badge>
+                    )}
+
+                    {mySubmission?.status === "accepted" && (
+                      <p className="text-muted-foreground text-sm">{t.submissionAcceptedNote}</p>
+                    )}
+
+                    {mySubmission?.status === "rejected" && (
+                      <div className="space-y-2">
+                        <p className="text-muted-foreground text-sm">{t.submissionRejectedNote}</p>
+                        {mySubmission.review_comment && (
+                          <div>
+                            <Label className="text-muted-foreground text-xs">
+                              {t.submissionReviewCommentLabel}
+                            </Label>
+                            <p className="text-sm">{mySubmission.review_comment}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="space-y-4">
+                      <div className="space-y-1.5">
+                        <Label>{t.submissionSelectPlaceholder}</Label>
+                        <Select
+                          value={selectedSubmissionChallengeId}
+                          onValueChange={setSelectedSubmissionChallengeId}
+                          disabled={submissionLocked}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t.submissionSelectPlaceholder} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {submissionChallenges.map((c) => (
+                              <SelectItem key={c.id} value={c.id}>
+                                {(language === "en" ? c.challenge_title_en : c.challenge_title) ||
+                                  c.challenge_title_en ||
+                                  c.challenge_title}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>
+                          {submissionDescriptionRequired
+                            ? t.submissionDescriptionRequiredLabel
+                            : t.submissionDescriptionLabel}
+                        </Label>
+                        <Textarea
+                          value={submissionDescription}
+                          onChange={(e) => setSubmissionDescription(e.target.value)}
+                          placeholder={t.submissionDescriptionPlaceholder}
+                          rows={4}
+                          disabled={submissionLocked}
+                        />
+                      </div>
+                      <Button
+                        onClick={() => void submitChallengeSubmission()}
+                        disabled={submissionLocked || submittingSubmission || !selectedSubmissionChallengeId}
+                        className="gap-2 bg-[#530A5D] hover:bg-[#530A5D]/90">
+                        {submittingSubmission && <Loader2 className="h-4 w-4 animate-spin" />}
+                        {t.submissionSubmit}
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </section>
+            )}
           </div>
         </div>
       </div>

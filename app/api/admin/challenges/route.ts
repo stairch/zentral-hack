@@ -18,7 +18,9 @@ async function handleGet(req: AuthenticatedRequest) {
         sc.website, sc.logo_note,
         sc.challenge_title, sc.challenge_title_en, sc.short_description, sc.short_description_en,
         sc.difficulty, sc.team_size, sc.challenge_language,
-        sc.challenge_data, sc.prize, sc.sponsor_id, sc.published_at, sc.created_at, sc.updated_at,
+        sc.challenge_data, sc.prize, sc.sponsor_id,
+        sc.submission_enabled, sc.submission_description_required,
+        sc.published_at, sc.created_at, sc.updated_at,
         c.name AS category_name, c.id AS category_id, c.slug AS category_slug,
         u.email AS user_email, u.first_name, u.last_name,
         sp.company_name AS sponsor_company_name
