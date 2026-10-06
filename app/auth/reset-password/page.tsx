@@ -120,7 +120,6 @@ export default function ResetPasswordPage() {
 
     setLoading(true)
     try {
-      console.log("request: /api/auth/password-reset/confirm")
       const res = await fetch("/api/auth/password-reset/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

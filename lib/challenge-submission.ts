@@ -13,7 +13,3 @@ export interface ChallengeSubmissionRecord {
   created_at: string
   updated_at: string
 }
-
-export function isSubmissionEditable(status: ChallengeSubmissionStatus): boolean {
-  return status !== "accepted"
-}

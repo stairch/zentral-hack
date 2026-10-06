@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     // Subscribe to newsletter if requested
     if (subscribeNewsletter) {
       try {
-        await addSubscriber(email)
+        await addSubscriber(email, { firstName, lastName })
       } catch (error) {
         console.error("Newsletter subscription failed:", error)
       }

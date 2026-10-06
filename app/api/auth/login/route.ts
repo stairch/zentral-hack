@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     const { email, password } = validation.data
 
     const result = await query(
-      "SELECT id, email, password_hash, role, category_id, is_active, email_verified FROM users WHERE email = $1",
+      "SELECT id, email, first_name, last_name, password_hash, role, category_id, is_active, email_verified FROM users WHERE email = $1",
       [email.toLowerCase()]
     )
 
@@ -69,7 +69,14 @@ export async function POST(request: NextRequest) {
 
       const bypassResponse = successResponse({
         token: authToken,
-        user: { id: user.id, email: user.email, role: user.role, categoryId: user.category_id || null },
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          role: user.role,
+          categoryId: user.category_id || null
+        },
         message: "2FA bypassed (development)"
       })
       bypassResponse.cookies.set("token", authToken, {

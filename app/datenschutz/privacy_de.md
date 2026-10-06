@@ -50,7 +50,7 @@ Zur Anmeldung und Zugangssicherung verwenden wir:
 
 ### Newsletter
 
-Falls Sie sich für den Newsletter anmelden, speichern wir Ihre E-Mail-Adresse für den Versand von Informationen zum Event. Der Versand erfolgt über unseren Dienstleister Resend, Inc. (USA).
+Falls Sie sich für den Newsletter anmelden, speichern wir Ihre E-Mail-Adresse sowie, sofern bei der Anmeldung bekannt, Ihren Vor- und Nachnamen für den Versand von Informationen zum Event. Der Versand erfolgt über unseren Dienstleister Resend, Inc. (USA).
 
 **Rechtsgrundlage:** Einwilligung (Art. 6 Abs. 6 DSG). Die Einwilligung kann jederzeit widerrufen werden.
 

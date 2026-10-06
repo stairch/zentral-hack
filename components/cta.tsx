@@ -69,6 +69,10 @@ export function CTA() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
+          // Only pass the name when the entered address belongs to the logged-in user
+          ...(user && user.email.toLowerCase() === email.trim().toLowerCase()
+            ? { firstName: user.firstName, lastName: user.lastName }
+            : {}),
           source: "cta"
         })
       })
