@@ -1,6 +1,6 @@
 import { withAdminAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
-import { sendNewsletterCampaign } from "@/lib/resend"
+import { sendNewsletterCampaign, type NewsletterTarget } from "@/lib/resend"
 
 async function handlePost(req: AuthenticatedRequest) {
   try {
@@ -9,6 +9,8 @@ async function handlePost(req: AuthenticatedRequest) {
     const name = typeof body.name === "string" ? body.name : ""
     const templateId = typeof body.templateId === "string" ? body.templateId : ""
     const segmentId = typeof body.segmentId === "string" ? body.segmentId : ""
+    const participants = body.participants === true
+    const categoryId = typeof body.categoryId === "string" && body.categoryId ? body.categoryId : undefined
     const scheduledAt =
       typeof body.scheduledAt === "string" && body.scheduledAt ? body.scheduledAt : undefined
 
@@ -21,9 +23,13 @@ async function handlePost(req: AuthenticatedRequest) {
 
     if (!id) return validationError("Campaign ID is required")
     if (!templateId) return validationError("Please select a template")
-    if (!segmentId) return validationError("Please select an audience")
+    if (!participants && !segmentId) return validationError("Please select an audience")
 
-    await sendNewsletterCampaign(id, name, { templateId, segmentId, adminValues, scheduledAt })
+    const target: NewsletterTarget = participants
+      ? { type: "participants", categoryId }
+      : { type: "segment", segmentId }
+
+    await sendNewsletterCampaign(id, name, { templateId, target, adminValues, scheduledAt })
     return successResponse({ message: scheduledAt ? "Campaign scheduled" : "Campaign sent" })
   } catch (error) {
     console.error("[Admin Newsletter] send Error:", error)

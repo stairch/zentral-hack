@@ -30,14 +30,15 @@ import {
 import {
   Loader2,
   Plus,
-  Send,
+  SquarePen,
   Trash2,
   Ban,
   ExternalLink,
   MoreVertical,
   Pencil,
   HelpCircle,
-  Mail
+  Mail,
+  TriangleAlert
 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
@@ -74,6 +75,8 @@ interface Campaign {
   scheduledAt: string | null
   sentAt: string | null
   lastModifiedAt: string
+  source?: "broadcast" | "participants"
+  audience?: string
 }
 
 interface CampaignDetail extends Campaign {
@@ -86,6 +89,12 @@ interface CampaignDetail extends Campaign {
 interface Segment {
   id: string
   name: string
+}
+
+interface AudienceCounts {
+  all: number
+  segments: Record<string, number>
+  participants: { all: number; categories: { id: string; name: string; count: number }[] }
 }
 
 interface TemplateSummary {
@@ -118,7 +127,7 @@ const copy = {
     statusQueued: "In Warteschlange",
     statusCanceled: "Abgebrochen",
     actions: "Aktionen",
-    send: "Senden",
+    send: "Vorbereiten",
     edit: "Bearbeiten",
     cancelSend: "Versand abbrechen",
     delete: "Löschen",
@@ -160,10 +169,18 @@ const copy = {
     previewHint: "Live-Vorschau mit den oben eingegebenen Werten.",
     previewLoadError: "Vorschau konnte nicht geladen werden",
     audience: "Zielgruppe",
-    audienceAll: "Alle Kontakte",
-    audienceSegment: "Bestimmtes Segment",
+    audienceAll: "Alle Newsletter-Abonnenten",
+    audienceSegment: "Bestimmtes Newsletter-Segment",
     segmentPlaceholder: "Segment auswählen",
     noSegments: "Keine Segmente in Resend gefunden.",
+    audienceSubscribers: "Newsletter-Abonnenten",
+    audienceParticipants: "Alle Teilnehmer",
+    audienceCategory: "Teilnehmer einer Kategorie",
+    categoryPlaceholder: "Kategorie auswählen",
+    pickCategory: "Bitte eine Kategorie auswählen",
+    participantsWarningTitle: "Empfänger haben sich nicht für den Newsletter angemeldet",
+    participantsWarning:
+      "Diese Personen sind Teilnehmende des Hackathons, haben aber kein Newsletter-Opt-in gegeben. Es dürfen nur Informationsmails versendet werden, die für die Durchführung und Teilnahme zwingend relevant sind (z.B. Ort, Zeit, Ablauf, Änderungen, Absagen). Werbung, Sponsoren-Angebote oder allgemeine Neuigkeiten ohne direkten Bezug zur Durchführung stellen einen Verstoss gegen UWG Art. 3 Abs. 1 lit o dar und dürfen nur an Newsletter-Abonnenten versendet werden.",
     scheduling: "Zeitpunkt",
     sendNow: "Sofort senden",
     scheduleLater: "Später planen",
@@ -182,6 +199,8 @@ const copy = {
       `Die Kampagne wird jetzt an ${count} Kontakt${count === 1 ? "" : "e"} gesendet.`,
     confirmSendLaterDesc: (count: number, when: string) =>
       `Die Kampagne wird am ${when} an ${count} Kontakt${count === 1 ? "" : "e"} gesendet.`,
+    confirmParticipantsNote:
+      "Achtung: Diese Empfänger haben sich nicht für den Newsletter angemeldet. Bitte nur Informationen senden, die für die Teilnahme nötig sind.",
     // send test email
     sendTestEmail: "Test-E-Mail senden",
     testEmailDesc: "Sende eine Testversion dieser Kampagne an eine einzelne E-Mail-Adresse.",
@@ -261,7 +280,7 @@ const copy = {
     statusQueued: "Queued",
     statusCanceled: "Canceled",
     actions: "Actions",
-    send: "Send",
+    send: "Prepare",
     edit: "Edit",
     cancelSend: "Cancel send",
     delete: "Delete",
@@ -299,10 +318,18 @@ const copy = {
     previewHint: "Live preview using the values entered above.",
     previewLoadError: "Failed to load preview",
     audience: "Audience",
-    audienceAll: "All contacts",
-    audienceSegment: "Specific segment",
+    audienceAll: "All newsletter subscribers",
+    audienceSegment: "Specific newsletter segment",
     segmentPlaceholder: "Select a segment",
     noSegments: "No segments found in Resend.",
+    audienceSubscribers: "Newsletter subscribers",
+    audienceParticipants: "All participants",
+    audienceCategory: "Participants of a category",
+    categoryPlaceholder: "Select a category",
+    pickCategory: "Please select a category",
+    participantsWarningTitle: "Recipients did not subscribe to the newsletter",
+    participantsWarning:
+      "These people are hackathon participants but have not opted in to the newsletter. Only informational emails that are strictly relevant to participation may be sent (e.g. location, time, schedule, changes, cancellations). Advertising, sponsor offers or general news not directly related to the event constitute a violation of UWG Art. 3(1)(o) and may only be sent to newsletter subscribers.",
     scheduling: "Timing",
     sendNow: "Send now",
     scheduleLater: "Schedule for later",
@@ -321,6 +348,8 @@ const copy = {
       `The campaign will be sent now to ${count} contact${count === 1 ? "" : "s"}.`,
     confirmSendLaterDesc: (count: number, when: string) =>
       `The campaign will be sent on ${when} to ${count} contact${count === 1 ? "" : "s"}.`,
+    confirmParticipantsNote:
+      "Note: These recipients did not subscribe to the newsletter. Only send information required for participation.",
     // send test email
     sendTestEmail: "Send test email",
     testEmailDesc: "Send a test version of this campaign to a single email address.",
@@ -426,17 +455,15 @@ export function NewsletterPage() {
   const [templateVars, setTemplateVars] = useState<TemplateVariable[]>([])
   const [varsLoading, setVarsLoading] = useState(false)
   const [adminValues, setAdminValues] = useState<Record<string, string>>({})
-  const [targetMode, setTargetMode] = useState<"all" | "segment">("all")
+  const [targetMode, setTargetMode] = useState<"all" | "segment" | "participants" | "category">("all")
   const [segmentId, setSegmentId] = useState("")
+  const [categoryId, setCategoryId] = useState("")
   const [scheduleMode, setScheduleMode] = useState<"now" | "later">("now")
   const [scheduledAt, setScheduledAt] = useState("")
   const [sending, setSending] = useState(false)
   const [previewHtml, setPreviewHtml] = useState("")
   const [previewLoading, setPreviewLoading] = useState(false)
-  const [audienceCounts, setAudienceCounts] = useState<{
-    all: number
-    segments: Record<string, number>
-  } | null>(null)
+  const [audienceCounts, setAudienceCounts] = useState<AudienceCounts | null>(null)
   const [confirmSendOpen, setConfirmSendOpen] = useState(false)
 
   // test email dialog
@@ -575,11 +602,12 @@ export function NewsletterPage() {
     setAdminValues({})
     setTargetMode("all")
     setSegmentId("")
+    setCategoryId("")
     setScheduleMode("now")
     setScheduledAt("")
     setPreviewHtml("")
     setAudienceCounts(null)
-    api<{ all: number; segments: Record<string, number> }>("/api/admin/newsletter/audience")
+    api<AudienceCounts>("/api/admin/newsletter/audience")
       .then(setAudienceCounts)
       .catch(() => setAudienceCounts(null))
   }
@@ -609,10 +637,27 @@ export function NewsletterPage() {
     }
   }
 
+  const isParticipantTarget = targetMode === "participants" || targetMode === "category"
+
+  const selectedAudienceCount = () => {
+    if (!audienceCounts) return 0
+    if (targetMode === "all") return audienceCounts.all
+    if (targetMode === "segment") return audienceCounts.segments[segmentId] ?? 0
+    if (targetMode === "participants") return audienceCounts.participants.all
+    return audienceCounts.participants.categories.find((c) => c.id === categoryId)?.count ?? 0
+  }
+
+  const validateTarget = () => {
+    if (targetMode === "segment" && !segmentId) return text.pickSegment
+    if (targetMode === "category" && !categoryId) return text.pickCategory
+    return null
+  }
+
   const submitSend = async () => {
     if (!sendCampaign) return
     if (!templateId) return toast.error(text.pickTemplate)
-    if (targetMode === "segment" && !segmentId) return toast.error(text.pickSegment)
+    const targetError = validateTarget()
+    if (targetError) return toast.error(targetError)
     if (scheduleMode === "later" && !scheduledAt) return toast.error(text.pickTime)
 
     setSending(true)
@@ -624,7 +669,9 @@ export function NewsletterPage() {
           id: sendCampaign.id,
           name: sendCampaign.name,
           templateId,
-          segmentId: targetMode === "all" ? ALL_CONTACTS : segmentId,
+          ...(isParticipantTarget
+            ? { participants: true, categoryId: targetMode === "category" ? categoryId : undefined }
+            : { segmentId: targetMode === "all" ? ALL_CONTACTS : segmentId }),
           adminValues,
           scheduledAt: scheduleMode === "later" ? new Date(scheduledAt).toISOString() : undefined
         })
@@ -860,7 +907,12 @@ export function NewsletterPage() {
                 <TableBody>
                   {campaigns.map((campaign) => (
                     <TableRow key={campaign.id}>
-                      <TableCell className="font-medium">{campaign.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {campaign.name}
+                        <span className="text-muted-foreground block text-xs font-normal">
+                          {campaign.audience ?? text.audienceSubscribers}
+                        </span>
+                      </TableCell>
                       <TableCell>
                         <Badge className={statusColors[campaign.status]}>
                           {statusLabel[campaign.status]}
@@ -872,12 +924,14 @@ export function NewsletterPage() {
                       <TableCell>
                         {campaign.status === "draft" ? (
                           <span>—</span>
+                        ) : campaign.source === "participants" ? (
+                          "—"
                         ) : (
                           <Link
                             href={`${RESEND_BROADCAST_BASE}/${campaign.id}`}
                             target="_blank"
                             className="flex w-fit items-center gap-x-2 text-blue-600">
-                            {text.resendLinkText}
+                            <span>{text.resendLinkText}</span>
                             <ExternalLink className="h-3.5 w-3.5" />
                           </Link>
                         )}
@@ -885,53 +939,54 @@ export function NewsletterPage() {
                       <TableCell className="flex items-center gap-2 text-right">
                         {campaign.status === "draft" && (
                           <Button size="sm" className="text-sm" onClick={() => openSend(campaign)}>
-                            <Send className="h-4 w-4" />
+                            <SquarePen className="h-4 w-4" />
                             {text.send}
                           </Button>
                         )}
-                        {(campaign.status === "draft" ||
-                          campaign.status === "queued" ||
-                          campaign.status === "scheduled") && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button size="icon" variant="ghost" className="h-8 w-8">
-                                <MoreVertical className="h-4 w-4" />
-                                <span className="sr-only">{text.actions}</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {campaign.status === "draft" && (
-                                <>
-                                  <DropdownMenuItem onClick={() => openEdit(campaign)}>
-                                    <Pencil className="h-4 w-4" />
-                                    {text.edit}
+                        {campaign.source !== "participants" &&
+                          (campaign.status === "draft" ||
+                            campaign.status === "queued" ||
+                            campaign.status === "scheduled") && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button size="icon" variant="ghost" className="h-8 w-8">
+                                  <MoreVertical className="h-4 w-4" />
+                                  <span className="sr-only">{text.actions}</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {campaign.status === "draft" && (
+                                  <>
+                                    <DropdownMenuItem onClick={() => openEdit(campaign)}>
+                                      <Pencil className="h-4 w-4" />
+                                      {text.edit}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => openTest(campaign)}>
+                                      <Mail className="h-4 w-4" />
+                                      {text.sendTestEmail}
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {(campaign.status === "queued" || campaign.status === "scheduled") && (
+                                  <DropdownMenuItem onClick={() => setCancelId(campaign.id)}>
+                                    <Ban className="h-4 w-4" />
+                                    {text.cancelSend}
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => openTest(campaign)}>
-                                    <Mail className="h-4 w-4" />
-                                    {text.sendTestEmail}
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                              {(campaign.status === "queued" || campaign.status === "scheduled") && (
-                                <DropdownMenuItem onClick={() => setCancelId(campaign.id)}>
-                                  <Ban className="h-4 w-4" />
-                                  {text.cancelSend}
-                                </DropdownMenuItem>
-                              )}
-                              {(campaign.status === "draft" || campaign.status === "scheduled") && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    variant="destructive"
-                                    onClick={() => setDeleteId(campaign.id)}>
-                                    <Trash2 className="h-4 w-4" />
-                                    {text.delete}
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
+                                )}
+                                {(campaign.status === "draft" || campaign.status === "scheduled") && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      variant="destructive"
+                                      onClick={() => setDeleteId(campaign.id)}>
+                                      <Trash2 className="h-4 w-4" />
+                                      {text.delete}
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -1139,6 +1194,34 @@ export function NewsletterPage() {
                   />
                   {text.audienceSegment}
                 </label>
+                <label className="flex w-fit cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="nl-target"
+                    className="cursor-pointer"
+                    checked={targetMode === "participants"}
+                    onChange={() => setTargetMode("participants")}
+                  />
+                  {text.audienceParticipants}
+                  <span className="text-muted-foreground">
+                    {audienceCounts ? (
+                      `(${audienceCounts.participants.all})`
+                    ) : (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    )}
+                  </span>
+                </label>
+                <label className="flex w-fit cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="nl-target"
+                    className="cursor-pointer"
+                    checked={targetMode === "category"}
+                    onChange={() => setTargetMode("category")}
+                    disabled={!audienceCounts}
+                  />
+                  {text.audienceCategory}
+                </label>
               </div>
               {targetMode === "segment" &&
                 (segments.length === 0 ? (
@@ -1162,6 +1245,29 @@ export function NewsletterPage() {
                     </SelectContent>
                   </Select>
                 ))}
+              {targetMode === "category" && audienceCounts && (
+                <Select value={categoryId} onValueChange={setCategoryId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={text.categoryPlaceholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {audienceCounts.participants.categories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name} <span className="text-muted-foreground">({c.count})</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {isParticipantTarget && (
+                <div className="border-destructive/30 bg-destructive/10 text-destructive flex gap-3 rounded-md border p-3 text-sm">
+                  <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                  <div className="space-y-1">
+                    <p className="font-medium">{text.participantsWarningTitle}</p>
+                    <p>{text.participantsWarning}</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Scheduling */}
@@ -1206,7 +1312,8 @@ export function NewsletterPage() {
             <Button
               onClick={() => {
                 if (!templateId) return toast.error(text.pickTemplate)
-                if (targetMode === "segment" && !segmentId) return toast.error(text.pickSegment)
+                const targetError = validateTarget()
+                if (targetError) return toast.error(targetError)
                 if (scheduleMode === "later" && !scheduledAt) return toast.error(text.pickTime)
                 setConfirmSendOpen(true)
               }}
@@ -1370,16 +1477,13 @@ export function NewsletterPage() {
         onOpenChange={setConfirmSendOpen}
         title={text.confirmSendTitle}
         description={
-          scheduleMode === "later"
+          (scheduleMode === "later"
             ? text.confirmSendLaterDesc(
-                targetMode === "all"
-                  ? (audienceCounts?.all ?? 0)
-                  : (audienceCounts?.segments[segmentId] ?? 0),
+                selectedAudienceCount(),
                 scheduledAt ? formatDate(new Date(scheduledAt).toISOString()) : ""
               )
-            : text.confirmSendNowDesc(
-                targetMode === "all" ? (audienceCounts?.all ?? 0) : (audienceCounts?.segments[segmentId] ?? 0)
-              )
+            : text.confirmSendNowDesc(selectedAudienceCount())) +
+          (isParticipantTarget ? ` ${text.confirmParticipantsNote}` : "")
         }
         confirmLabel={text.finalConfirm}
         cancelLabel={text.cancel}

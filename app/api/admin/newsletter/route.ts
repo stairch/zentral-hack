@@ -9,6 +9,7 @@ import {
   listEmailTemplates,
   updateNewsletterCampaign
 } from "@/lib/resend"
+import { listParticipantSends } from "@/lib/newsletter-participants"
 
 function fail(error: unknown, scope: string) {
   console.error(`[Admin Newsletter] ${scope} Error:`, error)
@@ -22,11 +23,15 @@ async function handleGet(req: AuthenticatedRequest) {
       const campaign = await getNewsletterCampaign(id)
       return successResponse({ campaign })
     }
-    const [campaigns, segments, templates] = await Promise.all([
+    const [broadcasts, participantSends, segments, templates] = await Promise.all([
       listNewsletterCampaigns(),
+      listParticipantSends(),
       listNewsletterSegments(),
       listEmailTemplates()
     ])
+    const campaigns = [...broadcasts, ...participantSends].sort((a, b) =>
+      b.lastModifiedAt.localeCompare(a.lastModifiedAt)
+    )
     return successResponse({ campaigns, segments, templates })
   } catch (error) {
     return fail(error, "GET")

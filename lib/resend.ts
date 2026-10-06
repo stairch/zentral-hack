@@ -1,5 +1,10 @@
 import { Resend } from "resend"
-import { renderHtml } from "@/lib/email-render"
+import { escapeHtml, renderHtml } from "@/lib/email-render"
+import {
+  getParticipantRecipients,
+  recordParticipantSend,
+  type ParticipantRecipient
+} from "@/lib/newsletter-participants"
 
 let resendClient: Resend | null = null
 
@@ -107,6 +112,10 @@ export interface NewsletterCampaign {
   scheduledAt: string | null
   sentAt: string | null
   lastModifiedAt: string
+  /** "participants" marks DB-logged sends that bypass Resend broadcasts (read-only in the list). */
+  source?: "broadcast" | "participants"
+  /** Audience description, only set for participant sends. */
+  audience?: string
 }
 
 export interface NewsletterCampaignDetail extends NewsletterCampaign {
@@ -344,16 +353,112 @@ export async function cancelNewsletterCampaign(id: string): Promise<void> {
 /** Sentinel target meaning "all contacts" (resolved to the default segment). */
 const NEWSLETTER_ALL_CONTACTS = "__all__"
 
+/** Resend accepts up to 100 emails per batch call. */
+const BATCH_SIZE = 100
+/** Stay below Resend's default rate limit of 2 requests per second. */
+const BATCH_DELAY_MS = 600
+
+export type NewsletterTarget =
+  | { type: "segment"; segmentId: string }
+  | { type: "participants"; categoryId?: string }
+
+const UNSUBSCRIBE_TAG = /\{\{\{\s*RESEND_UNSUBSCRIBE_URL\s*(\|[^}]*)?\}\}\}/g
+
+function contactTagPattern(field: string): RegExp {
+  return new RegExp(`\\{\\{\\{\\s*contact\\.${field}\\s*(?:\\|([^}]*))?\\}\\}\\}`, "g")
+}
+
+/**
+ * Fills the Resend contact tags per recipient. Broadcast-only tags do not work
+ * in single emails: the unsubscribe link falls back to the site, as participant
+ * emails are informational and carry no unsubscribe.
+ */
+function renderForRecipient(html: string, recipient: ParticipantRecipient): string {
+  const fill = (value: string | null) => (_match: string, fallback?: string) =>
+    escapeHtml(value || fallback || "")
+  return html
+    .replace(UNSUBSCRIBE_TAG, process.env.NEXT_PUBLIC_APP_URL || "https://zentralhack.ch")
+    .replace(contactTagPattern("first_name"), fill(recipient.firstName))
+    .replace(contactTagPattern("last_name"), fill(recipient.lastName))
+    .replace(contactTagPattern("email"), fill(recipient.email))
+}
+
+async function sendToParticipants(
+  id: string,
+  name: string,
+  html: string,
+  categoryId: string | undefined,
+  scheduledAt: string | undefined
+): Promise<void> {
+  const [broadcast, recipients] = await Promise.all([
+    getNewsletterCampaign(id),
+    getParticipantRecipients(categoryId)
+  ])
+  if (!broadcast.subject) throw new Error("Campaign has no subject")
+  if (recipients.length === 0) throw new Error("No participants found for this audience")
+
+  const preheader = broadcast.previewText
+    ? `<div style="display:none;max-height:0;overflow:hidden">${escapeHtml(broadcast.previewText)}</div>`
+    : ""
+  const tags = [
+    { name: "campaign", value: id },
+    { name: "audience", value: categoryId ? `category-${categoryId}` : "participants" }
+  ]
+
+  for (let start = 0; start < recipients.length; start += BATCH_SIZE) {
+    const chunk = recipients.slice(start, start + BATCH_SIZE)
+    unwrap(
+      await resend.batch.send(
+        chunk.map((recipient) => ({
+          from: NEWSLETTER_FROM,
+          to: recipient.email,
+          subject: broadcast.subject as string,
+          html: preheader + renderForRecipient(html, recipient),
+          tags,
+          ...(scheduledAt ? { scheduledAt } : {})
+        })),
+        // deterministic key: a retry of the same campaign/chunk within 24h does not send duplicates
+        { idempotencyKey: `newsletter-${id}-${categoryId ?? "all"}-${start / BATCH_SIZE}` }
+      ),
+      `Failed to send batch ${start / BATCH_SIZE + 1}`
+    )
+    if (start + BATCH_SIZE < recipients.length) {
+      await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS))
+    }
+  }
+
+  // The emails are sent. Log the send so it stays in the campaign list and drop the now-obsolete
+  // broadcast draft. Failures here must not report the (already completed) send as failed.
+  try {
+    await recordParticipantSend({ name, categoryId, recipientCount: recipients.length, scheduledAt })
+    await deleteNewsletterCampaign(id)
+  } catch (error) {
+    console.error("[Newsletter] Failed to log participant send:", error)
+  }
+}
+
 export async function sendNewsletterCampaign(
   id: string,
   name: string,
-  input: { templateId: string; segmentId: string; adminValues: Record<string, string>; scheduledAt?: string }
+  input: {
+    templateId: string
+    target: NewsletterTarget
+    adminValues: Record<string, string>
+    scheduledAt?: string
+  }
 ): Promise<void> {
   const template = await getEmailTemplate(input.templateId)
   const body = renderHtml(template, input.adminValues)
   const html = `<!-- zh-template:${input.templateId} -->\n${body}`
+
+  if (input.target.type === "participants") {
+    return sendToParticipants(id, name, html, input.target.categoryId, input.scheduledAt)
+  }
+
   const segmentId =
-    input.segmentId === NEWSLETTER_ALL_CONTACTS ? await resolveDefaultSegmentId() : input.segmentId
+    input.target.segmentId === NEWSLETTER_ALL_CONTACTS
+      ? await resolveDefaultSegmentId()
+      : input.target.segmentId
 
   // due to a bug in the API, we need to send the name in the update request to prevent the name is renamed to "Untitled"
   unwrap(await resend.broadcasts.update(id, { name, html, segmentId }), "Failed to prepare broadcast")
