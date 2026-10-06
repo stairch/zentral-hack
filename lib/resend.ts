@@ -24,11 +24,18 @@ const resend = new Proxy({} as Resend, {
 const NEWSLETTER_FROM = process.env.RESEND_NEWSLETTER_FROM ?? ""
 const NEWSLETTER_DEFAULT_SEGMENT_ID = process.env.RESEND_NEWSLETTER_DEFAULT_SEGMENT_ID ?? null
 
-export async function addSubscriber(email: string): Promise<string> {
+export interface SubscriberName {
+  firstName?: string | null
+  lastName?: string | null
+}
+
+export async function addSubscriber(email: string, name: SubscriberName = {}): Promise<string> {
   const segmentId = await resolveDefaultSegmentId()
 
   const { data, error } = await resend.contacts.create({
     email,
+    ...(name.firstName ? { firstName: name.firstName } : {}),
+    ...(name.lastName ? { lastName: name.lastName } : {}),
     segments: [{ id: segmentId }],
     unsubscribed: false
   })

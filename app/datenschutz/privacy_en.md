@@ -50,7 +50,7 @@ For login and access security, we use:
 
 ### Newsletter
 
-If you subscribe to the newsletter, we store your email address to send you event-related information. Delivery is handled by our service provider Resend, Inc. (USA).
+If you subscribe to the newsletter, we store your email address and, if known at sign-up, your first and last name to send you event-related information. Delivery is handled by our service provider Resend, Inc. (USA).
 
 **Legal basis:** Consent (Art. 6 para. 6 FADP). Consent may be withdrawn at any time.
 

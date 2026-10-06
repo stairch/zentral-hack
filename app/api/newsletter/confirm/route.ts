@@ -10,13 +10,13 @@ function redirectTo(request: NextRequest, status: "success" | "invalid" | "error
 export async function GET(request: NextRequest) {
   const token = new URL(request.url).searchParams.get("token") ?? ""
 
-  const email = await consumeOptInToken(token)
-  if (!email) {
+  const subscriber = await consumeOptInToken(token)
+  if (!subscriber) {
     return redirectTo(request, "invalid")
   }
 
   try {
-    await addSubscriber(email)
+    await addSubscriber(subscriber.email, subscriber)
   } catch (error) {
     console.error("Newsletter confirmation error:", error)
     return redirectTo(request, "error")

@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { emailSchema } from "@/lib/validation"
 import { createRateLimiter } from "@/lib/rate-limit"
 import { createOptInToken } from "@/lib/newsletter-opt-in"
 import { sendNewsletterOptInEmail } from "@/lib/transactional-emails"
+
+const nameSchema = z.string().trim().min(1).max(50)
 
 const rateLimit = createRateLimiter("newsletter")
 
@@ -17,9 +20,13 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid e-mail address" }, { status: 400 })
     }
-
     const email = parsed.data
-    const { token } = await createOptInToken(email)
+    const firstName = nameSchema.safeParse(body?.firstName)
+    const lastName = nameSchema.safeParse(body?.lastName)
+    const { token } = await createOptInToken(email, {
+      firstName: firstName.success ? firstName.data : null,
+      lastName: lastName.success ? lastName.data : null
+    })
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://zentralhack.ch"
     const confirmUrl = `${baseUrl}/api/newsletter/confirm?token=${encodeURIComponent(token)}`

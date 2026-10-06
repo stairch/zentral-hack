@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- First and last name saved for newsletter subscribers in Resend when known at sign-up
+
 ## [1.11.1] - 2026-10-04
 
 ### Fixed
