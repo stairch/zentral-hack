@@ -20,6 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import ColorPicker from "../ui/color-picker"
 import {
+  ChevronDown,
   Edit2,
   Loader2,
   MessageSquare,
@@ -453,6 +454,40 @@ const emptyCreateForm: CreateSponsorForm = {
   phone: "",
   interestedIn: "",
   message: ""
+}
+
+function ScrollableMessage({ message }: { message: string }) {
+  const ref = useRef<HTMLParagraphElement>(null)
+  const [hasMore, setHasMore] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const update = () => setHasMore(el.scrollHeight - el.scrollTop - el.clientHeight > 1)
+    update()
+    el.addEventListener("scroll", update)
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    return () => {
+      el.removeEventListener("scroll", update)
+      observer.disconnect()
+    }
+  }, [message])
+
+  return (
+    <div className="border-border relative border-t">
+      <p
+        ref={ref}
+        className="text-muted-foreground max-h-32 overflow-y-auto pt-2 text-xs break-words whitespace-pre-wrap italic">
+        "{message}"
+      </p>
+      {hasMore && (
+        <div className="from-card pointer-events-none absolute inset-x-0 bottom-0 flex justify-center bg-gradient-to-t to-transparent pt-4">
+          <ChevronDown className="text-muted-foreground h-4 w-4 animate-bounce" />
+        </div>
+      )}
+    </div>
+  )
 }
 
 function CreateSponsorDialog({
@@ -1574,11 +1609,7 @@ export function AdminSponsorsPage() {
                       </div>
 
                       {/* Message */}
-                      {contact.message && (
-                        <p className="text-muted-foreground border-border line-clamp-2 border-t pt-2 text-xs italic">
-                          "{contact.message}"
-                        </p>
-                      )}
+                      {contact.message && <ScrollableMessage message={contact.message} />}
 
                       {/* Footer: date + actions */}
                       <div className="border-border flex items-center justify-between border-t pt-2">
