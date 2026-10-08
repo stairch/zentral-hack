@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.1] - 2026-10-08
+
+### Fixed
+
+- Sponsor inquiry text is cut after certain length
+
 ## [1.12.0] - 2026-10-06
 
 ### Added
