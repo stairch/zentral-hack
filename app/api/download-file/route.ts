@@ -2,6 +2,7 @@ import path from "path"
 import { NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
 import { verifyJWT } from "@/lib/auth"
+import { hasTeamAccess } from "@/lib/team-access"
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,13 +26,33 @@ export async function GET(request: NextRequest) {
       return new NextResponse(JSON.stringify({ error: "fileId parameter required" }), { status: 400 })
     }
 
-    const type = request.nextUrl.searchParams.get("type") // "document" | null (team file)
+    const type = request.nextUrl.searchParams.get("type") // "document" | "chat" | null (team file)
 
     let blobUrl: string
     let originalName: string
     let mimeType: string
 
-    if (type === "document") {
+    if (type === "chat") {
+      const result = await query(
+        `SELECT team_id, attachment_url, attachment_name, attachment_mime
+         FROM team_chat_messages
+         WHERE id = $1 AND deleted_at IS NULL AND attachment_url IS NOT NULL`,
+        [fileId]
+      )
+      if (result.rows.length === 0) {
+        return new NextResponse(JSON.stringify({ error: "File not found" }), { status: 404 })
+      }
+
+      const message = result.rows[0]
+      const hasAccess = await hasTeamAccess(message.team_id, payload.userId, payload.role, payload.categoryId)
+      if (!hasAccess) {
+        return new NextResponse(JSON.stringify({ error: "Access denied" }), { status: 403 })
+      }
+
+      blobUrl = message.attachment_url
+      originalName = message.attachment_name || "file"
+      mimeType = message.attachment_mime || "application/octet-stream"
+    } else if (type === "document") {
       // Category or global document
       const result = await query(
         "SELECT id, name, file_path, category_id FROM category_documents WHERE id = $1",
@@ -80,12 +101,8 @@ export async function GET(request: NextRequest) {
 
       const file = fileRecord.rows[0]
 
-      const memberCheck = await query("SELECT id FROM team_members WHERE team_id = $1 AND user_id = $2", [
-        file.team_id,
-        payload.userId
-      ])
-
-      if (memberCheck.rows.length === 0 && payload.role !== "admin") {
+      const hasAccess = await hasTeamAccess(file.team_id, payload.userId, payload.role, payload.categoryId)
+      if (!hasAccess) {
         return new NextResponse(JSON.stringify({ error: "Access denied" }), { status: 403 })
       }
 

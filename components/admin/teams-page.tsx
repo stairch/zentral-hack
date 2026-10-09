@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,7 +17,19 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Users, Plus, Loader2, ArrowLeft, UserPlus, Trash2, Crown } from "lucide-react"
+import {
+  Users,
+  Plus,
+  Loader2,
+  ArrowLeft,
+  UserPlus,
+  Trash2,
+  Crown,
+  Pencil,
+  Upload,
+  Download,
+  FileText
+} from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
@@ -48,6 +60,13 @@ interface Category {
   name: string
 }
 
+interface TeamFile {
+  id: string
+  original_name: string
+  file_size: number
+  created_at: string
+}
+
 const copy = {
   de: {
     heading: "TEAMS",
@@ -70,6 +89,8 @@ const copy = {
     addMemberDesc: "Wähle einen registrierten Teilnehmer dieser Kategorie aus",
     participant: "Teilnehmer",
     participantPlaceholder: "Teilnehmer wählen...",
+    searchPlaceholder: "Name oder E-Mail suchen...",
+    searchNoResults: "Keine Teilnehmer gefunden.",
     loadingParticipants: "Lade Teilnehmer...",
     noParticipants: "Keine verfügbaren Teilnehmer für diese Kategorie.",
     role: "Rolle",
@@ -97,7 +118,24 @@ const copy = {
     addMemberError: "Fehler beim Hinzufügen",
     removeMemberConfirm: "Mitglied wirklich entfernen?",
     removeMemberSuccess: "Mitglied entfernt",
-    removeMemberError: "Fehler beim Entfernen"
+    removeMemberError: "Fehler beim Entfernen",
+    makeLeader: "Zum Teamchef machen",
+    makeMember: "Teamchef entfernen",
+    roleChangeError: "Fehler beim Ändern der Rolle",
+    editTeam: "Team bearbeiten",
+    editTeamDialog: "Team bearbeiten",
+    saveChanges: "Speichern",
+    editTeamSuccess: "Team aktualisiert",
+    editTeamError: "Fehler beim Speichern",
+    filesTitle: "Dateien",
+    filesEmpty: "Noch keine Dateien hochgeladen.",
+    uploadFile: "Datei hochladen",
+    fileLoadError: "Fehler beim Laden der Dateien",
+    fileUploadSuccess: "Datei hochgeladen",
+    fileUploadError: "Fehler beim Hochladen",
+    deleteFileConfirm: "Datei wirklich löschen?",
+    fileDeleteSuccess: "Datei gelöscht",
+    fileDeleteError: "Fehler beim Löschen"
   },
   en: {
     heading: "TEAMS",
@@ -120,6 +158,8 @@ const copy = {
     addMemberDesc: "Select a registered participant from this category",
     participant: "Participant",
     participantPlaceholder: "Select participant...",
+    searchPlaceholder: "Search name or email...",
+    searchNoResults: "No participants found.",
     loadingParticipants: "Loading participants...",
     noParticipants: "No available participants for this category.",
     role: "Role",
@@ -147,7 +187,24 @@ const copy = {
     addMemberError: "Failed to add",
     removeMemberConfirm: "Really remove member?",
     removeMemberSuccess: "Member removed",
-    removeMemberError: "Failed to remove"
+    removeMemberError: "Failed to remove",
+    makeLeader: "Make team leader",
+    makeMember: "Remove as leader",
+    roleChangeError: "Failed to change role",
+    editTeam: "Edit team",
+    editTeamDialog: "Edit team",
+    saveChanges: "Save",
+    editTeamSuccess: "Team updated",
+    editTeamError: "Failed to save",
+    filesTitle: "Files",
+    filesEmpty: "No files uploaded yet.",
+    uploadFile: "Upload file",
+    fileLoadError: "Failed to load files",
+    fileUploadSuccess: "File uploaded",
+    fileUploadError: "Failed to upload",
+    deleteFileConfirm: "Really delete this file?",
+    fileDeleteSuccess: "File deleted",
+    fileDeleteError: "Failed to delete"
   }
 } as const
 
@@ -180,6 +237,18 @@ export function TeamsAdminPage() {
   const [deletingTeam, setDeletingTeam] = useState(false)
   const [removeMemberId, setRemoveMemberId] = useState<string | null>(null)
   const [removingMember, setRemovingMember] = useState(false)
+  const [memberSearch, setMemberSearch] = useState("")
+  const [changingRoleId, setChangingRoleId] = useState<string | null>(null)
+  const [editTeamOpen, setEditTeamOpen] = useState(false)
+  const [editTeamName, setEditTeamName] = useState("")
+  const [editTeamDescription, setEditTeamDescription] = useState("")
+  const [savingTeamEdit, setSavingTeamEdit] = useState(false)
+  const [teamFiles, setTeamFiles] = useState<TeamFile[]>([])
+  const [loadingFiles, setLoadingFiles] = useState(false)
+  const [uploadingFile, setUploadingFile] = useState(false)
+  const [deleteFileId, setDeleteFileId] = useState<string | null>(null)
+  const [deletingFile, setDeletingFile] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetchData()
@@ -276,12 +345,15 @@ export function TeamsAdminPage() {
     } finally {
       setLoadingMembers(false)
     }
+    void fetchTeamFiles(team.id)
   }
 
-  const fetchAvailableUsers = async (categoryId: string) => {
+  const fetchAvailableUsers = async (categoryId: string, q?: string) => {
     setLoadingAvailable(true)
     try {
-      const res = await fetch(`/api/admin/teams/members?availableForCategory=${categoryId}`, {
+      const params = new URLSearchParams({ availableForCategory: categoryId })
+      if (q) params.set("q", q)
+      const res = await fetch(`/api/admin/teams/members?${params}`, {
         credentials: "include"
       })
       if (res.ok) {
@@ -298,8 +370,137 @@ export function TeamsAdminPage() {
   const openAddMemberDialog = () => {
     setSelectedUserId("")
     setNewMemberRole("member")
+    setMemberSearch("")
     setAddMemberOpen(true)
     if (selectedTeam) fetchAvailableUsers(selectedTeam.category_id)
+  }
+
+  // Debounced search-as-you-type for the member picker.
+  useEffect(() => {
+    if (!addMemberOpen || !selectedTeam) return
+    const timeout = setTimeout(() => {
+      fetchAvailableUsers(selectedTeam.category_id, memberSearch)
+    }, 300)
+    return () => clearTimeout(timeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [memberSearch, addMemberOpen])
+
+  const handleToggleLeader = async (member: TeamMember) => {
+    if (!selectedTeam) return
+    const nextRole = member.member_role === "leader" ? "member" : "leader"
+    setChangingRoleId(member.id)
+    try {
+      const res = await fetch("/api/admin/teams/members", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ teamId: selectedTeam.id, memberId: member.id, role: nextRole })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || text.roleChangeError)
+      setMembers((prev) =>
+        prev.map((m) => {
+          if (m.id === member.id) return { ...m, member_role: nextRole }
+          if (nextRole === "leader" && m.member_role === "leader") return { ...m, member_role: "member" }
+          return m
+        })
+      )
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : text.roleChangeError)
+    } finally {
+      setChangingRoleId(null)
+    }
+  }
+
+  const openEditTeam = () => {
+    if (!selectedTeam) return
+    setEditTeamName(selectedTeam.name)
+    setEditTeamDescription(selectedTeam.description || "")
+    setEditTeamOpen(true)
+  }
+
+  const handleSaveTeamEdit = async () => {
+    if (!selectedTeam || !editTeamName.trim()) return
+    setSavingTeamEdit(true)
+    try {
+      const res = await fetch("/api/admin/teams", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          id: selectedTeam.id,
+          name: editTeamName.trim(),
+          description: editTeamDescription.trim() || null
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || text.editTeamError)
+      const updated = { ...selectedTeam, name: data.data.team.name, description: data.data.team.description }
+      setSelectedTeam(updated)
+      setTeams((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+      setEditTeamOpen(false)
+      toast.success(text.editTeamSuccess)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : text.editTeamError)
+    } finally {
+      setSavingTeamEdit(false)
+    }
+  }
+
+  const fetchTeamFiles = async (teamId: string) => {
+    setLoadingFiles(true)
+    try {
+      const res = await fetch(`/api/teams-files?teamId=${teamId}`, { credentials: "include" })
+      if (res.ok) {
+        const data = await res.json()
+        setTeamFiles(data.data?.files || [])
+      }
+    } catch {
+      toast.error(text.fileLoadError)
+    } finally {
+      setLoadingFiles(false)
+    }
+  }
+
+  const handleUploadFile = async (file: File) => {
+    if (!selectedTeam) return
+    setUploadingFile(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      const res = await fetch(`/api/teams-files?teamId=${selectedTeam.id}`, {
+        method: "POST",
+        credentials: "include",
+        body: formData
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || text.fileUploadError)
+      setTeamFiles((prev) => [data.data.file, ...prev])
+      toast.success(text.fileUploadSuccess)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : text.fileUploadError)
+    } finally {
+      setUploadingFile(false)
+    }
+  }
+
+  const handleDeleteFile = async () => {
+    if (!selectedTeam || !deleteFileId) return
+    setDeletingFile(true)
+    try {
+      const res = await fetch(`/api/teams-files?teamId=${selectedTeam.id}&fileId=${deleteFileId}`, {
+        method: "DELETE",
+        credentials: "include"
+      })
+      if (!res.ok) throw new Error(text.fileDeleteError)
+      setTeamFiles((prev) => prev.filter((f) => f.id !== deleteFileId))
+      toast.success(text.fileDeleteSuccess)
+      setDeleteFileId(null)
+    } catch {
+      toast.error(text.fileDeleteError)
+    } finally {
+      setDeletingFile(false)
+    }
   }
 
   const handleAddMember = async () => {
@@ -371,11 +572,48 @@ export function TeamsAdminPage() {
             <ArrowLeft className="mr-2 h-4 w-4" /> {text.back}
           </Button>
           <div className="flex-1">
-            <h1 className="font-display text-foreground text-3xl font-bold">{selectedTeam.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="font-display text-foreground text-3xl font-bold">{selectedTeam.name}</h1>
+              <Button variant="ghost" size="icon" onClick={openEditTeam}>
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </div>
             <p className="text-muted-foreground">
               {selectedTeam.category_name} • {members.length} {text.members}
             </p>
           </div>
+          <Dialog open={editTeamOpen} onOpenChange={setEditTeamOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{text.editTeamDialog}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-team-name">{text.teamName}</Label>
+                  <Input
+                    id="edit-team-name"
+                    value={editTeamName}
+                    onChange={(e) => setEditTeamName(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-team-description">{text.description}</Label>
+                  <Textarea
+                    id="edit-team-description"
+                    value={editTeamDescription}
+                    onChange={(e) => setEditTeamDescription(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+                <Button
+                  onClick={handleSaveTeamEdit}
+                  disabled={savingTeamEdit || !editTeamName.trim()}
+                  className="bg-violet hover:bg-violet/90 w-full">
+                  {savingTeamEdit ? <Loader2 className="h-4 w-4 animate-spin" /> : text.saveChanges}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
             <DialogTrigger asChild>
               <Button className="bg-violet hover:bg-violet/90 gap-2" onClick={openAddMemberDialog}>
@@ -388,27 +626,39 @@ export function TeamsAdminPage() {
                 <DialogDescription>{text.addMemberDesc}</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
-                <div>
+                <div className="space-y-2">
                   <Label>{text.participant}</Label>
+                  <Input
+                    value={memberSearch}
+                    onChange={(e) => {
+                      setMemberSearch(e.target.value)
+                      setSelectedUserId("")
+                    }}
+                    placeholder={text.searchPlaceholder}
+                  />
                   {loadingAvailable ? (
                     <div className="text-muted-foreground flex items-center gap-2 py-2">
                       <Loader2 className="h-4 w-4 animate-spin" /> {text.loadingParticipants}
                     </div>
                   ) : availableUsers.length > 0 ? (
-                    <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={text.participantPlaceholder} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableUsers.map((u) => (
-                          <SelectItem key={u.id} value={u.id}>
-                            {u.first_name} {u.last_name} ({u.email})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border p-1">
+                      {availableUsers.map((u) => (
+                        <button
+                          key={u.id}
+                          type="button"
+                          onClick={() => setSelectedUserId(u.id)}
+                          className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                            selectedUserId === u.id ? "bg-violet/10" : "hover:bg-muted"
+                          }`}>
+                          {u.first_name} {u.last_name}{" "}
+                          <span className="text-muted-foreground">({u.email})</span>
+                        </button>
+                      ))}
+                    </div>
                   ) : (
-                    <p className="text-muted-foreground py-2 text-sm">{text.noParticipants}</p>
+                    <p className="text-muted-foreground py-2 text-sm">
+                      {memberSearch ? text.searchNoResults : text.noParticipants}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -484,6 +734,18 @@ export function TeamsAdminPage() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          disabled={changingRoleId === member.id}
+                          onClick={() => handleToggleLeader(member)}
+                          title={member.member_role === "leader" ? text.makeMember : text.makeLeader}>
+                          {changingRoleId === member.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Crown className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => setRemoveMemberId(member.id)}
                           className="text-destructive hover:text-destructive">
                           <Trash2 className="h-4 w-4" />
@@ -498,6 +760,85 @@ export function TeamsAdminPage() {
             )}
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>{text.filesTitle}</CardTitle>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              onChange={(e) => {
+                const picked = e.target.files?.[0]
+                if (picked) void handleUploadFile(picked)
+                if (fileInputRef.current) fileInputRef.current.value = ""
+              }}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              disabled={uploadingFile}
+              onClick={() => fileInputRef.current?.click()}>
+              {uploadingFile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              {text.uploadFile}
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {loadingFiles ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : teamFiles.length > 0 ? (
+              <div className="space-y-2">
+                {teamFiles.map((file) => (
+                  <div
+                    key={file.id}
+                    className="border-border hover:bg-muted/50 flex items-center justify-between rounded-lg border p-3 transition-colors">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <FileText className="text-primary h-4 w-4 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{file.original_name}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {(file.file_size / 1024).toFixed(0)} KB
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      <a
+                        href={`/api/download-file?fileId=${file.id}`}
+                        className="hover:bg-muted rounded-lg p-2 transition-colors">
+                        <Download className="text-muted-foreground h-4 w-4" />
+                      </a>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => setDeleteFileId(file.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground py-8 text-center">{text.filesEmpty}</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <ConfirmDialog
+          open={!!deleteFileId}
+          onOpenChange={(open) => !open && setDeleteFileId(null)}
+          title={language === "en" ? "Delete file?" : "Datei löschen?"}
+          description={text.deleteFileConfirm}
+          confirmLabel={language === "en" ? "Delete" : "Löschen"}
+          cancelLabel={language === "en" ? "Cancel" : "Abbrechen"}
+          onConfirm={handleDeleteFile}
+          loading={deletingFile}
+        />
       </div>
     )
   }

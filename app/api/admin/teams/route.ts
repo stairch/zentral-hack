@@ -21,14 +21,14 @@ async function handleGet(req: AuthenticatedRequest) {
 
     const result = await query(
       `SELECT teams.id, teams.name, teams.description, teams.category_id,
-              c.name as category_name,
+              c.name as category_name, c.color as category_color,
               COUNT(DISTINCT team_members.id) as member_count,
               teams.created_at
        FROM teams
        LEFT JOIN team_members ON teams.id = team_members.team_id
        JOIN categories c ON teams.category_id = c.id
        ${filter}
-       GROUP BY teams.id, c.name
+       GROUP BY teams.id, c.name, c.color
        ORDER BY teams.created_at DESC`,
       params
     )
@@ -78,6 +78,42 @@ async function handlePost(req: AuthenticatedRequest) {
   }
 }
 
+async function handlePut(req: AuthenticatedRequest) {
+  try {
+    const showTeams = await adminTeamsFlag()
+    if (!showTeams) {
+      return errorResponse("Not found", 404)
+    }
+
+    const body = await req.json()
+    const { id, name, description } = body
+
+    if (!id || !name) {
+      return validationError("ID and name required")
+    }
+
+    if (req.user?.role === "category_partner") {
+      const teamCheck = await query("SELECT category_id FROM teams WHERE id = $1", [id])
+      if (teamCheck.rows.length === 0) return validationError("Team not found")
+      if (teamCheck.rows[0].category_id !== req.user.categoryId) {
+        return validationError("Cannot edit teams from other categories")
+      }
+    }
+
+    const result = await query(
+      "UPDATE teams SET name = $1, description = $2, updated_at = NOW() WHERE id = $3 RETURNING id, name, description, category_id",
+      [name, description || null, id]
+    )
+
+    if (!result.rows[0]) return validationError("Team not found")
+
+    return successResponse({ team: result.rows[0] })
+  } catch (error) {
+    console.error("[Teams] PUT Error:", error)
+    return serverError()
+  }
+}
+
 async function handleDelete(req: AuthenticatedRequest) {
   try {
     const showTeams = await adminTeamsFlag()
@@ -109,4 +145,5 @@ async function handleDelete(req: AuthenticatedRequest) {
 
 export const GET = withCategoryPartnerAuth(handleGet)
 export const POST = withCategoryPartnerAuth(handlePost)
+export const PUT = withCategoryPartnerAuth(handlePut)
 export const DELETE = withCategoryPartnerAuth(handleDelete)

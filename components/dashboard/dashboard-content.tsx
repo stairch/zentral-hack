@@ -10,7 +10,17 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { LogOut, Loader2, FileText, Users, Download, ShieldCogCorner, Bug, MessageSquare } from "lucide-react"
+import {
+  LogOut,
+  Loader2,
+  FileText,
+  Users,
+  Download,
+  ShieldCogCorner,
+  Bug,
+  MessageSquare,
+  Pencil
+} from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -21,6 +31,8 @@ import { AccountSettings } from "@/components/dashboard/account-settings"
 import { ProfileSection } from "@/components/dashboard/profile-section"
 import { type SponsorChallengeRecord } from "@/lib/sponsor-challenge"
 import { type ChallengeSubmissionRecord } from "@/lib/challenge-submission"
+import { TeamChat } from "@/components/chat/team-chat"
+import { Input } from "@/components/ui/input"
 import ComingSoon from "../ui/coming-soon"
 import { Urls } from "@/lib/constants"
 import * as Tooltip from "@radix-ui/react-tooltip"
@@ -127,6 +139,9 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
   const [submissionDescription, setSubmissionDescription] = useState("")
   const [loadingSubmission, setLoadingSubmission] = useState(true)
   const [submittingSubmission, setSubmittingSubmission] = useState(false)
+  const [editingTeamName, setEditingTeamName] = useState(false)
+  const [teamNameDraft, setTeamNameDraft] = useState("")
+  const [savingTeamName, setSavingTeamName] = useState(false)
 
   useEffect(() => {
     if (isAuthLoading) return
@@ -190,6 +205,12 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       teamDescription: "Beschreibung",
       teamCategory: "Kategorie",
       teamRole: "Deine Rolle",
+      teamRenamePlaceholder: "Team-Name",
+      teamRenameSave: "Speichern",
+      teamRenameCancel: "Abbrechen",
+      teamRenameSuccess: "Team umbenannt",
+      teamRenameError: "Fehler beim Umbenennen",
+      teamChatTitle: "Team-Chat",
       teamRoleLeader: "Team-Leader",
       teamRoleMember: "Mitglied",
       teamDocsHint: 'Team-Dokumente und GitHub-Repos findest du im Tab "Dokumente"',
@@ -262,6 +283,12 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       teamDescription: "Description",
       teamCategory: "Category",
       teamRole: "Your role",
+      teamRenamePlaceholder: "Team name",
+      teamRenameSave: "Save",
+      teamRenameCancel: "Cancel",
+      teamRenameSuccess: "Team renamed",
+      teamRenameError: "Failed to rename",
+      teamChatTitle: "Team Chat",
       teamRoleLeader: "Team leader",
       teamRoleMember: "Member",
       teamDocsHint: 'Team documents and GitHub repos can be found in the "Documents" tab',
@@ -426,6 +453,31 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       toast.error(error instanceof Error ? error.message : t.submissionSaveError)
     } finally {
       setSubmittingSubmission(false)
+    }
+  }
+
+  async function saveTeamName() {
+    const teamId = data?.team?.id
+    if (!teamId || !teamNameDraft.trim()) return
+    setSavingTeamName(true)
+    try {
+      const res = await fetch("/api/team", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ teamId, name: teamNameDraft.trim() })
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || t.teamRenameError)
+      setData((prev) =>
+        prev && prev.team ? { ...prev, team: { ...prev.team, name: json.data.team.name } } : prev
+      )
+      setEditingTeamName(false)
+      toast.success(t.teamRenameSuccess)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t.teamRenameError)
+    } finally {
+      setSavingTeamName(false)
     }
   }
 
@@ -725,7 +777,37 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                   <div className="space-y-6">
                     <div>
                       <Label className="text-muted-foreground text-sm">{t.teamName}</Label>
-                      <p className="text-lg font-medium">{team.name}</p>
+                      {editingTeamName ? (
+                        <div className="mt-1 flex items-center gap-2">
+                          <Input
+                            value={teamNameDraft}
+                            onChange={(e) => setTeamNameDraft(e.target.value)}
+                            placeholder={t.teamRenamePlaceholder}
+                            className="max-w-xs"
+                            autoFocus
+                          />
+                          <Button size="sm" onClick={() => void saveTeamName()} disabled={savingTeamName}>
+                            {savingTeamName ? <Loader2 className="h-4 w-4 animate-spin" /> : t.teamRenameSave}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingTeamName(false)}>
+                            {t.teamRenameCancel}
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <p className="text-lg font-medium">{team.name}</p>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => {
+                              setTeamNameDraft(team.name)
+                              setEditingTeamName(true)
+                            }}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     {team.description && (
                       <div>
@@ -744,6 +826,12 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                       </Badge>
                     </div>
                     <p className="text-muted-foreground text-sm">{t.teamDocsHint}</p>
+                    <div>
+                      <h3 className="mb-2 text-sm font-bold">{t.teamChatTitle}</h3>
+                      <div className="border-border h-[500px] overflow-hidden rounded-xl border">
+                        <TeamChat teamId={team.id} />
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="py-8 text-center">

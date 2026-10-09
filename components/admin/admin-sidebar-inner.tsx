@@ -26,6 +26,8 @@ import {
   Image,
   Trophy,
   ClipboardCheck,
+  MessageCircle,
+  Megaphone,
   Lock,
   ShieldCheck,
   Bug,
@@ -50,6 +52,7 @@ const copy = {
     registrations: "Anmeldungen",
     users: "Benutzer",
     teams: "Teams",
+    teamChats: "Team-Chats",
     documents: "Dokumente",
     categories: "Kategorien",
     challenges: "Challenges",
@@ -66,6 +69,7 @@ const copy = {
     emailsContacts: "Kontakte",
     sponsors: "Sponsoren",
     roles: "Rollen",
+    announcements: "Ankündigungen",
     adminPanel: "Admin Panel",
     categoryAdmin: "Kategorien-Admin",
     logout: "Abmelden",
@@ -80,6 +84,7 @@ const copy = {
     registrations: "Registrations",
     users: "Users",
     teams: "Teams",
+    teamChats: "Team Chats",
     documents: "Documents",
     categories: "Categories",
     challenges: "Challenges",
@@ -96,6 +101,7 @@ const copy = {
     emailsContacts: "Contacts",
     sponsors: "Sponsors",
     roles: "Roles",
+    announcements: "Announcements",
     adminPanel: "Admin Panel",
     categoryAdmin: "Category Admin",
     logout: "Log Out",
@@ -169,6 +175,14 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       label: text.teams,
       icon: Users,
       permissionKey: "teams",
+      adminOnly: false
+    },
+    {
+      id: "team-chats",
+      href: "/admin/team-chats",
+      label: text.teamChats,
+      icon: MessageCircle,
+      permissionKey: "team-chats",
       adminOnly: false
     },
     {
@@ -250,6 +264,14 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       icon: ShieldCheck,
       permissionKey: null,
       adminOnly: true
+    },
+    {
+      id: "announcements",
+      href: "/admin/announcements",
+      label: text.announcements,
+      icon: Megaphone,
+      permissionKey: "announcements",
+      adminOnly: false
     },
     {
       id: "emails",

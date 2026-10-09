@@ -13,11 +13,18 @@ async function handleGet(req: AuthenticatedRequest) {
     const { searchParams } = new URL(req.url)
     const teamId = searchParams.get("teamId")
     const availableForCategory = searchParams.get("availableForCategory")
+    const q = searchParams.get("q")
 
     // Return users registered for a category who are NOT yet in any team
     if (availableForCategory) {
       if (req.user?.role === "category_partner" && req.user.categoryId !== availableForCategory) {
         return validationError("Cannot view users from other categories")
+      }
+      const values: string[] = [availableForCategory]
+      let searchClause = ""
+      if (q && q.trim()) {
+        values.push(`%${q.trim()}%`)
+        searchClause = ` AND (u.first_name ILIKE $2 OR u.last_name ILIKE $2 OR u.email ILIKE $2)`
       }
       const result = await query(
         `SELECT u.id, u.email, u.first_name, u.last_name
@@ -27,9 +34,10 @@ async function handleGet(req: AuthenticatedRequest) {
            SELECT tm.user_id FROM team_members tm
            JOIN teams t ON tm.team_id = t.id
            WHERE t.category_id = $1
-         )
-         ORDER BY u.last_name, u.first_name`,
-        [availableForCategory]
+         )${searchClause}
+         ORDER BY u.last_name, u.first_name
+         LIMIT 20`,
+        values
       )
       return successResponse({ users: result.rows })
     }
@@ -167,6 +175,49 @@ async function handleDelete(req: AuthenticatedRequest) {
   }
 }
 
+async function handlePut(req: AuthenticatedRequest) {
+  try {
+    const showTeams = await adminTeamsFlag()
+    if (!showTeams) {
+      return errorResponse("Not found", 404)
+    }
+
+    const body = await req.json()
+    const { teamId, memberId, role } = body
+
+    if (!teamId || !memberId || !role) {
+      return validationError("Team ID, Member ID and role required")
+    }
+    if (!["member", "leader"].includes(role)) {
+      return validationError("Invalid role")
+    }
+
+    const teamCheck = await query("SELECT category_id FROM teams WHERE id = $1", [teamId])
+    if (teamCheck.rows.length === 0) return validationError("Team not found")
+    if (req.user?.role === "category_partner" && teamCheck.rows[0].category_id !== req.user.categoryId) {
+      return validationError("Cannot manage members of teams from other categories")
+    }
+
+    if (role === "leader") {
+      // Exactly one leader per team: demote any existing leader first.
+      await query("UPDATE team_members SET role = 'member' WHERE team_id = $1 AND role = 'leader'", [teamId])
+    }
+
+    const result = await query(
+      "UPDATE team_members SET role = $1 WHERE id = $2 AND team_id = $3 RETURNING id, user_id, role as member_role",
+      [role, memberId, teamId]
+    )
+
+    if (!result.rows[0]) return validationError("Member not found")
+
+    return successResponse({ member: result.rows[0] })
+  } catch (error) {
+    console.error("[Team Members] PUT Error:", error)
+    return serverError()
+  }
+}
+
 export const GET = withCategoryPartnerAuth(handleGet)
 export const POST = withCategoryPartnerAuth(handlePost)
+export const PUT = withCategoryPartnerAuth(handlePut)
 export const DELETE = withCategoryPartnerAuth(handleDelete)
