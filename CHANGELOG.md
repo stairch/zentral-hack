@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.13.0] - 2026-10-14
+
+### Added
+
+- Super admins can change user's category
+
+### Fixed
+
+- Participants count in admin dashboard page not correct
+- Users were able to change category even when the category was full/closed
+
 ## [1.12.1] - 2026-10-08
 
 ### Fixed
