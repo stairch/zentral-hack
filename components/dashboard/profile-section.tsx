@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useLanguage } from "@/lib/language-context"
+import { getCategoryPresentationByLanguage, type CategoryRecord } from "@/lib/category-config"
 
 interface CategoryOption {
   id: string
   name: string
+  registrationClosed: boolean
+  isRegistrationOpen: boolean
 }
 
 interface ProfileSectionProps {
@@ -24,6 +27,7 @@ interface ProfileSectionProps {
   categoryLabel: string
   currentCategoryId: string | null
   hasRegistration: boolean
+  canChooseCategory: boolean
   allergies: string | null
   dietaryRestrictions: string | null
   linkedinUrl: string | null
@@ -37,6 +41,7 @@ export function ProfileSection({
   categoryLabel,
   currentCategoryId,
   hasRegistration,
+  canChooseCategory,
   allergies,
   dietaryRestrictions,
   linkedinUrl,
@@ -64,6 +69,12 @@ export function ProfileSection({
           labelLinkedIn: "LinkedIn",
           viewProfile: "Profil ansehen",
           selectCategory: "Kategorie wählen",
+          categoryClosed: "Geschlossen",
+          categoryFull: "Ausgebucht",
+          categoryUnavailableHint:
+            "Ein Wechsel ist nur in Kategorien möglich, deren Anmeldung offen ist und die noch freie Plätze haben.",
+          categoryMissingHint:
+            "Du bist noch keiner Kategorie zugewiesen. Klicke auf „Bearbeiten“, um eine Kategorie zu wählen.",
           empty: "—",
           edit: "Bearbeiten",
           save: "Speichern",
@@ -84,6 +95,11 @@ export function ProfileSection({
           labelLinkedIn: "LinkedIn",
           viewProfile: "View profile",
           selectCategory: "Select category",
+          categoryClosed: "Closed",
+          categoryFull: "Full",
+          categoryUnavailableHint:
+            "You can only switch to categories whose registration is open and that still have spots left.",
+          categoryMissingHint: 'You haven\'t been assigned to a category yet. Click "Edit" to choose one.',
           empty: "—",
           edit: "Edit",
           save: "Save",
@@ -102,17 +118,26 @@ export function ProfileSection({
         if (!res.ok) return
         const json = await res.json()
         setCategories(
-          (json.data?.categories || []).map((c: { id: string; name: string }) => ({
-            id: c.id,
-            name: c.name
-          }))
+          (json.data?.categories || []).map((c: CategoryRecord & { id: string; name: string }) => {
+            const presentation = getCategoryPresentationByLanguage(c, language)
+            return {
+              id: c.id,
+              name: c.name,
+              registrationClosed: presentation.registrationClosed,
+              isRegistrationOpen: presentation.isRegistrationOpen
+            }
+          })
         )
       } catch (error) {
         console.error("Failed to load categories:", error)
       }
     }
     void loadCategories()
-  }, [])
+  }, [language])
+
+  const isCategoryLocked = (category: CategoryOption) =>
+    category.id !== currentCategoryId && !category.isRegistrationOpen
+  const hasLockedCategory = categories.some(isCategoryLocked)
 
   const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ")
 
@@ -175,6 +200,7 @@ export function ProfileSection({
     editValue?: string
     editor?: "text" | "number" | "select"
     href?: string
+    hint?: string
     hidden?: boolean
   }
 
@@ -223,7 +249,8 @@ export function ProfileSection({
       value: categoryLabel,
       editValue: currentCategoryId || "",
       editor: "select",
-      hidden: !hasRegistration
+      hint: currentCategoryId ? undefined : t.categoryMissingHint,
+      hidden: !hasRegistration && !canChooseCategory
     },
     ...(linkedinUrl
       ? [{ key: "linkedin" as const, label: t.labelLinkedIn, value: t.viewProfile, href: linkedinUrl }]
@@ -249,18 +276,33 @@ export function ProfileSection({
                 <div className="min-w-0 flex-1">
                   <p className="text-muted-foreground mb-1 text-xs">{row.label}</p>
                   {isEditing && row.editor === "select" ? (
-                    <Select value={draft} onValueChange={setDraft} disabled={saving}>
-                      <SelectTrigger className="max-w-[240px] font-semibold">
-                        <SelectValue placeholder={t.selectCategory} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <>
+                      <Select value={draft} onValueChange={setDraft} disabled={saving}>
+                        <SelectTrigger className="max-w-[240px] font-semibold">
+                          <SelectValue placeholder={t.selectCategory} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => {
+                            const locked = isCategoryLocked(category)
+                            return (
+                              <SelectItem key={category.id} value={category.id} disabled={locked}>
+                                {category.name}
+                                {locked && (
+                                  <span className="text-muted-foreground ml-1 text-xs">
+                                    ({category.registrationClosed ? t.categoryClosed : t.categoryFull})
+                                  </span>
+                                )}
+                              </SelectItem>
+                            )
+                          })}
+                        </SelectContent>
+                      </Select>
+                      {hasLockedCategory && (
+                        <p className="text-muted-foreground mt-2 max-w-[360px] text-xs">
+                          {t.categoryUnavailableHint}
+                        </p>
+                      )}
+                    </>
                   ) : isEditing ? (
                     <Input
                       autoFocus
@@ -284,7 +326,10 @@ export function ProfileSection({
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   ) : (
-                    <p className="truncate text-[15px] font-semibold">{row.value}</p>
+                    <>
+                      <p className="truncate text-[15px] font-semibold">{row.value}</p>
+                      {row.hint && <p className="mt-1 text-xs text-amber-700">{row.hint}</p>}
+                    </>
                   )}
                 </div>
 

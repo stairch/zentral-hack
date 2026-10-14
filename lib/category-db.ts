@@ -37,6 +37,39 @@ export async function getAvailableCategoryColumns(): Promise<Set<OptionalCategor
   return new Set(result.rows.map((row) => row.column_name as OptionalCategoryColumn))
 }
 
+/**
+ * Checks whether a category still accepts participants. Returns an error message
+ * when registration is closed or the maximum number of registrations is reached,
+ * or null when the category is open.
+ */
+export async function getCategoryRegistrationError(categoryId: string): Promise<string | null> {
+  const categoryCapacity = await query(
+    `SELECT c.registration_closed, c.max_registrations, COUNT(u.id)::integer AS registration_count
+     FROM categories c
+     LEFT JOIN registrations r ON r.category_id = c.id AND r.status != 'cancelled'
+     LEFT JOIN users u ON u.id = r.user_id AND u.role = 'user'
+     WHERE c.id = $1
+     GROUP BY c.id, c.registration_closed, c.max_registrations`,
+    [categoryId]
+  )
+
+  if (categoryCapacity.rows.length === 0) {
+    return "Kategorie nicht gefunden"
+  }
+
+  const { registration_closed, max_registrations, registration_count } = categoryCapacity.rows[0]
+
+  if (registration_closed) {
+    return "Die Anmeldung für diese Kategorie wurde geschlossen"
+  }
+
+  if (max_registrations !== null && registration_count >= max_registrations) {
+    return "Die maximale Anzahl Anmeldungen für diese Kategorie wurde erreicht"
+  }
+
+  return null
+}
+
 export function buildCategorySelectClause(availableColumns: Set<OptionalCategoryColumn>) {
   return [
     "id",
