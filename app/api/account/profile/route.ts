@@ -3,6 +3,7 @@ import { query } from "@/lib/db"
 import { withAuth, type AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { getError } from "@/lib/validation"
+import { getCategoryRegistrationError } from "@/lib/category-db"
 
 const profileSchema = z
   .object({
@@ -58,15 +59,17 @@ async function handlePatch(req: AuthenticatedRequest) {
       allergies !== undefined || dietaryRestrictions !== undefined || categoryId !== undefined
 
     if (needsRegistration) {
-      const registration = await query("SELECT id FROM registrations WHERE user_id = $1", [userId])
+      const registration = await query("SELECT id, category_id FROM registrations WHERE user_id = $1", [
+        userId
+      ])
       if (registration.rows.length === 0) {
         return validationError("Keine aktive Anmeldung vorhanden")
       }
 
-      if (categoryId !== undefined) {
-        const category = await query("SELECT id FROM categories WHERE id = $1", [categoryId])
-        if (category.rows.length === 0) {
-          return validationError("Kategorie nicht gefunden")
+      if (categoryId !== undefined && categoryId !== registration.rows[0].category_id) {
+        const categoryError = await getCategoryRegistrationError(categoryId)
+        if (categoryError) {
+          return validationError(categoryError)
         }
       }
 
