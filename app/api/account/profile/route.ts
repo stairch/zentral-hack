@@ -63,7 +63,24 @@ async function handlePatch(req: AuthenticatedRequest) {
         userId
       ])
       if (registration.rows.length === 0) {
-        return validationError("Keine aktive Anmeldung vorhanden")
+        if (categoryId === undefined || req.user!.role !== "user") {
+          return validationError("Keine aktive Anmeldung vorhanden")
+        }
+
+        // Participants without a category can pick one here, which creates their registration
+        const categoryError = await getCategoryRegistrationError(categoryId)
+        if (categoryError) {
+          return validationError(categoryError)
+        }
+
+        await query(
+          `INSERT INTO registrations (user_id, category_id, allergies, dietary_restrictions, status, confirmation_sent)
+           VALUES ($1, $2, $3, $4, 'confirmed', false)`,
+          [userId, categoryId, allergies || null, dietaryRestrictions || null]
+        )
+        await query("UPDATE users SET category_id = $1 WHERE id = $2", [categoryId, userId])
+
+        return successResponse({ message: "Profil aktualisiert" })
       }
 
       if (categoryId !== undefined && categoryId !== registration.rows[0].category_id) {

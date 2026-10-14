@@ -10,7 +10,17 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { LogOut, Loader2, FileText, Users, Download, ShieldCogCorner, Bug, MessageSquare } from "lucide-react"
+import {
+  LogOut,
+  Loader2,
+  FileText,
+  Users,
+  Download,
+  ShieldCogCorner,
+  Bug,
+  MessageSquare,
+  AlertTriangle
+} from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -161,8 +171,6 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       welcomeSubtitle: "Willkommen in deinem Zentral Hack Dashboard",
       registrationConfirmed: "✓ Anmeldung bestätigt",
       registrationPending: "Ausstehend",
-      notRegistered: "Du hast dich noch nicht für eine Kategorie registriert.",
-      registerNow: "Jetzt registrieren",
       tabProfile: "Profil",
       tabSecurity: "Konto & Sicherheit",
       tabDocuments: "Dokumente",
@@ -204,6 +212,8 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       homeAriaLabel: "Zentral Hack Startseite",
       currentCategory: "Aktuelle Kategorie",
       categoryMissing: "Keine Kategorie registriert",
+      notRegistered:
+        "Du bist noch keiner Kategorie zugewiesen. Wähle in deinem Profil unter „Aktuelle Kategorie“ eine aus.",
       tabSubmission: "Challenge-Einreichung",
       submissionTitleSimple: "Bewirb dich für eine Challenge",
       submissionSubtitleSimple: "Wähle die Challenge, die dich am meisten interessiert.",
@@ -233,8 +243,6 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       welcomeSubtitle: "Welcome to your Zentral Hack dashboard",
       registrationConfirmed: "✓ Registration confirmed",
       registrationPending: "Pending",
-      notRegistered: "You haven't registered for a category yet.",
-      registerNow: "Register now",
       tabProfile: "Profile",
       tabSecurity: "Account & Security",
       tabDocuments: "Documents",
@@ -276,6 +284,8 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       homeAriaLabel: "Zentral Hack Home",
       currentCategory: "Current category",
       categoryMissing: "No category registered",
+      notRegistered:
+        'You haven\'t been assigned to a category yet. Choose one under "Current category" in your profile.',
       tabSubmission: "Challenge Submission",
       submissionTitleSimple: "Apply for a challenge",
       submissionSubtitleSimple: "Choose the challenge that interests you most.",
@@ -476,8 +486,9 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       ? selectedChallengeCategoryId || undefined
       : registration?.category?.id || profile?.category_id || undefined
   const dashboardCategoryName =
-    registration?.category?.name || profile?.category_slug?.replace(/-/g, " ") || null
+    registration?.category?.name || (showTeamTab ? null : profile?.category_slug?.replace(/-/g, " ")) || null
   const categoryLabel = dashboardCategoryName || t.categoryMissing
+  const currentCategoryId = registration?.category?.id || (showTeamTab ? null : profile?.category_id) || null
 
   const navItems: Array<{ key: NavKey; label: string }> = [
     { key: "profil", label: t.tabProfile },
@@ -599,16 +610,10 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
             </Card>
           </motion.div>
         ) : showTeamTab ? (
-          <Card className="mb-8 border-amber-200 bg-amber-50">
-            <CardContent className="pt-6">
-              <p className="text-amber-800">
-                {t.notRegistered}{" "}
-                <Link href="/anmeldung" className="font-medium underline">
-                  {t.registerNow}
-                </Link>
-              </p>
-            </CardContent>
-          </Card>
+          <div className="mb-8 flex items-center gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+            <p className="text-amber-700">{t.notRegistered}</p>
+          </div>
         ) : null}
 
         {/* Sidebar navigation + content */}
@@ -633,8 +638,9 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
               <ProfileSection
                 profile={profile ?? null}
                 categoryLabel={categoryLabel}
-                currentCategoryId={registration?.category?.id || profile?.category_id || null}
+                currentCategoryId={currentCategoryId}
                 hasRegistration={!!registration}
+                canChooseCategory={showTeamTab}
                 allergies={registration?.allergies ?? null}
                 dietaryRestrictions={registration?.dietary_restrictions ?? null}
                 linkedinUrl={profile?.linkedin_url ?? null}

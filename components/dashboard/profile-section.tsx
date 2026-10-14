@@ -27,6 +27,7 @@ interface ProfileSectionProps {
   categoryLabel: string
   currentCategoryId: string | null
   hasRegistration: boolean
+  canChooseCategory: boolean
   allergies: string | null
   dietaryRestrictions: string | null
   linkedinUrl: string | null
@@ -40,6 +41,7 @@ export function ProfileSection({
   categoryLabel,
   currentCategoryId,
   hasRegistration,
+  canChooseCategory,
   allergies,
   dietaryRestrictions,
   linkedinUrl,
@@ -71,6 +73,8 @@ export function ProfileSection({
           categoryFull: "Ausgebucht",
           categoryUnavailableHint:
             "Ein Wechsel ist nur in Kategorien möglich, deren Anmeldung offen ist und die noch freie Plätze haben.",
+          categoryMissingHint:
+            "Du bist noch keiner Kategorie zugewiesen. Klicke auf „Bearbeiten“, um eine Kategorie zu wählen.",
           empty: "—",
           edit: "Bearbeiten",
           save: "Speichern",
@@ -95,6 +99,7 @@ export function ProfileSection({
           categoryFull: "Full",
           categoryUnavailableHint:
             "You can only switch to categories whose registration is open and that still have spots left.",
+          categoryMissingHint: 'You haven\'t been assigned to a category yet. Click "Edit" to choose one.',
           empty: "—",
           edit: "Edit",
           save: "Save",
@@ -195,6 +200,7 @@ export function ProfileSection({
     editValue?: string
     editor?: "text" | "number" | "select"
     href?: string
+    hint?: string
     hidden?: boolean
   }
 
@@ -243,7 +249,8 @@ export function ProfileSection({
       value: categoryLabel,
       editValue: currentCategoryId || "",
       editor: "select",
-      hidden: !hasRegistration
+      hint: currentCategoryId ? undefined : t.categoryMissingHint,
+      hidden: !hasRegistration && !canChooseCategory
     },
     ...(linkedinUrl
       ? [{ key: "linkedin" as const, label: t.labelLinkedIn, value: t.viewProfile, href: linkedinUrl }]
@@ -319,7 +326,10 @@ export function ProfileSection({
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   ) : (
-                    <p className="truncate text-[15px] font-semibold">{row.value}</p>
+                    <>
+                      <p className="truncate text-[15px] font-semibold">{row.value}</p>
+                      {row.hint && <p className="mt-1 text-xs text-amber-700">{row.hint}</p>}
+                    </>
                   )}
                 </div>
 
