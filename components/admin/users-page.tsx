@@ -530,7 +530,8 @@ export function UsersAdminPage() {
       toast.error(text.categoryRequired)
       return
     }
-    const needsAssignment = createForm.role === "category_partner" || createForm.role === "sponsor"
+    const needsAssignment =
+      createForm.role === "category_partner" || createForm.role === "sponsor" || createForm.role === "user"
     const hasAssignment = createForm.adminRoleId || createForm.categoryId
     if (needsAssignment && !hasAssignment) {
       toast.error(text.categoryRequired)
@@ -1022,6 +1023,7 @@ export function UsersAdminPage() {
               </div>
             )}
             {(createForm.role === "sponsor" ||
+              createForm.role === "user" ||
               (createForm.role === "category_partner" && !createForm.adminRoleId)) && (
               <div>
                 <Label>{text.category}</Label>

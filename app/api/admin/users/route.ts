@@ -243,9 +243,16 @@ async function handlePost(req: AuthenticatedRequest) {
       return validationError("Category or admin role is required for category_partner")
     } else if (role === "sponsor" && !categoryId) {
       return validationError("Category is required for sponsor role")
+    } else if (role === "user" && !categoryId) {
+      return validationError("Category is required for participants")
     }
 
-    if (role !== "category_partner" && role !== "sponsor") {
+    if (role === "user") {
+      const catCheck = await query("SELECT id FROM categories WHERE id = $1", [categoryId])
+      if (catCheck.rows.length === 0) return validationError("Category not found")
+    }
+
+    if (role !== "category_partner" && role !== "sponsor" && role !== "user") {
       resolvedCategoryId = null
       resolvedAdminRoleId = null
     }
@@ -285,6 +292,27 @@ async function handlePost(req: AuthenticatedRequest) {
       : null
     created.email_verified = true
     created.registrations = null
+
+    if (role === "user") {
+      const regResult = await query(
+        `INSERT INTO registrations (user_id, category_id, status, confirmation_sent)
+         VALUES ($1, $2, 'confirmed', false)
+         RETURNING id, category_id, status, created_at`,
+        [created.id, resolvedCategoryId]
+      )
+      created.registrations = [
+        {
+          ...regResult.rows[0],
+          category_name: created.category_name,
+          university: null,
+          study_program: null,
+          semester: null,
+          allergies: null,
+          dietary_restrictions: null,
+          intolerances: null
+        }
+      ]
+    }
 
     return successResponse({ user: created })
   } catch (error) {
