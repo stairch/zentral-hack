@@ -28,6 +28,7 @@ interface ProfileSectionProps {
   currentCategoryId: string | null
   hasRegistration: boolean
   canChooseCategory: boolean
+  hasChallengeSubmission: boolean
   allergies: string | null
   dietaryRestrictions: string | null
   linkedinUrl: string | null
@@ -42,6 +43,7 @@ export function ProfileSection({
   currentCategoryId,
   hasRegistration,
   canChooseCategory,
+  hasChallengeSubmission,
   allergies,
   dietaryRestrictions,
   linkedinUrl,
@@ -75,6 +77,8 @@ export function ProfileSection({
             "Ein Wechsel ist nur in Kategorien möglich, deren Anmeldung offen ist und die noch freie Plätze haben.",
           categoryMissingHint:
             "Du bist noch keiner Kategorie zugewiesen. Klicke auf „Bearbeiten“, um eine Kategorie zu wählen.",
+          categorySubmissionHint:
+            "Achtung: Beim Wechsel der Kategorie wird deine Challenge-Einreichung zurückgezogen. Du kannst dich danach für eine Challenge der neuen Kategorie bewerben, sofern es dort welche gibt.",
           empty: "—",
           edit: "Bearbeiten",
           save: "Speichern",
@@ -100,6 +104,8 @@ export function ProfileSection({
           categoryUnavailableHint:
             "You can only switch to categories whose registration is open and that still have spots left.",
           categoryMissingHint: 'You haven\'t been assigned to a category yet. Click "Edit" to choose one.',
+          categorySubmissionHint:
+            "Note: Changing your category withdraws your challenge submission. You can then apply for a challenge in the new category, if it offers any.",
           empty: "—",
           edit: "Edit",
           save: "Save",
@@ -300,6 +306,11 @@ export function ProfileSection({
                       {hasLockedCategory && (
                         <p className="text-muted-foreground mt-2 max-w-[360px] text-xs">
                           {t.categoryUnavailableHint}
+                        </p>
+                      )}
+                      {hasChallengeSubmission && (
+                        <p className="mt-2 max-w-[360px] text-xs text-amber-700">
+                          {t.categorySubmissionHint}
                         </p>
                       )}
                     </>
