@@ -324,6 +324,10 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
   async function handleDataRefresh() {
     await refreshAuth()
     await fetchDashboardData()
+    // A category change withdraws the challenge submission and changes the available challenges
+    if (user?.role === "user") {
+      await fetchChallengeSubmission()
+    }
   }
 
   async function initializeAdminChallengeEditor() {
@@ -641,6 +645,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                 currentCategoryId={currentCategoryId}
                 hasRegistration={!!registration}
                 canChooseCategory={showTeamTab}
+                hasChallengeSubmission={!!mySubmission}
                 allergies={registration?.allergies ?? null}
                 dietaryRestrictions={registration?.dietary_restrictions ?? null}
                 linkedinUrl={profile?.linkedin_url ?? null}

@@ -171,6 +171,10 @@ async function handlePatch(req: AuthenticatedRequest) {
       [registration.user_id, registration.category_id]
     )
 
+    // A challenge submission belongs to the old category's challenges, so withdraw it
+    // to let the participant apply again in the new category
+    await query("DELETE FROM challenge_submissions WHERE user_id = $1", [registration.user_id])
+
     return successResponse({ message: "Category updated successfully" })
   } catch (error) {
     console.error("[Admin Users] PATCH Error:", error)

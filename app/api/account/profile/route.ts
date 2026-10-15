@@ -83,7 +83,8 @@ async function handlePatch(req: AuthenticatedRequest) {
         return successResponse({ message: "Profil aktualisiert" })
       }
 
-      if (categoryId !== undefined && categoryId !== registration.rows[0].category_id) {
+      const categoryChanged = categoryId !== undefined && categoryId !== registration.rows[0].category_id
+      if (categoryChanged) {
         const categoryError = await getCategoryRegistrationError(categoryId)
         if (categoryError) {
           return validationError(categoryError)
@@ -108,6 +109,12 @@ async function handlePatch(req: AuthenticatedRequest) {
 
       if (categoryId !== undefined) {
         await query("UPDATE users SET category_id = $1 WHERE id = $2", [categoryId, userId])
+      }
+
+      // A challenge submission belongs to the old category's challenges, so withdraw it
+      // to let the participant apply again in the new category
+      if (categoryChanged) {
+        await query("DELETE FROM challenge_submissions WHERE user_id = $1", [userId])
       }
     }
 

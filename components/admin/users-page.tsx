@@ -131,6 +131,8 @@ const copy = {
     categoryUpdated: "Kategorie aktualisiert",
     categoryUpdateError: "Fehler beim Ändern der Kategorie",
     categoryChangeHint: "Die Mitgliedschaft in Teams der bisherigen Kategorie wird entfernt.",
+    categoryChangeSubmissionWarning:
+      "Achtung: Eine allfällige Challenge-Einreichung des Benutzers wird gelöscht – auch wenn sie bereits angenommen wurde.",
     save: "Speichern",
     changeRoleDesc: "Wähle die neue Rolle für",
     newRole: "Neue Rolle",
@@ -220,6 +222,8 @@ const copy = {
     categoryUpdated: "Category updated",
     categoryUpdateError: "Failed to change category",
     categoryChangeHint: "Membership in teams of the previous category will be removed.",
+    categoryChangeSubmissionWarning:
+      "Note: Any challenge submission of this user will be deleted – even if it has already been accepted.",
     save: "Save",
     changeRoleDesc: "Select the new role for",
     newRole: "New role",
@@ -1110,6 +1114,7 @@ export function UsersAdminPage() {
               </Select>
             </div>
             <p className="text-muted-foreground text-sm">{text.categoryChangeHint}</p>
+            <p className="text-sm text-amber-700">{text.categoryChangeSubmissionWarning}</p>
             <div className="flex justify-end gap-2 pt-2">
               <Button
                 variant="outline"
