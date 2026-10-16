@@ -30,6 +30,7 @@ interface Challenge {
   prize: string | null
   sponsor_id: string | null
   submission_enabled: boolean
+  info_published: boolean
   sponsor_company_name: string | null
   published_at: string | null
   created_at: string
@@ -58,6 +59,15 @@ const copy = {
     published: "Veröffentlicht",
     draft: "Entwurf",
     submissionActive: "Submission aktiv",
+    infoPublished: "Infos für Teilnehmer veröffentlicht",
+    publishInfo: "Infos veröffentlichen",
+    unpublishInfo: "Infos verbergen",
+    publishInfoTitle:
+      "Teilnehmer, die diese Challenge gewählt haben, sehen die Challenge-Infos in ihrem Dashboard",
+    publishInfoSuccess: "Challenge-Infos für Teilnehmer veröffentlicht",
+    unpublishInfoSuccess: "Challenge-Infos für Teilnehmer verborgen",
+    labelInfoPublished: "Infos für Teilnehmer",
+    infoNotPublished: "Nicht veröffentlicht",
     allCategories: "Alle Kategorien",
     of: "von",
     challenges: "Challenges",
@@ -111,6 +121,14 @@ const copy = {
     published: "Published",
     draft: "Draft",
     submissionActive: "Submission active",
+    infoPublished: "Info published to participants",
+    publishInfo: "Publish info",
+    unpublishInfo: "Hide info",
+    publishInfoTitle: "Participants who chose this challenge see the challenge info in their dashboard",
+    publishInfoSuccess: "Challenge info published to participants",
+    unpublishInfoSuccess: "Challenge info hidden from participants",
+    labelInfoPublished: "Info for participants",
+    infoNotPublished: "Not published",
     allCategories: "All Categories",
     of: "of",
     challenges: "Challenges",
@@ -176,6 +194,7 @@ export function AdminChallengesPage() {
   const [editingPrize, setEditingPrize] = useState<{ id: string; prize: string } | null>(null)
   const [savingPrize, setSavingPrize] = useState(false)
   const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [togglingInfoId, setTogglingInfoId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
   // Editor sheet state
@@ -293,6 +312,28 @@ export function AdminChallengesPage() {
       toast.error(text.toggleError)
     } finally {
       setTogglingId(null)
+    }
+  }
+
+  const toggleInfoPublished = async (challenge: Challenge) => {
+    const infoPublished = !challenge.info_published
+    try {
+      setTogglingInfoId(challenge.id)
+      const res = await fetch("/api/admin/challenges", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id: challenge.id, infoPublished })
+      })
+      if (!res.ok) throw new Error()
+      toast.success(infoPublished ? text.publishInfoSuccess : text.unpublishInfoSuccess)
+      setChallenges((prev) =>
+        prev.map((c) => (c.id === challenge.id ? { ...c, info_published: infoPublished } : c))
+      )
+    } catch {
+      toast.error(text.toggleError)
+    } finally {
+      setTogglingInfoId(null)
     }
   }
 
@@ -425,6 +466,11 @@ export function AdminChallengesPage() {
                     {text.submissionActive}
                   </Badge>
                 )}
+                {challenge.info_published && (
+                  <Badge variant="outline" className="border-primary text-primary">
+                    {text.infoPublished}
+                  </Badge>
+                )}
               </div>
               <p className="text-muted-foreground mt-0.5 text-sm">
                 {challenge.company_name} · {challenge.category_name} · {challenge.user_email}
@@ -500,6 +546,25 @@ export function AdminChallengesPage() {
                   text.unpublish
                 ) : (
                   text.publish
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                title={text.publishInfoTitle}
+                disabled={togglingInfoId === challenge.id}
+                onClick={() => toggleInfoPublished(challenge)}
+                className={
+                  challenge.info_published
+                    ? "text-muted-foreground hover:text-foreground"
+                    : "text-primary hover:text-primary/80"
+                }>
+                {togglingInfoId === challenge.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : challenge.info_published ? (
+                  text.unpublishInfo
+                ) : (
+                  text.publishInfo
                 )}
               </Button>
               <Button
@@ -608,6 +673,10 @@ export function AdminChallengesPage() {
                 <Detail
                   label={text.labelStatus}
                   value={detailChallenge.status === "published" ? text.published : text.draft}
+                />
+                <Detail
+                  label={text.labelInfoPublished}
+                  value={detailChallenge.info_published ? text.published : text.infoNotPublished}
                 />
                 <Detail
                   label={text.labelSubmitted}

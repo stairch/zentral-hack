@@ -19,7 +19,7 @@ async function handleGet(req: AuthenticatedRequest) {
         sc.challenge_title, sc.challenge_title_en, sc.short_description, sc.short_description_en,
         sc.difficulty, sc.team_size, sc.challenge_language,
         sc.challenge_data, sc.prize, sc.sponsor_id,
-        sc.submission_enabled, sc.submission_description_required,
+        sc.submission_enabled, sc.submission_description_required, sc.info_published,
         sc.published_at, sc.created_at, sc.updated_at,
         c.name AS category_name, c.id AS category_id, c.slug AS category_slug,
         u.email AS user_email, u.first_name, u.last_name,
@@ -58,7 +58,7 @@ async function handleGet(req: AuthenticatedRequest) {
 
 async function handlePut(req: AuthenticatedRequest) {
   try {
-    const { id, status, prize } = await req.json()
+    const { id, status, prize, infoPublished } = await req.json()
     if (!id) return validationError("id required")
     const isCategoryPartner = req.user?.role === "category_partner"
 
@@ -85,6 +85,12 @@ async function handlePut(req: AuthenticatedRequest) {
     if (prize !== undefined) {
       values.push(prize === "" ? null : String(prize).trim())
       fields.push(`prize = $${values.length}`)
+    }
+
+    if (infoPublished !== undefined) {
+      if (typeof infoPublished !== "boolean") return validationError("Invalid infoPublished")
+      values.push(infoPublished)
+      fields.push(`info_published = $${values.length}`)
     }
 
     if (fields.length === 0) return validationError("No fields to update")

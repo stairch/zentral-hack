@@ -29,8 +29,9 @@ import { BrandMark } from "@/components/brand-mark"
 import { SponsorChallengeEditor } from "@/components/dashboard/sponsor-challenge-editor"
 import { AccountSettings } from "@/components/dashboard/account-settings"
 import { ProfileSection } from "@/components/dashboard/profile-section"
+import { ChallengeInfo } from "@/components/dashboard/challenge-info"
 import { type SponsorChallengeRecord } from "@/lib/sponsor-challenge"
-import { type ChallengeSubmissionRecord } from "@/lib/challenge-submission"
+import { type ChallengeSubmissionRecord, type ParticipantChallengeInfo } from "@/lib/challenge-submission"
 import ComingSoon from "../ui/coming-soon"
 import { Urls } from "@/lib/constants"
 import * as Tooltip from "@radix-ui/react-tooltip"
@@ -133,6 +134,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
   const [submissionEligible, setSubmissionEligible] = useState(false)
   const [submissionChallenges, setSubmissionChallenges] = useState<SubmissionChallengeOption[]>([])
   const [mySubmission, setMySubmission] = useState<ChallengeSubmissionRecord | null>(null)
+  const [challengeInfo, setChallengeInfo] = useState<ParticipantChallengeInfo | null>(null)
   const [selectedSubmissionChallengeId, setSelectedSubmissionChallengeId] = useState("")
   const [submissionDescription, setSubmissionDescription] = useState("")
   const [loadingSubmission, setLoadingSubmission] = useState(true)
@@ -214,11 +216,18 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       categoryMissing: "Keine Kategorie registriert",
       notRegistered:
         "Du bist noch keiner Kategorie zugewiesen. Wähle in deinem Profil unter „Aktuelle Kategorie“ eine aus.",
-      tabSubmission: "Challenge-Einreichung",
-      submissionTitleSimple: "Bewirb dich für eine Challenge",
-      submissionSubtitleSimple: "Wähle die Challenge, die dich am meisten interessiert.",
-      submissionTitleWithDescription: "Bewirb dich mit deiner Challenge",
-      submissionSubtitleWithDescription: "Wähle eine Challenge und beschreibe kurz deine Idee dazu.",
+      tabSubmission: "Challenge",
+      challengeTitle: "Deine Challenge",
+      challengeSubtitleChoose: "Wähle die Challenge, die dich am meisten interessiert.",
+      challengeSubtitleChooseWithDescription: "Wähle eine Challenge und beschreibe kurz deine Idee dazu.",
+      challengeSubtitleInfoPending:
+        "Sobald die Details zu deiner Challenge veröffentlicht sind, findest du sie hier.",
+      challengeSubtitleReview:
+        "Deine Bewerbung wird geprüft. Nach der Annahme findest du hier die Details zu deiner Challenge, sobald sie veröffentlicht sind.",
+      challengeSubtitleInfo: "Alle Informationen zu deiner Challenge findest du unterhalb deiner Bewerbung.",
+      challengeInfoTitle: "Challenge-Details",
+      submissionTitle: "Deine Bewerbung",
+      submissionSelectionClosed: "Die Challenge-Auswahl ist abgeschlossen.",
       submissionSelectLabel: "Deine Wunsch-Challenge",
       submissionSelectPlaceholder: "Challenge auswählen",
       submissionDescriptionRequiredLabel: "Deine Idee",
@@ -286,11 +295,18 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       categoryMissing: "No category registered",
       notRegistered:
         'You haven\'t been assigned to a category yet. Choose one under "Current category" in your profile.',
-      tabSubmission: "Challenge Submission",
-      submissionTitleSimple: "Apply for a challenge",
-      submissionSubtitleSimple: "Choose the challenge that interests you most.",
-      submissionTitleWithDescription: "Apply with your challenge",
-      submissionSubtitleWithDescription: "Choose a challenge and briefly describe your idea for it.",
+      tabSubmission: "Challenge",
+      challengeTitle: "Your Challenge",
+      challengeSubtitleChoose: "Choose the challenge that interests you most.",
+      challengeSubtitleChooseWithDescription: "Choose a challenge and briefly describe your idea for it.",
+      challengeSubtitleInfoPending:
+        "As soon as the details of your challenge are published, you'll find them here.",
+      challengeSubtitleReview:
+        "Your application is being reviewed. Once accepted, you'll find the details of your challenge here as soon as they are published.",
+      challengeSubtitleInfo: "You'll find all information about your challenge below your application.",
+      challengeInfoTitle: "Challenge details",
+      submissionTitle: "Your application",
+      submissionSelectionClosed: "The challenge selection is closed.",
       submissionSelectLabel: "Your preferred challenge",
       submissionSelectPlaceholder: "Select a challenge",
       submissionDescriptionRequiredLabel: "Your idea",
@@ -399,8 +415,8 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
     }
   }
 
-  async function fetchChallengeSubmission() {
-    setLoadingSubmission(true)
+  async function fetchChallengeSubmission({ silent = false } = {}) {
+    if (!silent) setLoadingSubmission(true)
     try {
       const res = await fetch("/api/challenge-submissions", { credentials: "include" })
       if (!res.ok) return
@@ -410,6 +426,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       setSubmissionChallenges((json.data?.challenges as SubmissionChallengeOption[]) || [])
       const submission = (json.data?.submission as ChallengeSubmissionRecord | null) || null
       setMySubmission(submission)
+      setChallengeInfo((json.data?.challengeInfo as ParticipantChallengeInfo | null) || null)
       setSelectedSubmissionChallengeId(submission?.challenge_id || "")
       setSubmissionDescription(submission?.description || "")
     } catch (error) {
@@ -434,8 +451,9 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || t.submissionSaveError)
-      setMySubmission(json.data?.submission as ChallengeSubmissionRecord)
       toast.success(t.submissionSaveSuccess)
+      // Reload to get the published info of the newly chosen challenge
+      await fetchChallengeSubmission({ silent: true })
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t.submissionSaveError)
     } finally {
@@ -505,6 +523,21 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
   const selectedSubmissionChallenge = submissionChallenges.find((c) => c.id === selectedSubmissionChallengeId)
   const submissionDescriptionRequired = selectedSubmissionChallenge?.submission_description_required ?? false
   const submissionLocked = mySubmission?.status === "accepted"
+  const submissionOpen = submissionChallenges.length > 0
+  // The chosen challenge may no longer be selectable (e.g. selection closed), keep showing it in the picker
+  const submittedChallengeUnavailable =
+    !!mySubmission && !submissionChallenges.some((c) => c.id === mySubmission.challenge_id)
+  const pickChallengeTitle = (de: string | null | undefined, en: string | null | undefined) =>
+    (language === "en" ? en || de : de || en) || ""
+  const challengeSubtitle = challengeInfo
+    ? t.challengeSubtitleInfo
+    : mySubmission?.status === "accepted"
+      ? t.challengeSubtitleInfoPending
+      : mySubmission?.status === "pending"
+        ? t.challengeSubtitleReview
+        : submissionDescriptionRequired
+          ? t.challengeSubtitleChooseWithDescription
+          : t.challengeSubtitleChoose
 
   return (
     <main className="bg-background min-h-screen">
@@ -816,20 +849,12 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                 <ComingSoon />
               ))}
 
-            {/* Challenge-Einreichung */}
+            {/* Challenge (Teilnehmer) */}
             {nav === "einreichung" && (
-              <section className="max-w-xl space-y-6">
+              <section className="max-w-3xl space-y-8">
                 <div>
-                  <h2 className="text-base font-bold">
-                    {submissionDescriptionRequired
-                      ? t.submissionTitleWithDescription
-                      : t.submissionTitleSimple}
-                  </h2>
-                  <p className="text-muted-foreground mt-0.5 mb-3 text-[13px]">
-                    {submissionDescriptionRequired
-                      ? t.submissionSubtitleWithDescription
-                      : t.submissionSubtitleSimple}
-                  </p>
+                  <h2 className="text-base font-bold">{t.challengeTitle}</h2>
+                  <p className="text-muted-foreground mt-0.5 mb-3 text-[13px]">{challengeSubtitle}</p>
                 </div>
 
                 {loadingSubmission ? (
@@ -838,83 +863,108 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                   </div>
                 ) : (
                   <>
-                    {mySubmission && (
-                      <Badge
-                        variant={
-                          mySubmission.status === "accepted"
-                            ? "default"
-                            : mySubmission.status === "rejected"
-                              ? "destructive"
-                              : "secondary"
-                        }
-                        className={mySubmission.status === "accepted" ? "bg-green-600" : ""}>
-                        {mySubmission.status === "accepted"
-                          ? t.submissionStatusAccepted
-                          : mySubmission.status === "rejected"
-                            ? t.submissionStatusRejected
-                            : t.submissionStatusPending}
-                      </Badge>
-                    )}
-
-                    {mySubmission?.status === "accepted" && (
-                      <p className="text-muted-foreground text-sm">{t.submissionAcceptedNote}</p>
-                    )}
-
-                    {mySubmission?.status === "rejected" && (
-                      <div className="space-y-2">
-                        <p className="text-muted-foreground text-sm">{t.submissionRejectedNote}</p>
-                        {mySubmission.review_comment && (
-                          <div>
-                            <Label className="text-muted-foreground text-xs">
-                              {t.submissionReviewCommentLabel}
-                            </Label>
-                            <p className="text-sm">{mySubmission.review_comment}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="space-y-4">
-                      <div className="space-y-1.5">
-                        <Label>{t.submissionSelectLabel}</Label>
-                        <Select
-                          value={selectedSubmissionChallengeId}
-                          onValueChange={setSelectedSubmissionChallengeId}
-                          disabled={submissionLocked}>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t.submissionSelectPlaceholder} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {submissionChallenges.map((c) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {(language === "en" ? c.challenge_title_en : c.challenge_title) ||
-                                  c.challenge_title_en ||
-                                  c.challenge_title}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      {submissionDescriptionRequired && (
-                        <div className="space-y-1.5">
-                          <Label>{t.submissionDescriptionRequiredLabel}</Label>
-                          <Textarea
-                            value={submissionDescription}
-                            onChange={(e) => setSubmissionDescription(e.target.value)}
-                            placeholder={t.submissionDescriptionPlaceholder}
-                            rows={4}
-                            disabled={submissionLocked}
-                          />
+                    <section className="max-w-xl space-y-6">
+                      {mySubmission && (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-sm font-bold">{t.submissionTitle}</h3>
+                          <Badge
+                            variant={
+                              mySubmission.status === "accepted"
+                                ? "default"
+                                : mySubmission.status === "rejected"
+                                  ? "destructive"
+                                  : "secondary"
+                            }
+                            className={mySubmission.status === "accepted" ? "bg-green-600" : ""}>
+                            {mySubmission.status === "accepted"
+                              ? t.submissionStatusAccepted
+                              : mySubmission.status === "rejected"
+                                ? t.submissionStatusRejected
+                                : t.submissionStatusPending}
+                          </Badge>
                         </div>
                       )}
-                      <Button
-                        onClick={() => void submitChallengeSubmission()}
-                        disabled={submissionLocked || submittingSubmission || !selectedSubmissionChallengeId}
-                        className="gap-2 bg-[#530A5D] hover:bg-[#530A5D]/90">
-                        {submittingSubmission && <Loader2 className="h-4 w-4 animate-spin" />}
-                        {t.submissionSubmit}
-                      </Button>
-                    </div>
+
+                      {mySubmission?.status === "accepted" && (
+                        <p className="text-muted-foreground text-sm">{t.submissionAcceptedNote}</p>
+                      )}
+
+                      {mySubmission?.status === "rejected" && (
+                        <div className="space-y-2">
+                          <p className="text-muted-foreground text-sm">{t.submissionRejectedNote}</p>
+                          {mySubmission.review_comment && (
+                            <div>
+                              <Label className="text-muted-foreground text-xs">
+                                {t.submissionReviewCommentLabel}
+                              </Label>
+                              <p className="text-sm">{mySubmission.review_comment}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <Label>{t.submissionSelectLabel}</Label>
+                          <Select
+                            value={selectedSubmissionChallengeId}
+                            onValueChange={setSelectedSubmissionChallengeId}
+                            disabled={submissionLocked || !submissionOpen}>
+                            <SelectTrigger>
+                              <SelectValue placeholder={t.submissionSelectPlaceholder} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {submittedChallengeUnavailable && mySubmission && (
+                                <SelectItem value={mySubmission.challenge_id} disabled>
+                                  {pickChallengeTitle(
+                                    mySubmission.challenge_title,
+                                    mySubmission.challenge_title_en
+                                  )}
+                                </SelectItem>
+                              )}
+                              {submissionChallenges.map((c) => (
+                                <SelectItem key={c.id} value={c.id}>
+                                  {pickChallengeTitle(c.challenge_title, c.challenge_title_en)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {(submissionDescriptionRequired ||
+                          (!selectedSubmissionChallenge && !!mySubmission?.description)) && (
+                          <div className="space-y-1.5">
+                            <Label>{t.submissionDescriptionRequiredLabel}</Label>
+                            <Textarea
+                              value={submissionDescription}
+                              onChange={(e) => setSubmissionDescription(e.target.value)}
+                              placeholder={t.submissionDescriptionPlaceholder}
+                              rows={4}
+                              disabled={submissionLocked || !selectedSubmissionChallenge}
+                            />
+                          </div>
+                        )}
+                        {submissionOpen ? (
+                          <Button
+                            onClick={() => void submitChallengeSubmission()}
+                            disabled={
+                              submissionLocked || submittingSubmission || !selectedSubmissionChallenge
+                            }
+                            className="gap-2 bg-[#530A5D] hover:bg-[#530A5D]/90">
+                            {submittingSubmission && <Loader2 className="h-4 w-4 animate-spin" />}
+                            {t.submissionSubmit}
+                          </Button>
+                        ) : (
+                          <p className="text-muted-foreground text-sm">{t.submissionSelectionClosed}</p>
+                        )}
+                      </div>
+                    </section>
+
+                    {challengeInfo && (
+                      <section className="border-border space-y-4 border-t pt-8">
+                        <h3 className="text-sm font-bold">{t.challengeInfoTitle}</h3>
+                        <ChallengeInfo info={challengeInfo} />
+                      </section>
+                    )}
                   </>
                 )}
               </section>
