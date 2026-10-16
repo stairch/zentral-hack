@@ -20,6 +20,7 @@ export interface ChallengeSubmissionRecord {
   updated_at: string
   challenge_title?: string | null
   challenge_title_en?: string | null
+  submission_deadline?: string | null
 }
 
 // Challenge details shown to participants once the info is published (no contact, legal or signature data)

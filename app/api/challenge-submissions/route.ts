@@ -29,7 +29,7 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
     )
 
     const submissionResult = await query(
-      `SELECT cs.*, sc.challenge_title, sc.challenge_title_en
+      `SELECT cs.*, sc.challenge_title, sc.challenge_title_en, sc.submission_deadline
        FROM challenge_submissions cs
        JOIN sponsor_challenges sc ON cs.challenge_id = sc.id
        WHERE cs.user_id = $1`,
