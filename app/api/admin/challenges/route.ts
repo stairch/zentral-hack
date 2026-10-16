@@ -58,7 +58,15 @@ async function handleGet(req: AuthenticatedRequest) {
 
 async function handlePut(req: AuthenticatedRequest) {
   try {
-    const { id, status, prize, infoPublished, submissionDeadline } = await req.json()
+    const {
+      id,
+      status,
+      prize,
+      infoPublished,
+      submissionDeadline,
+      submissionEnabled,
+      submissionDescriptionRequired
+    } = await req.json()
     if (!id) return validationError("id required")
     const isCategoryPartner = req.user?.role === "category_partner"
 
@@ -91,6 +99,22 @@ async function handlePut(req: AuthenticatedRequest) {
       if (typeof infoPublished !== "boolean") return validationError("Invalid infoPublished")
       values.push(infoPublished)
       fields.push(`info_published = $${values.length}`)
+    }
+
+    if (submissionEnabled !== undefined) {
+      if (typeof submissionEnabled !== "boolean") return validationError("Invalid submissionEnabled")
+      values.push(submissionEnabled)
+      fields.push(`submission_enabled = $${values.length}`)
+      // Closing the submission also drops the description requirement (same as the editor did)
+      if (!submissionEnabled) fields.push("submission_description_required = false")
+    }
+
+    if (submissionDescriptionRequired !== undefined && submissionEnabled !== false) {
+      if (typeof submissionDescriptionRequired !== "boolean") {
+        return validationError("Invalid submissionDescriptionRequired")
+      }
+      values.push(submissionDescriptionRequired)
+      fields.push(`submission_description_required = $${values.length}`)
     }
 
     if (submissionDeadline !== undefined) {

@@ -360,14 +360,7 @@ export function SponsorChallengeEditor({
       loadError: "Fehler beim Laden",
       saveSuccess: "Entwurf gespeichert",
       publishSuccess: "Challenge veröffentlicht",
-      saveError: "Fehler beim Speichern",
-      submissionSectionTitle: "Challenge-Auswahl durch Teilnehmer",
-      submissionEnableLabel: "Teilnehmer können sich für diese Challenge entscheiden",
-      submissionEnableHint:
-        "Angemeldete User dieser Kategorie sehen in ihrem Dashboard eine Auswahl und können sich für diese Challenge einschreiben.",
-      submissionRequireDescriptionLabel: "Challengebeschreibung erforderlich",
-      submissionRequireDescriptionHint:
-        "User müssen zusätzlich zur Auswahl eine kurze Beschreibung ihres Vorhabens einreichen."
+      saveError: "Fehler beim Speichern"
     },
     en: {
       existingChallenges: "Existing Challenges",
@@ -495,20 +488,14 @@ export function SponsorChallengeEditor({
       loadError: "Error loading",
       saveSuccess: "Draft saved",
       publishSuccess: "Challenge published",
-      saveError: "Error saving",
-      submissionSectionTitle: "Challenge selection by participants",
-      submissionEnableLabel: "Participants can choose this challenge",
-      submissionEnableHint:
-        "Registered users of this category will see a selection in their dashboard and can sign up for this challenge.",
-      submissionRequireDescriptionLabel: "Challenge description required",
-      submissionRequireDescriptionHint:
-        "Users must also submit a short description of their approach alongside their selection."
+      saveError: "Error saving"
     }
   }[language]
 
   const [formData, setFormData] = useState<SponsorChallengeData>(() => createEmptySponsorChallengeData())
   const [prize, setPrize] = useState("")
   const [sponsorId, setSponsorId] = useState("")
+  // Edited from the admin challenge list; kept here so saving the editor sends the current values back
   const [submissionEnabled, setSubmissionEnabled] = useState(false)
   const [submissionDescriptionRequired, setSubmissionDescriptionRequired] = useState(false)
   const [sponsors, setSponsors] = useState<SponsorOption[]>([])
@@ -986,36 +973,6 @@ export function SponsorChallengeEditor({
           </div>
         </CardHeader>
       </Card>
-
-      {/* ── Submission settings (admin / category partner only) ── */}
-      {canPublish && (
-        <Card className="border-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">{t.submissionSectionTitle}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <CheckboxRow
-              id="submission-enabled"
-              label={t.submissionEnableLabel}
-              hint={t.submissionEnableHint}
-              checked={submissionEnabled}
-              onCheckedChange={(value) => {
-                setSubmissionEnabled(value)
-                if (!value) setSubmissionDescriptionRequired(false)
-              }}
-            />
-            {submissionEnabled && (
-              <CheckboxRow
-                id="submission-description-required"
-                label={t.submissionRequireDescriptionLabel}
-                hint={t.submissionRequireDescriptionHint}
-                checked={submissionDescriptionRequired}
-                onCheckedChange={setSubmissionDescriptionRequired}
-              />
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       {/* ── Website-visible section ── */}
       <Card className="border-[#530A5D]/40 bg-gradient-to-br from-[#530A5D]/5 to-[#530A5D]/10 shadow-sm">
