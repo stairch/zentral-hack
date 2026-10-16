@@ -5,21 +5,34 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import {
   Loader2,
   Trash2,
   Eye,
-  Trophy,
-  CheckCircle,
-  XCircle,
-  Filter,
+  FileCheck,
+  FileX,
+  Globe,
+  GlobeOff,
   PenLine,
   Plus,
-  AlarmClock
+  AlarmClock,
+  MoreHorizontal,
+  SquarePen,
+  SquarePlus
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
@@ -42,6 +55,7 @@ interface Challenge {
   prize: string | null
   sponsor_id: string | null
   submission_enabled: boolean
+  submission_description_required: boolean
   info_published: boolean
   submission_deadline: string | null
   sponsor_company_name: string | null
@@ -64,25 +78,57 @@ interface CategoryInfo {
 
 const copy = {
   de: {
-    heading: "CHALLENGES",
-    subtitle: "Alle eingereichten Sponsor-Challenges verwalten",
-    subtitleCategory: "Challenges für deine Kategorie verwalten",
-    total: "total",
-    allStatus: "Alle Status",
+    heading: "Challenges",
+    summary: (total: number, published: number) =>
+      total > 0 && published === total
+        ? `${total} Challenges · alle veröffentlicht`
+        : `${total} Challenges · ${published} veröffentlicht`,
+    filterAll: "Alle",
+    filterLive: "Live",
+    filterDraft: "Entwurf",
+    colChallenge: "Challenge",
+    colStatus: "Status",
+    colDeadline: "Abgabe",
+    colPrize: "Preisgeld",
+    statusPublic: "Öffentlich",
+    statusSubmission: "Submission",
+    statusInfo: "Infos",
+    tipPublicOn: "Challenge ist öffentlich",
+    tipPublicOff: "Challenge ist ein Entwurf (nicht öffentlich)",
+    tipSubmissionOn: "Submission für Teilnehmende geöffnet",
+    tipSubmissionOff: "Submission für Teilnehmende geschlossen",
+    tipSubmissionOnDescription: "Submission geöffnet, Beschreibung erforderlich",
+    tipInfoOn: "Infos für Teilnehmende veröffentlicht",
+    tipInfoOff: "Infos für Teilnehmende verborgen",
+    noDeadline: "Keine Frist",
+    today: "Heute",
+    preview: "Vorschau",
+    moreActions: "Weitere Aktionen",
+    setDeadline: "Abgabefrist festlegen",
+    changeDeadline: "Abgabefrist ändern",
+    openSubmissionMenu: "Submission öffnen…",
+    editSubmissionMenu: "Submission bearbeiten…",
+    openSubmissionTitle: "Submission öffnen",
+    editSubmissionTitle: "Submission bearbeiten",
+    submissionDialogHint:
+      "Angemeldete Teilnehmende dieser Kategorie sehen in ihrem Dashboard eine Auswahl und können sich für diese Challenge einschreiben.",
+    descriptionRequiredLabel: "Beschreibung erforderlich",
+    descriptionRequiredHint:
+      "Teilnehmende müssen zusätzlich zur Auswahl eine kurze Beschreibung ihres Vorhabens einreichen.",
+    openSubmission: "Submission öffnen",
+    closeSubmission: "Submission schliessen",
+    submissionOpened: "Submission für Teilnehmende geöffnet",
+    submissionClosed: "Submission für Teilnehmende geschlossen",
+    submissionSaved: "Submission-Einstellungen gespeichert",
+    deleteMenu: "Löschen…",
     published: "Veröffentlicht",
     draft: "Entwurf",
-    submissionActive: "Submission aktiv",
-    infoPublished: "Infos für Teilnehmer veröffentlicht",
     publishInfo: "Infos veröffentlichen",
     unpublishInfo: "Infos verbergen",
-    publishInfoTitle:
-      "Teilnehmer, die diese Challenge gewählt haben, sehen die Challenge-Infos in ihrem Dashboard",
     publishInfoSuccess: "Challenge-Infos für Teilnehmer veröffentlicht",
     unpublishInfoSuccess: "Challenge-Infos für Teilnehmer verborgen",
     labelInfoPublished: "Infos für Teilnehmer",
     infoNotPublished: "Nicht veröffentlicht",
-    deadlineBadge: (date: string) => `Abgabe: ${date}`,
-    deadlineButtonTitle: "Abgabedeadline festlegen",
     deadlineDialogTitle: "Abgabedeadline",
     deadlineDialogHint:
       "Teilnehmer, deren Bewerbung für diese Challenge angenommen wurde, sehen bis zur Deadline einen Countdown-Banner in ihrem Dashboard.",
@@ -93,14 +139,9 @@ const copy = {
     deadlineRemoved: "Abgabedeadline entfernt",
     labelDeadline: "Abgabedeadline",
     allCategories: "Alle Kategorien",
-    of: "von",
-    challenges: "Challenges",
     noTitle: "(Kein Titel)",
     noResults: "Keine Challenges gefunden.",
-    editPrizePlaceholder: "z.B. CHF 500",
-    editPrizeTitle: "Preisgeld bearbeiten",
-    detailsTitle: "Details",
-    unpublish: "Depublizieren",
+    unpublish: "Zurückziehen",
     publish: "Veröffentlichen",
     close: "Schliessen",
     detailsDialogDefaultTitle: "Challenge Details",
@@ -126,8 +167,6 @@ const copy = {
     publishSuccess: "Veröffentlicht",
     unpublishSuccess: "Auf Entwurf gesetzt",
     toggleError: "Fehler beim Aktualisieren",
-    prizeSaved: "Preisgeld gespeichert",
-    prizeSaveError: "Fehler beim Speichern",
     deleted: "Gelöscht",
     deleteError: "Fehler beim Löschen",
     newChallenge: "Neue Challenge",
@@ -137,24 +176,57 @@ const copy = {
     selectCategoryHint: "Für welche Kategorie soll die Challenge erstellt werden?"
   },
   en: {
-    heading: "CHALLENGES",
-    subtitle: "Manage all submitted sponsor challenges",
-    subtitleCategory: "Manage challenges for your category",
-    total: "total",
-    allStatus: "All Status",
+    heading: "Challenges",
+    summary: (total: number, published: number) =>
+      total > 0 && published === total
+        ? `${total} challenges · all published`
+        : `${total} challenges · ${published} published`,
+    filterAll: "All",
+    filterLive: "Live",
+    filterDraft: "Draft",
+    colChallenge: "Challenge",
+    colStatus: "Status",
+    colDeadline: "Deadline",
+    colPrize: "Prize",
+    statusPublic: "Public",
+    statusSubmission: "Submission",
+    statusInfo: "Info",
+    tipPublicOn: "Challenge is public",
+    tipPublicOff: "Challenge is a draft (not public)",
+    tipSubmissionOn: "Submission open for participants",
+    tipSubmissionOff: "Submission closed for participants",
+    tipSubmissionOnDescription: "Submission open, description required",
+    tipInfoOn: "Info published to participants",
+    tipInfoOff: "Info hidden from participants",
+    noDeadline: "No deadline",
+    today: "Today",
+    preview: "Preview",
+    moreActions: "More actions",
+    setDeadline: "Set deadline",
+    changeDeadline: "Change deadline",
+    openSubmissionMenu: "Open submission…",
+    editSubmissionMenu: "Edit submission…",
+    openSubmissionTitle: "Open submission",
+    editSubmissionTitle: "Edit submission",
+    submissionDialogHint:
+      "Registered participants of this category see a selection in their dashboard and can sign up for this challenge.",
+    descriptionRequiredLabel: "Description required",
+    descriptionRequiredHint:
+      "Participants must also submit a short description of their approach alongside their selection.",
+    openSubmission: "Open submission",
+    closeSubmission: "Close submission",
+    submissionOpened: "Submission opened for participants",
+    submissionClosed: "Submission closed for participants",
+    submissionSaved: "Submission settings saved",
+    deleteMenu: "Delete…",
     published: "Published",
     draft: "Draft",
-    submissionActive: "Submission active",
-    infoPublished: "Info published to participants",
     publishInfo: "Publish info",
     unpublishInfo: "Hide info",
-    publishInfoTitle: "Participants who chose this challenge see the challenge info in their dashboard",
     publishInfoSuccess: "Challenge info published to participants",
     unpublishInfoSuccess: "Challenge info hidden from participants",
     labelInfoPublished: "Info for participants",
     infoNotPublished: "Not published",
-    deadlineBadge: (date: string) => `Due: ${date}`,
-    deadlineButtonTitle: "Set submission deadline",
     deadlineDialogTitle: "Submission deadline",
     deadlineDialogHint:
       "Participants accepted for this challenge see a countdown banner in their dashboard until the deadline.",
@@ -165,13 +237,8 @@ const copy = {
     deadlineRemoved: "Submission deadline removed",
     labelDeadline: "Submission deadline",
     allCategories: "All Categories",
-    of: "of",
-    challenges: "Challenges",
     noTitle: "(No Title)",
     noResults: "No challenges found.",
-    editPrizePlaceholder: "e.g. CHF 500",
-    editPrizeTitle: "Edit prize",
-    detailsTitle: "Details",
     unpublish: "Unpublish",
     publish: "Publish",
     close: "Close",
@@ -198,8 +265,6 @@ const copy = {
     publishSuccess: "Published",
     unpublishSuccess: "Set to draft",
     toggleError: "Failed to update",
-    prizeSaved: "Prize saved",
-    prizeSaveError: "Failed to save",
     deleted: "Deleted",
     deleteError: "Failed to delete",
     newChallenge: "New Challenge",
@@ -226,10 +291,14 @@ export function AdminChallengesPage() {
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterCategory, setFilterCategory] = useState<string>("all")
   const [detailChallenge, setDetailChallenge] = useState<Challenge | null>(null)
-  const [editingPrize, setEditingPrize] = useState<{ id: string; prize: string } | null>(null)
-  const [savingPrize, setSavingPrize] = useState(false)
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [togglingInfoId, setTogglingInfoId] = useState<string | null>(null)
+  const [editingSubmission, setEditingSubmission] = useState<{
+    id: string
+    wasEnabled: boolean
+    descriptionRequired: boolean
+  } | null>(null)
+  const [savingSubmission, setSavingSubmission] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   // value is in the "datetime-local" input format (local time, no timezone)
   const [editingDeadline, setEditingDeadline] = useState<{ id: string; value: string } | null>(null)
@@ -408,26 +477,45 @@ export function AdminChallengesPage() {
       minute: "2-digit"
     })
 
-  const savePrize = async () => {
-    if (!editingPrize) return
+  const formatDeadlineTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString(dateLocale, { hour: "2-digit", minute: "2-digit" })
+
+  const formatDeadlineDay = (iso: string) =>
+    new Date(iso).toLocaleDateString(dateLocale, { weekday: "short", day: "2-digit", month: "2-digit" })
+
+  const saveSubmission = async (enabled: boolean) => {
+    if (!editingSubmission) return
+    const { id, wasEnabled } = editingSubmission
+    // Closing the submission also drops the description requirement (mirrors the server)
+    const descriptionRequired = enabled && editingSubmission.descriptionRequired
     try {
-      setSavingPrize(true)
+      setSavingSubmission(true)
       const res = await fetch("/api/admin/challenges", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ id: editingPrize.id, prize: editingPrize.prize })
+        body: JSON.stringify({
+          id,
+          submissionEnabled: enabled,
+          submissionDescriptionRequired: descriptionRequired
+        })
       })
       if (!res.ok) throw new Error()
-      toast.success(text.prizeSaved)
-      setChallenges((prev) =>
-        prev.map((c) => (c.id === editingPrize.id ? { ...c, prize: editingPrize.prize || null } : c))
+      toast.success(
+        !enabled ? text.submissionClosed : wasEnabled ? text.submissionSaved : text.submissionOpened
       )
-      setEditingPrize(null)
+      setChallenges((prev) =>
+        prev.map((c) =>
+          c.id === id
+            ? { ...c, submission_enabled: enabled, submission_description_required: descriptionRequired }
+            : c
+        )
+      )
+      setEditingSubmission(null)
     } catch {
-      toast.error(text.prizeSaveError)
+      toast.error(text.toggleError)
     } finally {
-      setSavingPrize(false)
+      setSavingSubmission(false)
     }
   }
 
@@ -445,11 +533,22 @@ export function AdminChallengesPage() {
 
   const categories = Array.from(new Set(challenges.map((c) => c.category_name))).sort()
 
-  const filtered = challenges.filter((c) => {
-    if (filterStatus !== "all" && c.status !== filterStatus) return false
-    if (filterCategory !== "all" && c.category_name !== filterCategory) return false
-    return true
-  })
+  const inCategory = challenges.filter((c) => filterCategory === "all" || c.category_name === filterCategory)
+  const filtered = inCategory.filter((c) => filterStatus === "all" || c.status === filterStatus)
+  const publishedCount = challenges.filter((c) => c.status === "published").length
+
+  const statusFilters = [
+    { value: "all", label: text.filterAll, count: inCategory.length },
+    {
+      value: "published",
+      label: text.filterLive,
+      count: inCategory.filter((c) => c.status === "published").length
+    },
+    { value: "draft", label: text.filterDraft, count: inCategory.filter((c) => c.status === "draft").length }
+  ]
+
+  // Shared column template so header and rows stay aligned
+  const gridCols = "grid grid-cols-[minmax(0,2.6fr)_300px_150px_110px_120px] items-center gap-4 px-5 py-4"
 
   if (loading) {
     return (
@@ -463,210 +562,222 @@ export function AdminChallengesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold">{text.heading}</h1>
-          <p className="text-muted-foreground mt-2">
-            {isCategoryPartner ? text.subtitleCategory : text.subtitle} ({challenges.length} {text.total})
+          <h1 className="text-2xl font-semibold tracking-tight">{text.heading}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {text.summary(challenges.length, publishedCount)}
           </p>
         </div>
-        <Button onClick={handleNewChallenge} className="gap-2">
-          <Plus className="h-4 w-4" />
-          {text.newChallenge}
-        </Button>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="flex items-center gap-2">
-          <Filter className="text-muted-foreground h-4 w-4" />
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{text.allStatus}</SelectItem>
-              <SelectItem value="published">{text.published}</SelectItem>
-              <SelectItem value="draft">{text.draft}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        {!isCategoryPartner && (
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="w-52">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{text.allCategories}</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-        <div className="text-muted-foreground flex items-center text-sm">
-          {filtered.length} {text.of} {challenges.length} {text.challenges}
-        </div>
-      </div>
-
-      {/* Challenge list */}
-      <div className="space-y-3">
-        {filtered.length === 0 && <p className="text-muted-foreground py-12 text-center">{text.noResults}</p>}
-        {filtered.map((challenge) => (
-          <div
-            key={challenge.id}
-            className="bg-card border-border flex flex-col gap-3 rounded-xl border p-4 md:flex-row md:items-center">
-            <div className="shrink-0">
-              {challenge.status === "published" ? (
-                <CheckCircle className="h-5 w-5 text-green-500" />
-              ) : (
-                <XCircle className="text-muted-foreground h-5 w-5" />
-              )}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-semibold">
-                  {pickLocale(challenge.challenge_title, challenge.challenge_title_en) || text.noTitle}
-                </p>
-                <Badge variant={challenge.status === "published" ? "default" : "secondary"}>
-                  {challenge.status === "published" ? text.published : text.draft}
-                </Badge>
-                {challenge.submission_enabled && (
-                  <Badge variant="outline" className="border-green-600 text-green-600">
-                    {text.submissionActive}
-                  </Badge>
-                )}
-                {challenge.info_published && (
-                  <Badge variant="outline" className="border-primary text-primary">
-                    {text.infoPublished}
-                  </Badge>
-                )}
-                {challenge.submission_deadline && (
-                  <Badge variant="outline" className="gap-1">
-                    <AlarmClock className="h-3 w-3" />
-                    {text.deadlineBadge(formatDeadline(challenge.submission_deadline))}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-muted-foreground mt-0.5 text-sm">
-                {challenge.company_name} · {challenge.category_name} · {challenge.user_email}
-              </p>
-              {pickLocale(challenge.short_description, challenge.short_description_en) && (
-                <p className="text-muted-foreground mt-1 line-clamp-1 text-xs">
-                  {pickLocale(challenge.short_description, challenge.short_description_en)}
-                </p>
-              )}
-            </div>
-
-            {/* Prize inline edit */}
-            <div className="flex shrink-0 items-center gap-2">
-              <Trophy className="text-muted-foreground h-4 w-4 shrink-0" />
-              {editingPrize?.id === challenge.id ? (
-                <div className="flex items-center gap-1">
-                  <Input
-                    className="h-8 w-32 text-sm"
-                    value={editingPrize.prize}
-                    onChange={(e) => setEditingPrize({ ...editingPrize, prize: e.target.value })}
-                    placeholder={text.editPrizePlaceholder}
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") void savePrize()
-                      if (e.key === "Escape") setEditingPrize(null)
-                    }}
-                  />
-                  <Button size="sm" className="h-8" onClick={savePrize} disabled={savingPrize}>
-                    {savingPrize ? <Loader2 className="h-3 w-3 animate-spin" /> : "OK"}
-                  </Button>
-                  <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditingPrize(null)}>
-                    ✕
-                  </Button>
-                </div>
-              ) : (
-                <button
-                  className="text-muted-foreground hover:text-foreground min-w-[60px] text-left text-sm transition-colors"
-                  onClick={() => setEditingPrize({ id: challenge.id, prize: challenge.prize || "" })}
-                  title={text.editPrizeTitle}>
-                  {challenge.prize || <span className="opacity-50">—</span>}
-                </button>
-              )}
-            </div>
-
-            <div className="flex shrink-0 gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                title={text.detailsTitle}
-                onClick={() => setDetailChallenge(challenge)}>
-                <Eye className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                title={text.editChallenge}
-                onClick={() => handleEditChallenge(challenge)}>
-                <PenLine className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                title={text.deadlineButtonTitle}
-                onClick={() =>
-                  setEditingDeadline({
-                    id: challenge.id,
-                    value: challenge.submission_deadline ? toDatetimeLocal(challenge.submission_deadline) : ""
-                  })
-                }
-                className={challenge.submission_deadline ? "text-primary" : undefined}>
-                <AlarmClock className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={togglingId === challenge.id}
-                onClick={() => toggleStatus(challenge)}
-                className={
-                  challenge.status === "published"
-                    ? "text-muted-foreground hover:text-foreground"
-                    : "text-green-600 hover:text-green-700"
-                }>
-                {togglingId === challenge.id ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : challenge.status === "published" ? (
-                  text.unpublish
-                ) : (
-                  text.publish
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                title={text.publishInfoTitle}
-                disabled={togglingInfoId === challenge.id}
-                onClick={() => toggleInfoPublished(challenge)}
-                className={
-                  challenge.info_published
-                    ? "text-muted-foreground hover:text-foreground"
-                    : "text-primary hover:text-primary/80"
-                }>
-                {togglingInfoId === challenge.id ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : challenge.info_published ? (
-                  text.unpublishInfo
-                ) : (
-                  text.publishInfo
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-destructive"
-                onClick={() => setDeleteId(challenge.id)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
+        <div className="flex flex-wrap items-center gap-3">
+          {!isCategoryPartner && categories.length > 1 && (
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{text.allCategories}</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <div className="bg-muted inline-flex rounded-lg p-1">
+            {statusFilters.map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                aria-pressed={filterStatus === f.value}
+                onClick={() => setFilterStatus(f.value)}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm transition-colors",
+                  filterStatus === f.value
+                    ? "bg-background text-foreground font-medium shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}>
+                {f.label} <span className="tabular-nums">{f.count}</span>
+              </button>
+            ))}
           </div>
-        ))}
+          <Button onClick={handleNewChallenge} className="gap-2">
+            <Plus className="h-4 w-4" />
+            {text.newChallenge}
+          </Button>
+        </div>
+      </div>
+
+      {/* Challenge table */}
+      <div className="bg-card border-border overflow-x-auto rounded-[14px] border">
+        <div className="min-w-[960px]">
+          <div
+            className={cn(
+              gridCols,
+              "border-border text-muted-foreground border-b py-3 text-xs font-medium tracking-[0.04em] uppercase"
+            )}>
+            <span>{text.colChallenge}</span>
+            <span>{text.colStatus}</span>
+            <span>{text.colDeadline}</span>
+            <span className="text-right">{text.colPrize}</span>
+            <span />
+          </div>
+
+          {filtered.length === 0 && (
+            <p className="text-muted-foreground py-12 text-center">{text.noResults}</p>
+          )}
+
+          <div className="divide-border divide-y">
+            {filtered.map((challenge) => {
+              const title =
+                pickLocale(challenge.challenge_title, challenge.challenge_title_en) || text.noTitle
+              const description = pickLocale(challenge.short_description, challenge.short_description_en)
+              const isPublished = challenge.status === "published"
+              const isBusy = togglingId === challenge.id || togglingInfoId === challenge.id
+              const deadline = challenge.submission_deadline
+
+              return (
+                <div key={challenge.id} className={cn(gridCols, "hover:bg-muted/40 transition-colors")}>
+                  {/* Challenge */}
+                  <div className="min-w-0">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <p className="truncate text-[15px] font-semibold">{title}</p>
+                      <Badge variant="secondary" className="rounded-full">
+                        {challenge.category_name}
+                      </Badge>
+                    </div>
+                    {description && (
+                      <p className="text-muted-foreground mt-0.5 truncate text-[13px]">{description}</p>
+                    )}
+                  </div>
+
+                  {/* Status */}
+                  <div className="flex items-center gap-4 text-[13px]">
+                    <StatusIndicator
+                      active={isPublished}
+                      label={text.statusPublic}
+                      tooltip={isPublished ? text.tipPublicOn : text.tipPublicOff}
+                    />
+                    <StatusIndicator
+                      active={challenge.submission_enabled}
+                      label={text.statusSubmission}
+                      tooltip={
+                        !challenge.submission_enabled
+                          ? text.tipSubmissionOff
+                          : challenge.submission_description_required
+                            ? text.tipSubmissionOnDescription
+                            : text.tipSubmissionOn
+                      }
+                    />
+                    <StatusIndicator
+                      active={challenge.info_published}
+                      label={text.statusInfo}
+                      tooltip={challenge.info_published ? text.tipInfoOn : text.tipInfoOff}
+                    />
+                  </div>
+
+                  {/* Deadline */}
+                  <div className="text-[13px]">
+                    {!deadline ? (
+                      <span className="text-muted-foreground">{text.noDeadline}</span>
+                    ) : isToday(deadline) ? (
+                      <>
+                        <p className="font-medium text-amber-700 dark:text-amber-500">
+                          {text.today}, {formatDeadlineTime(deadline)}
+                        </p>
+                        <p className="text-muted-foreground">{formatDeadlineDay(deadline)}</p>
+                      </>
+                    ) : (
+                      <span>{formatDeadline(deadline)}</span>
+                    )}
+                  </div>
+
+                  {/* Prize */}
+                  <div className="text-right text-sm font-medium tabular-nums">
+                    {challenge.prize ? (
+                      formatPrize(challenge.prize)
+                    ) : (
+                      <span className="text-muted-foreground">–</span>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-end">
+                    <IconAction label={text.preview} onClick={() => setDetailChallenge(challenge)}>
+                      <Eye className="h-4 w-4" />
+                    </IconAction>
+                    <IconAction label={text.editChallenge} onClick={() => handleEditChallenge(challenge)}>
+                      <PenLine className="h-4 w-4" />
+                    </IconAction>
+                    <DropdownMenu modal={false}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={text.moreActions}
+                              className="text-muted-foreground hover:bg-muted hover:text-foreground data-[state=open]:bg-muted">
+                              {isBusy ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <MoreHorizontal className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </DropdownMenuTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent>{text.moreActions}</TooltipContent>
+                      </Tooltip>
+                      <DropdownMenuContent align="end" className="min-w-56 rounded-lg p-1.5">
+                        <DropdownMenuItem
+                          className={menuItemClass}
+                          disabled={togglingInfoId === challenge.id}
+                          onSelect={() => toggleInfoPublished(challenge)}>
+                          {challenge.info_published ? <FileX /> : <FileCheck />}
+                          {challenge.info_published ? text.unpublishInfo : text.publishInfo}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className={menuItemClass}
+                          onSelect={() =>
+                            setEditingDeadline({
+                              id: challenge.id,
+                              value: deadline ? toDatetimeLocal(deadline) : ""
+                            })
+                          }>
+                          <AlarmClock />
+                          {deadline ? text.changeDeadline : text.setDeadline}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className={menuItemClass}
+                          onSelect={() =>
+                            setEditingSubmission({
+                              id: challenge.id,
+                              wasEnabled: challenge.submission_enabled,
+                              descriptionRequired: challenge.submission_description_required
+                            })
+                          }>
+                          {challenge.submission_enabled ? <SquarePen /> : <SquarePlus />}
+                          {challenge.submission_enabled ? text.editSubmissionMenu : text.openSubmissionMenu}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className={menuItemClass}
+                          disabled={togglingId === challenge.id}
+                          onSelect={() => toggleStatus(challenge)}>
+                          {isPublished ? <GlobeOff /> : <Globe />}
+                          {isPublished ? text.unpublish : text.publish}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem variant="destructive" onSelect={() => setDeleteId(challenge.id)}>
+                          <Trash2 />
+                          {text.deleteMenu}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Challenge Editor Sheet */}
@@ -815,6 +926,54 @@ export function AdminChallengesPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Submission settings dialog */}
+      <Dialog open={!!editingSubmission} onOpenChange={(open) => !open && setEditingSubmission(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {editingSubmission?.wasEnabled ? text.editSubmissionTitle : text.openSubmissionTitle}
+            </DialogTitle>
+          </DialogHeader>
+          {editingSubmission && (
+            <div className="space-y-4">
+              <p className="text-muted-foreground text-sm">{text.submissionDialogHint}</p>
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="submission-description-required"
+                  className="mt-0.5"
+                  checked={editingSubmission.descriptionRequired}
+                  onCheckedChange={(checked) =>
+                    setEditingSubmission({ ...editingSubmission, descriptionRequired: checked === true })
+                  }
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="submission-description-required">{text.descriptionRequiredLabel}</Label>
+                  <p className="text-muted-foreground text-xs">{text.descriptionRequiredHint}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            {editingSubmission?.wasEnabled && (
+              <Button
+                variant="destructive"
+                className="sm:mr-auto"
+                disabled={savingSubmission}
+                onClick={() => saveSubmission(false)}>
+                {text.closeSubmission}
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setEditingSubmission(null)}>
+              {text.cancel}
+            </Button>
+            <Button disabled={savingSubmission} onClick={() => saveSubmission(true)}>
+              {savingSubmission && <Loader2 className="h-4 w-4 animate-spin" />}
+              {editingSubmission?.wasEnabled ? text.deadlineSave : text.openSubmission}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Submission deadline dialog */}
       <Dialog open={!!editingDeadline} onOpenChange={(open) => !open && setEditingDeadline(null)}>
         <DialogContent className="sm:max-w-lg">
@@ -885,6 +1044,69 @@ function toDatetimeLocal(iso: string) {
   const date = new Date(iso)
   const pad = (n: number) => String(n).padStart(2, "0")
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+// Neutral hover instead of the default accent (yellow) highlight
+const menuItemClass = "focus:bg-muted focus:text-foreground"
+
+function isToday(iso: string) {
+  return new Date(iso).toDateString() === new Date().toDateString()
+}
+
+// Formats plain numeric prizes as "CHF 1'000"; free-text prizes are shown as entered
+function formatPrize(prize: string) {
+  const raw = prize.trim()
+  const digits = raw.replace(/^CHF\s*/i, "").replace(/['’\s,]/g, "")
+  if (!/^\d+$/.test(digits)) return raw
+  return `CHF ${digits.replace(/\B(?=(\d{3})+(?!\d))/g, "'")}`
+}
+
+function StatusIndicator({ active, label, tooltip }: { active: boolean; label: string; tooltip: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          tabIndex={0}
+          className={cn(
+            "focus-visible:ring-ring/50 inline-flex cursor-default items-center gap-1.5 rounded-sm outline-none focus-visible:ring-2",
+            active ? "text-foreground" : "text-muted-foreground"
+          )}>
+          <span
+            aria-hidden
+            className={cn("size-2 shrink-0 rounded-full", active ? "bg-green-600" : "bg-red-600")}
+          />
+          {label}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+function IconAction({
+  label,
+  onClick,
+  children
+}: {
+  label: string
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={label}
+          onClick={onClick}
+          className="text-muted-foreground hover:bg-muted hover:text-foreground">
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  )
 }
 
 function Detail({ label, value }: { label: string; value: string | null | undefined }) {
