@@ -1,7 +1,11 @@
 import { query } from "@/lib/db"
 import { withAuth, type AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
-import type { ChallengeSubmissionRecord } from "@/lib/challenge-submission"
+import {
+  toParticipantChallengeInfo,
+  type ChallengeSubmissionRecord,
+  type ParticipantChallengeInfo
+} from "@/lib/challenge-submission"
 
 async function resolveCategoryId(userId: string): Promise<string | null> {
   const result = await query("SELECT category_id FROM registrations WHERE user_id = $1 LIMIT 1", [userId])
@@ -13,7 +17,7 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
     const userId = req.user?.userId ?? ""
     const categoryId = await resolveCategoryId(userId)
     if (!categoryId) {
-      return successResponse({ eligible: false, challenges: [], submission: null })
+      return successResponse({ eligible: false, challenges: [], submission: null, challengeInfo: null })
     }
 
     const challengesResult = await query(
@@ -24,16 +28,38 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
       [categoryId]
     )
 
-    if (challengesResult.rows.length === 0) {
-      return successResponse({ eligible: false, challenges: [], submission: null })
+    const submissionResult = await query(
+      `SELECT cs.*, sc.challenge_title, sc.challenge_title_en
+       FROM challenge_submissions cs
+       JOIN sponsor_challenges sc ON cs.challenge_id = sc.id
+       WHERE cs.user_id = $1`,
+      [userId]
+    )
+    const submission = (submissionResult.rows[0] as ChallengeSubmissionRecord) || null
+
+    if (challengesResult.rows.length === 0 && !submission) {
+      return successResponse({ eligible: false, challenges: [], submission: null, challengeInfo: null })
     }
 
-    const submissionResult = await query("SELECT * FROM challenge_submissions WHERE user_id = $1", [userId])
+    let challengeInfo: ParticipantChallengeInfo | null = null
+    if (submission?.status === "accepted") {
+      const infoResult = await query(
+        `SELECT sc.id, sc.challenge_title, sc.challenge_title_en, sc.short_description, sc.short_description_en,
+                sc.company_name, sc.difficulty, sc.team_size, sc.challenge_language, sc.prize, sc.challenge_data,
+                sp.company_name AS sponsor_name
+         FROM sponsor_challenges sc
+         LEFT JOIN sponsor_contacts sp ON sc.sponsor_id = sp.id
+         WHERE sc.id = $1 AND sc.info_published = true`,
+        [submission.challenge_id]
+      )
+      if (infoResult.rows[0]) challengeInfo = toParticipantChallengeInfo(infoResult.rows[0])
+    }
 
     return successResponse({
       eligible: true,
       challenges: challengesResult.rows,
-      submission: (submissionResult.rows[0] as ChallengeSubmissionRecord) || null
+      submission,
+      challengeInfo
     })
   } catch (error) {
     console.error("[Challenge Submissions] GET error:", error)
