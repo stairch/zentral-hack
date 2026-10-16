@@ -19,6 +19,12 @@ function getStage(remainingMs: number): DeadlineStage {
   return "calm"
 }
 
+const titleBlinkIntervalMs: Partial<Record<DeadlineStage, number>> = {
+  warning: 2000,
+  urgent: 1000,
+  critical: 1000
+}
+
 // Keep the "deadline passed" note visible for a while, then hide the banner
 const SHOW_OVER_FOR_MS = HOUR
 
@@ -62,6 +68,7 @@ const copy = {
     hours: "Std.",
     minutes: "Min.",
     seconds: "Sek.",
+    tabTitle: (remaining: string) => `⚠️ Deadline: ${remaining}`,
     message: (remaining: string, title: string, deadline: string) =>
       `Noch ${remaining} bis zur Abgabe von «${title}» – Deadline: ${deadline} Uhr`,
     over: (title: string, deadline: string) =>
@@ -72,6 +79,7 @@ const copy = {
     hours: "h",
     minutes: "min",
     seconds: "s",
+    tabTitle: (remaining: string) => `⚠️ Deadline: ${remaining}`,
     message: (remaining: string, title: string, deadline: string) =>
       `${remaining} left to submit “${title}” – Deadline: ${deadline}`,
     over: (title: string, deadline: string) =>
@@ -96,6 +104,25 @@ export function DeadlineBanner({ deadline, challengeTitle, language }: DeadlineB
 
   const deadlineDate = new Date(deadline)
   const remainingMs = deadlineDate.getTime() - now
+  const blinkIntervalMs = Number.isNaN(remainingMs) ? undefined : titleBlinkIntervalMs[getStage(remainingMs)]
+
+  useEffect(() => {
+    if (!blinkIntervalMs) return
+    const originalTitle = document.title
+    const deadlineMs = new Date(deadline).getTime()
+    let showAlert = false
+    const interval = setInterval(() => {
+      showAlert = !showAlert
+      document.title = showAlert
+        ? copy[language].tabTitle(formatClock(deadlineMs - Date.now()))
+        : originalTitle
+    }, blinkIntervalMs)
+    return () => {
+      clearInterval(interval)
+      document.title = originalTitle
+    }
+  }, [blinkIntervalMs, deadline, language])
+
   if (Number.isNaN(remainingMs) || remainingMs < -SHOW_OVER_FOR_MS) return null
 
   const stage = getStage(remainingMs)
@@ -142,6 +169,12 @@ export function DeadlineBanner({ deadline, challengeTitle, language }: DeadlineB
       </div>
     </div>
   )
+}
+
+function formatClock(ms: number) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${Math.floor(totalSeconds / 3600)} h ${pad(Math.floor((totalSeconds % 3600) / 60))} min`
 }
 
 function formatRemaining(ms: number, text: (typeof copy)[keyof typeof copy]) {

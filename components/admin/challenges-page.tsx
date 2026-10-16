@@ -307,7 +307,7 @@ export function AdminChallengesPage() {
         const cat = (data.data?.categories || []).find((c: { id: string }) => c.id === user.categoryId)
         if (cat) setEditorCategory({ id: cat.id, name: cat.name, slug: cat.slug })
       })
-      .catch(() => { })
+      .catch(() => {})
   }, [isCategoryPartner, challenges, editorCategory, user?.categoryId])
 
   const openEditor = (category: CategoryInfo, challengeId: string | null) => {
