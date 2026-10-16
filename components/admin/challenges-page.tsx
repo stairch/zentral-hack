@@ -4,10 +4,22 @@ import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Loader2, Trash2, Eye, Trophy, CheckCircle, XCircle, Filter, PenLine, Plus } from "lucide-react"
+import {
+  Loader2,
+  Trash2,
+  Eye,
+  Trophy,
+  CheckCircle,
+  XCircle,
+  Filter,
+  PenLine,
+  Plus,
+  AlarmClock
+} from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
@@ -31,6 +43,7 @@ interface Challenge {
   sponsor_id: string | null
   submission_enabled: boolean
   info_published: boolean
+  submission_deadline: string | null
   sponsor_company_name: string | null
   published_at: string | null
   created_at: string
@@ -68,6 +81,17 @@ const copy = {
     unpublishInfoSuccess: "Challenge-Infos für Teilnehmer verborgen",
     labelInfoPublished: "Infos für Teilnehmer",
     infoNotPublished: "Nicht veröffentlicht",
+    deadlineBadge: (date: string) => `Abgabe: ${date}`,
+    deadlineButtonTitle: "Abgabedeadline festlegen",
+    deadlineDialogTitle: "Abgabedeadline",
+    deadlineDialogHint:
+      "Teilnehmer, deren Bewerbung für diese Challenge angenommen wurde, sehen bis zur Deadline einen Countdown-Banner in ihrem Dashboard.",
+    deadlineLabel: "Datum und Uhrzeit",
+    deadlineRemove: "Deadline entfernen",
+    deadlineSave: "Speichern",
+    deadlineSaved: "Abgabedeadline gespeichert",
+    deadlineRemoved: "Abgabedeadline entfernt",
+    labelDeadline: "Abgabedeadline",
     allCategories: "Alle Kategorien",
     of: "von",
     challenges: "Challenges",
@@ -129,6 +153,17 @@ const copy = {
     unpublishInfoSuccess: "Challenge info hidden from participants",
     labelInfoPublished: "Info for participants",
     infoNotPublished: "Not published",
+    deadlineBadge: (date: string) => `Due: ${date}`,
+    deadlineButtonTitle: "Set submission deadline",
+    deadlineDialogTitle: "Submission deadline",
+    deadlineDialogHint:
+      "Participants accepted for this challenge see a countdown banner in their dashboard until the deadline.",
+    deadlineLabel: "Date and time",
+    deadlineRemove: "Remove deadline",
+    deadlineSave: "Save",
+    deadlineSaved: "Submission deadline saved",
+    deadlineRemoved: "Submission deadline removed",
+    labelDeadline: "Submission deadline",
     allCategories: "All Categories",
     of: "of",
     challenges: "Challenges",
@@ -196,6 +231,9 @@ export function AdminChallengesPage() {
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [togglingInfoId, setTogglingInfoId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  // value is in the "datetime-local" input format (local time, no timezone)
+  const [editingDeadline, setEditingDeadline] = useState<{ id: string; value: string } | null>(null)
+  const [savingDeadline, setSavingDeadline] = useState(false)
 
   // Editor sheet state
   const [editorOpen, setEditorOpen] = useState(false)
@@ -269,7 +307,7 @@ export function AdminChallengesPage() {
         const cat = (data.data?.categories || []).find((c: { id: string }) => c.id === user.categoryId)
         if (cat) setEditorCategory({ id: cat.id, name: cat.name, slug: cat.slug })
       })
-      .catch(() => {})
+      .catch(() => { })
   }, [isCategoryPartner, challenges, editorCategory, user?.categoryId])
 
   const openEditor = (category: CategoryInfo, challengeId: string | null) => {
@@ -336,6 +374,39 @@ export function AdminChallengesPage() {
       setTogglingInfoId(null)
     }
   }
+
+  const saveDeadline = async (value: string | null) => {
+    if (!editingDeadline) return
+    const submissionDeadline = value ? new Date(value).toISOString() : null
+    try {
+      setSavingDeadline(true)
+      const res = await fetch("/api/admin/challenges", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id: editingDeadline.id, submissionDeadline })
+      })
+      if (!res.ok) throw new Error()
+      toast.success(submissionDeadline ? text.deadlineSaved : text.deadlineRemoved)
+      setChallenges((prev) =>
+        prev.map((c) => (c.id === editingDeadline.id ? { ...c, submission_deadline: submissionDeadline } : c))
+      )
+      setEditingDeadline(null)
+    } catch {
+      toast.error(text.toggleError)
+    } finally {
+      setSavingDeadline(false)
+    }
+  }
+
+  const formatDeadline = (iso: string) =>
+    new Date(iso).toLocaleString(dateLocale, {
+      weekday: "short",
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    })
 
   const savePrize = async () => {
     if (!editingPrize) return
@@ -471,6 +542,12 @@ export function AdminChallengesPage() {
                     {text.infoPublished}
                   </Badge>
                 )}
+                {challenge.submission_deadline && (
+                  <Badge variant="outline" className="gap-1">
+                    <AlarmClock className="h-3 w-3" />
+                    {text.deadlineBadge(formatDeadline(challenge.submission_deadline))}
+                  </Badge>
+                )}
               </div>
               <p className="text-muted-foreground mt-0.5 text-sm">
                 {challenge.company_name} · {challenge.category_name} · {challenge.user_email}
@@ -529,6 +606,19 @@ export function AdminChallengesPage() {
                 title={text.editChallenge}
                 onClick={() => handleEditChallenge(challenge)}>
                 <PenLine className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                title={text.deadlineButtonTitle}
+                onClick={() =>
+                  setEditingDeadline({
+                    id: challenge.id,
+                    value: challenge.submission_deadline ? toDatetimeLocal(challenge.submission_deadline) : ""
+                  })
+                }
+                className={challenge.submission_deadline ? "text-primary" : undefined}>
+                <AlarmClock className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
@@ -651,7 +741,7 @@ export function AdminChallengesPage() {
 
       {/* Detail dialog */}
       <Dialog open={!!detailChallenge} onOpenChange={(open) => !open && setDetailChallenge(null)}>
-        <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {pickLocale(detailChallenge?.challenge_title, detailChallenge?.challenge_title_en) ||
@@ -677,6 +767,14 @@ export function AdminChallengesPage() {
                 <Detail
                   label={text.labelInfoPublished}
                   value={detailChallenge.info_published ? text.published : text.infoNotPublished}
+                />
+                <Detail
+                  label={text.labelDeadline}
+                  value={
+                    detailChallenge.submission_deadline
+                      ? formatDeadline(detailChallenge.submission_deadline)
+                      : null
+                  }
                 />
                 <Detail
                   label={text.labelSubmitted}
@@ -717,6 +815,49 @@ export function AdminChallengesPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Submission deadline dialog */}
+      <Dialog open={!!editingDeadline} onOpenChange={(open) => !open && setEditingDeadline(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{text.deadlineDialogTitle}</DialogTitle>
+          </DialogHeader>
+          {editingDeadline && (
+            <div className="space-y-3">
+              <p className="text-muted-foreground text-sm">{text.deadlineDialogHint}</p>
+              <div className="space-y-1.5">
+                <Label htmlFor="submission-deadline">{text.deadlineLabel}</Label>
+                <Input
+                  id="submission-deadline"
+                  type="datetime-local"
+                  value={editingDeadline.value}
+                  onChange={(e) => setEditingDeadline({ ...editingDeadline, value: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            {challenges.find((c) => c.id === editingDeadline?.id)?.submission_deadline && (
+              <Button
+                variant="outline"
+                className="text-destructive sm:mr-auto"
+                disabled={savingDeadline}
+                onClick={() => saveDeadline(null)}>
+                {text.deadlineRemove}
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setEditingDeadline(null)}>
+              {text.cancel}
+            </Button>
+            <Button
+              disabled={savingDeadline || !editingDeadline?.value}
+              onClick={() => saveDeadline(editingDeadline?.value || null)}>
+              {savingDeadline && <Loader2 className="h-4 w-4 animate-spin" />}
+              {text.deadlineSave}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete confirmation */}
       <Dialog open={!!deleteId} onOpenChange={(open: boolean) => !open && setDeleteId(null)}>
         <DialogContent className="sm:max-w-sm">
@@ -738,6 +879,12 @@ export function AdminChallengesPage() {
       </Dialog>
     </div>
   )
+}
+
+function toDatetimeLocal(iso: string) {
+  const date = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
 function Detail({ label, value }: { label: string; value: string | null | undefined }) {

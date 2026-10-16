@@ -30,6 +30,7 @@ import { SponsorChallengeEditor } from "@/components/dashboard/sponsor-challenge
 import { AccountSettings } from "@/components/dashboard/account-settings"
 import { ProfileSection } from "@/components/dashboard/profile-section"
 import { ChallengeInfo } from "@/components/dashboard/challenge-info"
+import { DeadlineBanner } from "@/components/dashboard/deadline-banner"
 import { type SponsorChallengeRecord } from "@/lib/sponsor-challenge"
 import { type ChallengeSubmissionRecord, type ParticipantChallengeInfo } from "@/lib/challenge-submission"
 import ComingSoon from "../ui/coming-soon"
@@ -162,6 +163,14 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       setLoadingSubmission(false)
     }
   }, [user?.role])
+
+  // Keep the submission deadline current during the event, admins may set or move it at any time
+  const isAcceptedForChallenge = mySubmission?.status === "accepted"
+  useEffect(() => {
+    if (!isAcceptedForChallenge) return
+    const interval = setInterval(() => void fetchChallengeSubmission({ silent: true }), 5 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [isAcceptedForChallenge])
 
   const t = {
     de: {
@@ -613,6 +622,14 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
           </div>
         </div>
       </header>
+
+      {mySubmission?.status === "accepted" && mySubmission.submission_deadline && (
+        <DeadlineBanner
+          deadline={mySubmission.submission_deadline}
+          challengeTitle={pickChallengeTitle(mySubmission.challenge_title, mySubmission.challenge_title_en)}
+          language={language}
+        />
+      )}
 
       <div className="container mx-auto px-4 py-8">
         {/* Welcome */}
