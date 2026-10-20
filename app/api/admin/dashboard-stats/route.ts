@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
       query(
         `SELECT COUNT(*) as count
          FROM users u
-         WHERE u.email_verified = true AND u.role = 'user'`
+         WHERE u.email_verified = true
+           AND u.role = 'user'
+           AND EXISTS (SELECT 1 FROM registrations r WHERE r.user_id = u.id)`
       ),
       getAllSubscribers(),
       query("SELECT COUNT(*) as count FROM teams"),

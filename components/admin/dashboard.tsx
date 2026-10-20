@@ -17,7 +17,7 @@ const copy = {
   de: {
     heading: "ADMIN DASHBOARD",
     subtitle: "Übersicht über alle Anmeldungen und Aktivitäten",
-    registrations: "Anmeldungen",
+    registrations: "Teilnehmer",
     newsletter: "Newsletter",
     teams: "Teams",
     documents: "Dokumente",
@@ -39,7 +39,7 @@ const copy = {
   en: {
     heading: "ADMIN DASHBOARD",
     subtitle: "Overview of all registrations and activities",
-    registrations: "Registrations",
+    registrations: "Participants",
     newsletter: "Newsletter",
     teams: "Teams",
     documents: "Documents",
