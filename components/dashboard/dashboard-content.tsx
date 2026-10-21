@@ -32,6 +32,7 @@ import { ProfileSection } from "@/components/dashboard/profile-section"
 import { type SponsorChallengeRecord } from "@/lib/sponsor-challenge"
 import { type ChallengeSubmissionRecord } from "@/lib/challenge-submission"
 import { TeamChat } from "@/components/chat/team-chat"
+import { ChallengeDocumentsList } from "@/components/dashboard/challenge-documents-list"
 import { Input } from "@/components/ui/input"
 import ComingSoon from "../ui/coming-soon"
 import { Urls } from "@/lib/constants"
@@ -972,6 +973,9 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                           </SelectContent>
                         </Select>
                       </div>
+                      {selectedSubmissionChallengeId && (
+                        <ChallengeDocumentsList challengeId={selectedSubmissionChallengeId} />
+                      )}
                       {submissionDescriptionRequired && (
                         <div className="space-y-1.5">
                           <Label>{t.submissionDescriptionRequiredLabel}</Label>

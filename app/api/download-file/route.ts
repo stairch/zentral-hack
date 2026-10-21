@@ -26,13 +26,47 @@ export async function GET(request: NextRequest) {
       return new NextResponse(JSON.stringify({ error: "fileId parameter required" }), { status: 400 })
     }
 
-    const type = request.nextUrl.searchParams.get("type") // "document" | "chat" | null (team file)
+    const type = request.nextUrl.searchParams.get("type") // "document" | "chat" | "challenge" | null (team file)
 
     let blobUrl: string
     let originalName: string
     let mimeType: string
 
-    if (type === "chat") {
+    if (type === "challenge") {
+      const result = await query(
+        "SELECT cd.name, cd.file_path, sc.category_id FROM challenge_documents cd JOIN sponsor_challenges sc ON cd.challenge_id = sc.id WHERE cd.id = $1",
+        [fileId]
+      )
+      if (result.rows.length === 0) {
+        return new NextResponse(JSON.stringify({ error: "File not found" }), { status: 404 })
+      }
+
+      const doc = result.rows[0]
+
+      if (payload.role !== "admin" && payload.role !== "category_partner") {
+        const regCheck = await query("SELECT id FROM registrations WHERE user_id = $1 AND category_id = $2", [
+          payload.userId,
+          doc.category_id
+        ])
+        const sponsorCheck = await query("SELECT id FROM users WHERE id = $1 AND category_id = $2", [
+          payload.userId,
+          doc.category_id
+        ])
+        if (regCheck.rows.length === 0 && sponsorCheck.rows.length === 0) {
+          return new NextResponse(JSON.stringify({ error: "Access denied" }), { status: 403 })
+        }
+      } else if (payload.role === "category_partner" && doc.category_id !== payload.categoryId) {
+        return new NextResponse(JSON.stringify({ error: "Access denied" }), { status: 403 })
+      }
+
+      blobUrl = doc.file_path
+      originalName = doc.name
+      if (blobUrl && !path.extname(originalName)) {
+        const ext = path.extname(new URL(blobUrl).pathname)
+        if (ext) originalName += ext
+      }
+      mimeType = "application/octet-stream"
+    } else if (type === "chat") {
       const result = await query(
         `SELECT team_id, attachment_url, attachment_name, attachment_mime
          FROM team_chat_messages

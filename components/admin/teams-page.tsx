@@ -28,12 +28,15 @@ import {
   Pencil,
   Upload,
   Download,
-  FileText
+  FileText,
+  Trophy
 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+
+const NO_CHALLENGE_SENTINEL = "__none__"
 
 interface Team {
   id: string
@@ -41,8 +44,17 @@ interface Team {
   description?: string
   category_id: string
   category_name?: string
+  challenge_id?: string | null
+  challenge_title?: string | null
+  challenge_title_en?: string | null
   member_count?: number
   created_at: string
+}
+
+interface ChallengeOption {
+  id: string
+  challenge_title: string | null
+  challenge_title_en: string | null
 }
 
 interface TeamMember {
@@ -78,6 +90,10 @@ const copy = {
     teamNamePlaceholder: "z.B. Team Alpha",
     category: "Kategorie",
     categoryPlaceholder: "Wähle eine Kategorie",
+    challengeLabel: "Challenge (optional)",
+    challengePlaceholder: "Challenge wählen",
+    noChallengeOption: "Keine Challenge",
+    assignedChallenge: "Challenge",
     description: "Beschreibung (optional)",
     descPlaceholder: "Teambeschreibung...",
     createTeam: "Team erstellen",
@@ -147,6 +163,10 @@ const copy = {
     teamNamePlaceholder: "e.g. Team Alpha",
     category: "Category",
     categoryPlaceholder: "Select a category",
+    challengeLabel: "Challenge (optional)",
+    challengePlaceholder: "Select challenge",
+    noChallengeOption: "No challenge",
+    assignedChallenge: "Challenge",
     description: "Description (optional)",
     descPlaceholder: "Team description...",
     createTeam: "Create team",
@@ -220,7 +240,13 @@ export function TeamsAdminPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
-  const [newTeam, setNewTeam] = useState({ name: "", description: "", categoryId: user?.categoryId || "" })
+  const [newTeam, setNewTeam] = useState({
+    name: "",
+    description: "",
+    categoryId: user?.categoryId || "",
+    challengeId: NO_CHALLENGE_SENTINEL
+  })
+  const [challengeOptions, setChallengeOptions] = useState<ChallengeOption[]>([])
 
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
   const [members, setMembers] = useState<TeamMember[]>([])
@@ -242,6 +268,7 @@ export function TeamsAdminPage() {
   const [editTeamOpen, setEditTeamOpen] = useState(false)
   const [editTeamName, setEditTeamName] = useState("")
   const [editTeamDescription, setEditTeamDescription] = useState("")
+  const [editTeamChallengeId, setEditTeamChallengeId] = useState(NO_CHALLENGE_SENTINEL)
   const [savingTeamEdit, setSavingTeamEdit] = useState(false)
   const [teamFiles, setTeamFiles] = useState<TeamFile[]>([])
   const [loadingFiles, setLoadingFiles] = useState(false)
@@ -291,7 +318,8 @@ export function TeamsAdminPage() {
         body: JSON.stringify({
           name: newTeam.name,
           description: newTeam.description || null,
-          categoryId: newTeam.categoryId
+          categoryId: newTeam.categoryId,
+          challengeId: newTeam.challengeId === NO_CHALLENGE_SENTINEL ? null : newTeam.challengeId
         })
       })
       if (!res.ok) {
@@ -300,7 +328,7 @@ export function TeamsAdminPage() {
       }
       const data = await res.json()
       setTeams([data.data.team, ...teams])
-      setNewTeam({ name: "", description: "", categoryId: "" })
+      setNewTeam({ name: "", description: "", categoryId: "", challengeId: NO_CHALLENGE_SENTINEL })
       setDialogOpen(false)
       toast.success(text.createSuccess)
     } catch (error) {
@@ -412,10 +440,25 @@ export function TeamsAdminPage() {
     }
   }
 
+  const fetchChallengeOptions = async (categoryId: string) => {
+    try {
+      const res = await fetch(`/api/admin/challenges?category=${categoryId}&status=published`, {
+        credentials: "include"
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      setChallengeOptions(data.data?.challenges || [])
+    } catch {
+      // non-critical
+    }
+  }
+
   const openEditTeam = () => {
     if (!selectedTeam) return
     setEditTeamName(selectedTeam.name)
     setEditTeamDescription(selectedTeam.description || "")
+    setEditTeamChallengeId(selectedTeam.challenge_id || NO_CHALLENGE_SENTINEL)
+    void fetchChallengeOptions(selectedTeam.category_id)
     setEditTeamOpen(true)
   }
 
@@ -430,12 +473,19 @@ export function TeamsAdminPage() {
         body: JSON.stringify({
           id: selectedTeam.id,
           name: editTeamName.trim(),
-          description: editTeamDescription.trim() || null
+          description: editTeamDescription.trim() || null,
+          challengeId: editTeamChallengeId === NO_CHALLENGE_SENTINEL ? null : editTeamChallengeId
         })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || text.editTeamError)
-      const updated = { ...selectedTeam, name: data.data.team.name, description: data.data.team.description }
+      const updated = {
+        ...selectedTeam,
+        name: data.data.team.name,
+        description: data.data.team.description,
+        challenge_id: data.data.team.challenge_id,
+        challenge_title: challengeOptions.find((c) => c.id === data.data.team.challenge_id)?.challenge_title
+      }
       setSelectedTeam(updated)
       setTeams((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
       setEditTeamOpen(false)
@@ -580,6 +630,12 @@ export function TeamsAdminPage() {
             </div>
             <p className="text-muted-foreground">
               {selectedTeam.category_name} • {members.length} {text.members}
+              {selectedTeam.challenge_title && (
+                <>
+                  {" "}
+                  • {text.assignedChallenge}: {selectedTeam.challenge_title}
+                </>
+              )}
             </p>
           </div>
           <Dialog open={editTeamOpen} onOpenChange={setEditTeamOpen}>
@@ -604,6 +660,22 @@ export function TeamsAdminPage() {
                     onChange={(e) => setEditTeamDescription(e.target.value)}
                     rows={3}
                   />
+                </div>
+                <div>
+                  <Label htmlFor="edit-team-challenge">{text.challengeLabel}</Label>
+                  <Select value={editTeamChallengeId} onValueChange={setEditTeamChallengeId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={text.challengePlaceholder} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NO_CHALLENGE_SENTINEL}>{text.noChallengeOption}</SelectItem>
+                      {challengeOptions.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.challenge_title || c.challenge_title_en || c.id}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button
                   onClick={handleSaveTeamEdit}
@@ -854,7 +926,11 @@ export function TeamsAdminPage() {
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-violet hover:bg-violet/90 gap-2">
+            <Button
+              className="bg-violet hover:bg-violet/90 gap-2"
+              onClick={() => {
+                if (isCategoryPartner && user?.categoryId) void fetchChallengeOptions(user.categoryId)
+              }}>
               <Plus className="h-4 w-4" />
               {text.newTeam}
             </Button>
@@ -879,7 +955,10 @@ export function TeamsAdminPage() {
                   <Label htmlFor="category">{text.category}</Label>
                   <Select
                     value={newTeam.categoryId}
-                    onValueChange={(val) => setNewTeam({ ...newTeam, categoryId: val })}>
+                    onValueChange={(val) => {
+                      setNewTeam({ ...newTeam, categoryId: val, challengeId: NO_CHALLENGE_SENTINEL })
+                      void fetchChallengeOptions(val)
+                    }}>
                     <SelectTrigger>
                       <SelectValue placeholder={text.categoryPlaceholder} />
                     </SelectTrigger>
@@ -893,6 +972,24 @@ export function TeamsAdminPage() {
                   </Select>
                 </div>
               )}
+              <div>
+                <Label htmlFor="new-team-challenge">{text.challengeLabel}</Label>
+                <Select
+                  value={newTeam.challengeId}
+                  onValueChange={(val) => setNewTeam({ ...newTeam, challengeId: val })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={text.challengePlaceholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_CHALLENGE_SENTINEL}>{text.noChallengeOption}</SelectItem>
+                    {challengeOptions.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.challenge_title || c.challenge_title_en || c.id}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label htmlFor="description">{text.description}</Label>
                 <Textarea
@@ -935,6 +1032,12 @@ export function TeamsAdminPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {team.description && <p className="text-muted-foreground text-sm">{team.description}</p>}
+                {team.challenge_title && (
+                  <Badge variant="outline" className="gap-1">
+                    <Trophy className="h-3 w-3" />
+                    {team.challenge_title}
+                  </Badge>
+                )}
                 <div className="text-muted-foreground flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4" />
                   {text.created} {new Date(team.created_at).toLocaleDateString(dateLocale)}

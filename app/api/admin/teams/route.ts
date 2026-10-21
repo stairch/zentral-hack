@@ -20,15 +20,17 @@ async function handleGet(req: AuthenticatedRequest) {
     const params = categoryId ? [categoryId] : []
 
     const result = await query(
-      `SELECT teams.id, teams.name, teams.description, teams.category_id,
+      `SELECT teams.id, teams.name, teams.description, teams.category_id, teams.challenge_id,
               c.name as category_name, c.color as category_color,
+              sc.challenge_title, sc.challenge_title_en,
               COUNT(DISTINCT team_members.id) as member_count,
               teams.created_at
        FROM teams
        LEFT JOIN team_members ON teams.id = team_members.team_id
        JOIN categories c ON teams.category_id = c.id
+       LEFT JOIN sponsor_challenges sc ON teams.challenge_id = sc.id
        ${filter}
-       GROUP BY teams.id, c.name, c.color
+       GROUP BY teams.id, c.name, c.color, sc.challenge_title, sc.challenge_title_en
        ORDER BY teams.created_at DESC`,
       params
     )
@@ -40,6 +42,19 @@ async function handleGet(req: AuthenticatedRequest) {
   }
 }
 
+async function resolveChallengeId(
+  challengeId: unknown,
+  categoryId: string
+): Promise<{ ok: true; challengeId: string | null } | { ok: false }> {
+  if (!challengeId) return { ok: true, challengeId: null }
+  const check = await query("SELECT id FROM sponsor_challenges WHERE id = $1 AND category_id = $2", [
+    String(challengeId),
+    categoryId
+  ])
+  if (check.rows.length === 0) return { ok: false }
+  return { ok: true, challengeId: String(challengeId) }
+}
+
 async function handlePost(req: AuthenticatedRequest) {
   try {
     const showTeams = await adminTeamsFlag()
@@ -48,7 +63,7 @@ async function handlePost(req: AuthenticatedRequest) {
     }
 
     const body = await req.json()
-    const { name, description, categoryId } = body
+    const { name, description, categoryId, challengeId } = body
 
     if (!name || !categoryId) {
       return validationError("Name and category required")
@@ -58,12 +73,15 @@ async function handlePost(req: AuthenticatedRequest) {
       return validationError("Cannot create teams in other categories")
     }
 
+    const resolvedChallenge = await resolveChallengeId(challengeId, categoryId)
+    if (!resolvedChallenge.ok) return validationError("Challenge not found in this category")
+
     const catResult = await query("SELECT name FROM categories WHERE id = $1", [categoryId])
     const categoryName = catResult.rows[0]?.name || ""
 
     const result = await query(
-      "INSERT INTO teams (name, description, category_id, created_by) VALUES ($1, $2, $3, $4) RETURNING id, name, description, category_id, created_at",
-      [name, description || null, categoryId, req.user?.userId ?? null]
+      "INSERT INTO teams (name, description, category_id, challenge_id, created_by) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, description, category_id, challenge_id, created_at",
+      [name, description || null, categoryId, resolvedChallenge.challengeId, req.user?.userId ?? null]
     )
 
     return successResponse(
@@ -86,24 +104,36 @@ async function handlePut(req: AuthenticatedRequest) {
     }
 
     const body = await req.json()
-    const { id, name, description } = body
+    const { id, name, description, challengeId } = body
 
     if (!id || !name) {
       return validationError("ID and name required")
     }
 
-    if (req.user?.role === "category_partner") {
-      const teamCheck = await query("SELECT category_id FROM teams WHERE id = $1", [id])
-      if (teamCheck.rows.length === 0) return validationError("Team not found")
-      if (teamCheck.rows[0].category_id !== req.user.categoryId) {
-        return validationError("Cannot edit teams from other categories")
-      }
+    const teamCheck = await query("SELECT category_id FROM teams WHERE id = $1", [id])
+    if (teamCheck.rows.length === 0) return validationError("Team not found")
+
+    if (req.user?.role === "category_partner" && teamCheck.rows[0].category_id !== req.user.categoryId) {
+      return validationError("Cannot edit teams from other categories")
     }
 
-    const result = await query(
-      "UPDATE teams SET name = $1, description = $2, updated_at = NOW() WHERE id = $3 RETURNING id, name, description, category_id",
-      [name, description || null, id]
-    )
+    // challengeId omitted entirely = leave the existing assignment untouched;
+    // challengeId explicitly null/"" = clear it; a real id = reassign (validated below).
+    let result
+    if (challengeId !== undefined) {
+      const resolvedChallenge = await resolveChallengeId(challengeId, teamCheck.rows[0].category_id)
+      if (!resolvedChallenge.ok) return validationError("Challenge not found in this category")
+
+      result = await query(
+        "UPDATE teams SET name = $1, description = $2, challenge_id = $3, updated_at = NOW() WHERE id = $4 RETURNING id, name, description, category_id, challenge_id",
+        [name, description || null, resolvedChallenge.challengeId, id]
+      )
+    } else {
+      result = await query(
+        "UPDATE teams SET name = $1, description = $2, updated_at = NOW() WHERE id = $3 RETURNING id, name, description, category_id, challenge_id",
+        [name, description || null, id]
+      )
+    }
 
     if (!result.rows[0]) return validationError("Team not found")
 
