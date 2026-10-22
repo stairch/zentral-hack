@@ -24,3 +24,66 @@ export async function hasTeamAccess(
 
   return false
 }
+
+export async function isTeamMember(userId: string): Promise<boolean> {
+  const result = await query("SELECT 1 FROM team_members WHERE user_id = $1 LIMIT 1", [userId])
+  return result.rows.length > 0
+}
+
+// A participant's category follows their team. A challenge submission belongs to the old
+// category's challenges, so it is withdrawn when the category actually changes.
+export async function syncParticipantCategoryToTeam(userId: string, categoryId: string): Promise<void> {
+  const registration = await query("SELECT category_id FROM registrations WHERE user_id = $1", [userId])
+  const previousCategoryId: string | undefined = registration.rows[0]?.category_id
+
+  if (!registration.rows[0]) {
+    await query(
+      `INSERT INTO registrations (user_id, category_id, status, confirmation_sent)
+       VALUES ($1, $2, 'confirmed', false)`,
+      [userId, categoryId]
+    )
+  } else if (previousCategoryId !== categoryId) {
+    await query("UPDATE registrations SET category_id = $1, updated_at = NOW() WHERE user_id = $2", [
+      categoryId,
+      userId
+    ])
+  }
+
+  await query("UPDATE users SET category_id = $1 WHERE id = $2", [categoryId, userId])
+
+  if (previousCategoryId && previousCategoryId !== categoryId) {
+    await query("DELETE FROM challenge_submissions WHERE user_id = $1", [userId])
+  }
+}
+
+// Deadline of the team's challenge; teams without an assigned challenge fall back to the
+// earliest deadline of a challenge one of their members has been accepted for
+export async function getTeamSubmissionDeadline(teamId: string): Promise<string | null> {
+  const result = await query(
+    `SELECT CASE
+              WHEN t.challenge_id IS NOT NULL THEN sc.submission_deadline
+              ELSE (
+                SELECT MIN(msc.submission_deadline)
+                FROM team_members tm
+                JOIN challenge_submissions cs ON cs.user_id = tm.user_id AND cs.status = 'accepted'
+                JOIN sponsor_challenges msc ON msc.id = cs.challenge_id
+                WHERE tm.team_id = t.id
+              )
+            END AS submission_deadline
+     FROM teams t
+     LEFT JOIN sponsor_challenges sc ON sc.id = t.challenge_id
+     WHERE t.id = $1`,
+    [teamId]
+  )
+  const deadline = result.rows[0]?.submission_deadline
+  return deadline ? new Date(deadline).toISOString() : null
+}
+
+// Admins and category partners may still fix a team's submission after the deadline
+export async function isTeamSubmissionClosed(teamId: string, role: string | undefined): Promise<boolean> {
+  if (role === "admin" || role === "category_partner") return false
+  const deadline = await getTeamSubmissionDeadline(teamId)
+  return !!deadline && new Date(deadline).getTime() <= Date.now()
+}
+
+export const SUBMISSION_CLOSED_ERROR = "Die Abgabefrist ist abgelaufen, Änderungen sind nicht mehr möglich"

@@ -4,7 +4,12 @@ import { query } from "@/lib/db"
 import { successResponse, serverError } from "@/lib/api"
 import { verifyJWT } from "@/lib/auth"
 import { validateFileUpload, generateSecureFilename } from "@/lib/file-upload"
-import { hasTeamAccess } from "@/lib/team-access"
+import {
+  getTeamSubmissionDeadline,
+  hasTeamAccess,
+  isTeamSubmissionClosed,
+  SUBMISSION_CLOSED_ERROR
+} from "@/lib/team-access"
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,7 +40,11 @@ export async function GET(request: NextRequest) {
       [teamId]
     )
 
-    return successResponse({ files: result.rows })
+    const submissionDeadline = await getTeamSubmissionDeadline(teamId)
+    // Staff can still edit after the deadline, so the UI only locks for participants
+    const submissionClosed = await isTeamSubmissionClosed(teamId, payload.role)
+
+    return successResponse({ files: result.rows, submissionDeadline, submissionClosed })
   } catch (error) {
     console.error("Team files fetch error:", error)
     return serverError("Fehler beim Laden der Dateien")
@@ -61,6 +70,10 @@ export async function POST(request: NextRequest) {
 
     if (!(await hasTeamAccess(teamId, payload.userId, payload.role, payload.categoryId))) {
       return new NextResponse(JSON.stringify({ error: "Not a team member" }), { status: 403 })
+    }
+
+    if (await isTeamSubmissionClosed(teamId, payload.role)) {
+      return new NextResponse(JSON.stringify({ error: SUBMISSION_CLOSED_ERROR }), { status: 403 })
     }
 
     const formData = await request.formData()
@@ -113,6 +126,10 @@ export async function DELETE(request: NextRequest) {
 
     if (!(await hasTeamAccess(teamId, payload.userId, payload.role, payload.categoryId))) {
       return new NextResponse(JSON.stringify({ error: "Not a team member" }), { status: 403 })
+    }
+
+    if (await isTeamSubmissionClosed(teamId, payload.role)) {
+      return new NextResponse(JSON.stringify({ error: SUBMISSION_CLOSED_ERROR }), { status: 403 })
     }
 
     const fileRecord = await query("SELECT id, file_path FROM team_files WHERE id = $1 AND team_id = $2", [

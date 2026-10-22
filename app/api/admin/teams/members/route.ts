@@ -2,6 +2,7 @@ import { query } from "@/lib/db"
 import { withCategoryPartnerAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError, errorResponse } from "@/lib/api"
 import { adminTeamsFlag } from "@/lib/flags"
+import { isTeamMember, syncParticipantCategoryToTeam } from "@/lib/team-access"
 
 async function handleGet(req: AuthenticatedRequest) {
   try {
@@ -93,19 +94,20 @@ async function handlePost(req: AuthenticatedRequest) {
     }
 
     let userId: string
-    let userInfo: { email: string; first_name: string; last_name: string }
+    let userInfo: { email: string; first_name: string; last_name: string; role: string }
 
     if (directUserId) {
-      const userResult = await query("SELECT id, email, first_name, last_name FROM users WHERE id = $1", [
+      const userResult = await query("SELECT id, email, first_name, last_name, role FROM users WHERE id = $1", [
         directUserId
       ])
       if (userResult.rows.length === 0) return validationError("Benutzer nicht gefunden")
       userId = userResult.rows[0].id
       userInfo = userResult.rows[0]
     } else {
-      const userResult = await query("SELECT id, email, first_name, last_name FROM users WHERE email = $1", [
-        userEmail.toLowerCase()
-      ])
+      const userResult = await query(
+        "SELECT id, email, first_name, last_name, role FROM users WHERE email = $1",
+        [userEmail.toLowerCase()]
+      )
       if (userResult.rows.length === 0) return validationError("Benutzer mit dieser E-Mail nicht gefunden")
       userId = userResult.rows[0].id
       userInfo = userResult.rows[0]
@@ -119,10 +121,20 @@ async function handlePost(req: AuthenticatedRequest) {
       return validationError("Benutzer ist bereits Mitglied dieses Teams")
     }
 
+    // A participant's category follows the team, so a second team could leave it ambiguous
+    const isParticipant = userInfo.role === "user"
+    if (isParticipant && (await isTeamMember(userId))) {
+      return validationError("Benutzer ist bereits Mitglied eines anderen Teams")
+    }
+
     const result = await query(
       "INSERT INTO team_members (team_id, user_id, role) VALUES ($1, $2, $3) RETURNING id",
       [teamId, userId, role || "member"]
     )
+
+    if (isParticipant) {
+      await syncParticipantCategoryToTeam(userId, teamCheck.rows[0].category_id)
+    }
 
     return successResponse(
       {

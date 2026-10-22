@@ -4,6 +4,7 @@ import { withAuth, type AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { getError } from "@/lib/validation"
 import { getCategoryRegistrationError } from "@/lib/category-db"
+import { isTeamMember } from "@/lib/team-access"
 
 const profileSchema = z
   .object({
@@ -33,6 +34,16 @@ async function handlePatch(req: AuthenticatedRequest) {
 
     const { university, studyProgram, semester, allergies, dietaryRestrictions, categoryId } = parsed.data
     const userId = req.user!.userId
+
+    // The category follows the team once a participant is assigned to one, checked before any write
+    if (categoryId !== undefined && (await isTeamMember(userId))) {
+      const current = await query("SELECT category_id FROM registrations WHERE user_id = $1", [userId])
+      if (current.rows[0]?.category_id !== categoryId) {
+        return validationError(
+          "Du bist einem Team zugewiesen, deine Kategorie kann nicht mehr geändert werden"
+        )
+      }
+    }
 
     // --- profiles table (study details) ---
     const profileAssignments: string[] = []

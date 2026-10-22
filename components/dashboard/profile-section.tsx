@@ -28,6 +28,8 @@ interface ProfileSectionProps {
   currentCategoryId: string | null
   hasRegistration: boolean
   canChooseCategory: boolean
+  // The category follows the team once a participant is assigned to one
+  categoryLockedByTeam: boolean
   hasChallengeSubmission: boolean
   allergies: string | null
   dietaryRestrictions: string | null
@@ -43,6 +45,7 @@ export function ProfileSection({
   currentCategoryId,
   hasRegistration,
   canChooseCategory,
+  categoryLockedByTeam,
   hasChallengeSubmission,
   allergies,
   dietaryRestrictions,
@@ -79,6 +82,7 @@ export function ProfileSection({
             "Du bist noch keiner Kategorie zugewiesen. Klicke auf „Bearbeiten“, um eine Kategorie zu wählen.",
           categorySubmissionHint:
             "Achtung: Beim Wechsel der Kategorie wird deine Challenge-Einreichung zurückgezogen. Du kannst dich danach für eine Challenge der neuen Kategorie bewerben, sofern es dort welche gibt.",
+          categoryTeamLockedHint: "Du bist einem Team zugewiesen, deine Kategorie kann daher nicht mehr geändert werden.",
           empty: "—",
           edit: "Bearbeiten",
           save: "Speichern",
@@ -106,6 +110,7 @@ export function ProfileSection({
           categoryMissingHint: 'You haven\'t been assigned to a category yet. Click "Edit" to choose one.',
           categorySubmissionHint:
             "Note: Changing your category withdraws your challenge submission. You can then apply for a challenge in the new category, if it offers any.",
+          categoryTeamLockedHint: "You've been assigned to a team, so your category can no longer be changed.",
           empty: "—",
           edit: "Edit",
           save: "Save",
@@ -254,8 +259,12 @@ export function ProfileSection({
       label: t.labelCategory,
       value: categoryLabel,
       editValue: currentCategoryId || "",
-      editor: "select",
-      hint: currentCategoryId ? undefined : t.categoryMissingHint,
+      editor: categoryLockedByTeam ? undefined : "select",
+      hint: categoryLockedByTeam
+        ? t.categoryTeamLockedHint
+        : currentCategoryId
+          ? undefined
+          : t.categoryMissingHint,
       hidden: !hasRegistration && !canChooseCategory
     },
     ...(linkedinUrl

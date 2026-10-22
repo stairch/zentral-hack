@@ -739,6 +739,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                 currentCategoryId={currentCategoryId}
                 hasRegistration={!!registration}
                 canChooseCategory={showTeamTab}
+                categoryLockedByTeam={!!team}
                 hasChallengeSubmission={!!mySubmission}
                 allergies={registration?.allergies ?? null}
                 dietaryRestrictions={registration?.dietary_restrictions ?? null}
