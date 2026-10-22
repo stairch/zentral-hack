@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.14.0] - 2026-10-22
+
+### Added
+
+- Support for publishing challenge infos to users dashboard
+- Support for Challenge deadlines incl. banner and tab blinking
+- Support for teams and internal rankings and notes
+- Support for documents
+
+### Changed
+
+- New design of challenges table in admin panel
+- Make more groups in admin sidebar
+
+### Fixed
+
+- Set language not stored properly
+- Participants count on admin dashboard
+
 ## [1.13.1] - 2026-10-15
 
 ### Fixed
