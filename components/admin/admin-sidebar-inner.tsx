@@ -39,6 +39,7 @@ import {
   LayoutTemplate,
   MailCheck,
   Contact,
+  Globe,
   type LucideIcon
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -52,11 +53,14 @@ const copy = {
     registrations: "Anmeldungen",
     users: "Benutzer",
     teams: "Teams",
+    teamsOverview: "Übersicht",
     teamChats: "Team-Chats",
     documents: "Dokumente",
+    challengesGroup: "Challenges",
     categories: "Kategorien",
     challenges: "Challenges",
     challengeSubmissions: "Challenge Submissions",
+    website: "Website Content",
     about: "About Stats",
     schedule: "Zeitplan",
     partnerLogos: "Partner-Logos",
@@ -84,11 +88,14 @@ const copy = {
     registrations: "Registrations",
     users: "Users",
     teams: "Teams",
+    teamsOverview: "Overview",
     teamChats: "Team Chats",
     documents: "Documents",
+    challengesGroup: "Challenges",
     categories: "Categories",
     challenges: "Challenges",
     challengeSubmissions: "Challenge Submissions",
+    website: "Website Content",
     about: "About Stats",
     schedule: "Schedule",
     partnerLogos: "Partner Logos",
@@ -170,84 +177,122 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       adminOnly: false
     },
     {
-      id: "teams",
+      id: "group-teams",
       href: "/admin/teams",
       label: text.teams,
       icon: Users,
-      permissionKey: "teams",
-      adminOnly: false
+      permissionKey: null,
+      adminOnly: false,
+      children: [
+        {
+          id: "teams",
+          href: "/admin/teams",
+          label: text.teamsOverview,
+          icon: Users,
+          permissionKey: "teams",
+          adminOnly: false
+        },
+        {
+          id: "team-chats",
+          href: "/admin/team-chats",
+          label: text.teamChats,
+          icon: MessageCircle,
+          permissionKey: "team-chats",
+          adminOnly: false
+        },
+        {
+          id: "announcements",
+          href: "/admin/announcements",
+          label: text.announcements,
+          icon: Megaphone,
+          permissionKey: "announcements",
+          adminOnly: false
+        }
+      ]
     },
     {
-      id: "team-chats",
-      href: "/admin/team-chats",
-      label: text.teamChats,
-      icon: MessageCircle,
-      permissionKey: "team-chats",
-      adminOnly: false
-    },
-    {
-      id: "documents",
-      href: "/admin/documents",
-      label: text.documents,
-      icon: FolderOpen,
-      permissionKey: "documents",
-      adminOnly: false
-    },
-    {
-      id: "categories",
-      href: "/admin/categories",
-      label: text.categories,
-      icon: Sparkles,
-      permissionKey: "categories",
-      adminOnly: false
-    },
-    {
-      id: "challenges",
+      id: "group-challenges",
       href: "/admin/challenges",
-      label: text.challenges,
+      label: text.challengesGroup,
       icon: Trophy,
-      permissionKey: "challenges",
-      adminOnly: false
+      permissionKey: null,
+      adminOnly: false,
+      children: [
+        {
+          id: "categories",
+          href: "/admin/categories",
+          label: text.categories,
+          icon: Sparkles,
+          permissionKey: "categories",
+          adminOnly: false
+        },
+        {
+          id: "challenges",
+          href: "/admin/challenges",
+          label: text.challenges,
+          icon: Trophy,
+          permissionKey: "challenges",
+          adminOnly: false
+        },
+        {
+          id: "challenge-submissions",
+          href: "/admin/challenge-submissions",
+          label: text.challengeSubmissions,
+          icon: ClipboardCheck,
+          permissionKey: "challenge-submissions",
+          adminOnly: false
+        },
+        {
+          id: "documents",
+          href: "/admin/documents",
+          label: text.documents,
+          icon: FolderOpen,
+          permissionKey: "documents",
+          adminOnly: false
+        }
+      ]
     },
     {
-      id: "challenge-submissions",
-      href: "/admin/challenge-submissions",
-      label: text.challengeSubmissions,
-      icon: ClipboardCheck,
-      permissionKey: "challenge-submissions",
-      adminOnly: false
-    },
-    {
-      id: "about",
+      id: "group-website",
       href: "/admin/about",
-      label: text.about,
-      icon: BarChart3,
-      permissionKey: "about",
-      adminOnly: true
-    },
-    {
-      id: "schedule",
-      href: "/admin/schedule",
-      label: text.schedule,
-      icon: CalendarDays,
-      permissionKey: "schedule",
-      adminOnly: true
-    },
-    {
-      id: "partner-logos",
-      href: "/admin/partner-logos",
-      label: text.partnerLogos,
-      icon: Image,
-      permissionKey: "partner-logos",
-      adminOnly: true
-    },
-    {
-      id: "faqs",
-      href: "/admin/faqs",
-      label: text.faqs,
-      icon: HelpCircle,
-      permissionKey: "faqs",
-      adminOnly: true
+      label: text.website,
+      icon: Globe,
+      permissionKey: null,
+      adminOnly: true,
+      children: [
+        {
+          id: "about",
+          href: "/admin/about",
+          label: text.about,
+          icon: BarChart3,
+          permissionKey: "about",
+          adminOnly: true
+        },
+        {
+          id: "schedule",
+          href: "/admin/schedule",
+          label: text.schedule,
+          icon: CalendarDays,
+          permissionKey: "schedule",
+          adminOnly: true
+        },
+        {
+          id: "partner-logos",
+          href: "/admin/partner-logos",
+          label: text.partnerLogos,
+          icon: Image,
+          permissionKey: "partner-logos",
+          adminOnly: true
+        },
+        {
+          id: "faqs",
+          href: "/admin/faqs",
+          label: text.faqs,
+          icon: HelpCircle,
+          permissionKey: "faqs",
+          adminOnly: true
+        }
+      ]
     },
     {
       id: "sponsors",
@@ -264,14 +309,6 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       icon: ShieldCheck,
       permissionKey: null,
       adminOnly: true
-    },
-    {
-      id: "announcements",
-      href: "/admin/announcements",
-      label: text.announcements,
-      icon: Megaphone,
-      permissionKey: "announcements",
-      adminOnly: false
     },
     {
       id: "emails",
@@ -319,13 +356,17 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
     }
   ]
 
-  // Merge feature-flag release state into nav items
-  const merged = allNavItems.map((navItem) => {
+  // Merge feature-flag release state into nav items (including sub-items)
+  const mergeReleaseState = (navItem: NavItemType): NavItemType => {
     const match = releasedItems.find((link) => link.id === navItem.id)
-    return match ? { ...navItem, ...match } : { ...navItem, isReleased: true }
-  })
+    return {
+      ...navItem,
+      isReleased: match ? match.isReleased : true,
+      children: navItem.children?.map(mergeReleaseState)
+    }
+  }
 
-  const navItems = merged.filter((item) => {
+  const isItemVisible = (item: NavItemType) => {
     if (isAdmin) return true
     // Custom-role user: sidebar driven entirely by their permissions array
     if (user?.permissions) {
@@ -342,7 +383,19 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       return DEFAULT_CATEGORY_PARTNER_PERMISSIONS.includes(item.permissionKey)
     }
     return !item.adminOnly
-  })
+  }
+
+  // Groups are visible when at least one sub-item is; a group with a single visible sub-item collapses into it.
+  const filterNavItems = (items: NavItemType[]): NavItemType[] =>
+    items.flatMap((item) => {
+      if (!item.children) return isItemVisible(item) ? [item] : []
+      const children = filterNavItems(item.children)
+      if (children.length === 0) return []
+      if (children.length === 1) return children
+      return [{ ...item, children }]
+    })
+
+  const navItems = filterNavItems(allNavItems.map(mergeReleaseState))
 
   const handleLogout = async () => {
     await logout()
