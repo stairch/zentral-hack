@@ -103,6 +103,8 @@ export function AdminCategoriesPage() {
   const [creating, setCreating] = useState(false)
   const [layout, setLayout] = useState<"standard" | "bento">("standard")
   const [layoutSaving, setLayoutSaving] = useState(false)
+  const [categoryChangeEnabled, setCategoryChangeEnabled] = useState(true)
+  const [categoryChangeSaving, setCategoryChangeSaving] = useState(false)
   const [reorderingId, setReorderingId] = useState<string | null>(null)
   const [createForm, setCreateForm] = useState({
     name: "",
@@ -172,6 +174,12 @@ export function AdminCategoriesPage() {
           layoutBentoLabel: "Featured",
           layoutSaved: "Layout updated",
           layoutSaveError: "Failed to update layout",
+          categoryChangeSectionTitle: "Category change by participants",
+          categoryChangeSectionHint:
+            "When disabled, participants can no longer change their category themselves, regardless of any other rules. When enabled, other rules still apply (e.g. no change once assigned to a team).",
+          categoryChangeLabel: "Participants may change their category",
+          categoryChangeSaved: "Setting updated",
+          categoryChangeSaveError: "Failed to update setting",
           orderLabel: "Order",
           moveUp: "Move up",
           moveDown: "Move down",
@@ -243,6 +251,12 @@ export function AdminCategoriesPage() {
           layoutBentoLabel: "Hervorgehoben",
           layoutSaved: "Layout aktualisiert",
           layoutSaveError: "Layout konnte nicht aktualisiert werden",
+          categoryChangeSectionTitle: "Kategoriewechsel durch Teilnehmende",
+          categoryChangeSectionHint:
+            "Wenn deaktiviert, können Teilnehmende ihre Kategorie nicht mehr selbst ändern, unabhängig von allen anderen Regeln. Wenn aktiviert, gelten weiterhin die übrigen Regeln (z. B. kein Wechsel nach Zuweisung zu einem Team).",
+          categoryChangeLabel: "Teilnehmende dürfen ihre Kategorie ändern",
+          categoryChangeSaved: "Einstellung aktualisiert",
+          categoryChangeSaveError: "Einstellung konnte nicht aktualisiert werden",
           orderLabel: "Reihenfolge",
           moveUp: "Nach oben",
           moveDown: "Nach unten",
@@ -284,6 +298,12 @@ export function AdminCategoriesPage() {
             setLayout(layoutData.data.value)
           }
         }
+
+        const categoryChangeRes = await fetch("/api/site-settings?key=category_change_enabled")
+        if (categoryChangeRes.ok) {
+          const categoryChangeData = await categoryChangeRes.json()
+          setCategoryChangeEnabled(categoryChangeData.data?.value !== false)
+        }
       } catch (error) {
         console.error("Failed to fetch categories:", error)
         toast.error(text.loadError)
@@ -323,6 +343,28 @@ export function AdminCategoriesPage() {
       toast.error(text.layoutSaveError)
     } finally {
       setLayoutSaving(false)
+    }
+  }
+
+  // Global switch whether participants may change their category at all.
+  const handleCategoryChangeToggle = async (enabled: boolean) => {
+    const previous = categoryChangeEnabled
+    setCategoryChangeEnabled(enabled)
+    try {
+      setCategoryChangeSaving(true)
+      const res = await fetch("/api/admin/site-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ key: "category_change_enabled", value: enabled })
+      })
+      if (!res.ok) throw new Error("failed")
+      toast.success(text.categoryChangeSaved)
+    } catch {
+      setCategoryChangeEnabled(previous)
+      toast.error(text.categoryChangeSaveError)
+    } finally {
+      setCategoryChangeSaving(false)
     }
   }
 
@@ -568,6 +610,28 @@ export function AdminCategoriesPage() {
                 className={`text-sm ${layout === "bento" ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                 {text.layoutBentoLabel}
               </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">{text.categoryChangeSectionTitle}</CardTitle>
+            <CardDescription>{text.categoryChangeSectionHint}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3">
+              <Switch
+                id="category-change-enabled"
+                checked={categoryChangeEnabled}
+                disabled={categoryChangeSaving}
+                onCheckedChange={handleCategoryChangeToggle}
+              />
+              <Label htmlFor="category-change-enabled" className="text-sm">
+                {text.categoryChangeLabel}
+              </Label>
             </div>
           </CardContent>
         </Card>

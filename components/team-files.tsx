@@ -97,10 +97,13 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
       return
     }
     // setTimeout overflows above ~24.8 days, re-check later in that case
-    const timeout = setTimeout(() => {
-      if (new Date(submissionDeadline).getTime() <= Date.now()) setSubmissionClosed(true)
-      else setDeadlineCheck((n) => n + 1)
-    }, Math.min(remainingMs, 2 ** 31 - 1))
+    const timeout = setTimeout(
+      () => {
+        if (new Date(submissionDeadline).getTime() <= Date.now()) setSubmissionClosed(true)
+        else setDeadlineCheck((n) => n + 1)
+      },
+      Math.min(remainingMs, 2 ** 31 - 1)
+    )
     return () => clearTimeout(timeout)
   }, [submissionDeadline, submissionClosed, deadlineCheck])
 

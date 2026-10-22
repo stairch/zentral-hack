@@ -3,6 +3,7 @@ import { query } from "@/lib/db"
 import { verifyJWT } from "@/lib/auth"
 import { normalizeSponsorChallengeData, type SponsorChallengeData } from "@/lib/sponsor-challenge"
 import { isMissingTableError } from "@/lib/db-errors"
+import { isCategoryChangeEnabled } from "@/lib/category-db"
 
 export async function GET(req: NextRequest) {
   try {
@@ -195,6 +196,8 @@ export async function GET(req: NextRequest) {
     )
     const globalDocuments = globalDocsResult.rows
 
+    const categoryChangeEnabled = await isCategoryChangeEnabled()
+
     return NextResponse.json({
       data: {
         profile,
@@ -204,7 +207,8 @@ export async function GET(req: NextRequest) {
         teamRepos,
         categoryDocuments,
         globalDocuments,
-        sponsorChallenge
+        sponsorChallenge,
+        categoryChangeEnabled
       }
     })
   } catch (error) {

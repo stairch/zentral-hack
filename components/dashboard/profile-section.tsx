@@ -28,6 +28,8 @@ interface ProfileSectionProps {
   currentCategoryId: string | null
   hasRegistration: boolean
   canChooseCategory: boolean
+  // Global admin switch, takes precedence over all other category rules
+  categoryChangeEnabled: boolean
   // The category follows the team once a participant is assigned to one
   categoryLockedByTeam: boolean
   hasChallengeSubmission: boolean
@@ -45,6 +47,7 @@ export function ProfileSection({
   currentCategoryId,
   hasRegistration,
   canChooseCategory,
+  categoryChangeEnabled,
   categoryLockedByTeam,
   hasChallengeSubmission,
   allergies,
@@ -82,7 +85,9 @@ export function ProfileSection({
             "Du bist noch keiner Kategorie zugewiesen. Klicke auf „Bearbeiten“, um eine Kategorie zu wählen.",
           categorySubmissionHint:
             "Achtung: Beim Wechsel der Kategorie wird deine Challenge-Einreichung zurückgezogen. Du kannst dich danach für eine Challenge der neuen Kategorie bewerben, sofern es dort welche gibt.",
-          categoryTeamLockedHint: "Du bist einem Team zugewiesen, deine Kategorie kann daher nicht mehr geändert werden.",
+          categoryTeamLockedHint:
+            "Du bist einem Team zugewiesen, deine Kategorie kann daher nicht mehr geändert werden.",
+          categoryChangeDisabledHint: "Die Kategorie kann derzeit nicht geändert werden.",
           empty: "—",
           edit: "Bearbeiten",
           save: "Speichern",
@@ -110,7 +115,9 @@ export function ProfileSection({
           categoryMissingHint: 'You haven\'t been assigned to a category yet. Click "Edit" to choose one.',
           categorySubmissionHint:
             "Note: Changing your category withdraws your challenge submission. You can then apply for a challenge in the new category, if it offers any.",
-          categoryTeamLockedHint: "You've been assigned to a team, so your category can no longer be changed.",
+          categoryTeamLockedHint:
+            "You've been assigned to a team, so your category can no longer be changed.",
+          categoryChangeDisabledHint: "Your category can't be changed at the moment.",
           empty: "—",
           edit: "Edit",
           save: "Save",
@@ -215,6 +222,9 @@ export function ProfileSection({
     hidden?: boolean
   }
 
+  // Picking a first category stays possible while the admin switch is off
+  const categoryChangeLocked = !categoryChangeEnabled && !!currentCategoryId
+
   const rows: Row[] = [
     { key: "name", label: t.labelName, value: fullName || t.empty },
     {
@@ -259,12 +269,14 @@ export function ProfileSection({
       label: t.labelCategory,
       value: categoryLabel,
       editValue: currentCategoryId || "",
-      editor: categoryLockedByTeam ? undefined : "select",
-      hint: categoryLockedByTeam
-        ? t.categoryTeamLockedHint
-        : currentCategoryId
-          ? undefined
-          : t.categoryMissingHint,
+      editor: categoryChangeLocked || categoryLockedByTeam ? undefined : "select",
+      hint: categoryChangeLocked
+        ? t.categoryChangeDisabledHint
+        : categoryLockedByTeam
+          ? t.categoryTeamLockedHint
+          : currentCategoryId
+            ? undefined
+            : t.categoryMissingHint,
       hidden: !hasRegistration && !canChooseCategory
     },
     ...(linkedinUrl

@@ -38,6 +38,15 @@ export async function getAvailableCategoryColumns(): Promise<Set<OptionalCategor
 }
 
 /**
+ * Global admin switch whether participants may change their category at all. It takes
+ * precedence over every other rule (e.g. the team lock). Defaults to enabled when unset.
+ */
+export async function isCategoryChangeEnabled(): Promise<boolean> {
+  const result = await query("SELECT value FROM site_settings WHERE key = $1", ["category_change_enabled"])
+  return result.rows[0]?.value !== false
+}
+
+/**
  * Checks whether a category still accepts participants. Returns an error message
  * when registration is closed or the maximum number of registrations is reached,
  * or null when the category is open.

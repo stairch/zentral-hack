@@ -97,9 +97,10 @@ async function handlePost(req: AuthenticatedRequest) {
     let userInfo: { email: string; first_name: string; last_name: string; role: string }
 
     if (directUserId) {
-      const userResult = await query("SELECT id, email, first_name, last_name, role FROM users WHERE id = $1", [
-        directUserId
-      ])
+      const userResult = await query(
+        "SELECT id, email, first_name, last_name, role FROM users WHERE id = $1",
+        [directUserId]
+      )
       if (userResult.rows.length === 0) return validationError("Benutzer nicht gefunden")
       userId = userResult.rows[0].id
       userInfo = userResult.rows[0]
