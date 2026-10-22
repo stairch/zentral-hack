@@ -98,9 +98,17 @@ export const PUT = withAuth(async (req: AuthenticatedRequest) => {
       return validationError("Bitte gib eine Challengebeschreibung ein")
     }
 
-    const existing = await query("SELECT status FROM challenge_submissions WHERE user_id = $1", [userId])
-    if (existing.rows[0]?.status === "accepted") {
+    const existing = await query(
+      "SELECT status, challenge_id FROM challenge_submissions WHERE user_id = $1",
+      [userId]
+    )
+    const existingSubmission = existing.rows[0]
+    if (existingSubmission?.status === "accepted") {
       return validationError("Deine Einreichung wurde bereits angenommen und kann nicht mehr geändert werden")
+    }
+    // A pending application can only be replaced by one for another challenge
+    if (existingSubmission?.status === "pending" && existingSubmission.challenge_id === challengeId) {
+      return validationError("Du hast dich bereits für diese Challenge beworben")
     }
 
     const result = await query(

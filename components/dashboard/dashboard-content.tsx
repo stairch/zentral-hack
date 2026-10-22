@@ -577,6 +577,9 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
   const selectedSubmissionChallenge = submissionChallenges.find((c) => c.id === selectedSubmissionChallengeId)
   const submissionDescriptionRequired = selectedSubmissionChallenge?.submission_description_required ?? false
   const submissionLocked = mySubmission?.status === "accepted"
+  // A pending application can only be replaced by one for another challenge
+  const submissionAlreadyPending =
+    mySubmission?.status === "pending" && mySubmission.challenge_id === selectedSubmissionChallengeId
   const submissionOpen = submissionChallenges.length > 0
   // The chosen challenge may no longer be selectable (e.g. selection closed), keep showing it in the picker
   const submittedChallengeUnavailable =
@@ -1050,7 +1053,10 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                           <Button
                             onClick={() => void submitChallengeSubmission()}
                             disabled={
-                              submissionLocked || submittingSubmission || !selectedSubmissionChallenge
+                              submissionLocked ||
+                              submissionAlreadyPending ||
+                              submittingSubmission ||
+                              !selectedSubmissionChallenge
                             }
                             className="gap-2 bg-[#530A5D] hover:bg-[#530A5D]/90">
                             {submittingSubmission && <Loader2 className="h-4 w-4 animate-spin" />}
