@@ -4,7 +4,7 @@ import { adminDocumentsFlag, adminEmailsFlag, adminTeamsFlag } from "@/lib/flags
 const adminFeatureFlags = [
   { id: "documents", featureFlag: adminDocumentsFlag },
   { id: "emails", featureFlag: adminEmailsFlag },
-  { id: "teams", featureFlag: adminTeamsFlag }
+  { id: "group-teams", featureFlag: adminTeamsFlag }
 ]
 
 export default async function AdminSidebar() {
