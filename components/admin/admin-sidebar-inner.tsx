@@ -356,13 +356,14 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
     }
   ]
 
-  // Merge feature-flag release state into nav items (including sub-items)
-  const mergeReleaseState = (navItem: NavItemType): NavItemType => {
+  // Merge feature-flag release state into nav items; sub-items inherit an unreleased group
+  const mergeReleaseState = (navItem: NavItemType, parentReleased = true): NavItemType => {
     const match = releasedItems.find((link) => link.id === navItem.id)
+    const isReleased = parentReleased && (match ? match.isReleased : true)
     return {
       ...navItem,
-      isReleased: match ? match.isReleased : true,
-      children: navItem.children?.map(mergeReleaseState)
+      isReleased,
+      children: navItem.children?.map((child) => mergeReleaseState(child, isReleased))
     }
   }
 
@@ -395,7 +396,7 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
       return [{ ...item, children }]
     })
 
-  const navItems = filterNavItems(allNavItems.map(mergeReleaseState))
+  const navItems = filterNavItems(allNavItems.map((item) => mergeReleaseState(item)))
 
   const handleLogout = async () => {
     await logout()
