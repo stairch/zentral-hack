@@ -103,6 +103,7 @@ interface DashboardData {
     created_at: string
   }>
   sponsorChallenge: SponsorChallengeRecord | null
+  categoryChangeEnabled: boolean
 }
 
 interface CategoryOption {
@@ -739,6 +740,8 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                 currentCategoryId={currentCategoryId}
                 hasRegistration={!!registration}
                 canChooseCategory={showTeamTab}
+                categoryChangeEnabled={data?.categoryChangeEnabled ?? true}
+                categoryLockedByTeam={!!team}
                 hasChallengeSubmission={!!mySubmission}
                 allergies={registration?.allergies ?? null}
                 dietaryRestrictions={registration?.dietary_restrictions ?? null}

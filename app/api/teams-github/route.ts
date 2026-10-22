@@ -3,6 +3,7 @@ import { query } from "@/lib/db"
 import { successResponse, serverError } from "@/lib/api"
 import { verifyJWT } from "@/lib/auth"
 import { z } from "zod"
+import { isTeamSubmissionClosed, SUBMISSION_CLOSED_ERROR } from "@/lib/team-access"
 
 const githubLinkSchema = z.object({
   repositoryUrl: z
@@ -36,6 +37,10 @@ export async function POST(request: NextRequest) {
 
     if (memberCheck.rows.length === 0 && payload.role !== "admin") {
       return new Response(JSON.stringify({ error: "Not a team member" }), { status: 403 })
+    }
+
+    if (await isTeamSubmissionClosed(teamId, payload.role)) {
+      return new Response(JSON.stringify({ error: SUBMISSION_CLOSED_ERROR }), { status: 403 })
     }
 
     const body = await request.json()
@@ -123,6 +128,10 @@ export async function DELETE(request: NextRequest) {
 
     if (repo.rows[0].added_by !== payload.userId && payload.role !== "admin") {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 403 })
+    }
+
+    if (await isTeamSubmissionClosed(teamId, payload.role)) {
+      return new Response(JSON.stringify({ error: SUBMISSION_CLOSED_ERROR }), { status: 403 })
     }
 
     await query("DELETE FROM team_github_repos WHERE id = $1", [repoId])

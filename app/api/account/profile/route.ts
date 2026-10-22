@@ -3,7 +3,8 @@ import { query } from "@/lib/db"
 import { withAuth, type AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { getError } from "@/lib/validation"
-import { getCategoryRegistrationError } from "@/lib/category-db"
+import { getCategoryRegistrationError, isCategoryChangeEnabled } from "@/lib/category-db"
+import { isTeamMember } from "@/lib/team-access"
 
 const profileSchema = z
   .object({
@@ -33,6 +34,24 @@ async function handlePatch(req: AuthenticatedRequest) {
 
     const { university, studyProgram, semester, allergies, dietaryRestrictions, categoryId } = parsed.data
     const userId = req.user!.userId
+
+    // Category change rules, checked before any write. Picking a first category stays possible.
+    if (categoryId !== undefined) {
+      const current = await query("SELECT category_id FROM registrations WHERE user_id = $1", [userId])
+      const currentCategoryId: string | null = current.rows[0]?.category_id ?? null
+      if (currentCategoryId && currentCategoryId !== categoryId) {
+        // The admin switch is absolute and takes precedence over all other rules
+        if (!(await isCategoryChangeEnabled())) {
+          return validationError("Die Kategorie kann derzeit nicht geändert werden")
+        }
+        // The category follows the team once a participant is assigned to one
+        if (await isTeamMember(userId)) {
+          return validationError(
+            "Du bist einem Team zugewiesen, deine Kategorie kann nicht mehr geändert werden"
+          )
+        }
+      }
+    }
 
     // --- profiles table (study details) ---
     const profileAssignments: string[] = []

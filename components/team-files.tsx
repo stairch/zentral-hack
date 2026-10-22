@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog"
-import { FileUp, Loader2, Trash2, ExternalLink } from "lucide-react"
+import { FileUp, Loader2, Trash2, ExternalLink, Lock } from "lucide-react"
 import { toast } from "sonner"
 import Github from "@/assets/icons/github.svg"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
@@ -52,6 +52,9 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null)
   const [deleteRepoId, setDeleteRepoId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [submissionDeadline, setSubmissionDeadline] = useState<string | null>(null)
+  const [submissionClosed, setSubmissionClosed] = useState(false)
+  const [deadlineCheck, setDeadlineCheck] = useState(0)
 
   // Fetch team files and repos
   useEffect(() => {
@@ -66,6 +69,8 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
         if (filesRes.ok) {
           const data = await filesRes.json()
           setFiles(data.data?.files || [])
+          setSubmissionDeadline(data.data?.submissionDeadline || null)
+          setSubmissionClosed(!!data.data?.submissionClosed)
         }
 
         if (reposRes.ok) {
@@ -81,6 +86,26 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
 
     fetchData()
   }, [teamId])
+
+  // Lock the moment the deadline passes, without waiting for a reload (the API enforces it regardless)
+  useEffect(() => {
+    if (!submissionDeadline || submissionClosed) return
+    const remainingMs = new Date(submissionDeadline).getTime() - Date.now()
+    if (Number.isNaN(remainingMs)) return
+    if (remainingMs <= 0) {
+      setSubmissionClosed(true)
+      return
+    }
+    // setTimeout overflows above ~24.8 days, re-check later in that case
+    const timeout = setTimeout(
+      () => {
+        if (new Date(submissionDeadline).getTime() <= Date.now()) setSubmissionClosed(true)
+        else setDeadlineCheck((n) => n + 1)
+      },
+      Math.min(remainingMs, 2 ** 31 - 1)
+    )
+    return () => clearTimeout(timeout)
+  }, [submissionDeadline, submissionClosed, deadlineCheck])
 
   // Upload file
   const handleFileUpload = async () => {
@@ -168,6 +193,10 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
         setFiles(files.filter((f) => f.id !== deleteFileId))
         toast.success("Datei gelöscht")
         setDeleteFileId(null)
+      } else {
+        const error = await res.json()
+        toast.error(error.error || "Fehler beim Löschen")
+        setDeleteFileId(null)
       }
     } catch (error) {
       console.error("Delete error:", error)
@@ -189,6 +218,10 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
         setRepos(repos.filter((r) => r.id !== deleteRepoId))
         toast.success("Repository gelöscht")
         setDeleteRepoId(null)
+      } else {
+        const error = await res.json()
+        toast.error(error.error || "Fehler beim Löschen")
+        setDeleteRepoId(null)
       }
     } catch (error) {
       console.error("Delete error:", error)
@@ -206,8 +239,29 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
     )
   }
 
+  const formattedDeadline = submissionDeadline
+    ? new Date(submissionDeadline).toLocaleString("de-CH", {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      })
+    : ""
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {submissionClosed && (
+        <div
+          role="status"
+          className="bg-muted text-muted-foreground flex items-center gap-2 rounded border p-3 text-sm lg:col-span-2">
+          <Lock className="h-4 w-4 shrink-0" />
+          <span>
+            Die Abgabefrist ist abgelaufen{formattedDeadline && ` (${formattedDeadline} Uhr)`}. Dateien und
+            Repositories können nicht mehr geändert werden.
+          </span>
+        </div>
+      )}
       {/* Files Upload */}
       <Card>
         <CardHeader>
@@ -220,7 +274,7 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
         <CardContent className="space-y-4">
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="w-full gap-2">
+              <Button className="w-full gap-2" disabled={submissionClosed}>
                 <FileUp className="h-4 w-4" />
                 Datei hochladen
               </Button>
@@ -242,7 +296,10 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
                     <p className="text-muted-foreground mt-2 text-sm">📎 {selectedFile.name}</p>
                   )}
                 </div>
-                <Button onClick={handleFileUpload} disabled={uploading || !selectedFile} className="w-full">
+                <Button
+                  onClick={handleFileUpload}
+                  disabled={uploading || !selectedFile || submissionClosed}
+                  className="w-full">
                   {uploading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -272,11 +329,13 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
                       title="Datei downloaden">
                       <ExternalLink className="h-4 w-4" />
                     </a>
-                    <button
-                      onClick={() => setDeleteFileId(file.id)}
-                      className="hover:bg-destructive/10 hover:text-destructive cursor-pointer rounded p-1">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    {!submissionClosed && (
+                      <button
+                        onClick={() => setDeleteFileId(file.id)}
+                        className="hover:bg-destructive/10 hover:text-destructive cursor-pointer rounded p-1">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))
@@ -299,7 +358,7 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
         <CardContent className="space-y-4">
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="w-full gap-2">
+              <Button className="w-full gap-2" disabled={submissionClosed}>
                 <Github className="h-4 w-4 fill-white" />
                 Repository hinzufügen
               </Button>
@@ -338,7 +397,10 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
                     rows={3}
                   />
                 </div>
-                <Button onClick={handleAddGithub} disabled={addingGithub || !githubUrl} className="w-full">
+                <Button
+                  onClick={handleAddGithub}
+                  disabled={addingGithub || !githubUrl || submissionClosed}
+                  className="w-full">
                   {addingGithub ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -371,11 +433,13 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
                       className="hover:bg-muted rounded p-1">
                       <ExternalLink className="h-4 w-4" />
                     </a>
-                    <button
-                      onClick={() => setDeleteRepoId(repo.id)}
-                      className="hover:bg-destructive/10 hover:text-destructive cursor-pointer rounded p-1">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    {!submissionClosed && (
+                      <button
+                        onClick={() => setDeleteRepoId(repo.id)}
+                        className="hover:bg-destructive/10 hover:text-destructive cursor-pointer rounded p-1">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))
