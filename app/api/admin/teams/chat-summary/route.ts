@@ -10,6 +10,8 @@ export const GET = withCategoryPartnerAuth(async (req: AuthenticatedRequest) => 
       return errorResponse("Not found", 404)
     }
 
+    // The chat bubble only lists the viewer's own category, also for super admins
+    // (the admin panel's team chats page lists every team via /api/admin/teams).
     const categoryId = req.user?.categoryId
     const filter = categoryId ? "WHERE teams.category_id = $1" : ""
     const params = categoryId ? [categoryId] : []

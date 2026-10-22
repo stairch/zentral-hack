@@ -10,7 +10,8 @@ async function handleGet(req: AuthenticatedRequest) {
       return errorResponse("Not found", 404)
     }
 
-    const categoryId = req.user?.categoryId
+    // Super admins see every team, even when they have a category assigned.
+    const categoryId = req.user?.role === "admin" ? undefined : req.user?.categoryId
 
     if (!categoryId && req.user?.role !== "admin") {
       return validationError("Category ID required")

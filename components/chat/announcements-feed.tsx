@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Loader2, Megaphone } from "lucide-react"
 import { useLanguage } from "@/lib/language-context"
 import { normalizeHexColor, getContrastForegroundColor } from "@/lib/helpers"
@@ -35,6 +35,7 @@ export function AnnouncementsFeed() {
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [loading, setLoading] = useState(true)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -43,7 +44,8 @@ export function AnnouncementsFeed() {
         const res = await fetch("/api/announcements", { credentials: "include" })
         if (!res.ok || cancelled) return
         const json = await res.json()
-        if (!cancelled) setAnnouncements(json.data?.announcements || [])
+        // API returns newest first; show newest at the bottom like a chat.
+        if (!cancelled) setAnnouncements([...(json.data?.announcements || [])].reverse())
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -56,6 +58,10 @@ export function AnnouncementsFeed() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!loading) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
+  }, [announcements.length, loading])
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -65,7 +71,7 @@ export function AnnouncementsFeed() {
   }
 
   return (
-    <div className="h-full space-y-3 overflow-y-auto p-4">
+    <div ref={scrollRef} className="h-full space-y-3 overflow-y-auto p-4">
       {announcements.length === 0 && (
         <p className="text-muted-foreground py-8 text-center text-sm">{t.empty}</p>
       )}
