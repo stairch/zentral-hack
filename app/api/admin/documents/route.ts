@@ -19,13 +19,13 @@ async function handleGet(req: AuthenticatedRequest) {
       const catId = categoryId || req.user.categoryId
       if (!catId) return validationError("Category required")
       const result = await query(
-        "SELECT id, name, description, file_path, file_size, created_at FROM category_documents WHERE category_id = $1 ORDER BY created_at DESC",
+        "SELECT cd.id, cd.name, cd.description, cd.file_path, cd.file_size, cd.created_at, c.name as category_name FROM category_documents cd LEFT JOIN categories c ON cd.category_id = c.id WHERE cd.category_id = $1 OR cd.category_id IS NULL ORDER BY cd.created_at DESC",
         [catId]
       )
       return successResponse({ documents: result.rows })
     }
 
-    // Admin: all documents or filtered by category
+    // Admin: all documents (including global) or filtered by category
     if (categoryId) {
       const result = await query(
         "SELECT cd.id, cd.name, cd.description, cd.file_path, cd.file_size, cd.created_at, c.name as category_name FROM category_documents cd JOIN categories c ON cd.category_id = c.id WHERE cd.category_id = $1 ORDER BY cd.created_at DESC",
@@ -35,7 +35,7 @@ async function handleGet(req: AuthenticatedRequest) {
     }
 
     const result = await query(
-      "SELECT cd.id, cd.name, cd.description, cd.file_path, cd.file_size, cd.created_at, c.name as category_name FROM category_documents cd JOIN categories c ON cd.category_id = c.id ORDER BY cd.created_at DESC"
+      "SELECT cd.id, cd.name, cd.description, cd.file_path, cd.file_size, cd.created_at, c.name as category_name FROM category_documents cd LEFT JOIN categories c ON cd.category_id = c.id ORDER BY cd.created_at DESC"
     )
     return successResponse({ documents: result.rows })
   } catch (error) {

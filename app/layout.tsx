@@ -5,6 +5,7 @@ import { Inter, Space_Grotesk, Geist_Mono } from "next/font/google"
 import { AuthProvider } from "@/lib/auth-context"
 import { LanguageProvider } from "@/lib/language-context"
 import { Toaster } from "@/components/ui/sonner"
+import { ChatWidget } from "@/components/chat/chat-widget"
 import "./globals.css"
 
 const inter = Inter({
@@ -66,7 +67,10 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} ${geistMono.variable} font-sans antialiased`}>
         <LanguageProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            {children}
+            <ChatWidget />
+          </AuthProvider>
         </LanguageProvider>
         <Toaster />
         <Analytics />

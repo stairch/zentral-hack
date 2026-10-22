@@ -4,6 +4,7 @@ import { query } from "@/lib/db"
 import { successResponse, serverError } from "@/lib/api"
 import { verifyJWT } from "@/lib/auth"
 import { validateFileUpload, generateSecureFilename } from "@/lib/file-upload"
+import { hasTeamAccess } from "@/lib/team-access"
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,12 +23,7 @@ export async function GET(request: NextRequest) {
     if (!teamId)
       return new NextResponse(JSON.stringify({ error: "teamId parameter required" }), { status: 400 })
 
-    const memberCheck = await query("SELECT id FROM team_members WHERE team_id = $1 AND user_id = $2", [
-      teamId,
-      payload.userId
-    ])
-
-    if (memberCheck.rows.length === 0 && payload.role !== "admin") {
+    if (!(await hasTeamAccess(teamId, payload.userId, payload.role, payload.categoryId))) {
       return new NextResponse(JSON.stringify({ error: "Not a team member" }), { status: 403 })
     }
 
@@ -63,12 +59,7 @@ export async function POST(request: NextRequest) {
     if (!teamId)
       return new NextResponse(JSON.stringify({ error: "teamId parameter required" }), { status: 400 })
 
-    const memberCheck = await query("SELECT id FROM team_members WHERE team_id = $1 AND user_id = $2", [
-      teamId,
-      payload.userId
-    ])
-
-    if (memberCheck.rows.length === 0 && payload.role !== "admin") {
+    if (!(await hasTeamAccess(teamId, payload.userId, payload.role, payload.categoryId))) {
       return new NextResponse(JSON.stringify({ error: "Not a team member" }), { status: 403 })
     }
 
@@ -120,12 +111,7 @@ export async function DELETE(request: NextRequest) {
     if (!fileId)
       return new NextResponse(JSON.stringify({ error: "fileId parameter required" }), { status: 400 })
 
-    const memberCheck = await query("SELECT id FROM team_members WHERE team_id = $1 AND user_id = $2", [
-      teamId,
-      payload.userId
-    ])
-
-    if (memberCheck.rows.length === 0 && payload.role !== "admin") {
+    if (!(await hasTeamAccess(teamId, payload.userId, payload.role, payload.categoryId))) {
       return new NextResponse(JSON.stringify({ error: "Not a team member" }), { status: 403 })
     }
 

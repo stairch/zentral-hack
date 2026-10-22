@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,11 +10,24 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { Eye, FileText, Gavel, Loader2, Package, Plus, Save, Send, Trash2, Trophy } from "lucide-react"
+import {
+  Eye,
+  FileText,
+  Gavel,
+  Loader2,
+  Package,
+  Plus,
+  Save,
+  Send,
+  Trash2,
+  Trophy,
+  Upload
+} from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
   createEmptySponsorChallengeData,
   normalizeSponsorChallengeData,
@@ -40,6 +53,14 @@ interface ChallengeListItem {
   status: "draft" | "published"
   updated_at: string
   category_id: string
+}
+
+interface ChallengeDocument {
+  id: string
+  name: string
+  description: string | null
+  file_size: number | null
+  created_at: string
 }
 
 interface SponsorOption {
@@ -360,7 +381,27 @@ export function SponsorChallengeEditor({
       loadError: "Fehler beim Laden",
       saveSuccess: "Entwurf gespeichert",
       publishSuccess: "Challenge veröffentlicht",
-      saveError: "Fehler beim Speichern"
+      saveError: "Fehler beim Speichern",
+      submissionSectionTitle: "Challenge-Auswahl durch Teilnehmer",
+      submissionEnableLabel: "Teilnehmer können sich für diese Challenge entscheiden",
+      submissionEnableHint:
+        "Angemeldete User dieser Kategorie sehen in ihrem Dashboard eine Auswahl und können sich für diese Challenge einschreiben.",
+      submissionRequireDescriptionLabel: "Challengebeschreibung erforderlich",
+      submissionRequireDescriptionHint:
+        "User müssen zusätzlich zur Auswahl eine kurze Beschreibung ihres Vorhabens einreichen.",
+      challengeDocsTitle: "Challenge-Dokumente",
+      challengeDocsHint: "Für Teams und Teilnehmer dieser Challenge sichtbar.",
+      challengeDocsUpload: "Datei hochladen",
+      challengeDocsEmpty: "Noch keine Dokumente hochgeladen.",
+      challengeDocsSaveFirst: "Speichere die Challenge zuerst, um Dokumente hochzuladen.",
+      challengeDocsUploadSuccess: "Dokument hochgeladen",
+      challengeDocsUploadError: "Fehler beim Hochladen",
+      challengeDocsDeleteConfirmTitle: "Dokument löschen?",
+      challengeDocsDeleteConfirmDesc: "Diese Aktion kann nicht rückgängig gemacht werden.",
+      challengeDocsDeleteConfirm: "Löschen",
+      challengeDocsCancel: "Abbrechen",
+      challengeDocsDeleteSuccess: "Dokument gelöscht",
+      challengeDocsDeleteError: "Fehler beim Löschen"
     },
     en: {
       existingChallenges: "Existing Challenges",
@@ -488,7 +529,27 @@ export function SponsorChallengeEditor({
       loadError: "Error loading",
       saveSuccess: "Draft saved",
       publishSuccess: "Challenge published",
-      saveError: "Error saving"
+      saveError: "Error saving",
+      submissionSectionTitle: "Challenge selection by participants",
+      submissionEnableLabel: "Participants can choose this challenge",
+      submissionEnableHint:
+        "Registered users of this category will see a selection in their dashboard and can sign up for this challenge.",
+      submissionRequireDescriptionLabel: "Challenge description required",
+      submissionRequireDescriptionHint:
+        "Users must also submit a short description of their approach alongside their selection.",
+      challengeDocsTitle: "Challenge Documents",
+      challengeDocsHint: "Visible to teams and participants of this challenge.",
+      challengeDocsUpload: "Upload file",
+      challengeDocsEmpty: "No documents uploaded yet.",
+      challengeDocsSaveFirst: "Save the challenge first to upload documents.",
+      challengeDocsUploadSuccess: "Document uploaded",
+      challengeDocsUploadError: "Failed to upload",
+      challengeDocsDeleteConfirmTitle: "Delete document?",
+      challengeDocsDeleteConfirmDesc: "This action cannot be undone.",
+      challengeDocsDeleteConfirm: "Delete",
+      challengeDocsCancel: "Cancel",
+      challengeDocsDeleteSuccess: "Document deleted",
+      challengeDocsDeleteError: "Failed to delete"
     }
   }[language]
 
@@ -504,6 +565,12 @@ export function SponsorChallengeEditor({
   const [challengeList, setChallengeList] = useState<ChallengeListItem[]>([])
   const [selectedChallengeId, setSelectedChallengeId] = useState<string>("")
   const [loadingList, setLoadingList] = useState(false)
+  const [challengeDocs, setChallengeDocs] = useState<ChallengeDocument[]>([])
+  const [loadingDocs, setLoadingDocs] = useState(false)
+  const [uploadingDoc, setUploadingDoc] = useState(false)
+  const [deleteDocId, setDeleteDocId] = useState<string | null>(null)
+  const [deletingDoc, setDeletingDoc] = useState(false)
+  const docFileInputRef = useRef<HTMLInputElement>(null)
 
   const patch = (partial: Partial<SponsorChallengeData>) => setFormData((prev) => ({ ...prev, ...partial }))
 
@@ -613,6 +680,74 @@ export function SponsorChallengeEditor({
     }
     applyRecord(initialChallenge)
   }, [initialChallenge, categoryId, initialChallengeId, forceNew])
+
+  // Challenge documents (admin / category partner only, requires a saved challenge).
+  useEffect(() => {
+    if (!canPublish || !selectedChallengeId) {
+      setChallengeDocs([])
+      return
+    }
+    void fetchChallengeDocs(selectedChallengeId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChallengeId, canPublish])
+
+  async function fetchChallengeDocs(challengeId: string) {
+    setLoadingDocs(true)
+    try {
+      const res = await fetch(`/api/admin/challenge-documents?challengeId=${challengeId}`, {
+        credentials: "include"
+      })
+      if (!res.ok) return
+      const json = await res.json()
+      setChallengeDocs(json.data?.documents || [])
+    } catch {
+      // non-critical
+    } finally {
+      setLoadingDocs(false)
+    }
+  }
+
+  async function handleUploadChallengeDoc(file: File) {
+    if (!selectedChallengeId) return
+    setUploadingDoc(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("challengeId", selectedChallengeId)
+      const res = await fetch("/api/admin/challenge-documents", {
+        method: "POST",
+        credentials: "include",
+        body: formData
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || t.challengeDocsUploadError)
+      setChallengeDocs((prev) => [json.data.document, ...prev])
+      toast.success(t.challengeDocsUploadSuccess)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t.challengeDocsUploadError)
+    } finally {
+      setUploadingDoc(false)
+    }
+  }
+
+  async function handleDeleteChallengeDoc() {
+    if (!deleteDocId) return
+    setDeletingDoc(true)
+    try {
+      const res = await fetch(`/api/admin/challenge-documents?id=${deleteDocId}`, {
+        method: "DELETE",
+        credentials: "include"
+      })
+      if (!res.ok) throw new Error()
+      setChallengeDocs((prev) => prev.filter((d) => d.id !== deleteDocId))
+      toast.success(t.challengeDocsDeleteSuccess)
+      setDeleteDocId(null)
+    } catch {
+      toast.error(t.challengeDocsDeleteError)
+    } finally {
+      setDeletingDoc(false)
+    }
+  }
 
   // Sponsor list for the "visible on website" selector; sourced from the public sponsor list.
   useEffect(() => {
@@ -974,6 +1109,87 @@ export function SponsorChallengeEditor({
         </CardHeader>
       </Card>
 
+      {/* ── Challenge documents (admin / category partner only) ── */}
+      {canPublish && (
+        <Card className="border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle className="text-base">{t.challengeDocsTitle}</CardTitle>
+              <p className="text-muted-foreground text-xs">{t.challengeDocsHint}</p>
+            </div>
+            {selectedChallengeId && (
+              <>
+                <input
+                  ref={docFileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
+                  onChange={(e) => {
+                    const picked = e.target.files?.[0]
+                    if (picked) void handleUploadChallengeDoc(picked)
+                    if (docFileInputRef.current) docFileInputRef.current.value = ""
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  disabled={uploadingDoc}
+                  onClick={() => docFileInputRef.current?.click()}>
+                  {uploadingDoc ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  {t.challengeDocsUpload}
+                </Button>
+              </>
+            )}
+          </CardHeader>
+          <CardContent>
+            {!selectedChallengeId ? (
+              <p className="text-muted-foreground text-sm">{t.challengeDocsSaveFirst}</p>
+            ) : loadingDocs ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            ) : challengeDocs.length > 0 ? (
+              <div className="space-y-2">
+                {challengeDocs.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="border-border hover:bg-muted/50 flex items-center justify-between rounded-lg border p-3 transition-colors">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <FileText className="text-primary h-4 w-4 shrink-0" />
+                      <p className="truncate text-sm font-medium">{doc.name}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive shrink-0"
+                      onClick={() => setDeleteDocId(doc.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground py-4 text-center text-sm">{t.challengeDocsEmpty}</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <ConfirmDialog
+        open={!!deleteDocId}
+        onOpenChange={(open) => !open && setDeleteDocId(null)}
+        title={t.challengeDocsDeleteConfirmTitle}
+        description={t.challengeDocsDeleteConfirmDesc}
+        confirmLabel={t.challengeDocsDeleteConfirm}
+        cancelLabel={t.challengeDocsCancel}
+        onConfirm={() => void handleDeleteChallengeDoc()}
+        loading={deletingDoc}
+      />
       {/* ── Website-visible section ── */}
       <Card className="border-[#530A5D]/40 bg-gradient-to-br from-[#530A5D]/5 to-[#530A5D]/10 shadow-sm">
         <CardHeader className="border-b pb-4">

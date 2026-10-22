@@ -20,6 +20,8 @@ import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
+const GLOBAL_SENTINEL = "__global__"
+
 interface Document {
   id: string
   name: string
@@ -47,6 +49,8 @@ const copy = {
     docNamePlaceholder: "z.B. Challenge Briefing",
     category: "Kategorie",
     categoryPlaceholder: "Wähle eine Kategorie",
+    globalOption: "Global (alle Kategorien)",
+    globalLabel: "Global",
     file: "Datei",
     uploading: "Wird hochgeladen...",
     uploadButton: "Hochladen",
@@ -73,6 +77,8 @@ const copy = {
     docNamePlaceholder: "e.g. Challenge Briefing",
     category: "Category",
     categoryPlaceholder: "Select a category",
+    globalOption: "Global (all categories)",
+    globalLabel: "Global",
     file: "File",
     uploading: "Uploading...",
     uploadButton: "Upload",
@@ -146,7 +152,7 @@ export function DocumentsManagementPage() {
       setUploading(true)
       const formData = new FormData()
       formData.append("file", file)
-      formData.append("categoryId", categoryId)
+      formData.append("categoryId", categoryId === GLOBAL_SENTINEL ? "" : categoryId)
       if (docName.trim()) formData.append("name", docName.trim())
 
       const res = await fetch("/api/admin/documents", {
@@ -254,6 +260,7 @@ export function DocumentsManagementPage() {
                             {cat.name}
                           </SelectItem>
                         ))}
+                        <SelectItem value={GLOBAL_SENTINEL}>{text.globalOption}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -310,7 +317,7 @@ export function DocumentsManagementPage() {
                     <div>
                       <p className="font-medium">{doc.name}</p>
                       <p className="text-muted-foreground text-sm">
-                        {doc.category_name || ""}{" "}
+                        {doc.category_name || text.globalLabel}{" "}
                         {doc.file_size ? `• ${Math.round(doc.file_size / 1024)} KB` : ""}
                       </p>
                     </div>
