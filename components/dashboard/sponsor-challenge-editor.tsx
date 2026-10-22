@@ -556,6 +556,7 @@ export function SponsorChallengeEditor({
   const [formData, setFormData] = useState<SponsorChallengeData>(() => createEmptySponsorChallengeData())
   const [prize, setPrize] = useState("")
   const [sponsorId, setSponsorId] = useState("")
+  // Edited from the admin challenge list; kept here so saving the editor sends the current values back
   const [submissionEnabled, setSubmissionEnabled] = useState(false)
   const [submissionDescriptionRequired, setSubmissionDescriptionRequired] = useState(false)
   const [sponsors, setSponsors] = useState<SponsorOption[]>([])
