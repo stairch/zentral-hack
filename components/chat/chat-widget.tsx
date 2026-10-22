@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { MessageCircle, X, ChevronLeft, Megaphone } from "lucide-react"
+import { MessageCircle, X, ChevronLeft, Megaphone, Users } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useLanguage } from "@/lib/language-context"
 import { TeamChat } from "@/components/chat/team-chat"
@@ -286,10 +286,13 @@ export function ChatWidget() {
                 className={`relative flex-1 py-2 text-xs font-semibold transition-colors ${
                   view === "team" ? "text-violet" : "text-muted-foreground hover:text-foreground"
                 }`}>
-                {t.teamTab}
-                {unreadTeamIds.size > 0 && (
-                  <span className="absolute top-1.5 right-[calc(50%-28px)] h-1.5 w-1.5 rounded-full bg-red-500" />
-                )}
+                <span className="relative inline-flex items-center gap-1">
+                  <MessageCircle className="h-3 w-3" />
+                  {t.teamTab}
+                  {unreadTeamIds.size > 0 && (
+                    <span className="absolute -top-0.5 -right-2 h-1.5 w-1.5 rounded-full bg-red-500" />
+                  )}
+                </span>
                 {view === "team" && <span className="bg-violet absolute right-0 -bottom-px left-0 h-0.5" />}
               </button>
               <button
@@ -298,13 +301,13 @@ export function ChatWidget() {
                 className={`relative flex-1 py-2 text-xs font-semibold transition-colors ${
                   view === "announcements" ? "text-violet" : "text-muted-foreground hover:text-foreground"
                 }`}>
-                <span className="inline-flex items-center gap-1">
+                <span className="relative inline-flex items-center gap-1">
                   <Megaphone className="h-3 w-3" />
                   {t.announcementsTab}
+                  {unreadAnnouncements && (
+                    <span className="absolute -top-0.5 -right-2 h-1.5 w-1.5 rounded-full bg-red-500" />
+                  )}
                 </span>
-                {unreadAnnouncements && (
-                  <span className="absolute top-1.5 right-[calc(50%-28px)] h-1.5 w-1.5 rounded-full bg-red-500" />
-                )}
                 {view === "announcements" && (
                   <span className="bg-violet absolute right-0 -bottom-px left-0 h-0.5" />
                 )}
@@ -329,7 +332,10 @@ export function ChatWidget() {
                         type="button"
                         onClick={() => openTeam(team.team_id)}
                         className="hover:bg-muted flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors">
-                        <span className="truncate">{team.team_name}</span>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <Users className="text-muted-foreground h-4 w-4 shrink-0" />
+                          <span className="truncate">{team.team_name}</span>
+                        </span>
                         {unreadTeamIds.has(team.team_id) && (
                           <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />
                         )}

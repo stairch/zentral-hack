@@ -1,25 +1,14 @@
-import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
 import { successResponse, serverError } from "@/lib/api"
-import { verifyJWT } from "@/lib/auth"
+import { withCategoryPartnerAuth } from "@/lib/middleware"
 import { getAllSubscribers } from "@/lib/resend"
 
 /**
  * GET /api/admin/dashboard-stats
- * Fetches dashboard statistics (admin only)
+ * Fetches dashboard statistics (admins and category partners; aggregate counts only)
  */
-export async function GET(request: NextRequest) {
+export const GET = withCategoryPartnerAuth(async () => {
   try {
-    const token = request.cookies.get("token")?.value
-    if (!token) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
-    }
-
-    const payload = verifyJWT(token)
-    if (!payload || payload.role !== "admin") {
-      return new Response(JSON.stringify({ error: "Unauthorized - Admin only" }), { status: 401 })
-    }
-
     const [registrationsRes, newsletterRes, teamsRes, documentsRes] = await Promise.all([
       query(
         `SELECT COUNT(*) as count
@@ -45,4 +34,4 @@ export async function GET(request: NextRequest) {
     console.error("Dashboard stats error:", error)
     return serverError("Fehler beim Laden der Statistiken")
   }
-}
+})
