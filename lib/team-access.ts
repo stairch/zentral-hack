@@ -25,6 +25,18 @@ export async function hasTeamAccess(
   return false
 }
 
+// Admin-side access only: super admins see every team, category partners only their category's
+export async function canManageTeam(
+  teamId: string,
+  role: string | undefined,
+  categoryId: string | undefined
+): Promise<boolean> {
+  const teamCheck = await query("SELECT category_id FROM teams WHERE id = $1", [teamId])
+  if (teamCheck.rows.length === 0) return false
+  if (role === "admin") return true
+  return role === "category_partner" && teamCheck.rows[0].category_id === categoryId
+}
+
 export async function isTeamMember(userId: string): Promise<boolean> {
   const result = await query("SELECT 1 FROM team_members WHERE user_id = $1 LIMIT 1", [userId])
   return result.rows.length > 0

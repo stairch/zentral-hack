@@ -54,6 +54,7 @@ async function handleGet(req: AuthenticatedRequest) {
               u.is_active, u.created_at, u.admin_role_id,
               u.email_verified, u.email_verified_at,
               COALESCE(ar.name, '') as admin_role_name,
+              u.category_id,
               COALESCE(cat_role.name, c.name) as category_name,
               ${REGISTRATIONS_SUBQUERY} as registrations
        FROM users u
@@ -103,6 +104,11 @@ async function handlePut(req: AuthenticatedRequest) {
     if (role !== "category_partner" && role !== "sponsor") {
       resolvedCategoryId = null
       resolvedAdminRoleId = null
+    }
+
+    if (resolvedCategoryId) {
+      const catCheck = await query("SELECT id FROM categories WHERE id = $1", [resolvedCategoryId])
+      if (catCheck.rows.length === 0) return validationError("Category not found")
     }
 
     await query(

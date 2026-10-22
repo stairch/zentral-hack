@@ -29,7 +29,9 @@ import {
   Upload,
   Download,
   FileText,
-  Trophy
+  Trophy,
+  NotebookPen,
+  Medal
 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
@@ -48,7 +50,26 @@ interface Team {
   challenge_title?: string | null
   challenge_title_en?: string | null
   member_count?: number
+  rank?: number | null
   created_at: string
+}
+
+interface TeamNote {
+  id: string
+  content: string
+  created_at: string
+  author_id: string | null
+  author_first_name: string | null
+  author_last_name: string | null
+  author_email: string | null
+}
+
+interface TeamRanking {
+  rank: number
+  updated_at: string
+  updated_by_first_name: string | null
+  updated_by_last_name: string | null
+  updated_by_email: string | null
 }
 
 interface ChallengeOption {
@@ -151,7 +172,30 @@ const copy = {
     fileUploadError: "Fehler beim Hochladen",
     deleteFileConfirm: "Datei wirklich löschen?",
     fileDeleteSuccess: "Datei gelöscht",
-    fileDeleteError: "Fehler beim Löschen"
+    fileDeleteError: "Fehler beim Löschen",
+    internalTitle: "Interne Notizen",
+    internalDesc: "Nur für Kategorie-Admins und Admins sichtbar. Teilnehmende sehen dies nicht.",
+    rankLabel: "Platzierung",
+    rankPlaceholder: "z.B. 1",
+    rankSave: "Platz speichern",
+    rankClear: "Entfernen",
+    rankNone: "Noch kein Platz festgelegt.",
+    rankPlace: "Platz",
+    rankUpdatedBy: "Zuletzt geändert von",
+    rankSaveSuccess: "Platzierung gespeichert",
+    rankClearSuccess: "Platzierung entfernt",
+    rankSaveError: "Fehler beim Speichern der Platzierung",
+    rankInvalid: "Bitte eine ganze Zahl ab 1 eingeben",
+    notesTitle: "Notizen",
+    notePlaceholder: "Notiz zum Team hinzufügen...",
+    addNote: "Notiz hinzufügen",
+    notesEmpty: "Noch keine Notizen.",
+    notesLoadError: "Fehler beim Laden der Notizen",
+    noteAddError: "Fehler beim Speichern der Notiz",
+    deleteNoteConfirm: "Notiz wirklich löschen?",
+    noteDeleteSuccess: "Notiz gelöscht",
+    noteDeleteError: "Fehler beim Löschen der Notiz",
+    unknownAuthor: "Unbekannt"
   },
   en: {
     heading: "TEAMS",
@@ -224,7 +268,30 @@ const copy = {
     fileUploadError: "Failed to upload",
     deleteFileConfirm: "Really delete this file?",
     fileDeleteSuccess: "File deleted",
-    fileDeleteError: "Failed to delete"
+    fileDeleteError: "Failed to delete",
+    internalTitle: "Internal notes",
+    internalDesc: "Only visible to category admins and admins. Participants never see this.",
+    rankLabel: "Placement",
+    rankPlaceholder: "e.g. 1",
+    rankSave: "Save placement",
+    rankClear: "Remove",
+    rankNone: "No placement set yet.",
+    rankPlace: "Place",
+    rankUpdatedBy: "Last changed by",
+    rankSaveSuccess: "Placement saved",
+    rankClearSuccess: "Placement removed",
+    rankSaveError: "Failed to save placement",
+    rankInvalid: "Please enter a whole number from 1",
+    notesTitle: "Notes",
+    notePlaceholder: "Add a note about this team...",
+    addNote: "Add note",
+    notesEmpty: "No notes yet.",
+    notesLoadError: "Failed to load notes",
+    noteAddError: "Failed to save note",
+    deleteNoteConfirm: "Really delete this note?",
+    noteDeleteSuccess: "Note deleted",
+    noteDeleteError: "Failed to delete note",
+    unknownAuthor: "Unknown"
   }
 } as const
 
@@ -276,6 +343,15 @@ export function TeamsAdminPage() {
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null)
   const [deletingFile, setDeletingFile] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [teamNotes, setTeamNotes] = useState<TeamNote[]>([])
+  const [teamRanking, setTeamRanking] = useState<TeamRanking | null>(null)
+  const [loadingNotes, setLoadingNotes] = useState(false)
+  const [newNote, setNewNote] = useState("")
+  const [addingNote, setAddingNote] = useState(false)
+  const [deleteNoteId, setDeleteNoteId] = useState<string | null>(null)
+  const [deletingNote, setDeletingNote] = useState(false)
+  const [rankInput, setRankInput] = useState("")
+  const [savingRank, setSavingRank] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -374,6 +450,106 @@ export function TeamsAdminPage() {
       setLoadingMembers(false)
     }
     void fetchTeamFiles(team.id)
+    void fetchTeamNotes(team.id)
+  }
+
+  const formatPerson = (firstName: string | null, lastName: string | null, email: string | null) =>
+    [firstName, lastName].filter(Boolean).join(" ") || email || text.unknownAuthor
+
+  const fetchTeamNotes = async (teamId: string) => {
+    setLoadingNotes(true)
+    setTeamNotes([])
+    setTeamRanking(null)
+    setRankInput("")
+    setNewNote("")
+    try {
+      const res = await fetch(`/api/admin/teams/notes?teamId=${teamId}`, { credentials: "include" })
+      if (res.ok) {
+        const data = await res.json()
+        setTeamNotes(data.data?.notes || [])
+        setTeamRanking(data.data?.ranking || null)
+        setRankInput(data.data?.ranking ? String(data.data.ranking.rank) : "")
+      }
+    } catch {
+      toast.error(text.notesLoadError)
+    } finally {
+      setLoadingNotes(false)
+    }
+  }
+
+  const applyRankToTeams = (teamId: string, rank: number | null) => {
+    setSelectedTeam((prev) => (prev && prev.id === teamId ? { ...prev, rank } : prev))
+    setTeams((prev) => prev.map((t) => (t.id === teamId ? { ...t, rank } : t)))
+  }
+
+  const handleSaveRank = async (clear = false) => {
+    if (!selectedTeam) return
+    const rank = clear ? null : Number(rankInput)
+    if (!clear && (!Number.isInteger(rank) || (rank as number) < 1)) {
+      toast.error(text.rankInvalid)
+      return
+    }
+    setSavingRank(true)
+    try {
+      const res = await fetch("/api/admin/teams/ranking", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ teamId: selectedTeam.id, rank })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || text.rankSaveError)
+      const ranking: TeamRanking | null = data.data?.ranking || null
+      setTeamRanking(ranking)
+      setRankInput(ranking ? String(ranking.rank) : "")
+      applyRankToTeams(selectedTeam.id, ranking?.rank ?? null)
+      toast.success(clear ? text.rankClearSuccess : text.rankSaveSuccess)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : text.rankSaveError)
+    } finally {
+      setSavingRank(false)
+    }
+  }
+
+  const handleAddNote = async () => {
+    if (!selectedTeam || !newNote.trim()) return
+    setAddingNote(true)
+    try {
+      const res = await fetch("/api/admin/teams/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ teamId: selectedTeam.id, content: newNote.trim() })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || text.noteAddError)
+      setTeamNotes((prev) => [data.data.note, ...prev])
+      setNewNote("")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : text.noteAddError)
+    } finally {
+      setAddingNote(false)
+    }
+  }
+
+  const handleDeleteNote = async () => {
+    if (!deleteNoteId) return
+    setDeletingNote(true)
+    try {
+      const res = await fetch(`/api/admin/teams/notes?noteId=${deleteNoteId}`, {
+        method: "DELETE",
+        credentials: "include"
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || text.noteDeleteError)
+      setTeamNotes((prev) => prev.filter((n) => n.id !== deleteNoteId))
+      toast.success(text.noteDeleteSuccess)
+      setDeleteNoteId(null)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : text.noteDeleteError)
+    } finally {
+      setDeletingNote(false)
+    }
   }
 
   const fetchAvailableUsers = async (categoryId: string, q?: string) => {
@@ -627,6 +803,11 @@ export function TeamsAdminPage() {
               <Button variant="ghost" size="icon" onClick={openEditTeam}>
                 <Pencil className="h-4 w-4" />
               </Button>
+              {selectedTeam.rank && (
+                <Badge className="bg-yellow text-violet gap-1">
+                  <Medal className="h-3 w-3" /> {text.rankPlace} {selectedTeam.rank}
+                </Badge>
+              )}
             </div>
             <p className="text-muted-foreground">
               {selectedTeam.category_name} • {members.length} {text.members}
@@ -901,6 +1082,115 @@ export function TeamsAdminPage() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <NotebookPen className="h-4 w-4" /> {text.internalTitle}
+            </CardTitle>
+            <CardDescription>{text.internalDesc}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {loadingNotes ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="team-rank">{text.rankLabel}</Label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Input
+                      id="team-rank"
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={rankInput}
+                      onChange={(e) => setRankInput(e.target.value)}
+                      placeholder={text.rankPlaceholder}
+                      className="w-28"
+                    />
+                    <Button
+                      onClick={() => handleSaveRank()}
+                      disabled={savingRank || !rankInput || rankInput === String(teamRanking?.rank ?? "")}
+                      className="bg-violet hover:bg-violet/90">
+                      {savingRank ? <Loader2 className="h-4 w-4 animate-spin" /> : text.rankSave}
+                    </Button>
+                    {teamRanking && (
+                      <Button variant="ghost" disabled={savingRank} onClick={() => handleSaveRank(true)}>
+                        {text.rankClear}
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-muted-foreground text-xs">
+                    {teamRanking
+                      ? `${text.rankUpdatedBy} ${formatPerson(
+                          teamRanking.updated_by_first_name,
+                          teamRanking.updated_by_last_name,
+                          teamRanking.updated_by_email
+                        )} · ${new Date(teamRanking.updated_at).toLocaleString(dateLocale)}`
+                      : text.rankNone}
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="team-note">{text.notesTitle}</Label>
+                  <Textarea
+                    id="team-note"
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    placeholder={text.notePlaceholder}
+                    rows={3}
+                  />
+                  <Button
+                    onClick={handleAddNote}
+                    disabled={addingNote || !newNote.trim()}
+                    variant="outline"
+                    className="gap-2">
+                    {addingNote ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                    {text.addNote}
+                  </Button>
+                  {teamNotes.length > 0 ? (
+                    <div className="space-y-2">
+                      {teamNotes.map((note) => (
+                        <div key={note.id} className="border-border rounded-lg border p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-muted-foreground text-xs">
+                              {formatPerson(note.author_first_name, note.author_last_name, note.author_email)}{" "}
+                              · {new Date(note.created_at).toLocaleString(dateLocale)}
+                            </p>
+                            {(user?.role === "admin" || note.author_id === user?.id) && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:text-destructive h-7 w-7 shrink-0"
+                                onClick={() => setDeleteNoteId(note.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap">{note.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground py-4 text-center text-sm">{text.notesEmpty}</p>
+                  )}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <ConfirmDialog
+          open={!!deleteNoteId}
+          onOpenChange={(open) => !open && setDeleteNoteId(null)}
+          title={language === "en" ? "Delete note?" : "Notiz löschen?"}
+          description={text.deleteNoteConfirm}
+          confirmLabel={language === "en" ? "Delete" : "Löschen"}
+          cancelLabel={language === "en" ? "Cancel" : "Abbrechen"}
+          onConfirm={handleDeleteNote}
+          loading={deletingNote}
+        />
         <ConfirmDialog
           open={!!deleteFileId}
           onOpenChange={(open) => !open && setDeleteFileId(null)}
@@ -1032,11 +1322,20 @@ export function TeamsAdminPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {team.description && <p className="text-muted-foreground text-sm">{team.description}</p>}
-                {team.challenge_title && (
-                  <Badge variant="outline" className="gap-1">
-                    <Trophy className="h-3 w-3" />
-                    {team.challenge_title}
-                  </Badge>
+                {(team.challenge_title || team.rank) && (
+                  <div className="flex flex-wrap gap-2">
+                    {team.rank && (
+                      <Badge className="bg-yellow text-violet gap-1">
+                        <Medal className="h-3 w-3" /> {text.rankPlace} {team.rank}
+                      </Badge>
+                    )}
+                    {team.challenge_title && (
+                      <Badge variant="outline" className="gap-1">
+                        <Trophy className="h-3 w-3" />
+                        {team.challenge_title}
+                      </Badge>
+                    )}
+                  </div>
                 )}
                 <div className="text-muted-foreground flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4" />
