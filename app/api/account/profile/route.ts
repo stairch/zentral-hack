@@ -3,6 +3,7 @@ import { query } from "@/lib/db"
 import { withAuth, type AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { getError } from "@/lib/validation"
+import { getCategoryRegistrationError } from "@/lib/category-db"
 
 const profileSchema = z
   .object({
@@ -58,15 +59,35 @@ async function handlePatch(req: AuthenticatedRequest) {
       allergies !== undefined || dietaryRestrictions !== undefined || categoryId !== undefined
 
     if (needsRegistration) {
-      const registration = await query("SELECT id FROM registrations WHERE user_id = $1", [userId])
+      const registration = await query("SELECT id, category_id FROM registrations WHERE user_id = $1", [
+        userId
+      ])
       if (registration.rows.length === 0) {
-        return validationError("Keine aktive Anmeldung vorhanden")
+        if (categoryId === undefined || req.user!.role !== "user") {
+          return validationError("Keine aktive Anmeldung vorhanden")
+        }
+
+        // Participants without a category can pick one here, which creates their registration
+        const categoryError = await getCategoryRegistrationError(categoryId)
+        if (categoryError) {
+          return validationError(categoryError)
+        }
+
+        await query(
+          `INSERT INTO registrations (user_id, category_id, allergies, dietary_restrictions, status, confirmation_sent)
+           VALUES ($1, $2, $3, $4, 'confirmed', false)`,
+          [userId, categoryId, allergies || null, dietaryRestrictions || null]
+        )
+        await query("UPDATE users SET category_id = $1 WHERE id = $2", [categoryId, userId])
+
+        return successResponse({ message: "Profil aktualisiert" })
       }
 
-      if (categoryId !== undefined) {
-        const category = await query("SELECT id FROM categories WHERE id = $1", [categoryId])
-        if (category.rows.length === 0) {
-          return validationError("Kategorie nicht gefunden")
+      const categoryChanged = categoryId !== undefined && categoryId !== registration.rows[0].category_id
+      if (categoryChanged) {
+        const categoryError = await getCategoryRegistrationError(categoryId)
+        if (categoryError) {
+          return validationError(categoryError)
         }
       }
 
@@ -88,6 +109,12 @@ async function handlePatch(req: AuthenticatedRequest) {
 
       if (categoryId !== undefined) {
         await query("UPDATE users SET category_id = $1 WHERE id = $2", [categoryId, userId])
+      }
+
+      // A challenge submission belongs to the old category's challenges, so withdraw it
+      // to let the participant apply again in the new category
+      if (categoryChanged) {
+        await query("DELETE FROM challenge_submissions WHERE user_id = $1", [userId])
       }
     }
 

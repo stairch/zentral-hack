@@ -49,7 +49,6 @@ async function handleGet(req: AuthenticatedRequest) {
       return successResponse({ users: result.rows })
     }
 
-    // Super admins see all real users: email confirmed, and (for participants) actually registered
     const result = await query(
       `SELECT u.id, u.email, u.first_name, u.last_name, u.role,
               u.is_active, u.created_at, u.admin_role_id,
@@ -125,6 +124,64 @@ async function handlePut(req: AuthenticatedRequest) {
   }
 }
 
+async function handlePatch(req: AuthenticatedRequest) {
+  try {
+    const { registrationId, categoryId } = await req.json()
+
+    if (!registrationId || !categoryId) {
+      return validationError("registrationId and categoryId are required")
+    }
+
+    const regResult = await query("SELECT id, user_id, category_id FROM registrations WHERE id = $1", [
+      registrationId
+    ])
+    if (regResult.rows.length === 0) return notFoundError("Registration")
+    const registration = regResult.rows[0]
+
+    if (registration.category_id === categoryId) {
+      return successResponse({ message: "Category unchanged" })
+    }
+
+    const catResult = await query("SELECT id FROM categories WHERE id = $1", [categoryId])
+    if (catResult.rows.length === 0) return notFoundError("Category")
+
+    const duplicate = await query("SELECT id FROM registrations WHERE user_id = $1 AND category_id = $2", [
+      registration.user_id,
+      categoryId
+    ])
+    if (duplicate.rows.length > 0) {
+      return validationError("User is already registered for this category")
+    }
+
+    await query("UPDATE registrations SET category_id = $1, updated_at = NOW() WHERE id = $2", [
+      categoryId,
+      registrationId
+    ])
+
+    await query("UPDATE users SET category_id = $1 WHERE id = $2 AND role = 'user'", [
+      categoryId,
+      registration.user_id
+    ])
+
+    // Teams belong to a category, so drop memberships in teams of the previous category
+    await query(
+      `DELETE FROM team_members
+       WHERE user_id = $1
+         AND team_id IN (SELECT id FROM teams WHERE category_id = $2)`,
+      [registration.user_id, registration.category_id]
+    )
+
+    // A challenge submission belongs to the old category's challenges, so withdraw it
+    // to let the participant apply again in the new category
+    await query("DELETE FROM challenge_submissions WHERE user_id = $1", [registration.user_id])
+
+    return successResponse({ message: "Category updated successfully" })
+  } catch (error) {
+    console.error("[Admin Users] PATCH Error:", error)
+    return serverError("Failed to update category")
+  }
+}
+
 async function handleDelete(req: AuthenticatedRequest) {
   try {
     const { searchParams } = new URL(req.url)
@@ -190,9 +247,16 @@ async function handlePost(req: AuthenticatedRequest) {
       return validationError("Category or admin role is required for category_partner")
     } else if (role === "sponsor" && !categoryId) {
       return validationError("Category is required for sponsor role")
+    } else if (role === "user" && !categoryId) {
+      return validationError("Category is required for participants")
     }
 
-    if (role !== "category_partner" && role !== "sponsor") {
+    if (role === "user") {
+      const catCheck = await query("SELECT id FROM categories WHERE id = $1", [categoryId])
+      if (catCheck.rows.length === 0) return validationError("Category not found")
+    }
+
+    if (role !== "category_partner" && role !== "sponsor" && role !== "user") {
       resolvedCategoryId = null
       resolvedAdminRoleId = null
     }
@@ -233,6 +297,27 @@ async function handlePost(req: AuthenticatedRequest) {
     created.email_verified = true
     created.registrations = null
 
+    if (role === "user") {
+      const regResult = await query(
+        `INSERT INTO registrations (user_id, category_id, status, confirmation_sent)
+         VALUES ($1, $2, 'confirmed', false)
+         RETURNING id, category_id, status, created_at`,
+        [created.id, resolvedCategoryId]
+      )
+      created.registrations = [
+        {
+          ...regResult.rows[0],
+          category_name: created.category_name,
+          university: null,
+          study_program: null,
+          semester: null,
+          allergies: null,
+          dietary_restrictions: null,
+          intolerances: null
+        }
+      ]
+    }
+
     return successResponse({ user: created })
   } catch (error) {
     console.error("[Admin Users] POST Error:", error)
@@ -243,4 +328,5 @@ async function handlePost(req: AuthenticatedRequest) {
 export const GET = withCategoryPartnerAuth(handleGet)
 export const POST = withAdminAuth(handlePost)
 export const PUT = withAdminAuth(handlePut)
+export const PATCH = withAdminAuth(handlePatch)
 export const DELETE = withAdminAuth(handleDelete)

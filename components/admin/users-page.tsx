@@ -27,7 +27,8 @@ import {
   UserPlus,
   Eye,
   Download,
-  MoreVertical
+  MoreVertical,
+  Tags
 } from "lucide-react"
 import { toast } from "sonner"
 import { useAuth } from "@/lib/auth-context"
@@ -123,6 +124,16 @@ const copy = {
     active: "Aktiv",
     deactivated: "Deaktiviert",
     changeRole: "Rolle ändern",
+    changeCategory: "Kategorie ändern",
+    changeCategoryDesc: "Wähle die neue Kategorie für",
+    currentRegistration: "Aktuelle Anmeldung",
+    newCategory: "Neue Kategorie",
+    categoryUpdated: "Kategorie aktualisiert",
+    categoryUpdateError: "Fehler beim Ändern der Kategorie",
+    categoryChangeHint: "Die Mitgliedschaft in Teams der bisherigen Kategorie wird entfernt.",
+    categoryChangeSubmissionWarning:
+      "Achtung: Eine allfällige Challenge-Einreichung des Benutzers wird gelöscht – auch wenn sie bereits angenommen wurde.",
+    save: "Speichern",
     changeRoleDesc: "Wähle die neue Rolle für",
     newRole: "Neue Rolle",
     warningAdminTitle: "Achtung: Super Admin Rolle",
@@ -204,6 +215,16 @@ const copy = {
     active: "Active",
     deactivated: "Deactivated",
     changeRole: "Change Role",
+    changeCategory: "Change category",
+    changeCategoryDesc: "Select the new category for",
+    currentRegistration: "Current registration",
+    newCategory: "New category",
+    categoryUpdated: "Category updated",
+    categoryUpdateError: "Failed to change category",
+    categoryChangeHint: "Membership in teams of the previous category will be removed.",
+    categoryChangeSubmissionWarning:
+      "Note: Any challenge submission of this user will be deleted – even if it has already been accepted.",
+    save: "Save",
     changeRoleDesc: "Select the new role for",
     newRole: "New role",
     warningAdminTitle: "Warning: Super Admin role",
@@ -266,6 +287,12 @@ export function UsersAdminPage() {
   } | null>(null)
   const [selectedCategoryId, setSelectedCategoryId] = useState("")
   const [selectedAdminRoleId, setSelectedAdminRoleId] = useState("")
+
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false)
+  const [categoryChangeUser, setCategoryChangeUser] = useState<User | null>(null)
+  const [selectedRegistrationId, setSelectedRegistrationId] = useState("")
+  const [newCategoryId, setNewCategoryId] = useState("")
+  const [savingCategory, setSavingCategory] = useState(false)
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; email: string; name: string } | null>(null)
@@ -415,6 +442,59 @@ export function UsersAdminPage() {
     }
   }
 
+  function openCategoryDialog(user: User) {
+    setCategoryChangeUser(user)
+    setSelectedRegistrationId(user.registrations?.[0]?.id || "")
+    setNewCategoryId("")
+    setCategoryDialogOpen(true)
+  }
+
+  async function confirmCategoryChange() {
+    if (!categoryChangeUser || !selectedRegistrationId || !newCategoryId) {
+      toast.error(text.categoryRequired)
+      return
+    }
+    setSavingCategory(true)
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ registrationId: selectedRegistrationId, categoryId: newCategoryId })
+      })
+      if (res.ok) {
+        const newName = categories.find((c) => c.id === newCategoryId)?.name || ""
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === categoryChangeUser.id
+              ? {
+                  ...u,
+                  category_name: u.role === "user" ? newName : u.category_name,
+                  registrations:
+                    u.registrations?.map((r) =>
+                      r.id === selectedRegistrationId
+                        ? { ...r, category_id: newCategoryId, category_name: newName }
+                        : r
+                    ) || null
+                }
+              : u
+          )
+        )
+        toast.success(text.categoryUpdated)
+        setCategoryDialogOpen(false)
+        setCategoryChangeUser(null)
+      } else {
+        const err = await res.json()
+        toast.error(err.error || text.categoryUpdateError)
+      }
+    } catch (err) {
+      console.error("Failed to change category:", err)
+      toast.error(text.categoryUpdateError)
+    } finally {
+      setSavingCategory(false)
+    }
+  }
+
   function openDeleteDialog(user: User) {
     setPendingDelete({
       id: user.id,
@@ -454,7 +534,8 @@ export function UsersAdminPage() {
       toast.error(text.categoryRequired)
       return
     }
-    const needsAssignment = createForm.role === "category_partner" || createForm.role === "sponsor"
+    const needsAssignment =
+      createForm.role === "category_partner" || createForm.role === "sponsor" || createForm.role === "user"
     const hasAssignment = createForm.adminRoleId || createForm.categoryId
     if (needsAssignment && !hasAssignment) {
       toast.error(text.categoryRequired)
@@ -822,6 +903,14 @@ export function UsersAdminPage() {
                                   <UserCog className="h-4 w-4" />
                                   {text.changeRole}
                                 </DropdownMenuItem>
+                                {user.role === "user" &&
+                                  user.registrations &&
+                                  user.registrations.length > 0 && (
+                                    <DropdownMenuItem onClick={() => openCategoryDialog(user)}>
+                                      <Tags className="h-4 w-4" />
+                                      {text.changeCategory}
+                                    </DropdownMenuItem>
+                                  )}
                                 {user.role !== "admin" && (
                                   <>
                                     <DropdownMenuSeparator />
@@ -938,6 +1027,7 @@ export function UsersAdminPage() {
               </div>
             )}
             {(createForm.role === "sponsor" ||
+              createForm.role === "user" ||
               (createForm.role === "category_partner" && !createForm.adminRoleId)) && (
               <div>
                 <Label>{text.category}</Label>
@@ -968,6 +1058,73 @@ export function UsersAdminPage() {
                   <UserPlus className="mr-2 h-4 w-4" />
                 )}
                 {text.create}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Category change dialog */}
+      <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{text.changeCategory}</DialogTitle>
+            <DialogDescription>
+              {text.changeCategoryDesc}{" "}
+              <strong>
+                {categoryChangeUser?.first_name} {categoryChangeUser?.last_name}
+              </strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {categoryChangeUser?.registrations && categoryChangeUser.registrations.length > 1 && (
+              <div>
+                <Label>{text.currentRegistration}</Label>
+                <Select value={selectedRegistrationId} onValueChange={setSelectedRegistrationId}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categoryChangeUser.registrations.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.category_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div>
+              <Label>{text.newCategory}</Label>
+              <Select value={newCategoryId} onValueChange={setNewCategoryId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={text.categoryPlaceholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories
+                    .filter(
+                      (cat) => !categoryChangeUser?.registrations?.some((r) => r.category_id === cat.id)
+                    )
+                    .map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-muted-foreground text-sm">{text.categoryChangeHint}</p>
+            <p className="text-sm text-amber-700">{text.categoryChangeSubmissionWarning}</p>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setCategoryDialogOpen(false)}
+                disabled={savingCategory}>
+                {text.cancel}
+              </Button>
+              <Button onClick={confirmCategoryChange} disabled={savingCategory || !newCategoryId}>
+                {savingCategory && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {text.save}
               </Button>
             </div>
           </div>

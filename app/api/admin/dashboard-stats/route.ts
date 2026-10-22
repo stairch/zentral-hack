@@ -21,7 +21,11 @@ export async function GET(request: NextRequest) {
     }
 
     const [registrationsRes, newsletterRes, teamsRes, documentsRes] = await Promise.all([
-      query("SELECT COUNT(*) as count FROM registrations"),
+      query(
+        `SELECT COUNT(*) as count
+         FROM users u
+         WHERE u.email_verified = true AND u.role = 'user'`
+      ),
       getAllSubscribers(),
       query("SELECT COUNT(*) as count FROM teams"),
       query("SELECT COUNT(*) as count FROM category_documents")

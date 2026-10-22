@@ -1108,36 +1108,6 @@ export function SponsorChallengeEditor({
         </CardHeader>
       </Card>
 
-      {/* ── Submission settings (admin / category partner only) ── */}
-      {canPublish && (
-        <Card className="border-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">{t.submissionSectionTitle}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <CheckboxRow
-              id="submission-enabled"
-              label={t.submissionEnableLabel}
-              hint={t.submissionEnableHint}
-              checked={submissionEnabled}
-              onCheckedChange={(value) => {
-                setSubmissionEnabled(value)
-                if (!value) setSubmissionDescriptionRequired(false)
-              }}
-            />
-            {submissionEnabled && (
-              <CheckboxRow
-                id="submission-description-required"
-                label={t.submissionRequireDescriptionLabel}
-                hint={t.submissionRequireDescriptionHint}
-                checked={submissionDescriptionRequired}
-                onCheckedChange={setSubmissionDescriptionRequired}
-              />
-            )}
-          </CardContent>
-        </Card>
-      )}
-
       {/* ── Challenge documents (admin / category partner only) ── */}
       {canPublish && (
         <Card className="border-border">
@@ -1219,7 +1189,6 @@ export function SponsorChallengeEditor({
         onConfirm={() => void handleDeleteChallengeDoc()}
         loading={deletingDoc}
       />
-
       {/* ── Website-visible section ── */}
       <Card className="border-[#530A5D]/40 bg-gradient-to-br from-[#530A5D]/5 to-[#530A5D]/10 shadow-sm">
         <CardHeader className="border-b pb-4">

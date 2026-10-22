@@ -4,6 +4,7 @@ import { sendRegisterConfirmationEmail } from "@/lib/transactional-emails"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { RegistrationSchema, validateRequest } from "@/lib/validation"
 import { addSubscriber } from "@/lib/resend"
+import { getCategoryRegistrationError } from "@/lib/category-db"
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,28 +55,9 @@ export async function POST(request: NextRequest) {
       return validationError("Sie sind bereits für diese Kategorie registriert")
     }
 
-    const categoryCapacity = await query(
-      `SELECT c.registration_closed, c.max_registrations, COUNT(u.id)::integer AS registration_count
-       FROM categories c
-       LEFT JOIN registrations r ON r.category_id = c.id AND r.status != 'cancelled'
-       LEFT JOIN users u ON u.id = r.user_id AND u.role = 'user'
-       WHERE c.id = $1
-       GROUP BY c.id, c.registration_closed, c.max_registrations`,
-      [categoryId]
-    )
-
-    if (categoryCapacity.rows.length === 0) {
-      return validationError("Kategorie nicht gefunden")
-    }
-
-    const { registration_closed, max_registrations, registration_count } = categoryCapacity.rows[0]
-
-    if (registration_closed) {
-      return validationError("Die Anmeldung für diese Kategorie wurde geschlossen")
-    }
-
-    if (max_registrations !== null && registration_count >= max_registrations) {
-      return validationError("Die maximale Anzahl Anmeldungen für diese Kategorie wurde erreicht")
+    const categoryError = await getCategoryRegistrationError(categoryId)
+    if (categoryError) {
+      return validationError(categoryError)
     }
 
     const result = await query(
