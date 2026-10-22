@@ -25,13 +25,15 @@ async function handleGet(req: AuthenticatedRequest) {
               c.name as category_name, c.color as category_color,
               sc.challenge_title, sc.challenge_title_en,
               COUNT(DISTINCT team_members.id) as member_count,
+              tr.rank,
               teams.created_at
        FROM teams
        LEFT JOIN team_members ON teams.id = team_members.team_id
        JOIN categories c ON teams.category_id = c.id
        LEFT JOIN sponsor_challenges sc ON teams.challenge_id = sc.id
+       LEFT JOIN team_rankings tr ON teams.id = tr.team_id
        ${filter}
-       GROUP BY teams.id, c.name, c.color, sc.challenge_title, sc.challenge_title_en
+       GROUP BY teams.id, c.name, c.color, sc.challenge_title, sc.challenge_title_en, tr.rank
        ORDER BY teams.created_at DESC`,
       params
     )

@@ -56,6 +56,7 @@ interface User {
   last_name: string
   role: "user" | "category_partner" | "sponsor" | "admin"
   is_active: boolean
+  category_id?: string | null
   category_name: string | null
   admin_role_id: string | null
   admin_role_name: string | null
@@ -284,6 +285,10 @@ export function UsersAdminPage() {
     currentRole: string
     newRole: string
     userName: string
+    // Set when only the category of an existing category admin is being changed
+    categoryOnly?: boolean
+    currentCategoryId?: string | null
+    currentAdminRoleId?: string | null
   } | null>(null)
   const [selectedCategoryId, setSelectedCategoryId] = useState("")
   const [selectedAdminRoleId, setSelectedAdminRoleId] = useState("")
@@ -368,6 +373,21 @@ export function UsersAdminPage() {
     setRoleDialogOpen(true)
   }
 
+  function openCategoryAdminChangeModal(user: User) {
+    setPendingRoleChange({
+      userId: user.id,
+      currentRole: user.role,
+      newRole: user.role,
+      userName: `${user.first_name} ${user.last_name}`,
+      categoryOnly: true,
+      currentCategoryId: user.category_id ?? null,
+      currentAdminRoleId: user.admin_role_id
+    })
+    setSelectedCategoryId(user.admin_role_id ? "" : user.category_id || "")
+    setSelectedAdminRoleId(user.admin_role_id || "")
+    setRoleDialogOpen(true)
+  }
+
   function selectNewRole(role: string) {
     setPendingRoleChange((prev) => (prev ? { ...prev, newRole: role } : prev))
     setSelectedCategoryId("")
@@ -422,6 +442,7 @@ export function UsersAdminPage() {
               ? {
                   ...u,
                   role: newRole as User["role"],
+                  category_id: role ? role.category_id : categoryId,
                   category_name: catName,
                   admin_role_id: adminRoleId,
                   admin_role_name: role?.name || null
@@ -911,6 +932,12 @@ export function UsersAdminPage() {
                                       {text.changeCategory}
                                     </DropdownMenuItem>
                                   )}
+                                {user.role === "category_partner" && (
+                                  <DropdownMenuItem onClick={() => openCategoryAdminChangeModal(user)}>
+                                    <Tags className="h-4 w-4" />
+                                    {text.changeCategory}
+                                  </DropdownMenuItem>
+                                )}
                                 {user.role !== "admin" && (
                                   <>
                                     <DropdownMenuSeparator />
@@ -1138,26 +1165,31 @@ export function UsersAdminPage() {
             if (e.key === "Enter") confirmRoleChange()
           }}>
           <DialogHeader>
-            <DialogTitle>{text.changeRole}</DialogTitle>
+            <DialogTitle>
+              {pendingRoleChange?.categoryOnly ? text.changeCategory : text.changeRole}
+            </DialogTitle>
             <DialogDescription>
-              {text.changeRoleDesc} <strong>{pendingRoleChange?.userName}</strong>
+              {pendingRoleChange?.categoryOnly ? text.changeCategoryDesc : text.changeRoleDesc}{" "}
+              <strong>{pendingRoleChange?.userName}</strong>
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label>{text.newRole}</Label>
-              <Select value={pendingRoleChange?.newRole} onValueChange={selectNewRole}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user">{text.roleUser}</SelectItem>
-                  <SelectItem value="category_partner">{text.roleCategoryAdmin}</SelectItem>
-                  <SelectItem value="sponsor">{text.roleSponsor}</SelectItem>
-                  <SelectItem value="admin">{text.roleSuperAdmin}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {!pendingRoleChange?.categoryOnly && (
+              <div>
+                <Label>{text.newRole}</Label>
+                <Select value={pendingRoleChange?.newRole} onValueChange={selectNewRole}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">{text.roleUser}</SelectItem>
+                    <SelectItem value="category_partner">{text.roleCategoryAdmin}</SelectItem>
+                    <SelectItem value="sponsor">{text.roleSponsor}</SelectItem>
+                    <SelectItem value="admin">{text.roleSuperAdmin}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             {pendingRoleChange?.newRole === "admin" && (
               <div className="border-destructive/50 bg-destructive/10 flex gap-2 rounded-md border p-3 text-sm">
                 <AlertTriangle className="text-destructive h-4 w-4 shrink-0" />
@@ -1167,13 +1199,14 @@ export function UsersAdminPage() {
                 </div>
               </div>
             )}
-            {(pendingRoleChange?.newRole === "category_partner" ||
-              pendingRoleChange?.newRole === "sponsor") && (
-              <div className="flex gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
-                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
-                <p className="text-amber-700">{text.warningElevatedText}</p>
-              </div>
-            )}
+            {!pendingRoleChange?.categoryOnly &&
+              (pendingRoleChange?.newRole === "category_partner" ||
+                pendingRoleChange?.newRole === "sponsor") && (
+                <div className="flex gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+                  <p className="text-amber-700">{text.warningElevatedText}</p>
+                </div>
+              )}
             {pendingRoleChange?.newRole === "category_partner" && adminRoles.length > 0 && (
               <div>
                 <Label>{language === "de" ? "Admin-Rolle (empfohlen)" : "Admin role (recommended)"}</Label>
@@ -1225,7 +1258,12 @@ export function UsersAdminPage() {
                 onClick={confirmRoleChange}
                 disabled={
                   !pendingRoleChange ||
-                  pendingRoleChange.newRole === pendingRoleChange.currentRole ||
+                  (pendingRoleChange.categoryOnly
+                    ? selectedAdminRoleId
+                      ? selectedAdminRoleId === pendingRoleChange.currentAdminRoleId
+                      : !pendingRoleChange.currentAdminRoleId &&
+                        selectedCategoryId === pendingRoleChange.currentCategoryId
+                    : pendingRoleChange.newRole === pendingRoleChange.currentRole) ||
                   ((pendingRoleChange.newRole === "category_partner" ||
                     pendingRoleChange.newRole === "sponsor") &&
                     !selectedCategoryId &&
