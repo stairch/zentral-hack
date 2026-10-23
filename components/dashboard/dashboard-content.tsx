@@ -7,6 +7,7 @@ import { useLanguage } from "@/lib/language-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import AlertBanner from "../outage-banner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
@@ -421,7 +422,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
 
       const preferredCategoryId =
         (data?.profile?.category_id &&
-        categories.some((category) => category.id === data.profile?.category_id)
+          categories.some((category) => category.id === data.profile?.category_id)
           ? data.profile.category_id
           : categories[0]?.id) || ""
 
@@ -687,6 +688,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
         />
       )}
 
+      <AlertBanner />
       <div className="container mx-auto px-4 py-8">
         {/* Welcome */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
@@ -734,9 +736,8 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                 key={item.key}
                 type="button"
                 onClick={() => setNav(item.key)}
-                className={`cursor-pointer rounded-lg px-3.5 py-2.5 text-left text-sm font-semibold whitespace-nowrap transition-colors ${
-                  nav === item.key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
-                }`}>
+                className={`cursor-pointer rounded-lg px-3.5 py-2.5 text-left text-sm font-semibold whitespace-nowrap transition-colors ${nav === item.key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+                  }`}>
                 {item.label}
               </button>
             ))}
@@ -1060,17 +1061,17 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                         )}
                         {(submissionDescriptionRequired ||
                           (!selectedSubmissionChallenge && !!mySubmission?.description)) && (
-                          <div className="space-y-1.5">
-                            <Label>{t.submissionDescriptionRequiredLabel}</Label>
-                            <Textarea
-                              value={submissionDescription}
-                              onChange={(e) => setSubmissionDescription(e.target.value)}
-                              placeholder={t.submissionDescriptionPlaceholder}
-                              rows={4}
-                              disabled={submissionLocked || !selectedSubmissionChallenge}
-                            />
-                          </div>
-                        )}
+                            <div className="space-y-1.5">
+                              <Label>{t.submissionDescriptionRequiredLabel}</Label>
+                              <Textarea
+                                value={submissionDescription}
+                                onChange={(e) => setSubmissionDescription(e.target.value)}
+                                placeholder={t.submissionDescriptionPlaceholder}
+                                rows={4}
+                                disabled={submissionLocked || !selectedSubmissionChallenge}
+                              />
+                            </div>
+                          )}
                         {submissionOpen ? (
                           <Button
                             onClick={() => void submitChallengeSubmission()}
