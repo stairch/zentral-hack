@@ -31,7 +31,8 @@ import {
   FileText,
   Trophy,
   NotebookPen,
-  Medal
+  Medal,
+  Search
 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
@@ -119,6 +120,13 @@ const copy = {
     descPlaceholder: "Teambeschreibung...",
     createTeam: "Team erstellen",
     noTeams: 'Noch keine Teams erstellt. Klicke auf "Neues Team", um zu starten.',
+    filterSearchPlaceholder: "Nach Team-Name oder Beschreibung suchen...",
+    filterAllCategories: "Alle Kategorien",
+    filterAllChallenges: "Alle Challenges",
+    filterAllRanks: "Alle Platzierungen",
+    filterRanked: "Mit Platzierung",
+    filterUnranked: "Ohne Platzierung",
+    filterNoResults: "Keine Teams entsprechen den Filtern.",
     back: "Zurück",
     members: "Mitglieder",
     addMember: "Mitglied hinzufügen",
@@ -215,6 +223,13 @@ const copy = {
     descPlaceholder: "Team description...",
     createTeam: "Create team",
     noTeams: 'No teams created yet. Click "New Team" to get started.',
+    filterSearchPlaceholder: "Search by team name or description...",
+    filterAllCategories: "All Categories",
+    filterAllChallenges: "All Challenges",
+    filterAllRanks: "All Placements",
+    filterRanked: "With placement",
+    filterUnranked: "Without placement",
+    filterNoResults: "No teams match the filters.",
     back: "Back",
     members: "members",
     addMember: "Add Member",
@@ -356,6 +371,10 @@ export function TeamsAdminPage() {
   const [deletingNote, setDeletingNote] = useState(false)
   const [rankInput, setRankInput] = useState("")
   const [savingRank, setSavingRank] = useState(false)
+  const [search, setSearch] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState("all")
+  const [challengeFilter, setChallengeFilter] = useState("all")
+  const [rankFilter, setRankFilter] = useState("all")
 
   useEffect(() => {
     fetchData()
@@ -794,6 +813,27 @@ export function TeamsAdminPage() {
       setRemovingMember(false)
     }
   }
+
+  // Challenges assigned to at least one team, used as filter options.
+  const teamChallenges = Array.from(
+    new Map(
+      teams.filter((t) => t.challenge_id).map((t) => [t.challenge_id as string, challengeTitle(t) || ""])
+    )
+  ).sort((a, b) => a[1].localeCompare(b[1]))
+
+  const filteredTeams = teams.filter((t) => {
+    const query = search.trim().toLowerCase()
+    const matchesSearch =
+      !query ||
+      t.name.toLowerCase().includes(query) ||
+      (t.description?.toLowerCase().includes(query) ?? false)
+    const matchesCategory = categoryFilter === "all" || t.category_id === categoryFilter
+    const matchesChallenge =
+      challengeFilter === "all" ||
+      (challengeFilter === NO_CHALLENGE_SENTINEL ? !t.challenge_id : t.challenge_id === challengeFilter)
+    const matchesRank = rankFilter === "all" || (rankFilter === "ranked" ? t.rank != null : t.rank == null)
+    return matchesSearch && matchesCategory && matchesChallenge && matchesRank
+  })
 
   // === Team Detail View ===
   if (selectedTeam) {
@@ -1302,13 +1342,66 @@ export function TeamsAdminPage() {
         </Dialog>
       </div>
 
+      {!loading && teams.length > 0 && (
+        <div className="flex flex-col gap-4 md:flex-row">
+          <div className="relative flex-1">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+            <Input
+              placeholder={text.filterSearchPlaceholder}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          {!isCategoryPartner && (
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full md:w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{text.filterAllCategories}</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={challengeFilter} onValueChange={setChallengeFilter}>
+            <SelectTrigger className="w-full md:w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{text.filterAllChallenges}</SelectItem>
+              <SelectItem value={NO_CHALLENGE_SENTINEL}>{text.noChallengeOption}</SelectItem>
+              {teamChallenges.map(([id, title]) => (
+                <SelectItem key={id} value={id}>
+                  {title || id}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={rankFilter} onValueChange={setRankFilter}>
+            <SelectTrigger className="w-full md:w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{text.filterAllRanks}</SelectItem>
+              <SelectItem value="ranked">{text.filterRanked}</SelectItem>
+              <SelectItem value="unranked">{text.filterUnranked}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {teams.map((team) => (
+          {filteredTeams.map((team) => (
             <Card key={team.id} className="transition-shadow hover:shadow-lg">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
@@ -1363,6 +1456,10 @@ export function TeamsAdminPage() {
             <p className="text-muted-foreground text-center">{text.noTeams}</p>
           </CardContent>
         </Card>
+      )}
+
+      {!loading && teams.length > 0 && filteredTeams.length === 0 && (
+        <p className="text-muted-foreground py-12 text-center">{text.filterNoResults}</p>
       )}
 
       <ConfirmDialog
