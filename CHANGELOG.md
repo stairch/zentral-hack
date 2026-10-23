@@ -1,8 +1,14 @@
 # Changelog
 
+## [1.14.3] - 2026-10-23
+
+### Added
+
+- Add teams filter
+
 ## [1.14.2] - 2026-10-23
 
-### Fixed
+### Fixed
 
 - Users not added to challenge if added via teams
 
