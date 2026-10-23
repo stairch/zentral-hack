@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.15.0] - 2026-10-23
+
+### Added
+
+- Support for alert banner
+
+## [1.14.4] - 2026-10-23
+
+### Fixed
+
+- Fix can't delete user from teams
+
 ## [1.14.3] - 2026-10-23
 
 ### Added
