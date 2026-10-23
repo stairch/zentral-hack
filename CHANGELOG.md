@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.14.2] - 2026-10-23
+
+### Fixed
+
+- Users not added to challenge if added via teams
+
 ## [1.14.1] - 2026-10-22
 
 ### Fixed
