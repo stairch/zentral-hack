@@ -73,6 +73,8 @@ interface DashboardData {
     description: string | null
     member_role: string
     category: { name: string }
+    challenge_title: string | null
+    challenge_title_en: string | null
   } | null
   teamFiles: Array<{
     id: string
@@ -138,6 +140,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
   const [adminChallenge, setAdminChallenge] = useState<SponsorChallengeRecord | null>(null)
   const [loadingAdminChallenge, setLoadingAdminChallenge] = useState(false)
   const [submissionEligible, setSubmissionEligible] = useState(false)
+  const [submissionInTeam, setSubmissionInTeam] = useState(false)
   const [submissionChallenges, setSubmissionChallenges] = useState<SubmissionChallengeOption[]>([])
   const [mySubmission, setMySubmission] = useState<ChallengeSubmissionRecord | null>(null)
   const [challengeInfo, setChallengeInfo] = useState<ParticipantChallengeInfo | null>(null)
@@ -216,6 +219,8 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       teamName: "Team-Name",
       teamDescription: "Beschreibung",
       teamCategory: "Kategorie",
+      teamChallenge: "Challenge",
+      teamChallengeNone: "Noch keine Challenge zugewiesen",
       teamRole: "Deine Rolle",
       teamRenamePlaceholder: "Team-Name",
       teamRenameSave: "Speichern",
@@ -262,6 +267,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       submissionStatusAccepted: "Angenommen",
       submissionStatusRejected: "Abgelehnt",
       submissionAcceptedNote: "Deine Bewerbung wurde angenommen. Viel Erfolg!",
+      submissionTeamNote: "Du bist in einem Team und arbeitest an dessen Challenge. Eine Bewerbung ist nicht mehr möglich.",
       submissionRejectedNote:
         "Deine Bewerbung wurde leider abgelehnt. Du kannst sie anpassen und erneut bewerben.",
       submissionReviewCommentLabel: "Kommentar"
@@ -301,6 +307,8 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       teamName: "Team name",
       teamDescription: "Description",
       teamCategory: "Category",
+      teamChallenge: "Challenge",
+      teamChallengeNone: "No challenge assigned yet",
       teamRole: "Your role",
       teamRenamePlaceholder: "Team name",
       teamRenameSave: "Save",
@@ -347,6 +355,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       submissionStatusAccepted: "Accepted",
       submissionStatusRejected: "Rejected",
       submissionAcceptedNote: "Your application has been accepted. Good luck!",
+      submissionTeamNote: "You're in a team and work on its challenge. Applying is no longer possible.",
       submissionRejectedNote: "Your application was declined. You can adjust it and apply again.",
       submissionReviewCommentLabel: "Comment"
     }
@@ -452,6 +461,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       const json = await res.json()
       const eligible = Boolean(json.data?.eligible)
       setSubmissionEligible(eligible)
+      setSubmissionInTeam(!!json.data?.inTeam)
       setSubmissionChallenges((json.data?.challenges as SubmissionChallengeOption[]) || [])
       const submission = (json.data?.submission as ChallengeSubmissionRecord | null) || null
       setMySubmission(submission)
@@ -576,7 +586,7 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
 
   const selectedSubmissionChallenge = submissionChallenges.find((c) => c.id === selectedSubmissionChallengeId)
   const submissionDescriptionRequired = selectedSubmissionChallenge?.submission_description_required ?? false
-  const submissionLocked = mySubmission?.status === "accepted"
+  const submissionLocked = mySubmission?.status === "accepted" || submissionInTeam
   const submissionOpen = submissionChallenges.length > 0
   // The chosen challenge may no longer be selectable (e.g. selection closed), keep showing it in the picker
   const submittedChallengeUnavailable =
@@ -876,6 +886,16 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                       <p className="font-medium">{team.category.name}</p>
                     </div>
                     <div>
+                      <Label className="text-muted-foreground text-sm">{t.teamChallenge}</Label>
+                      {team.challenge_title || team.challenge_title_en ? (
+                        <p className="font-medium">
+                          {pickChallengeTitle(team.challenge_title, team.challenge_title_en)}
+                        </p>
+                      ) : (
+                        <p className="text-muted-foreground">{t.teamChallengeNone}</p>
+                      )}
+                    </div>
+                    <div>
                       <Label className="text-muted-foreground text-sm">{t.teamRole}</Label>
                       <Badge variant="outline">
                         {team.member_role === "leader" ? t.teamRoleLeader : t.teamRoleMember}
@@ -985,8 +1005,12 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
                         </div>
                       )}
 
-                      {mySubmission?.status === "accepted" && (
-                        <p className="text-muted-foreground text-sm">{t.submissionAcceptedNote}</p>
+                      {submissionInTeam ? (
+                        <p className="text-muted-foreground text-sm">{t.submissionTeamNote}</p>
+                      ) : (
+                        mySubmission?.status === "accepted" && (
+                          <p className="text-muted-foreground text-sm">{t.submissionAcceptedNote}</p>
+                        )
                       )}
 
                       {mySubmission?.status === "rejected" && (

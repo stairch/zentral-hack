@@ -68,6 +68,36 @@ export async function syncParticipantCategoryToTeam(userId: string, categoryId: 
   }
 }
 
+// Participants in a team work on the team's challenge, so their submission is set to it and accepted.
+// Pass userId to sync only that member, otherwise every participant of the team is synced.
+export async function syncTeamChallengeToMembers(teamId: string, userId?: string): Promise<void> {
+  const params: string[] = [teamId]
+  let userFilter = ""
+  if (userId) {
+    params.push(userId)
+    userFilter = " AND tm.user_id = $2"
+  }
+
+  await query(
+    `INSERT INTO challenge_submissions (user_id, category_id, challenge_id, status, reviewed_at)
+     SELECT tm.user_id, t.category_id, t.challenge_id, 'accepted', NOW()
+     FROM teams t
+     JOIN team_members tm ON tm.team_id = t.id
+     JOIN users u ON u.id = tm.user_id AND u.role = 'user'
+     WHERE t.id = $1 AND t.challenge_id IS NOT NULL${userFilter}
+     ON CONFLICT (user_id) DO UPDATE
+     SET category_id = EXCLUDED.category_id,
+         challenge_id = EXCLUDED.challenge_id,
+         status = 'accepted',
+         review_comment = NULL,
+         reviewed_at = NOW(),
+         updated_at = NOW()
+     WHERE challenge_submissions.challenge_id IS DISTINCT FROM EXCLUDED.challenge_id
+        OR challenge_submissions.status <> 'accepted'`,
+    params
+  )
+}
+
 // Deadline of the team's challenge; teams without an assigned challenge fall back to the
 // earliest deadline of a challenge one of their members has been accepted for
 export async function getTeamSubmissionDeadline(teamId: string): Promise<string | null> {

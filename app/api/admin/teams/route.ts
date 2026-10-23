@@ -2,6 +2,7 @@ import { query } from "@/lib/db"
 import { withCategoryPartnerAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError, errorResponse } from "@/lib/api"
 import { adminTeamsFlag } from "@/lib/flags"
+import { syncTeamChallengeToMembers } from "@/lib/team-access"
 
 async function handleGet(req: AuthenticatedRequest) {
   try {
@@ -131,6 +132,7 @@ async function handlePut(req: AuthenticatedRequest) {
         "UPDATE teams SET name = $1, description = $2, challenge_id = $3, updated_at = NOW() WHERE id = $4 RETURNING id, name, description, category_id, challenge_id",
         [name, description || null, resolvedChallenge.challengeId, id]
       )
+      await syncTeamChallengeToMembers(id)
     } else {
       result = await query(
         "UPDATE teams SET name = $1, description = $2, updated_at = NOW() WHERE id = $3 RETURNING id, name, description, category_id, challenge_id",

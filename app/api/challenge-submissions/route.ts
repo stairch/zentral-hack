@@ -6,6 +6,7 @@ import {
   type ChallengeSubmissionRecord,
   type ParticipantChallengeInfo
 } from "@/lib/challenge-submission"
+import { isTeamMember } from "@/lib/team-access"
 
 async function resolveCategoryId(userId: string): Promise<string | null> {
   const result = await query("SELECT category_id FROM registrations WHERE user_id = $1 LIMIT 1", [userId])
@@ -59,7 +60,8 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
       eligible: true,
       challenges: challengesResult.rows,
       submission,
-      challengeInfo
+      challengeInfo,
+      inTeam: await isTeamMember(userId)
     })
   } catch (error) {
     console.error("[Challenge Submissions] GET error:", error)
@@ -76,6 +78,10 @@ export const PUT = withAuth(async (req: AuthenticatedRequest) => {
 
     if (!challengeId) {
       return validationError("Bitte wähle eine Challenge aus")
+    }
+
+    if (await isTeamMember(userId)) {
+      return validationError("Du bist bereits in einem Team und arbeitest an dessen Challenge")
     }
 
     const categoryId = await resolveCategoryId(userId)

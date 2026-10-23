@@ -300,6 +300,10 @@ export function TeamsAdminPage() {
   const { user } = useAuth()
   const text = copy[language]
   const dateLocale = language === "en" ? "en-GB" : "de-CH"
+  const challengeTitle = (team: Pick<Team, "challenge_title" | "challenge_title_en">) =>
+    language === "en"
+      ? team.challenge_title_en || team.challenge_title
+      : team.challenge_title || team.challenge_title_en
   const isCategoryPartner = user?.role === "category_partner"
 
   const [teams, setTeams] = useState<Team[]>([])
@@ -655,12 +659,14 @@ export function TeamsAdminPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || text.editTeamError)
+      const updatedChallenge = challengeOptions.find((c) => c.id === data.data.team.challenge_id)
       const updated = {
         ...selectedTeam,
         name: data.data.team.name,
         description: data.data.team.description,
         challenge_id: data.data.team.challenge_id,
-        challenge_title: challengeOptions.find((c) => c.id === data.data.team.challenge_id)?.challenge_title
+        challenge_title: updatedChallenge?.challenge_title ?? null,
+        challenge_title_en: updatedChallenge?.challenge_title_en ?? null
       }
       setSelectedTeam(updated)
       setTeams((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
@@ -811,12 +817,8 @@ export function TeamsAdminPage() {
             </div>
             <p className="text-muted-foreground">
               {selectedTeam.category_name} • {members.length} {text.members}
-              {selectedTeam.challenge_title && (
-                <>
-                  {" "}
-                  • {text.assignedChallenge}: {selectedTeam.challenge_title}
-                </>
-              )}
+              {" "}
+              • {text.assignedChallenge}: {challengeTitle(selectedTeam) || text.noChallengeOption}
             </p>
           </div>
           <Dialog open={editTeamOpen} onOpenChange={setEditTeamOpen}>
@@ -1322,21 +1324,17 @@ export function TeamsAdminPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {team.description && <p className="text-muted-foreground text-sm">{team.description}</p>}
-                {(team.challenge_title || team.rank) && (
-                  <div className="flex flex-wrap gap-2">
-                    {team.rank && (
-                      <Badge className="bg-yellow text-violet gap-1">
-                        <Medal className="h-3 w-3" /> {text.rankPlace} {team.rank}
-                      </Badge>
-                    )}
-                    {team.challenge_title && (
-                      <Badge variant="outline" className="gap-1">
-                        <Trophy className="h-3 w-3" />
-                        {team.challenge_title}
-                      </Badge>
-                    )}
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-2">
+                  {team.rank && (
+                    <Badge className="bg-yellow text-violet gap-1">
+                      <Medal className="h-3 w-3" /> {text.rankPlace} {team.rank}
+                    </Badge>
+                  )}
+                  <Badge variant="outline" className="gap-1">
+                    <Trophy className="h-3 w-3" />
+                    {challengeTitle(team) || text.noChallengeOption}
+                  </Badge>
+                </div>
                 <div className="text-muted-foreground flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4" />
                   {text.created} {new Date(team.created_at).toLocaleDateString(dateLocale)}
