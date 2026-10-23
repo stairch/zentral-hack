@@ -816,9 +816,8 @@ export function TeamsAdminPage() {
               )}
             </div>
             <p className="text-muted-foreground">
-              {selectedTeam.category_name} • {members.length} {text.members}
-              {" "}
-              • {text.assignedChallenge}: {challengeTitle(selectedTeam) || text.noChallengeOption}
+              {selectedTeam.category_name} • {members.length} {text.members} • {text.assignedChallenge}:{" "}
+              {challengeTitle(selectedTeam) || text.noChallengeOption}
             </p>
           </div>
           <Dialog open={editTeamOpen} onOpenChange={setEditTeamOpen}>

@@ -267,7 +267,8 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
       submissionStatusAccepted: "Angenommen",
       submissionStatusRejected: "Abgelehnt",
       submissionAcceptedNote: "Deine Bewerbung wurde angenommen. Viel Erfolg!",
-      submissionTeamNote: "Du bist in einem Team und arbeitest an dessen Challenge. Eine Bewerbung ist nicht mehr möglich.",
+      submissionTeamNote:
+        "Du bist in einem Team und arbeitest an dessen Challenge. Eine Bewerbung ist nicht mehr möglich.",
       submissionRejectedNote:
         "Deine Bewerbung wurde leider abgelehnt. Du kannst sie anpassen und erneut bewerben.",
       submissionReviewCommentLabel: "Kommentar"
