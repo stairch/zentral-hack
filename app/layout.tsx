@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/auth-context"
 import { LanguageProvider } from "@/lib/language-context"
 import { Toaster } from "@/components/ui/sonner"
 import { ChatWidget } from "@/components/chat/chat-widget"
+import AlertBanner from "@/components/outage-banner"
 import "./globals.css"
 
 const inter = Inter({
@@ -68,6 +69,7 @@ export default function RootLayout({
         className={`${inter.variable} ${spaceGrotesk.variable} ${geistMono.variable} font-sans antialiased`}>
         <LanguageProvider>
           <AuthProvider>
+            <AlertBanner />
             {children}
             <ChatWidget />
           </AuthProvider>
