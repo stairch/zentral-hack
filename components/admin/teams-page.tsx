@@ -1242,6 +1242,16 @@ export function TeamsAdminPage() {
           onConfirm={handleDeleteFile}
           loading={deletingFile}
         />
+        <ConfirmDialog
+          open={!!removeMemberId}
+          onOpenChange={(open) => !open && setRemoveMemberId(null)}
+          title={language === "en" ? "Remove member?" : "Mitglied entfernen?"}
+          description={text.removeMemberConfirm}
+          confirmLabel={language === "en" ? "Remove" : "Entfernen"}
+          cancelLabel={language === "en" ? "Cancel" : "Abbrechen"}
+          onConfirm={handleRemoveMember}
+          loading={removingMember}
+        />
       </div>
     )
   }
@@ -1471,16 +1481,6 @@ export function TeamsAdminPage() {
         cancelLabel={language === "en" ? "Cancel" : "Abbrechen"}
         onConfirm={handleDeleteTeam}
         loading={deletingTeam}
-      />
-      <ConfirmDialog
-        open={!!removeMemberId}
-        onOpenChange={(open) => !open && setRemoveMemberId(null)}
-        title={language === "en" ? "Remove member?" : "Mitglied entfernen?"}
-        description={text.removeMemberConfirm}
-        confirmLabel={language === "en" ? "Remove" : "Entfernen"}
-        cancelLabel={language === "en" ? "Cancel" : "Abbrechen"}
-        onConfirm={handleRemoveMember}
-        loading={removingMember}
       />
     </div>
   )
