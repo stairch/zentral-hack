@@ -7,7 +7,6 @@ import { useLanguage } from "@/lib/language-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import AlertBanner from "../outage-banner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
@@ -33,6 +32,7 @@ import { AccountSettings } from "@/components/dashboard/account-settings"
 import { ProfileSection } from "@/components/dashboard/profile-section"
 import { ChallengeInfo } from "@/components/dashboard/challenge-info"
 import { DeadlineBanner } from "@/components/dashboard/deadline-banner"
+import { AlertBanner } from "@/components/dashboard/alert-banner"
 import { type SponsorChallengeRecord } from "@/lib/sponsor-challenge"
 import { type ChallengeSubmissionRecord, type ParticipantChallengeInfo } from "@/lib/challenge-submission"
 import { TeamChat } from "@/components/chat/team-chat"
@@ -680,15 +680,18 @@ export function DashboardContent({ showChallenges }: DashboardContentProps) {
         </div>
       </header>
 
-      {mySubmission?.status === "accepted" && mySubmission.submission_deadline && (
-        <DeadlineBanner
-          deadline={mySubmission.submission_deadline}
-          challengeTitle={pickChallengeTitle(mySubmission.challenge_title, mySubmission.challenge_title_en)}
-          language={language}
-        />
-      )}
+      {/* One sticky stack so the banners don't overlap; the admin alert banner always comes first */}
+      <div className="sticky top-0 z-50">
+        <AlertBanner language={language} />
+        {mySubmission?.status === "accepted" && mySubmission.submission_deadline && (
+          <DeadlineBanner
+            deadline={mySubmission.submission_deadline}
+            challengeTitle={pickChallengeTitle(mySubmission.challenge_title, mySubmission.challenge_title_en)}
+            language={language}
+          />
+        )}
+      </div>
 
-      <AlertBanner />
       <div className="container mx-auto px-4 py-8">
         {/* Welcome */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">

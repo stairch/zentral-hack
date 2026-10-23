@@ -40,6 +40,7 @@ import {
   MailCheck,
   Contact,
   Globe,
+  TriangleAlert,
   type LucideIcon
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -73,6 +74,7 @@ const copy = {
     emailsContacts: "Kontakte",
     sponsors: "Sponsoren",
     roles: "Rollen",
+    alertBanner: "Alert Banner",
     announcements: "Ankündigungen",
     adminPanel: "Admin Panel",
     categoryAdmin: "Kategorien-Admin",
@@ -108,6 +110,7 @@ const copy = {
     emailsContacts: "Contacts",
     sponsors: "Sponsors",
     roles: "Roles",
+    alertBanner: "Alert Banner",
     announcements: "Announcements",
     adminPanel: "Admin Panel",
     categoryAdmin: "Category Admin",
@@ -290,6 +293,14 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
           label: text.faqs,
           icon: HelpCircle,
           permissionKey: "faqs",
+          adminOnly: true
+        },
+        {
+          id: "alert-banner",
+          href: "/admin/alert-banner",
+          label: text.alertBanner,
+          icon: TriangleAlert,
+          permissionKey: "alert-banner",
           adminOnly: true
         }
       ]
