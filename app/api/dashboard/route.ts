@@ -65,10 +65,12 @@ export async function GET(req: NextRequest) {
     const teamResult = await query(
       `SELECT t.id, t.name, t.description,
               c.name as category_name,
+              sc.challenge_title, sc.challenge_title_en,
               tm.role as member_role
        FROM team_members tm
        JOIN teams t ON tm.team_id = t.id
        JOIN categories c ON t.category_id = c.id
+       LEFT JOIN sponsor_challenges sc ON t.challenge_id = sc.id
        WHERE tm.user_id = $1`,
       [userId]
     )
@@ -78,7 +80,9 @@ export async function GET(req: NextRequest) {
           name: teamResult.rows[0].name,
           description: teamResult.rows[0].description,
           member_role: teamResult.rows[0].member_role,
-          category: { name: teamResult.rows[0].category_name }
+          category: { name: teamResult.rows[0].category_name },
+          challenge_title: teamResult.rows[0].challenge_title,
+          challenge_title_en: teamResult.rows[0].challenge_title_en
         }
       : null
 

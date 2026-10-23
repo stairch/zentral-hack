@@ -2,7 +2,7 @@ import { query } from "@/lib/db"
 import { withCategoryPartnerAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError, errorResponse } from "@/lib/api"
 import { adminTeamsFlag } from "@/lib/flags"
-import { isTeamMember, syncParticipantCategoryToTeam } from "@/lib/team-access"
+import { isTeamMember, syncParticipantCategoryToTeam, syncTeamChallengeToMembers } from "@/lib/team-access"
 
 async function handleGet(req: AuthenticatedRequest) {
   try {
@@ -135,6 +135,7 @@ async function handlePost(req: AuthenticatedRequest) {
 
     if (isParticipant) {
       await syncParticipantCategoryToTeam(userId, teamCheck.rows[0].category_id)
+      await syncTeamChallengeToMembers(teamId, userId)
     }
 
     return successResponse(
