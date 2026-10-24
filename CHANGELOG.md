@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.19.1] - 2026-10-25
+
+### Fixed
+
+- Colors of ranks and solo rank design
+
 ## [1.19.0] - 2026-10-25
 
 ### Changed
