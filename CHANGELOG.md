@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.17.0] - 2026-10-24
+
+### Added
+
+- Support for post event landing page
+
 ## [1.16.0] - 2026-10-24
 
 ### Added
