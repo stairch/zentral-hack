@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.19.0] - 2026-10-25
+
+### Changed
+
+- Winners are shown per challenge
+- Gallery photos are compressed
+
 ## [1.18.0] - 2026-10-24
 
 ### Added
