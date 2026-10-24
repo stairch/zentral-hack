@@ -9,6 +9,7 @@ import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { BrandMark } from "@/components/brand-mark"
 import { useEventPhase } from "@/lib/event-phase-context"
+import { LandingBanners } from "./landing-banners"
 
 const navItems = {
   de: [
