@@ -199,6 +199,8 @@ const copy = {
     internalTitle: "Interne Notizen",
     internalDesc: "Nur für Kategorie-Admins und Admins sichtbar. Teilnehmende sehen dies nicht.",
     rankLabel: "Platzierung",
+    rankDesc:
+      "Platz 1–3 wird mit Teamname und Kategorie öffentlich auf der Rückblick-Startseite angezeigt, sobald der Rückblick veröffentlicht ist.",
     rankPlaceholder: "z.B. 1",
     rankSave: "Platz speichern",
     rankClear: "Entfernen",
@@ -306,6 +308,8 @@ const copy = {
     internalTitle: "Internal notes",
     internalDesc: "Only visible to category admins and admins. Participants never see this.",
     rankLabel: "Placement",
+    rankDesc:
+      "Places 1–3 are shown publicly with team name and category on the recap homepage once the recap is published.",
     rankPlaceholder: "e.g. 1",
     rankSave: "Save placement",
     rankClear: "Remove",
@@ -1203,6 +1207,59 @@ export function TeamsAdminPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
+              <Medal className="h-4 w-4" /> {text.rankLabel}
+            </CardTitle>
+            <CardDescription>{text.rankDesc}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* The ranking is loaded together with the notes */}
+            {loadingNotes ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    id="team-rank"
+                    aria-label={text.rankLabel}
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={rankInput}
+                    onChange={(e) => setRankInput(e.target.value)}
+                    placeholder={text.rankPlaceholder}
+                    className="w-28"
+                  />
+                  <Button
+                    onClick={() => handleSaveRank()}
+                    disabled={savingRank || !rankInput || rankInput === String(teamRanking?.rank ?? "")}
+                    className="bg-violet hover:bg-violet/90">
+                    {savingRank ? <Loader2 className="h-4 w-4 animate-spin" /> : text.rankSave}
+                  </Button>
+                  {teamRanking && (
+                    <Button variant="ghost" disabled={savingRank} onClick={() => handleSaveRank(true)}>
+                      {text.rankClear}
+                    </Button>
+                  )}
+                </div>
+                <p className="text-muted-foreground text-xs">
+                  {teamRanking
+                    ? `${text.rankUpdatedBy} ${formatPerson(
+                        teamRanking.updated_by_first_name,
+                        teamRanking.updated_by_last_name,
+                        teamRanking.updated_by_email
+                      )} · ${new Date(teamRanking.updated_at).toLocaleString(dateLocale)}`
+                    : text.rankNone}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
               <NotebookPen className="h-4 w-4" /> {text.internalTitle}
             </CardTitle>
             <CardDescription>{text.internalDesc}</CardDescription>
@@ -1214,42 +1271,6 @@ export function TeamsAdminPage() {
               </div>
             ) : (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="team-rank">{text.rankLabel}</Label>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Input
-                      id="team-rank"
-                      type="number"
-                      min={1}
-                      step={1}
-                      value={rankInput}
-                      onChange={(e) => setRankInput(e.target.value)}
-                      placeholder={text.rankPlaceholder}
-                      className="w-28"
-                    />
-                    <Button
-                      onClick={() => handleSaveRank()}
-                      disabled={savingRank || !rankInput || rankInput === String(teamRanking?.rank ?? "")}
-                      className="bg-violet hover:bg-violet/90">
-                      {savingRank ? <Loader2 className="h-4 w-4 animate-spin" /> : text.rankSave}
-                    </Button>
-                    {teamRanking && (
-                      <Button variant="ghost" disabled={savingRank} onClick={() => handleSaveRank(true)}>
-                        {text.rankClear}
-                      </Button>
-                    )}
-                  </div>
-                  <p className="text-muted-foreground text-xs">
-                    {teamRanking
-                      ? `${text.rankUpdatedBy} ${formatPerson(
-                          teamRanking.updated_by_first_name,
-                          teamRanking.updated_by_last_name,
-                          teamRanking.updated_by_email
-                        )} · ${new Date(teamRanking.updated_at).toLocaleString(dateLocale)}`
-                      : text.rankNone}
-                  </p>
-                </div>
-
                 <div className="space-y-3">
                   <Label htmlFor="team-note">{text.notesTitle}</Label>
                   <Textarea
