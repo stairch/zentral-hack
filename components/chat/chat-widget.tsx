@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { usePathname } from "next/navigation"
 import { MessageCircle, X, ChevronLeft, Megaphone, Users } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useLanguage } from "@/lib/language-context"
@@ -85,8 +86,11 @@ function markSeen(key: string, timestamp: string) {
   }
 }
 
+const PUBLIC_PAGES = new Set(["/", "/anmeldung", "/impressum", "/datenschutz", "/agb"])
+
 export function ChatWidget() {
   const { user, isLoading } = useAuth()
+  const pathname = usePathname()
   const { language } = useLanguage()
   const t = copy[language]
   const isAdmin = user?.role === "admin" || user?.role === "category_partner"
@@ -227,7 +231,7 @@ export function ChatWidget() {
     hadUnreadRef.current = hasUnread
   }, [unreadTeamIds, unreadAnnouncements])
 
-  if (isLoading || !user) return null
+  if (isLoading || !user || PUBLIC_PAGES.has(pathname)) return null
 
   const openTeam = (teamId: string) => {
     setActiveTeamId(teamId)

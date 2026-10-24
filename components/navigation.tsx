@@ -28,15 +28,11 @@ const navItems = {
 
 const copy = {
   de: {
-    register: "Registrieren",
-    login: "Anmelden",
     dashboard: "Dashboard",
     toggleMenu: "Menü umschalten",
     language: "Sprache"
   },
   en: {
-    register: "Register",
-    login: "Sign In",
     dashboard: "Dashboard",
     toggleMenu: "Toggle menu",
     language: "Language"
@@ -115,25 +111,12 @@ export function Navigation() {
                 <option value="de">DE</option>
                 <option value="en">EN</option>
               </select>
-              {user ? (
+              {user && (
                 <Link href="/dashboard">
                   <Button className="bg-secondary hover:bg-secondary/90 text-foreground/80 font-semibold">
                     {text.dashboard}
                   </Button>
                 </Link>
-              ) : (
-                <>
-                  <Link href="/anmeldung">
-                    <Button className="bg-violet hover:bg-violet/90 font-semibold text-white">
-                      {text.register}
-                    </Button>
-                  </Link>
-                  <Link href="/auth/login">
-                    <Button className="bg-secondary hover:bg-secondary/90 text-foreground/80 font-semibold">
-                      {text.login}
-                    </Button>
-                  </Link>
-                </>
               )}
             </motion.div>
           </div>
@@ -183,7 +166,7 @@ export function Navigation() {
                   <option value="de">Deutsch</option>
                   <option value="en">English</option>
                 </select>
-                {user ? (
+                {user && (
                   <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
                     <Button
                       size="lg"
@@ -191,23 +174,6 @@ export function Navigation() {
                       {text.dashboard}
                     </Button>
                   </Link>
-                ) : (
-                  <>
-                    <Link href="/anmeldung" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
-                      <Button
-                        size="lg"
-                        className="bg-violet hover:bg-violet/90 w-full font-semibold text-white">
-                        {text.register}
-                      </Button>
-                    </Link>
-                    <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
-                      <Button
-                        size="lg"
-                        className="bg-secondary hover:bg-secondary/90 text-foreground/80 w-full font-semibold">
-                        {text.login}
-                      </Button>
-                    </Link>
-                  </>
                 )}
               </motion.div>
             </div>
