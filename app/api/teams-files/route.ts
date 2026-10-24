@@ -1,9 +1,9 @@
-import { put, del } from "@vercel/blob"
+import { del } from "@vercel/blob"
 import { NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
 import { successResponse, serverError } from "@/lib/api"
 import { verifyJWT } from "@/lib/auth"
-import { validateFileUpload, generateSecureFilename } from "@/lib/file-upload"
+import { verifyUploadedBlob } from "@/lib/blob-upload"
 import {
   getTeamSubmissionDeadline,
   hasTeamAccess,
@@ -76,24 +76,19 @@ export async function POST(request: NextRequest) {
       return new NextResponse(JSON.stringify({ error: SUBMISSION_CLOSED_ERROR }), { status: 403 })
     }
 
-    const formData = await request.formData()
-    const file = formData.get("file") as File
-
-    if (!file) return new NextResponse(JSON.stringify({ error: "File required" }), { status: 400 })
-
-    const validation = validateFileUpload({ name: file.name, size: file.size, type: file.type }, "document")
-    if (!validation.valid) {
-      return new NextResponse(JSON.stringify({ error: validation.error }), { status: 400 })
+    // The browser already uploaded the file to Vercel Blob (lib/client-upload.ts), we only get its URL
+    const { url, name } = await request.json()
+    const verified = await verifyUploadedBlob(url, name, `teams/${teamId}`, payload)
+    if (!verified.valid) {
+      return new NextResponse(JSON.stringify({ error: verified.error }), { status: 400 })
     }
-
-    const secureFilename = generateSecureFilename(file.name)
-    const blob = await put(`teams/${teamId}/${secureFilename}`, file, { access: "private" })
+    const file = verified.blob
 
     const result = await query(
       `INSERT INTO team_files (team_id, original_name, file_path, file_size, mime_type, uploaded_by)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, original_name, file_path, file_size, created_at`,
-      [teamId, file.name, blob.url, file.size, file.type, payload.userId]
+      [teamId, file.name, file.url, file.size, file.type, payload.userId]
     )
 
     return successResponse({ file: result.rows[0], message: "File uploaded successfully" }, 201)

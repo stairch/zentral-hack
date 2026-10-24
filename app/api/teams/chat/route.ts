@@ -1,8 +1,7 @@
-import { put } from "@vercel/blob"
 import { NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
 import { verifyJWT } from "@/lib/auth"
-import { validateFileUpload, generateSecureFilename } from "@/lib/file-upload"
+import { verifyUploadedBlob } from "@/lib/blob-upload"
 import { hasTeamAccess } from "@/lib/team-access"
 
 async function authenticate(request: NextRequest) {
@@ -56,15 +55,16 @@ export async function POST(request: NextRequest) {
     const payload = await authenticate(request)
     if (!payload) return unauthorized()
 
-    const formData = await request.formData()
-    const teamId = formData.get("teamId") as string
-    const content = (formData.get("content") as string | null)?.trim() || null
-    const file = formData.get("file") as File | null
+    // An attachment was already uploaded to Vercel Blob by the browser (lib/client-upload.ts)
+    const body = await request.json()
+    const teamId = typeof body.teamId === "string" ? body.teamId : null
+    const content = typeof body.content === "string" ? body.content.trim() || null : null
+    const attachment: { url?: unknown; name?: unknown } | null = body.attachment ?? null
 
     if (!teamId) {
       return new NextResponse(JSON.stringify({ error: "teamId parameter required" }), { status: 400 })
     }
-    if (!content && !file) {
+    if (!content && !attachment) {
       return new NextResponse(JSON.stringify({ error: "Message or attachment required" }), { status: 400 })
     }
 
@@ -77,19 +77,16 @@ export async function POST(request: NextRequest) {
     let attachmentMime: string | null = null
     let attachmentSize: number | null = null
 
-    if (file) {
-      const meta = { name: file.name, size: file.size, type: file.type }
-      const imageValidation = validateFileUpload(meta, "image")
-      const finalValidation = imageValidation.valid ? imageValidation : validateFileUpload(meta, "document")
-      if (!finalValidation.valid) {
+    if (attachment) {
+      const verified = await verifyUploadedBlob(attachment.url, attachment.name, `chat/${teamId}`, payload)
+      if (!verified.valid) {
         return new NextResponse(
-          JSON.stringify({ error: "Nur Bilder (JPG/PNG/WebP) oder Dokumente (PDF/Office) erlaubt" }),
+          JSON.stringify({ error: "Nur Bilder (JPG/PNG/WebP) oder Dokumente (PDF/Office/ZIP) erlaubt" }),
           { status: 400 }
         )
       }
-      const secureFilename = generateSecureFilename(file.name)
-      const blob = await put(`chat/${teamId}/${secureFilename}`, file, { access: "private" })
-      attachmentUrl = blob.url
+      const file = verified.blob
+      attachmentUrl = file.url
       attachmentName = file.name
       attachmentMime = file.type
       attachmentSize = file.size
@@ -98,7 +95,7 @@ export async function POST(request: NextRequest) {
       await query(
         `INSERT INTO team_files (team_id, original_name, file_path, file_size, mime_type, uploaded_by)
          VALUES ($1, $2, $3, $4, $5, $6)`,
-        [teamId, file.name, blob.url, file.size, file.type, payload.userId]
+        [teamId, file.name, file.url, file.size, file.type, payload.userId]
       )
     }
 

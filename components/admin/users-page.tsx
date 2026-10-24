@@ -951,6 +951,16 @@ export function UsersAdminPage() {
                                 )}
                               </>
                             )}
+                            {/* Super admins may move their own participant registration, but not change their own role */}
+                            {isAdmin && isSelf && user.registrations && user.registrations.length > 0 && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => openCategoryDialog(user)}>
+                                  <Tags className="h-4 w-4" />
+                                  {text.changeCategory}
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

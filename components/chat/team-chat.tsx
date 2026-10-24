@@ -9,6 +9,7 @@ import { Loader2, Paperclip, Send, PenLine, Trash2, FileText, X } from "lucide-r
 import { toast } from "sonner"
 import { useAuth } from "@/lib/auth-context"
 import { useLanguage } from "@/lib/language-context"
+import { uploadFileToBlob } from "@/lib/client-upload"
 
 interface ChatMessage {
   id: string
@@ -127,12 +128,14 @@ export function TeamChat({ teamId }: TeamChatProps) {
     if (!content.trim() && !file) return
     setSending(true)
     try {
-      const formData = new FormData()
-      formData.append("teamId", teamId)
-      if (content.trim()) formData.append("content", content.trim())
-      if (file) formData.append("file", file)
+      const attachment = file ? await uploadFileToBlob(file, `chat/${teamId}`, ["image", "document"]) : null
 
-      const res = await fetch("/api/teams/chat", { method: "POST", credentials: "include", body: formData })
+      const res = await fetch("/api/teams/chat", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teamId, content: content.trim() || null, attachment })
+      })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || t.sendError)
 
@@ -366,7 +369,7 @@ export function TeamChat({ teamId }: TeamChatProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
+            accept="image/jpeg,image/png,image/webp,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip"
             className="hidden"
             onChange={handleFilePick}
           />

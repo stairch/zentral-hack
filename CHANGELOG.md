@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.16.0] - 2026-10-24
+
+### Added
+
+- Banners to landing page if logged in
+
+### Fixed
+
+- Super admins cannot change their category
+
+## [1.15.2] - 2026-10-24
+
+### Fixed
+
+- Git repositories not shown in admin panel
+
+## [1.15.1] - 2026-10-24
+
+### Fixed
+
+- File uploads capped to 4.5MB. Now sizes possible up to 20MB
+
 ## [1.15.0] - 2026-10-23
 
 ### Added

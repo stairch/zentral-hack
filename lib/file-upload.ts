@@ -1,5 +1,4 @@
-import { randomUUID } from "crypto"
-import path from "path"
+// Shared by the API routes and the browser (client uploads validate before sending), so no Node imports here
 
 // Define allowed file types and their restrictions
 export const ALLOWED_FILE_TYPES = {
@@ -11,9 +10,12 @@ export const ALLOWED_FILE_TYPES = {
       "application/vnd.ms-powerpoint",
       "application/vnd.openxmlformats-officedocument.presentationml.presentation",
       "application/vnd.ms-excel",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/zip",
+      "application/x-zip-compressed",
+      "application/x-zip"
     ],
-    extensions: [".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx"],
+    extensions: [".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".zip"],
     maxSize: 20 * 1024 * 1024 // 20MB
   },
   image: {
@@ -28,12 +30,31 @@ export const ALLOWED_FILE_TYPES = {
   }
 }
 
+export type FileKind = keyof typeof ALLOWED_FILE_TYPES
+
+/**
+ * Lowercased extension including the dot, "" if there is none (same semantics as path.extname)
+ */
+export function getFileExtension(filename: string): string {
+  const basename = filename.slice(filename.lastIndexOf("/") + 1)
+  const dot = basename.lastIndexOf(".")
+  return dot > 0 ? basename.slice(dot).toLowerCase() : ""
+}
+
+/**
+ * The first allowed kind whose extension matches the filename
+ */
+export function getKindForFilename(filename: string, kinds: FileKind[]): FileKind | null {
+  const ext = getFileExtension(filename)
+  return kinds.find((kind) => ALLOWED_FILE_TYPES[kind].extensions.includes(ext)) ?? null
+}
+
 /**
  * Validate file upload based on type
  */
 export function validateFileUpload(
   file: { name: string; size: number; type: string },
-  allowedType: keyof typeof ALLOWED_FILE_TYPES
+  allowedType: FileKind
 ): { valid: boolean; error?: string } {
   const config = ALLOWED_FILE_TYPES[allowedType]
 
@@ -54,7 +75,7 @@ export function validateFileUpload(
   }
 
   // Check file extension (double-check for spoofed MIME types)
-  const ext = path.extname(file.name).toLowerCase()
+  const ext = getFileExtension(file.name)
   if (!config.extensions.includes(ext)) {
     return {
       valid: false,
@@ -70,10 +91,10 @@ export function validateFileUpload(
  */
 export function generateSecureFilename(originalFilename: string): string {
   // Extract extension safely
-  const ext = path.extname(originalFilename).toLowerCase()
+  const ext = getFileExtension(originalFilename)
 
   // Generate unique ID
-  const uniqueId = randomUUID()
+  const uniqueId = crypto.randomUUID()
 
   // Combine: timestamp-uuid.extension
   const timestamp = Date.now()

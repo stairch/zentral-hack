@@ -32,12 +32,15 @@ import {
   Trophy,
   NotebookPen,
   Medal,
-  Search
+  Search,
+  FolderGit2,
+  ExternalLink
 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { uploadFileToBlob } from "@/lib/client-upload"
 
 const NO_CHALLENGE_SENTINEL = "__none__"
 
@@ -98,6 +101,14 @@ interface TeamFile {
   id: string
   original_name: string
   file_size: number
+  created_at: string
+}
+
+interface TeamRepo {
+  id: string
+  repository_url: string
+  title: string | null
+  description: string | null
   created_at: string
 }
 
@@ -181,6 +192,10 @@ const copy = {
     deleteFileConfirm: "Datei wirklich löschen?",
     fileDeleteSuccess: "Datei gelöscht",
     fileDeleteError: "Fehler beim Löschen",
+    reposTitle: "Git Repositories",
+    reposEmpty: "Noch keine Repositories verlinkt.",
+    repoLoadError: "Fehler beim Laden der Repositories",
+    repoFallbackTitle: "Git Repo",
     internalTitle: "Interne Notizen",
     internalDesc: "Nur für Kategorie-Admins und Admins sichtbar. Teilnehmende sehen dies nicht.",
     rankLabel: "Platzierung",
@@ -284,6 +299,10 @@ const copy = {
     deleteFileConfirm: "Really delete this file?",
     fileDeleteSuccess: "File deleted",
     fileDeleteError: "Failed to delete",
+    reposTitle: "Git repositories",
+    reposEmpty: "No repositories linked yet.",
+    repoLoadError: "Failed to load repositories",
+    repoFallbackTitle: "Git repo",
     internalTitle: "Internal notes",
     internalDesc: "Only visible to category admins and admins. Participants never see this.",
     rankLabel: "Placement",
@@ -358,6 +377,8 @@ export function TeamsAdminPage() {
   const [savingTeamEdit, setSavingTeamEdit] = useState(false)
   const [teamFiles, setTeamFiles] = useState<TeamFile[]>([])
   const [loadingFiles, setLoadingFiles] = useState(false)
+  const [teamRepos, setTeamRepos] = useState<TeamRepo[]>([])
+  const [loadingRepos, setLoadingRepos] = useState(false)
   const [uploadingFile, setUploadingFile] = useState(false)
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null)
   const [deletingFile, setDeletingFile] = useState(false)
@@ -473,6 +494,7 @@ export function TeamsAdminPage() {
       setLoadingMembers(false)
     }
     void fetchTeamFiles(team.id)
+    void fetchTeamRepos(team.id)
     void fetchTeamNotes(team.id)
   }
 
@@ -713,16 +735,31 @@ export function TeamsAdminPage() {
     }
   }
 
+  const fetchTeamRepos = async (teamId: string) => {
+    setLoadingRepos(true)
+    try {
+      const res = await fetch(`/api/teams-github?teamId=${teamId}`, { credentials: "include" })
+      if (res.ok) {
+        const data = await res.json()
+        setTeamRepos(data.data?.repos || [])
+      }
+    } catch {
+      toast.error(text.repoLoadError)
+    } finally {
+      setLoadingRepos(false)
+    }
+  }
+
   const handleUploadFile = async (file: File) => {
     if (!selectedTeam) return
     setUploadingFile(true)
     try {
-      const formData = new FormData()
-      formData.append("file", file)
+      const uploaded = await uploadFileToBlob(file, `teams/${selectedTeam.id}`, ["document"])
       const res = await fetch(`/api/teams-files?teamId=${selectedTeam.id}`, {
         method: "POST",
         credentials: "include",
-        body: formData
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(uploaded)
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || text.fileUploadError)
@@ -1119,6 +1156,46 @@ export function TeamsAdminPage() {
               </div>
             ) : (
               <p className="text-muted-foreground py-8 text-center">{text.filesEmpty}</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{text.reposTitle}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingRepos ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : teamRepos.length > 0 ? (
+              <div className="space-y-2">
+                {teamRepos.map((repo) => (
+                  <a
+                    key={repo.id}
+                    href={repo.repository_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="border-border hover:bg-muted/50 flex items-center justify-between rounded-lg border p-3 transition-colors">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <FolderGit2 className="text-primary h-4 w-4 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{repo.title || text.repoFallbackTitle}</p>
+                        <p className="text-muted-foreground truncate text-xs">{repo.repository_url}</p>
+                        {repo.description && (
+                          <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">
+                            {repo.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <ExternalLink className="text-muted-foreground ml-2 h-4 w-4 shrink-0" />
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground py-8 text-center">{text.reposEmpty}</p>
             )}
           </CardContent>
         </Card>

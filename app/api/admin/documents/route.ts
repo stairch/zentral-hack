@@ -1,8 +1,8 @@
-import { put, del } from "@vercel/blob"
+import { del } from "@vercel/blob"
 import { query } from "@/lib/db"
 import { withCategoryPartnerAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError, errorResponse } from "@/lib/api"
-import { validateFileUpload, generateSecureFilename } from "@/lib/file-upload"
+import { verifyUploadedBlob } from "@/lib/blob-upload"
 import { adminDocumentsFlag } from "@/lib/flags"
 
 async function handleGet(req: AuthenticatedRequest) {
@@ -46,33 +46,26 @@ async function handleGet(req: AuthenticatedRequest) {
 
 async function handlePost(req: AuthenticatedRequest) {
   try {
-    const formData = await req.formData()
-    const file = formData.get("file") as File
-    const categoryId = (formData.get("categoryId") as string) || null
-    const name = formData.get("name") as string
-    const description = (formData.get("description") as string) || null
+    // The browser already uploaded the file to Vercel Blob (lib/client-upload.ts), we only get its URL
+    const body = await req.json()
+    const categoryId: string | null = body.categoryId || null
+    const name: string | undefined = body.name
+    const description: string | null = body.description || null
 
-    if (!file) return validationError("File required")
-
-    const docName = name || file.name.replace(/\.[^/.]+$/, "")
-
-    if (req.user?.role === "category_partner" && req.user.categoryId !== categoryId) {
+    if (!req.user || (req.user.role === "category_partner" && req.user.categoryId !== categoryId)) {
       return validationError("Cannot upload to other categories")
     }
 
-    const validation = validateFileUpload({ name: file.name, size: file.size, type: file.type }, "document")
-    if (!validation.valid) return validationError(validation.error!)
+    const folder = categoryId ? `documents/categories/${categoryId}` : "documents/global"
+    const verified = await verifyUploadedBlob(body.url, body.fileName, folder, req.user)
+    if (!verified.valid) return validationError(verified.error)
+    const file = verified.blob
 
-    const secureFilename = generateSecureFilename(file.name)
-    const blobPath = categoryId
-      ? `documents/categories/${categoryId}/${secureFilename}`
-      : `documents/global/${secureFilename}`
-
-    const blob = await put(blobPath, file, { access: "private" })
+    const docName = name || file.name.replace(/\.[^/.]+$/, "")
 
     const result = await query(
       "INSERT INTO category_documents (name, description, file_path, file_size, category_id, uploaded_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, description, file_path, file_size, created_at",
-      [docName, description, blob.url, file.size, categoryId, req.user?.userId ?? null]
+      [docName, description, file.url, file.size, categoryId, req.user?.userId ?? null]
     )
 
     return successResponse({ document: result.rows[0] }, 201)

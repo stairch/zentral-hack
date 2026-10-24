@@ -40,7 +40,7 @@ export default async function Home() {
 
   return (
     <main className="relative">
-      <Navigation />
+      <Navigation showBanners />
       <Hero />
       <About />
       <CoOrganisers />
