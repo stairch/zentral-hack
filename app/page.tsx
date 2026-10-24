@@ -12,7 +12,7 @@ import { Footer } from "@/components/footer"
 export default function Home() {
   return (
     <main className="relative">
-      <Navigation />
+      <Navigation showBanners />
       <Hero />
       <About />
       <CoOrganisers />
