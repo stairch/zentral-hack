@@ -8,6 +8,7 @@ import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { BrandMark } from "@/components/brand-mark"
+import { LandingBanners } from "@/components/landing-banners"
 
 const navItems = {
   de: [
@@ -43,7 +44,11 @@ const copy = {
   }
 } as const
 
-export function Navigation() {
+interface NavigationProps {
+  showBanners?: boolean
+}
+
+export function Navigation({ showBanners = false }: NavigationProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { language, setLanguage } = useLanguage()
@@ -146,6 +151,7 @@ export function Navigation() {
             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </nav>
+        {showBanners && <LandingBanners />}
       </motion.header>
 
       {/* Mobile Menu */}
