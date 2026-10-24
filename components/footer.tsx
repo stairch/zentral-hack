@@ -10,20 +10,6 @@ import GitHub from "@/assets/icons/github.svg"
 import { Urls } from "@/lib/constants"
 
 const footerLinks = {
-  event: {
-    de: [
-      { label: "Über uns", href: "/#about" },
-      { label: "Kategorien", href: "/#categories" },
-      { label: "Zeitplan", href: "/#schedule" },
-      { label: "FAQ", href: "/#faq" }
-    ],
-    en: [
-      { label: "About", href: "/#about" },
-      { label: "Categories", href: "/#categories" },
-      { label: "Schedule", href: "/#schedule" },
-      { label: "FAQ", href: "/#faq" }
-    ]
-  },
   legal: {
     de: [
       { label: "Impressum", href: "/impressum" },
@@ -58,10 +44,10 @@ const copy = {
   de: {
     description:
       "Der Hackathon für die Zentralschweiz. Verbindung von Bildung, Wirtschaft und Community für Innovation und Nachwuchsförderung.",
-    event: "EVENT",
     legal: "RECHTLICHES",
     support: "SUPPORT",
     rights: "© 2026 Zentral Hack. Alle Rechte vorbehalten.",
+    admin: "Admin",
     madeWith: "Erstellt mit",
     by: "von",
     and: "und",
@@ -70,10 +56,10 @@ const copy = {
   en: {
     description:
       "The hackathon for Central Switzerland. Connecting education, business, and community for innovation and young talent.",
-    event: "EVENT",
     legal: "LEGAL",
     support: "SUPPORT",
     rights: "© 2026 Zentral Hack. All rights reserved.",
+    admin: "Admin",
     madeWith: "Made with",
     by: "by",
     and: "and",
@@ -84,14 +70,13 @@ const copy = {
 export function Footer() {
   const { language } = useLanguage()
   const text = copy[language]
-  const eventLinks = footerLinks.event[language]
   const legalLinks = footerLinks.legal[language]
   const supportLinks = footerLinks.support[language]
 
   return (
     <footer className="bg-foreground py-16">
       <div className="container mx-auto px-4">
-        <div className="mb-12 grid gap-12 md:grid-cols-5">
+        <div className="mb-12 grid gap-12 md:grid-cols-4">
           {/* Logo & Description */}
           <div className="md:col-span-2">
             <motion.a href="/" className="mb-4 inline-block" whileHover={{ scale: 1.05 }}>
@@ -114,23 +99,6 @@ export function Footer() {
                 </motion.a>
               ))}
             </div>
-          </div>
-
-          {/* Event Links */}
-          <div>
-            <h4 className="font-display text-light-violet mb-4 font-bold">EVENT</h4>
-            <ul className="space-y-3">
-              {eventLinks.map((link) => (
-                <li key={link.label}>
-                  <motion.a
-                    href={link.href}
-                    className="text-muted-foreground hover:text-yellow transition-colors"
-                    whileHover={{ x: 5 }}>
-                    {link.label}
-                  </motion.a>
-                </li>
-              ))}
-            </ul>
           </div>
 
           {/* Legal Links */}
@@ -171,7 +139,12 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 md:flex-row">
-          <p className="text-muted-foreground text-sm">{text.rights}</p>
+          <div className="flex items-center gap-4">
+            <p className="text-muted-foreground text-sm">{text.rights}</p>
+            <Link href="/auth/login" className="text-xs text-white/40 transition-colors hover:text-white/70">
+              {text.admin}
+            </Link>
+          </div>
           <div className="text-muted-foreground flex items-center gap-1 text-xs">
             <div>
               {text.madeWith} <span className="text-red-500">♥</span> {text.by}

@@ -2,9 +2,7 @@
 
 import { useRef, useState, useEffect } from "react"
 import { motion, useInView } from "framer-motion"
-import { SponsorshipModal } from "./sponsorship-modal"
 import { useLanguage } from "@/lib/language-context"
-import { Emails } from "@/lib/constants"
 import { getSponsorPackageByLanguage } from "@/lib/sponsorship-packages"
 import { type SponsorPackage } from "@/lib/sponsorship-packages"
 import Image from "next/image"
@@ -164,58 +162,6 @@ function SponsorLogo({ item, tierIndex }: { item: OrganiserOrSponsor; tierIndex:
   )
 }
 
-function TierCard({
-  tier,
-  index,
-  onOpen,
-  onHover,
-  isSpotlit
-}: {
-  tier: SponsorPackage
-  index: number
-  onOpen: () => void
-  onHover: () => void
-  isSpotlit: boolean
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: "-80px" })
-  const { language } = useLanguage()
-  const localizedTier = getSponsorPackageByLanguage(tier, language)
-  const tierColor = localizedTier.color || "#530A5D"
-  const textColor = getContrastForegroundColor(tierColor)
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault()
-      onOpen()
-    }
-  }
-
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 24 }}
-      animate={isInView ? { opacity: isSpotlit ? 1 : 0.35 } : { opacity: 0, y: 24 }}
-      transition={{ duration: 0.2, delay: isInView ? 0 : index * 0.1 }}
-      onClick={onOpen}
-      onMouseEnter={onHover}
-      onKeyDown={handleKeyDown}
-      role="button"
-      tabIndex={0}
-      aria-label={
-        language === "de"
-          ? `${localizedTier.name} Sponsoring-Paket anfragen`
-          : `Request ${localizedTier.name} sponsorship package`
-      }
-      className="group relative flex min-h-28 w-56 cursor-pointer items-center justify-center rounded-2xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
-      style={{ backgroundColor: tierColor, borderColor: tierColor, color: textColor }}>
-      <div className="flex items-center gap-2.5">
-        <span className="font-display text-2xl font-semibold tracking-wide">{localizedTier.name}</span>
-      </div>
-    </motion.div>
-  )
-}
-
 export function CoOrganisers() {
   const [organisers, setOrganisers] = useState<OrganiserOrSponsor[]>([])
   const { language } = useLanguage()
@@ -285,9 +231,6 @@ export function CoOrganisers() {
 export function Partners() {
   const headerRef = useRef(null)
   const isHeaderInView = useInView(headerRef, { once: true })
-  const [sponsorshipModalOpen, setSponsorshipModalOpen] = useState(false)
-  const [selectedPackage, setSelectedPackage] = useState<SponsorPackage | null>(null)
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const [sponsors, setSponsors] = useState<Sponsor[]>([])
   const [sponsorPackageItems, setSponsorPackageItems] = useState<SponsorPackage[]>([])
   const { language } = useLanguage()
@@ -358,125 +301,66 @@ export function Partners() {
       headingAccent: "STÄRKER",
       description:
         "Unterstützt von führenden Unternehmen und Institutionen aus der Zentralschweiz und darüber hinaus.",
-      tierListsTitle: "Werden Sie ein Sponsor",
-      sponsoren: "SPONSOREN",
-      ctaQuestion: "Noch unsicher welches Paket passt?",
-      ctaAction: "Kontakt aufnehmen"
+      sponsoren: "SPONSOREN"
     },
     en: {
       badge: "SPONSORS",
       heading: "STRONGER",
       headingAccent: "TOGETHER",
       description: "Supported by leading companies and institutions from Central Switzerland and beyond.",
-      tierListsTitle: "Become a sponsor",
-      sponsoren: "SPONSORS",
-      ctaQuestion: "Not sure which package fits?",
-      ctaAction: "Get in touch"
+      sponsoren: "SPONSORS"
     }
   } as const
 
   const text = copy[language]
 
   return (
-    <>
-      <section id="partners" className="bg-background overflow-hidden py-24">
-        <div className="container mx-auto px-4">
-          {/* Section Header */}
-          <motion.div
-            ref={headerRef}
-            className="mb-16 text-center"
-            initial={{ opacity: 0, y: 30 }}
-            animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6 }}>
-            <motion.span
-              className="bg-secondary/30 text-primary mb-4 inline-block rounded-full px-4 py-2 text-sm font-medium"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={isHeaderInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.6, delay: 0.2 }}>
-              {text.badge}
-            </motion.span>
-            <h2 className="font-display text-foreground mb-4 text-4xl font-bold md:text-5xl">
-              {text.heading} <span className="text-violet">{text.headingAccent}</span>
-            </h2>
-            <p className="text-muted-foreground mx-auto max-w-3xl text-lg">{text.description}</p>
-          </motion.div>
+    <section id="partners" className="bg-background overflow-hidden py-24">
+      <div className="container mx-auto px-4">
+        {/* Section Header */}
+        <motion.div
+          ref={headerRef}
+          className="mb-16 text-center"
+          initial={{ opacity: 0, y: 30 }}
+          animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}>
+          <motion.span
+            className="bg-secondary/30 text-primary mb-4 inline-block rounded-full px-4 py-2 text-sm font-medium"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={isHeaderInView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 0.6, delay: 0.2 }}>
+            {text.badge}
+          </motion.span>
+          <h2 className="font-display text-foreground mb-4 text-4xl font-bold md:text-5xl">
+            {text.heading} <span className="text-violet">{text.headingAccent}</span>
+          </h2>
+          <p className="text-muted-foreground mx-auto max-w-3xl text-lg">{text.description}</p>
+        </motion.div>
 
-          {/* Sponsor grids */}
-          <div className="mx-auto mb-32 max-w-3xl">
-            {tiersWithSponsors.map(({ package: pkg, sponsors, tierIndex }) => {
-              const localizedPkg = getSponsorPackageByLanguage(pkg, language)
-              const label = localizedPkg.name.toUpperCase()
-              const bgColor = localizedPkg.color
-              const textColor = getContrastForegroundColor(bgColor)
-              const minH = getTierMinH(tierIndex)
+        {/* Sponsor grids */}
+        <div className="mx-auto max-w-3xl">
+          {tiersWithSponsors.map(({ package: pkg, sponsors, tierIndex }) => {
+            const localizedPkg = getSponsorPackageByLanguage(pkg, language)
+            const label = localizedPkg.name.toUpperCase()
+            const bgColor = localizedPkg.color
+            const textColor = getContrastForegroundColor(bgColor)
+            const minH = getTierMinH(tierIndex)
 
-              return (
-                <div key={pkg.id}>
-                  {/* Title */}
-                  <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
-                    <div className="w-fit rounded-md px-5" style={{ background: bgColor, color: textColor }}>
-                      {label} {text.sponsoren}
-                    </div>
-                  </h3>
+            return (
+              <div key={pkg.id}>
+                {/* Title */}
+                <h3 className="font-display text-foreground mt-16 mb-4 flex justify-center text-center text-lg font-bold">
+                  <div className="w-fit rounded-md px-5" style={{ background: bgColor, color: textColor }}>
+                    {label} {text.sponsoren}
+                  </div>
+                </h3>
 
-                  <SponsorGrid sponsors={sponsors} tierIndex={tierIndex} minH={minH} />
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Sponsor Tiers */}
-          <div className="mx-auto max-w-5xl">
-            <p className="text-muted-foreground mb-5 text-center font-medium tracking-widest uppercase">
-              {text.tierListsTitle}
-            </p>
-            <div className="flex w-full justify-center">
-              <div className="flex flex-wrap justify-center gap-3" onMouseLeave={() => setHoveredIndex(null)}>
-                {sponsorPackageItems.map((tier, index) => (
-                  <TierCard
-                    key={tier.id}
-                    tier={tier}
-                    index={index}
-                    isSpotlit={hoveredIndex === null || hoveredIndex === index}
-                    onHover={() => setHoveredIndex(index)}
-                    onOpen={() => {
-                      setSelectedPackage(tier)
-                      setSponsorshipModalOpen(true)
-                    }}
-                  />
-                ))}
+                <SponsorGrid sponsors={sponsors} tierIndex={tierIndex} minH={minH} />
               </div>
-            </div>
-          </div>
-
-          {/* CTA */}
-          <motion.p
-            className="mt-12 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.8 }}>
-            <span className="text-muted-foreground mb-4">{text.ctaQuestion} • </span>
-            <a
-              href={`mailto:${Emails.infoZentralHack}`}
-              className="text-violet group inline-flex cursor-pointer items-center gap-2 font-semibold">
-              <span className="group-hover:underline">{text.ctaAction}</span>
-              <span
-                aria-hidden="true"
-                className="inline-block transition-transform duration-200 ease-out group-hover:translate-x-1">
-                →
-              </span>
-            </a>
-          </motion.p>
+            )
+          })}
         </div>
-      </section>
-
-      {/* Sponsorship Modal */}
-      <SponsorshipModal
-        isOpen={sponsorshipModalOpen}
-        onClose={() => setSponsorshipModalOpen(false)}
-        selectedPackage={selectedPackage}
-        allPackages={sponsorPackageItems}
-      />
-    </>
+      </div>
+    </section>
   )
 }

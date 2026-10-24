@@ -1,28 +1,19 @@
-import { Suspense } from "react"
-import { Navigation } from "@/components/navigation"
-import { Hero } from "@/components/hero"
-import { About } from "@/components/about"
-import { Categories } from "@/components/categories"
-import { Schedule } from "@/components/schedule"
+import { PostEventHero } from "@/components/post-event-hero"
+import { LeaderboardSection } from "@/components/leaderboard-section"
+import { EventGallerySection } from "@/components/event-gallery-section"
 import { Partners, CoOrganisers } from "@/components/partners"
-import { FAQ } from "@/components/faq"
-import { CTA } from "@/components/cta"
+import { PostEventCTA } from "@/components/post-event-cta"
 import { Footer } from "@/components/footer"
 
 export default function Home() {
   return (
     <main className="relative">
-      <Navigation />
-      <Hero />
-      <About />
+      <PostEventHero />
+      <LeaderboardSection />
+      <EventGallerySection />
       <CoOrganisers />
-      <Suspense>
-        <Categories />
-      </Suspense>
-      <Schedule />
       <Partners />
-      <FAQ />
-      <CTA />
+      <PostEventCTA />
       <Footer />
     </main>
   )
