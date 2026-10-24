@@ -1,16 +1,11 @@
-import { put, del } from "@vercel/blob"
+import { del } from "@vercel/blob"
 import { query } from "@/lib/db"
 import { withCategoryPartnerAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, validationError, serverError } from "@/lib/api"
-import { validateFileUpload, generateSecureFilename } from "@/lib/file-upload"
+import { canManageChallenge, verifyUploadedBlob } from "@/lib/blob-upload"
 
 async function assertChallengeAccess(req: AuthenticatedRequest, challengeId: string): Promise<boolean> {
-  const result = await query("SELECT category_id FROM sponsor_challenges WHERE id = $1", [challengeId])
-  if (result.rows.length === 0) return false
-  if (req.user?.role === "category_partner" && result.rows[0].category_id !== req.user.categoryId) {
-    return false
-  }
-  return true
+  return !!req.user && canManageChallenge(challengeId, req.user)
 }
 
 async function handleGet(req: AuthenticatedRequest) {
@@ -36,31 +31,32 @@ async function handleGet(req: AuthenticatedRequest) {
 
 async function handlePost(req: AuthenticatedRequest) {
   try {
-    const formData = await req.formData()
-    const file = formData.get("file") as File
-    const challengeId = formData.get("challengeId") as string
-    const name = formData.get("name") as string
-    const description = (formData.get("description") as string) || null
+    // The browser already uploaded the file to Vercel Blob (lib/client-upload.ts), we only get its URL
+    const body = await req.json()
+    const challengeId: string | undefined = body.challengeId
+    const name: string | undefined = body.name
+    const description: string | null = body.description || null
 
-    if (!file) return validationError("File required")
     if (!challengeId) return validationError("challengeId required")
 
     if (!(await assertChallengeAccess(req, challengeId))) {
       return validationError("Challenge not found or no permission")
     }
 
-    const validation = validateFileUpload({ name: file.name, size: file.size, type: file.type }, "document")
-    if (!validation.valid) return validationError(validation.error!)
+    const verified = await verifyUploadedBlob(
+      body.url,
+      body.fileName,
+      `documents/challenges/${challengeId}`,
+      ["document"]
+    )
+    if (!verified.valid) return validationError(verified.error)
+    const file = verified.blob
 
     const docName = name || file.name.replace(/\.[^/.]+$/, "")
-    const secureFilename = generateSecureFilename(file.name)
-    const blob = await put(`documents/challenges/${challengeId}/${secureFilename}`, file, {
-      access: "private"
-    })
 
     const result = await query(
       "INSERT INTO challenge_documents (challenge_id, name, description, file_path, file_size, uploaded_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, description, file_path, file_size, created_at",
-      [challengeId, docName, description, blob.url, file.size, req.user?.userId ?? null]
+      [challengeId, docName, description, file.url, file.size, req.user?.userId ?? null]
     )
 
     return successResponse({ document: result.rows[0] }, 201)

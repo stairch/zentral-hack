@@ -38,6 +38,7 @@ import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { uploadFileToBlob } from "@/lib/client-upload"
 
 const NO_CHALLENGE_SENTINEL = "__none__"
 
@@ -717,12 +718,12 @@ export function TeamsAdminPage() {
     if (!selectedTeam) return
     setUploadingFile(true)
     try {
-      const formData = new FormData()
-      formData.append("file", file)
+      const uploaded = await uploadFileToBlob(file, `teams/${selectedTeam.id}`, ["document"])
       const res = await fetch(`/api/teams-files?teamId=${selectedTeam.id}`, {
         method: "POST",
         credentials: "include",
-        body: formData
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(uploaded)
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || text.fileUploadError)

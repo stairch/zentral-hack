@@ -18,6 +18,7 @@ import { FileUp, Loader2, Trash2, ExternalLink, Lock } from "lucide-react"
 import { toast } from "sonner"
 import Github from "@/assets/icons/github.svg"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { uploadFileToBlob } from "@/lib/client-upload"
 
 interface TeamFile {
   id: string
@@ -116,13 +117,13 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
 
     try {
       setUploading(true)
-      const formData = new FormData()
-      formData.append("file", selectedFile)
+      const uploaded = await uploadFileToBlob(selectedFile, `teams/${teamId}`, ["document"])
 
       const res = await fetch(`/api/teams-files?teamId=${teamId}`, {
         method: "POST",
         credentials: "include",
-        body: formData
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(uploaded)
       })
 
       if (!res.ok) {

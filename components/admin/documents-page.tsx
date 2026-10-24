@@ -19,6 +19,7 @@ import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { uploadFileToBlob } from "@/lib/client-upload"
 
 const GLOBAL_SENTINEL = "__global__"
 
@@ -150,15 +151,23 @@ export function DocumentsManagementPage() {
     }
     try {
       setUploading(true)
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("categoryId", categoryId === GLOBAL_SENTINEL ? "" : categoryId)
-      if (docName.trim()) formData.append("name", docName.trim())
+      const targetCategoryId = categoryId === GLOBAL_SENTINEL ? null : categoryId
+      const uploaded = await uploadFileToBlob(
+        file,
+        targetCategoryId ? `documents/categories/${targetCategoryId}` : "documents/global",
+        ["document"]
+      )
 
       const res = await fetch("/api/admin/documents", {
         method: "POST",
         credentials: "include",
-        body: formData
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: uploaded.url,
+          fileName: uploaded.name,
+          categoryId: targetCategoryId,
+          name: docName.trim() || undefined
+        })
       })
       if (!res.ok) {
         const error = await res.json()
@@ -272,7 +281,7 @@ export function DocumentsManagementPage() {
                     type="file"
                     onChange={(e) => setFile(e.target.files?.[0] || null)}
                     className="cursor-pointer"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip"
                   />
                   {file && <p className="text-muted-foreground mt-2 text-sm">📎 {file.name}</p>}
                 </div>

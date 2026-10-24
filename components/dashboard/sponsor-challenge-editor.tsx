@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { uploadFileToBlob } from "@/lib/client-upload"
 import {
   createEmptySponsorChallengeData,
   normalizeSponsorChallengeData,
@@ -711,13 +712,14 @@ export function SponsorChallengeEditor({
     if (!selectedChallengeId) return
     setUploadingDoc(true)
     try {
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("challengeId", selectedChallengeId)
+      const uploaded = await uploadFileToBlob(file, `documents/challenges/${selectedChallengeId}`, [
+        "document"
+      ])
       const res = await fetch("/api/admin/challenge-documents", {
         method: "POST",
         credentials: "include",
-        body: formData
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: uploaded.url, fileName: uploaded.name, challengeId: selectedChallengeId })
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || t.challengeDocsUploadError)
@@ -1123,7 +1125,7 @@ export function SponsorChallengeEditor({
                   ref={docFileInputRef}
                   type="file"
                   className="hidden"
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip"
                   onChange={(e) => {
                     const picked = e.target.files?.[0]
                     if (picked) void handleUploadChallengeDoc(picked)
