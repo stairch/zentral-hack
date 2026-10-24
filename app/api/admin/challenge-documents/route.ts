@@ -39,7 +39,7 @@ async function handlePost(req: AuthenticatedRequest) {
 
     if (!challengeId) return validationError("challengeId required")
 
-    if (!(await assertChallengeAccess(req, challengeId))) {
+    if (!req.user || !(await assertChallengeAccess(req, challengeId))) {
       return validationError("Challenge not found or no permission")
     }
 
@@ -47,7 +47,7 @@ async function handlePost(req: AuthenticatedRequest) {
       body.url,
       body.fileName,
       `documents/challenges/${challengeId}`,
-      ["document"]
+      req.user
     )
     if (!verified.valid) return validationError(verified.error)
     const file = verified.blob

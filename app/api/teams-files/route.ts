@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     // The browser already uploaded the file to Vercel Blob (lib/client-upload.ts), we only get its URL
     const { url, name } = await request.json()
-    const verified = await verifyUploadedBlob(url, name, `teams/${teamId}`, ["document"])
+    const verified = await verifyUploadedBlob(url, name, `teams/${teamId}`, payload)
     if (!verified.valid) {
       return new NextResponse(JSON.stringify({ error: verified.error }), { status: 400 })
     }

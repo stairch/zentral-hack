@@ -78,10 +78,7 @@ export async function POST(request: NextRequest) {
     let attachmentSize: number | null = null
 
     if (attachment) {
-      const verified = await verifyUploadedBlob(attachment.url, attachment.name, `chat/${teamId}`, [
-        "image",
-        "document"
-      ])
+      const verified = await verifyUploadedBlob(attachment.url, attachment.name, `chat/${teamId}`, payload)
       if (!verified.valid) {
         return new NextResponse(
           JSON.stringify({ error: "Nur Bilder (JPG/PNG/WebP) oder Dokumente (PDF/Office/ZIP) erlaubt" }),

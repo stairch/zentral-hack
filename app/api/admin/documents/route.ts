@@ -52,12 +52,12 @@ async function handlePost(req: AuthenticatedRequest) {
     const name: string | undefined = body.name
     const description: string | null = body.description || null
 
-    if (req.user?.role === "category_partner" && req.user.categoryId !== categoryId) {
+    if (!req.user || (req.user.role === "category_partner" && req.user.categoryId !== categoryId)) {
       return validationError("Cannot upload to other categories")
     }
 
     const folder = categoryId ? `documents/categories/${categoryId}` : "documents/global"
-    const verified = await verifyUploadedBlob(body.url, body.fileName, folder, ["document"])
+    const verified = await verifyUploadedBlob(body.url, body.fileName, folder, req.user)
     if (!verified.valid) return validationError(verified.error)
     const file = verified.blob
 
