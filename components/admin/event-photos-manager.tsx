@@ -8,6 +8,7 @@ import { Loader2, Upload, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { eventPhotoSrc } from "@/lib/event-phase"
+import { uploadEventPhoto } from "@/lib/client-upload"
 
 interface EventPhoto {
   id: string
@@ -18,12 +19,15 @@ interface EventPhoto {
 
 const copy = {
   de: {
-    uploadHint: "Fotos werden sofort hochgeladen bzw. gelöscht und brauchen kein Speichern.",
+    uploadHint:
+      "Mehrere Fotos auf einmal möglich, bis 30 MB pro Foto. Sie werden beim Hochladen komprimiert und brauchen kein Speichern.",
     captionLabel: "Bildunterschrift (optional)",
     captionPlaceholder: "z.B. Pitch-Finale Samstagabend",
     upload: "Hochladen",
-    uploadSuccess: "Foto hochgeladen",
+    uploadSuccess: (n: number) => (n === 1 ? "Foto hochgeladen" : `${n} Fotos hochgeladen`),
     uploadError: "Fehler beim Hochladen",
+    uploadFailed: (n: number) => `${n} ${n === 1 ? "Foto konnte" : "Fotos konnten"} nicht hochgeladen werden`,
+    uploadProgress: (done: number, total: number) => `${done} / ${total}`,
     listTitle: "Hochgeladene Fotos",
     noPhotos: "Noch keine Fotos hochgeladen.",
     loadError: "Fehler beim Laden",
@@ -35,12 +39,15 @@ const copy = {
     deleteError: "Fehler beim Löschen"
   },
   en: {
-    uploadHint: "Photos are uploaded and deleted right away and need no saving.",
+    uploadHint:
+      "Several photos at once, up to 30 MB each. They are compressed while uploading and need no saving.",
     captionLabel: "Caption (optional)",
     captionPlaceholder: "e.g. Saturday night pitch finale",
     upload: "Upload",
-    uploadSuccess: "Photo uploaded",
+    uploadSuccess: (n: number) => (n === 1 ? "Photo uploaded" : `${n} photos uploaded`),
     uploadError: "Failed to upload",
+    uploadFailed: (n: number) => `${n} ${n === 1 ? "photo" : "photos"} could not be uploaded`,
+    uploadProgress: (done: number, total: number) => `${done} / ${total}`,
     listTitle: "Uploaded photos",
     noPhotos: "No photos uploaded yet.",
     loadError: "Failed to load",
@@ -61,8 +68,9 @@ export function EventPhotosManager() {
   const [photos, setPhotos] = useState<EventPhoto[]>([])
   const [loading, setLoading] = useState(true)
   const [caption, setCaption] = useState("")
-  const [file, setFile] = useState<File | null>(null)
-  const [uploading, setUploading] = useState(false)
+  const [files, setFiles] = useState<File[]>([])
+  // Photos are uploaded one after another, so progress is the count done so far
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [fileInputKey, setFileInputKey] = useState(0)
@@ -86,30 +94,27 @@ export function EventPhotosManager() {
   }
 
   const handleUpload = async () => {
-    if (!file) return
-    setUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append("file", file)
-      if (caption.trim()) formData.append("caption", caption.trim())
-
-      const res = await fetch("/api/admin/event-photos", {
-        method: "POST",
-        credentials: "include",
-        body: formData
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || text.uploadError)
-      setPhotos((prev) => [...prev, data.data.photo])
-      setFile(null)
-      setCaption("")
-      setFileInputKey((k) => k + 1)
-      toast.success(text.uploadSuccess)
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : text.uploadError)
-    } finally {
-      setUploading(false)
+    if (files.length === 0) return
+    let uploaded = 0
+    let failed = 0
+    setProgress({ done: 0, total: files.length })
+    for (const file of files) {
+      try {
+        const photo = await uploadEventPhoto(file, { caption: caption.trim() || undefined })
+        setPhotos((prev) => [...prev, photo])
+        uploaded++
+      } catch (error) {
+        console.error(`[Event Photos] Upload of ${file.name} failed:`, error)
+        failed++
+      }
+      setProgress({ done: uploaded + failed, total: files.length })
     }
+    setProgress(null)
+    setFiles([])
+    setCaption("")
+    setFileInputKey((k) => k + 1)
+    if (uploaded > 0) toast.success(text.uploadSuccess(uploaded))
+    if (failed > 0) toast.error(text.uploadFailed(failed))
   }
 
   const handleDelete = async () => {
@@ -139,7 +144,9 @@ export function EventPhotosManager() {
             key={fileInputKey}
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            multiple
+            disabled={progress !== null}
+            onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
           />
           <Input
             value={caption}
@@ -152,10 +159,10 @@ export function EventPhotosManager() {
           <p className="text-muted-foreground text-xs">{text.uploadHint}</p>
           <Button
             onClick={() => void handleUpload()}
-            disabled={uploading || !file}
+            disabled={progress !== null || files.length === 0}
             className="bg-violet hover:bg-violet/90 gap-2">
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {text.upload}
+            {progress ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            {progress ? text.uploadProgress(progress.done, progress.total) : text.upload}
           </Button>
         </div>
       </div>
@@ -175,7 +182,7 @@ export function EventPhotosManager() {
                 <div className="overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={eventPhotoSrc(photo.id)}
+                    src={eventPhotoSrc(photo.id, "thumbnail")}
                     alt={photo.caption || ""}
                     className="aspect-square w-full object-cover transition-transform duration-500 ease-out motion-safe:group-hover:scale-105"
                   />

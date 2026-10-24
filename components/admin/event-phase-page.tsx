@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
+import { useEffect, useState, type ReactNode } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -11,10 +11,10 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { EventPhotosManager } from "@/components/admin/event-photos-manager"
+import { RankingsManager } from "@/components/admin/rankings-manager"
 import {
   BarChart3,
   Check,
-  ExternalLink,
   Flag,
   Images,
   Info,
@@ -22,7 +22,8 @@ import {
   Megaphone,
   Save,
   Sparkles,
-  Trophy
+  Trophy,
+  type LucideIcon
 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
@@ -78,8 +79,6 @@ const copy = {
     leaderboardTitle: "Sieger-Teams",
     leaderboardEnabled: "Sektion anzeigen",
     badgeLabel: "Badge",
-    rankingsHint: "Die Platzierungen (Rang 1–3 pro Kategorie) werden bei den Teams gesetzt.",
-    rankingsLink: "Zu den Teams",
     galleryTitle: "Galerie",
     galleryEnabled: "Sektion anzeigen",
     ctaTitle: "Abschluss",
@@ -135,8 +134,6 @@ const copy = {
     leaderboardTitle: "Winning teams",
     leaderboardEnabled: "Show section",
     badgeLabel: "Badge",
-    rankingsHint: "Placements (rank 1–3 per category) are set on the teams page.",
-    rankingsLink: "Go to teams",
     galleryTitle: "Gallery",
     galleryEnabled: "Show section",
     ctaTitle: "Closing",
@@ -196,15 +193,35 @@ function LocalizedField({
   )
 }
 
-function SectionLink({ hint, href, label }: { hint: string; href: string; label: string }) {
+// Collapsible section card. Content stays mounted while collapsed, so unsaved input survives.
+// forceMount keeps Radix from hiding it, so the inner wrapper hides itself while its parent is closed.
+function SectionCard({
+  value,
+  icon: Icon,
+  title,
+  className,
+  children
+}: {
+  value: string
+  icon: LucideIcon
+  title: string
+  className?: string
+  children: ReactNode
+}) {
   return (
-    <div className="bg-muted flex flex-wrap items-center justify-between gap-2 rounded-md px-3 py-2 text-sm">
-      <span className="text-muted-foreground">{hint}</span>
-      <Link href={href} className="text-violet inline-flex items-center gap-1 font-medium hover:underline">
-        {label}
-        <ExternalLink className="h-3.5 w-3.5" />
-      </Link>
-    </div>
+    <AccordionItem value={value} asChild className="gap-0 py-0 last:border-b">
+      <Card>
+        <AccordionTrigger className="items-center px-6 py-5 hover:no-underline">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Icon className="h-4 w-4" />
+            {title}
+          </CardTitle>
+        </AccordionTrigger>
+        <AccordionContent forceMount className={cn("px-6 pb-6 [[data-state=closed]>&]:hidden", className)}>
+          {children}
+        </AccordionContent>
+      </Card>
+    </AccordionItem>
   )
 }
 
@@ -387,14 +404,8 @@ export function EventPhaseAdminPage() {
                 </p>
               </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Sparkles className="h-4 w-4" />
-                    {text.heroTitle}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-5">
+              <Accordion type="multiple" className="space-y-6">
+                <SectionCard value="hero" icon={Sparkles} title={text.heroTitle} className="space-y-5">
                   <LocalizedField
                     id="hero-date"
                     label={text.dateLabel}
@@ -424,17 +435,9 @@ export function EventPhaseAdminPage() {
                     multiline
                     text={text}
                   />
-                </CardContent>
-              </Card>
+                </SectionCard>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <BarChart3 className="h-4 w-4" />
-                    {text.statsTitle}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
+                <SectionCard value="stats" icon={BarChart3} title={text.statsTitle} className="space-y-3">
                   <div className="grid gap-3 md:grid-cols-3">
                     {POST_EVENT_STAT_KEYS.map((key) => (
                       <div key={key}>
@@ -451,17 +454,13 @@ export function EventPhaseAdminPage() {
                     ))}
                   </div>
                   <p className="text-muted-foreground text-xs">{text.statsHint}</p>
-                </CardContent>
-              </Card>
+                </SectionCard>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Trophy className="h-4 w-4" />
-                    {text.leaderboardTitle}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-5">
+                <SectionCard
+                  value="leaderboard"
+                  icon={Trophy}
+                  title={text.leaderboardTitle}
+                  className="space-y-5">
                   <div className="flex items-center gap-3">
                     <Switch
                       id="leaderboard-enabled"
@@ -492,18 +491,10 @@ export function EventPhaseAdminPage() {
                     multiline
                     text={text}
                   />
-                  <SectionLink hint={text.rankingsHint} href="/admin/teams" label={text.rankingsLink} />
-                </CardContent>
-              </Card>
+                  <RankingsManager />
+                </SectionCard>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Images className="h-4 w-4" />
-                    {text.galleryTitle}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-5">
+                <SectionCard value="gallery" icon={Images} title={text.galleryTitle} className="space-y-5">
                   <div className="flex items-center gap-3">
                     <Switch
                       id="gallery-enabled"
@@ -528,17 +519,9 @@ export function EventPhaseAdminPage() {
                     text={text}
                   />
                   <EventPhotosManager />
-                </CardContent>
-              </Card>
+                </SectionCard>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Megaphone className="h-4 w-4" />
-                    {text.ctaTitle}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-5">
+                <SectionCard value="cta" icon={Megaphone} title={text.ctaTitle} className="space-y-5">
                   <LocalizedField
                     id="cta-heading"
                     label={text.headingLabel}
@@ -554,8 +537,8 @@ export function EventPhaseAdminPage() {
                     multiline
                     text={text}
                   />
-                </CardContent>
-              </Card>
+                </SectionCard>
+              </Accordion>
 
               <div className="flex flex-wrap items-center gap-3">
                 <Button

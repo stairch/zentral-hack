@@ -31,7 +31,6 @@ import {
   FileText,
   Trophy,
   NotebookPen,
-  Medal,
   Search,
   FolderGit2,
   ExternalLink
@@ -54,7 +53,6 @@ interface Team {
   challenge_title?: string | null
   challenge_title_en?: string | null
   member_count?: number
-  rank?: number | null
   created_at: string
 }
 
@@ -66,14 +64,6 @@ interface TeamNote {
   author_first_name: string | null
   author_last_name: string | null
   author_email: string | null
-}
-
-interface TeamRanking {
-  rank: number
-  updated_at: string
-  updated_by_first_name: string | null
-  updated_by_last_name: string | null
-  updated_by_email: string | null
 }
 
 interface ChallengeOption {
@@ -134,9 +124,6 @@ const copy = {
     filterSearchPlaceholder: "Nach Team-Name oder Beschreibung suchen...",
     filterAllCategories: "Alle Kategorien",
     filterAllChallenges: "Alle Challenges",
-    filterAllRanks: "Alle Platzierungen",
-    filterRanked: "Mit Platzierung",
-    filterUnranked: "Ohne Platzierung",
     filterNoResults: "Keine Teams entsprechen den Filtern.",
     back: "Zurück",
     members: "Mitglieder",
@@ -198,19 +185,6 @@ const copy = {
     repoFallbackTitle: "Git Repo",
     internalTitle: "Interne Notizen",
     internalDesc: "Nur für Kategorie-Admins und Admins sichtbar. Teilnehmende sehen dies nicht.",
-    rankLabel: "Platzierung",
-    rankDesc:
-      "Platz 1–3 wird mit Teamname und Kategorie öffentlich auf der Rückblick-Startseite angezeigt, sobald der Rückblick veröffentlicht ist.",
-    rankPlaceholder: "z.B. 1",
-    rankSave: "Platz speichern",
-    rankClear: "Entfernen",
-    rankNone: "Noch kein Platz festgelegt.",
-    rankPlace: "Platz",
-    rankUpdatedBy: "Zuletzt geändert von",
-    rankSaveSuccess: "Platzierung gespeichert",
-    rankClearSuccess: "Platzierung entfernt",
-    rankSaveError: "Fehler beim Speichern der Platzierung",
-    rankInvalid: "Bitte eine ganze Zahl ab 1 eingeben",
     notesTitle: "Notizen",
     notePlaceholder: "Notiz zum Team hinzufügen...",
     addNote: "Notiz hinzufügen",
@@ -243,9 +217,6 @@ const copy = {
     filterSearchPlaceholder: "Search by team name or description...",
     filterAllCategories: "All Categories",
     filterAllChallenges: "All Challenges",
-    filterAllRanks: "All Placements",
-    filterRanked: "With placement",
-    filterUnranked: "Without placement",
     filterNoResults: "No teams match the filters.",
     back: "Back",
     members: "members",
@@ -307,19 +278,6 @@ const copy = {
     repoFallbackTitle: "Git repo",
     internalTitle: "Internal notes",
     internalDesc: "Only visible to category admins and admins. Participants never see this.",
-    rankLabel: "Placement",
-    rankDesc:
-      "Places 1–3 are shown publicly with team name and category on the recap homepage once the recap is published.",
-    rankPlaceholder: "e.g. 1",
-    rankSave: "Save placement",
-    rankClear: "Remove",
-    rankNone: "No placement set yet.",
-    rankPlace: "Place",
-    rankUpdatedBy: "Last changed by",
-    rankSaveSuccess: "Placement saved",
-    rankClearSuccess: "Placement removed",
-    rankSaveError: "Failed to save placement",
-    rankInvalid: "Please enter a whole number from 1",
     notesTitle: "Notes",
     notePlaceholder: "Add a note about this team...",
     addNote: "Add note",
@@ -388,18 +346,14 @@ export function TeamsAdminPage() {
   const [deletingFile, setDeletingFile] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [teamNotes, setTeamNotes] = useState<TeamNote[]>([])
-  const [teamRanking, setTeamRanking] = useState<TeamRanking | null>(null)
   const [loadingNotes, setLoadingNotes] = useState(false)
   const [newNote, setNewNote] = useState("")
   const [addingNote, setAddingNote] = useState(false)
   const [deleteNoteId, setDeleteNoteId] = useState<string | null>(null)
   const [deletingNote, setDeletingNote] = useState(false)
-  const [rankInput, setRankInput] = useState("")
-  const [savingRank, setSavingRank] = useState(false)
   const [search, setSearch] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [challengeFilter, setChallengeFilter] = useState("all")
-  const [rankFilter, setRankFilter] = useState("all")
 
   useEffect(() => {
     fetchData()
@@ -508,55 +462,17 @@ export function TeamsAdminPage() {
   const fetchTeamNotes = async (teamId: string) => {
     setLoadingNotes(true)
     setTeamNotes([])
-    setTeamRanking(null)
-    setRankInput("")
     setNewNote("")
     try {
       const res = await fetch(`/api/admin/teams/notes?teamId=${teamId}`, { credentials: "include" })
       if (res.ok) {
         const data = await res.json()
         setTeamNotes(data.data?.notes || [])
-        setTeamRanking(data.data?.ranking || null)
-        setRankInput(data.data?.ranking ? String(data.data.ranking.rank) : "")
       }
     } catch {
       toast.error(text.notesLoadError)
     } finally {
       setLoadingNotes(false)
-    }
-  }
-
-  const applyRankToTeams = (teamId: string, rank: number | null) => {
-    setSelectedTeam((prev) => (prev && prev.id === teamId ? { ...prev, rank } : prev))
-    setTeams((prev) => prev.map((t) => (t.id === teamId ? { ...t, rank } : t)))
-  }
-
-  const handleSaveRank = async (clear = false) => {
-    if (!selectedTeam) return
-    const rank = clear ? null : Number(rankInput)
-    if (!clear && (!Number.isInteger(rank) || (rank as number) < 1)) {
-      toast.error(text.rankInvalid)
-      return
-    }
-    setSavingRank(true)
-    try {
-      const res = await fetch("/api/admin/teams/ranking", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ teamId: selectedTeam.id, rank })
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || text.rankSaveError)
-      const ranking: TeamRanking | null = data.data?.ranking || null
-      setTeamRanking(ranking)
-      setRankInput(ranking ? String(ranking.rank) : "")
-      applyRankToTeams(selectedTeam.id, ranking?.rank ?? null)
-      toast.success(clear ? text.rankClearSuccess : text.rankSaveSuccess)
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : text.rankSaveError)
-    } finally {
-      setSavingRank(false)
     }
   }
 
@@ -872,8 +788,7 @@ export function TeamsAdminPage() {
     const matchesChallenge =
       challengeFilter === "all" ||
       (challengeFilter === NO_CHALLENGE_SENTINEL ? !t.challenge_id : t.challenge_id === challengeFilter)
-    const matchesRank = rankFilter === "all" || (rankFilter === "ranked" ? t.rank != null : t.rank == null)
-    return matchesSearch && matchesCategory && matchesChallenge && matchesRank
+    return matchesSearch && matchesCategory && matchesChallenge
   })
 
   // === Team Detail View ===
@@ -890,11 +805,6 @@ export function TeamsAdminPage() {
               <Button variant="ghost" size="icon" onClick={openEditTeam}>
                 <Pencil className="h-4 w-4" />
               </Button>
-              {selectedTeam.rank && (
-                <Badge className="bg-yellow text-violet gap-1">
-                  <Medal className="h-3 w-3" /> {text.rankPlace} {selectedTeam.rank}
-                </Badge>
-              )}
             </div>
             <p className="text-muted-foreground">
               {selectedTeam.category_name} • {members.length} {text.members} • {text.assignedChallenge}:{" "}
@@ -1207,59 +1117,6 @@ export function TeamsAdminPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Medal className="h-4 w-4" /> {text.rankLabel}
-            </CardTitle>
-            <CardDescription>{text.rankDesc}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* The ranking is loaded together with the notes */}
-            {loadingNotes ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Input
-                    id="team-rank"
-                    aria-label={text.rankLabel}
-                    type="number"
-                    min={1}
-                    step={1}
-                    value={rankInput}
-                    onChange={(e) => setRankInput(e.target.value)}
-                    placeholder={text.rankPlaceholder}
-                    className="w-28"
-                  />
-                  <Button
-                    onClick={() => handleSaveRank()}
-                    disabled={savingRank || !rankInput || rankInput === String(teamRanking?.rank ?? "")}
-                    className="bg-violet hover:bg-violet/90">
-                    {savingRank ? <Loader2 className="h-4 w-4 animate-spin" /> : text.rankSave}
-                  </Button>
-                  {teamRanking && (
-                    <Button variant="ghost" disabled={savingRank} onClick={() => handleSaveRank(true)}>
-                      {text.rankClear}
-                    </Button>
-                  )}
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  {teamRanking
-                    ? `${text.rankUpdatedBy} ${formatPerson(
-                        teamRanking.updated_by_first_name,
-                        teamRanking.updated_by_last_name,
-                        teamRanking.updated_by_email
-                      )} · ${new Date(teamRanking.updated_at).toLocaleString(dateLocale)}`
-                    : text.rankNone}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
               <NotebookPen className="h-4 w-4" /> {text.internalTitle}
             </CardTitle>
             <CardDescription>{text.internalDesc}</CardDescription>
@@ -1490,16 +1347,6 @@ export function TeamsAdminPage() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={rankFilter} onValueChange={setRankFilter}>
-            <SelectTrigger className="w-full md:w-[200px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{text.filterAllRanks}</SelectItem>
-              <SelectItem value="ranked">{text.filterRanked}</SelectItem>
-              <SelectItem value="unranked">{text.filterUnranked}</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       )}
 
@@ -1525,11 +1372,6 @@ export function TeamsAdminPage() {
               <CardContent className="space-y-4">
                 {team.description && <p className="text-muted-foreground text-sm">{team.description}</p>}
                 <div className="flex flex-wrap gap-2">
-                  {team.rank && (
-                    <Badge className="bg-yellow text-violet gap-1">
-                      <Medal className="h-3 w-3" /> {text.rankPlace} {team.rank}
-                    </Badge>
-                  )}
                   <Badge variant="outline" className="gap-1">
                     <Trophy className="h-3 w-3" />
                     {challengeTitle(team) || text.noChallengeOption}

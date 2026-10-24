@@ -23,6 +23,12 @@ export const ALLOWED_FILE_TYPES = {
     extensions: [".jpg", ".jpeg", ".png", ".webp"],
     maxSize: 5 * 1024 * 1024 // 5MB
   },
+  // Event photos straight from the camera, compressed on the server after upload
+  photo: {
+    mimeTypes: ["image/jpeg", "image/png", "image/webp"],
+    extensions: [".jpg", ".jpeg", ".png", ".webp"],
+    maxSize: 30 * 1024 * 1024 // 30MB
+  },
   spreadsheet: {
     mimeTypes: ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv"],
     extensions: [".xlsx", ".csv"],
@@ -31,6 +37,9 @@ export const ALLOWED_FILE_TYPES = {
 }
 
 export type FileKind = keyof typeof ALLOWED_FILE_TYPES
+
+// Originals of gallery and winner photos, replaced by compressed versions right after the upload
+export const EVENT_PHOTO_UPLOAD_FOLDER = "event-photos/uploads"
 
 /**
  * Lowercased extension including the dot, "" if there is none (same semantics as path.extname)

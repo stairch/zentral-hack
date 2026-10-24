@@ -75,7 +75,8 @@ export default async function RootLayout({
           <EventPhaseProvider phase={phase}>
             <AuthProvider>
               {children}
-              <ChatWidget />
+              {/* The platform is locked after the event, so there is no one to chat with */}
+              {phase === "live" && <ChatWidget />}
             </AuthProvider>
           </EventPhaseProvider>
         </LanguageProvider>

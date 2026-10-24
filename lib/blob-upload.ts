@@ -2,7 +2,13 @@ import { head, del } from "@vercel/blob"
 import { query } from "@/lib/db"
 import { JWTPayload } from "@/lib/auth"
 import { hasTeamAccess, isTeamSubmissionClosed } from "@/lib/team-access"
-import { FileKind, getFileExtension, getKindForFilename, validateFileUpload } from "@/lib/file-upload"
+import {
+  EVENT_PHOTO_UPLOAD_FOLDER,
+  FileKind,
+  getFileExtension,
+  getKindForFilename,
+  validateFileUpload
+} from "@/lib/file-upload"
 
 // Files are uploaded from the browser straight to Vercel Blob, because Vercel functions reject
 // request bodies over 4.5 MB. /api/uploads hands out the upload token, and the regular API routes
@@ -30,6 +36,8 @@ export async function getAllowedKindsForFolder(folder: string, user: JWTPayload)
     if (await isTeamSubmissionClosed(teamId, user.role)) return null
     return ["document"]
   }
+
+  if (folder === EVENT_PHOTO_UPLOAD_FOLDER) return user.role === "admin" ? ["photo"] : null
 
   if (parts[0] !== "documents") return null
   if (user.role !== "admin" && user.role !== "category_partner") return null
