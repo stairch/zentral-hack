@@ -19,9 +19,10 @@ export interface EventPhoto {
   caption: string | null
 }
 
-// Photos live in the private blob store and are streamed through this route
-export function eventPhotoSrc(id: string): string {
-  return `/api/event-photo?id=${id}`
+// Photos live in the private blob store and are streamed through this route.
+// "thumbnail" is a small preview for grids and cards, "full" the compressed photo for enlarged views.
+export function eventPhotoSrc(id: string, size: "full" | "thumbnail" = "full"): string {
+  return size === "thumbnail" ? `/api/event-photo?id=${id}&size=thumbnail` : `/api/event-photo?id=${id}`
 }
 
 interface RankingTeam {

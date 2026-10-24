@@ -11,6 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ArrowDown, ArrowUp, ImageIcon, Loader2, Plus, Save, Trash2, Upload, X } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
+import { uploadEventPhoto } from "@/lib/client-upload"
 import {
   eventPhotoSrc,
   rankingGroupKey,
@@ -243,19 +244,11 @@ function RankingGroupEditor({
     if (!file) return
     setUploading(true)
     try {
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("category_id", categoryId)
-      if (group.challenge_id) formData.append("challenge_id", group.challenge_id)
-
-      const res = await fetch("/api/admin/event-photos", {
-        method: "POST",
-        credentials: "include",
-        body: formData
+      const photo = await uploadEventPhoto(file, {
+        category_id: categoryId,
+        challenge_id: group.challenge_id
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || text.uploadError)
-      onChange({ winner_photo_id: data.data.photo.id })
+      onChange({ winner_photo_id: photo.id })
       setFile(null)
       setFileInputKey((k) => k + 1)
       toast.success(text.uploadSuccess)
@@ -305,7 +298,7 @@ function RankingGroupEditor({
               {group.winner_photo_id ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={eventPhotoSrc(group.winner_photo_id)}
+                  src={eventPhotoSrc(group.winner_photo_id, "thumbnail")}
                   alt=""
                   className="h-full w-full object-cover"
                 />

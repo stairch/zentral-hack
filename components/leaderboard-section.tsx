@@ -159,7 +159,7 @@ function ChallengeCard({
         <div className="overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={eventPhotoSrc(group.winner_photo_id)}
+            src={eventPhotoSrc(group.winner_photo_id, "thumbnail")}
             alt={text.winnerPhoto(title)}
             className="aspect-video w-full object-cover transition-transform duration-500 ease-out motion-safe:group-hover:scale-105"
             loading="lazy"

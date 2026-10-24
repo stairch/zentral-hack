@@ -152,7 +152,7 @@ export function EventGallerySection({
                   className="group focus-visible:ring-violet cursor-zoom-in overflow-hidden rounded-2xl focus-visible:ring-4 focus-visible:outline-none">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={eventPhotoSrc(photo.id)}
+                    src={eventPhotoSrc(photo.id, "thumbnail")}
                     alt={photo.caption || ""}
                     className="aspect-square w-full object-cover transition-transform duration-500 ease-out motion-safe:group-hover:scale-105"
                     loading="lazy"

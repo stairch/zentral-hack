@@ -8,13 +8,18 @@ export async function GET(request: NextRequest) {
       return new NextResponse(null, { status: 400 })
     }
 
-    const result = await query("SELECT image_url FROM event_photos WHERE id = $1", [id])
+    // Older photos have no thumbnail and fall back to the full image
+    const column =
+      request.nextUrl.searchParams.get("size") === "thumbnail"
+        ? "COALESCE(thumbnail_url, image_url)"
+        : "image_url"
+    const result = await query(`SELECT ${column} AS url FROM event_photos WHERE id = $1`, [id])
 
     if (result.rows.length === 0) {
       return new NextResponse(null, { status: 404 })
     }
 
-    const blobUrl: string = result.rows[0].image_url
+    const blobUrl: string = result.rows[0].url
 
     if (!blobUrl?.startsWith("https://")) {
       return new NextResponse(null, { status: 404 })

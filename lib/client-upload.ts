@@ -1,6 +1,7 @@
 import { upload } from "@vercel/blob/client"
 import {
   ALLOWED_FILE_TYPES,
+  EVENT_PHOTO_UPLOAD_FOLDER,
   FileKind,
   generateSecureFilename,
   getKindForFilename,
@@ -29,4 +30,24 @@ export async function uploadFileToBlob(file: File, folder: string, kinds: FileKi
   })
 
   return { url: blob.url, name: file.name }
+}
+
+/**
+ * Uploads a gallery or winner photo. The original goes straight to Vercel Blob, the API route then
+ * stores compressed versions and deletes it. Pass category_id (and challenge_id) for a winner photo.
+ */
+export async function uploadEventPhoto(
+  file: File,
+  fields: { caption?: string; category_id?: string; challenge_id?: string | null }
+) {
+  const { url, name } = await uploadFileToBlob(file, EVENT_PHOTO_UPLOAD_FOLDER, ["photo"])
+  const res = await fetch("/api/admin/event-photos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ url, name, ...fields })
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Upload failed")
+  return data.data.photo as { id: string; caption: string | null; display_order: number; created_at: string }
 }
