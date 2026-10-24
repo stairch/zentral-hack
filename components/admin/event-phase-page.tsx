@@ -56,7 +56,16 @@ const copy = {
       }
     },
     current: "Aktiv",
-    unsaved: "Nicht gespeichert",
+    unsaved: "Ungespeicherte Änderungen",
+    publish: "Rückblick veröffentlichen",
+    revert: "Zurück zu „Vor / während Event“",
+    publishSuccess: "Rückblick veröffentlicht",
+    revertSuccess: "Plattform wieder geöffnet",
+    switchError: "Fehler beim Umschalten",
+    contentDraftInfo:
+      "Die folgenden Inhalte gehören zur Rückblick-Startseite. Du kannst sie jetzt schon speichern, sichtbar werden sie erst nach dem Veröffentlichen.",
+    contentLiveInfo:
+      "Der Rückblick ist veröffentlicht. Gespeicherte Änderungen sind sofort auf der Startseite sichtbar.",
     heroTitle: "Hero",
     dateLabel: "Datumszeile",
     headingLabel: "Titel",
@@ -84,8 +93,8 @@ const copy = {
     loadError: "Fehler beim Laden",
     confirmTitle: "Plattform sperren?",
     confirmDescription:
-      "Danach haben nur noch Super Admins Zugriff. Alle anderen werden sofort ausgeloggt, und Login, Anmeldung, Uploads sowie alle anderen Aktionen bleiben gesperrt, bis du wieder auf „Vor / während Event“ umschaltest.",
-    confirmLabel: "Sperren und speichern",
+      "Danach haben nur noch Super Admins Zugriff. Alle anderen werden sofort ausgeloggt, und Login, Anmeldung, Uploads sowie alle anderen Aktionen bleiben gesperrt, bis du wieder auf „Vor / während Event“ umschaltest. Ungespeicherte Änderungen an den Inhalten werden dabei mitgespeichert.",
+    confirmLabel: "Sperren und veröffentlichen",
     cancel: "Abbrechen"
   },
   en: {
@@ -105,7 +114,15 @@ const copy = {
       }
     },
     current: "Active",
-    unsaved: "Unsaved",
+    unsaved: "Unsaved changes",
+    publish: "Publish recap",
+    revert: "Back to “Before / during event”",
+    publishSuccess: "Recap published",
+    revertSuccess: "Platform reopened",
+    switchError: "Failed to switch phase",
+    contentDraftInfo:
+      "The following content belongs to the recap homepage. You can already save it, it only becomes visible once published.",
+    contentLiveInfo: "The recap is published. Saved changes are visible on the homepage immediately.",
     heroTitle: "Hero",
     dateLabel: "Date line",
     headingLabel: "Title",
@@ -133,8 +150,8 @@ const copy = {
     loadError: "Failed to load",
     confirmTitle: "Lock the platform?",
     confirmDescription:
-      "Afterwards only super admins have access. Everyone else is signed out immediately, and login, registration, uploads and every other action stay locked until you switch back to “Before / during event”.",
-    confirmLabel: "Lock and save",
+      "Afterwards only super admins have access. Everyone else is signed out immediately, and login, registration, uploads and every other action stay locked until you switch back to “Before / during event”. Unsaved content changes are saved along with it.",
+    confirmLabel: "Lock and publish",
     cancel: "Cancel"
   }
 } as const
@@ -195,12 +212,17 @@ export function EventPhaseAdminPage() {
   const { language } = useLanguage()
   const text = copy[language]
 
+  // config is the editable draft, savedConfig what is stored (including the live phase)
   const [config, setConfig] = useState<EventPhaseConfig>(DEFAULT_EVENT_PHASE)
-  const [savedPhase, setSavedPhase] = useState<EventPhase>(DEFAULT_EVENT_PHASE.phase)
+  const [savedConfig, setSavedConfig] = useState<EventPhaseConfig>(DEFAULT_EVENT_PHASE)
   const [autoStats, setAutoStats] = useState<PostEventStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [switching, setSwitching] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+
+  const savedPhase = savedConfig.phase
+  const dirty = JSON.stringify({ ...config, phase: savedPhase }) !== JSON.stringify(savedConfig)
 
   useEffect(() => {
     const load = async () => {
@@ -210,7 +232,7 @@ export function EventPhaseAdminPage() {
         const data = await res.json()
         const loaded = parseEventPhaseConfig(data.data?.config)
         setConfig(loaded)
-        setSavedPhase(loaded.phase)
+        setSavedConfig(loaded)
         setAutoStats(data.data?.autoStats ?? null)
       } catch {
         toast.error(text.loadError)
@@ -226,21 +248,29 @@ export function EventPhaseAdminPage() {
     patch: Partial<EventPhaseConfig[K]>
   ) => setConfig((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }))
 
+  const request = async (method: "PUT" | "PATCH", body: unknown, fallbackError: string) => {
+    const res = await fetch("/api/admin/event-phase", {
+      method,
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(body)
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || fallbackError)
+    return parseEventPhaseConfig(data.data?.config)
+  }
+
+  // Stores the content only, the phase stays as it is
+  const saveContent = async () => {
+    const saved = await request("PUT", config, text.saveError)
+    setConfig(saved)
+    setSavedConfig(saved)
+  }
+
   const save = async () => {
     setSaving(true)
     try {
-      const res = await fetch("/api/admin/event-phase", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(config)
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || text.saveError)
-      const saved = parseEventPhaseConfig(data.data?.config)
-      setConfig(saved)
-      setSavedPhase(saved.phase)
-      setConfirmOpen(false)
+      await saveContent()
       toast.success(text.saveSuccess)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : text.saveError)
@@ -249,13 +279,30 @@ export function EventPhaseAdminPage() {
     }
   }
 
+  const switchPhase = async (phase: EventPhase) => {
+    setSwitching(true)
+    try {
+      // The recap goes live with the content currently on screen
+      if (phase === "post" && dirty) await saveContent()
+      const saved = await request("PATCH", { phase }, text.switchError)
+      setSavedConfig(saved)
+      setConfig((prev) => ({ ...prev, phase: saved.phase }))
+      setConfirmOpen(false)
+      toast.success(phase === "post" ? text.publishSuccess : text.revertSuccess)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : text.switchError)
+    } finally {
+      setSwitching(false)
+    }
+  }
+
   // Locking the platform signs everyone out, so make that step explicit
-  const handleSave = () => {
-    if (config.phase === "post" && savedPhase !== "post") {
+  const handleSwitch = () => {
+    if (savedPhase === "live") {
       setConfirmOpen(true)
       return
     }
-    void save()
+    void switchPhase("live")
   }
 
   const handleStatChange = (key: (typeof POST_EVENT_STAT_KEYS)[number], value: string) => {
@@ -283,40 +330,63 @@ export function EventPhaseAdminPage() {
                 {text.phaseTitle}
               </CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-2">
-              {EVENT_PHASES.map((phase) => {
-                const selected = config.phase === phase
-                return (
-                  <button
-                    key={phase}
-                    type="button"
-                    onClick={() => setConfig((prev) => ({ ...prev, phase }))}
-                    aria-pressed={selected}
-                    className={cn(
-                      "flex cursor-pointer flex-col gap-2 rounded-lg border-2 p-4 text-left transition-colors",
-                      selected ? "border-violet bg-secondary" : "border-border hover:border-violet/50"
-                    )}>
-                    <span className="flex items-center justify-between gap-2 font-semibold">
-                      <span className="flex items-center gap-2">
-                        {selected && <Check className="text-violet h-4 w-4" />}
-                        {text.phases[phase].label}
+            <CardContent className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                {EVENT_PHASES.map((phase) => {
+                  const selected = config.phase === phase
+                  return (
+                    <button
+                      key={phase}
+                      type="button"
+                      onClick={() => setConfig((prev) => ({ ...prev, phase }))}
+                      aria-pressed={selected}
+                      className={cn(
+                        "flex cursor-pointer flex-col gap-2 rounded-lg border-2 p-4 text-left transition-colors",
+                        selected ? "border-violet bg-secondary" : "border-border hover:border-violet/50"
+                      )}>
+                      <span className="flex items-center justify-between gap-2 font-semibold">
+                        <span className="flex items-center gap-2">
+                          {selected && <Check className="text-violet h-4 w-4" />}
+                          {text.phases[phase].label}
+                        </span>
+                        {savedPhase === phase && <Badge>{text.current}</Badge>}
                       </span>
-                      {savedPhase === phase ? (
-                        <Badge>{text.current}</Badge>
-                      ) : (
-                        selected && <Badge variant="outline">{text.unsaved}</Badge>
-                      )}
-                    </span>
-                    <span className="text-muted-foreground text-sm">{text.phases[phase].description}</span>
-                  </button>
-                )
-              })}
+                      <span className="text-muted-foreground text-sm">{text.phases[phase].description}</span>
+                    </button>
+                  )
+                })}
+              </div>
+              {/* Selecting a phase only changes the view, switching the live phase is an explicit step */}
+              {config.phase !== savedPhase && (
+                <Button
+                  onClick={handleSwitch}
+                  disabled={switching || saving}
+                  variant={savedPhase === "live" ? "destructive" : "outline"}
+                  className="gap-2">
+                  {switching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Flag className="h-4 w-4" />}
+                  {savedPhase === "live" ? text.publish : text.revert}
+                </Button>
+              )}
             </CardContent>
           </Card>
 
-          {/* Post-event content only applies to the recap homepage */}
+          {config.phase === "live" && (
+            <div className="bg-muted flex items-start gap-3 rounded-md px-4 py-3 text-sm">
+              <Info className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
+              <p className="text-muted-foreground">{text.liveInfo}</p>
+            </div>
+          )}
+
+          {/* Recap content can be prepared and saved before the phase is switched */}
           {config.phase === "post" && (
             <>
+              <div className="bg-muted flex items-start gap-3 rounded-md px-4 py-3 text-sm">
+                <Info className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
+                <p className="text-muted-foreground">
+                  {savedPhase === "live" ? text.contentDraftInfo : text.contentLiveInfo}
+                </p>
+              </div>
+
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
@@ -486,22 +556,19 @@ export function EventPhaseAdminPage() {
                   />
                 </CardContent>
               </Card>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  onClick={() => void save()}
+                  disabled={saving || switching || !dirty}
+                  className="bg-violet hover:bg-violet/90 gap-2">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {text.save}
+                </Button>
+                {dirty && <Badge variant="outline">{text.unsaved}</Badge>}
+              </div>
             </>
           )}
-
-          {config.phase === "live" && (
-            <div className="bg-muted flex items-start gap-3 rounded-md px-4 py-3 text-sm">
-              <Info className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
-              <div className="space-y-1">
-                <p className="text-muted-foreground">{text.liveInfo}</p>
-              </div>
-            </div>
-          )}
-
-          <Button onClick={handleSave} disabled={saving} className="bg-violet hover:bg-violet/90 gap-2">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {text.save}
-          </Button>
         </>
       )}
 
@@ -512,8 +579,8 @@ export function EventPhaseAdminPage() {
         description={text.confirmDescription}
         confirmLabel={text.confirmLabel}
         cancelLabel={text.cancel}
-        onConfirm={() => void save()}
-        loading={saving}
+        onConfirm={() => void switchPhase("post")}
+        loading={switching}
       />
     </div>
   )
