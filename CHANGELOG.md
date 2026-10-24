@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.15.2] - 2026-10-24
+
+### Fixed
+
+- Git repositories not shown in admin panel
+
 ## [1.15.1] - 2026-10-24
 
 ### Fixed
