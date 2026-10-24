@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { useLanguage } from "@/lib/language-context"
+import { localize, type EventPhaseConfig } from "@/lib/event-phase"
 import Instagram from "@/assets/icons/instagram.svg"
 import GitHub from "@/assets/icons/github.svg"
 
@@ -10,21 +11,8 @@ const socialLinks = [
   { icon: GitHub, href: "https://github.com/stairch/zentral-hack/", label: "GitHub" }
 ]
 
-const copy = {
-  de: {
-    heading: "Bis 2027!",
-    description:
-      "Willst du erfahren, wenn die Anmeldung für die nächste Austragung öffnet? Folge uns, damit du es nicht verpasst."
-  },
-  en: {
-    heading: "See you in 2027!",
-    description: "Want to know when registration for the next edition opens? Follow us so you don't miss it."
-  }
-} as const
-
-export function PostEventCTA() {
+export function PostEventCTA({ content }: { content: EventPhaseConfig["cta"] }) {
   const { language } = useLanguage()
-  const text = copy[language]
 
   return (
     <section className="bg-violet relative overflow-hidden py-24">
@@ -35,7 +23,7 @@ export function PostEventCTA() {
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.6 }}
           className="font-display text-yellow text-4xl font-bold uppercase md:text-5xl">
-          {text.heading}
+          {localize(content.heading, language)}
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -43,7 +31,7 @@ export function PostEventCTA() {
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.6, delay: 0.1 }}
           className="text-light-violet max-w-md text-base leading-relaxed">
-          {text.description}
+          {localize(content.description, language)}
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 20 }}

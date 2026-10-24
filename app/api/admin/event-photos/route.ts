@@ -7,7 +7,7 @@ import { validateFileUpload, generateSecureFilename } from "@/lib/file-upload"
 async function handleGet() {
   try {
     const result = await query(
-      "SELECT id, image_url, caption, display_order, created_at FROM event_photos ORDER BY display_order ASC, created_at ASC"
+      "SELECT id, caption, display_order, created_at FROM event_photos ORDER BY display_order ASC, created_at ASC"
     )
     return successResponse({ photos: result.rows })
   } catch (error) {
@@ -28,13 +28,17 @@ async function handlePost(req: AuthenticatedRequest) {
     if (!validation.valid) return validationError(validation.error!)
 
     const secureFilename = generateSecureFilename(file.name)
-    const blob = await put(`event-photos/${secureFilename}`, file, { access: "public" })
+    // The blob store is private, photos are served through /api/event-photo
+    const blob = await put(`event-photos/${secureFilename}`, file, {
+      access: "private",
+      contentType: file.type
+    })
 
     const countResult = await query("SELECT COUNT(*)::integer AS count FROM event_photos")
     const nextOrder = countResult.rows[0]?.count ?? 0
 
     const result = await query(
-      "INSERT INTO event_photos (image_url, caption, display_order, uploaded_by) VALUES ($1, $2, $3, $4) RETURNING id, image_url, caption, display_order, created_at",
+      "INSERT INTO event_photos (image_url, caption, display_order, uploaded_by) VALUES ($1, $2, $3, $4) RETURNING id, caption, display_order, created_at",
       [blob.url, caption, nextOrder, req.user?.userId ?? null]
     )
 

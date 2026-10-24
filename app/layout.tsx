@@ -6,6 +6,9 @@ import { AuthProvider } from "@/lib/auth-context"
 import { LanguageProvider } from "@/lib/language-context"
 import { Toaster } from "@/components/ui/sonner"
 import { ChatWidget } from "@/components/chat/chat-widget"
+import { headers } from "next/headers"
+import { EVENT_PHASE_HEADER, type EventPhase } from "@/lib/event-phase"
+import { EventPhaseProvider } from "@/lib/event-phase-context"
 import "./globals.css"
 
 const inter = Inter({
@@ -57,20 +60,24 @@ export const viewport: Viewport = {
   themeColor: "#530A5D"
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const phase: EventPhase = (await headers()).get(EVENT_PHASE_HEADER) === "post" ? "post" : "live"
+
   return (
     <html lang="de">
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} ${geistMono.variable} font-sans antialiased`}>
         <LanguageProvider>
-          <AuthProvider>
-            {children}
-            <ChatWidget />
-          </AuthProvider>
+          <EventPhaseProvider phase={phase}>
+            <AuthProvider>
+              {children}
+              <ChatWidget />
+            </AuthProvider>
+          </EventPhaseProvider>
         </LanguageProvider>
         <Toaster />
         <Analytics />

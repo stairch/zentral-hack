@@ -1,55 +1,38 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { ChevronDown } from "lucide-react"
 import { useLanguage } from "@/lib/language-context"
-
-interface EventPhoto {
-  id: string
-  image_url: string
-  caption: string | null
-}
+import { eventPhotoSrc, localize, type EventPhaseConfig, type EventPhoto } from "@/lib/event-phase"
 
 const PREVIEW_COUNT = 8
 
 const copy = {
   de: {
     badge: "RÜCKBLICK",
-    heading: "Die Highlights",
-    description: "Fotos von zwei intensiven, inspirierenden Tagen.",
     empty: "Die Fotos folgen in Kürze.",
     showAll: (n: number) => `Alle ${n} ansehen`,
     showLess: "Weniger anzeigen"
   },
   en: {
     badge: "REVIEW",
-    heading: "The Highlights",
-    description: "Photos from two intense, inspiring days.",
     empty: "Photos coming soon.",
     showAll: (n: number) => `View all ${n}`,
     showLess: "Show less"
   }
 } as const
 
-export function EventGallerySection() {
+export function EventGallerySection({
+  content,
+  photos
+}: {
+  content: EventPhaseConfig["gallery"]
+  photos: EventPhoto[]
+}) {
   const { language } = useLanguage()
   const text = copy[language]
-  const [photos, setPhotos] = useState<EventPhoto[]>([])
   const [open, setOpen] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    fetch("/api/post-event")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((json) => {
-        if (!cancelled) setPhotos(json?.data?.photos || [])
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   const visiblePhotos = open ? photos : photos.slice(0, PREVIEW_COUNT)
 
@@ -66,9 +49,11 @@ export function EventGallerySection() {
             {text.badge}
           </span>
           <h2 className="font-display text-foreground mb-4 text-4xl font-bold uppercase md:text-5xl">
-            {text.heading}
+            {localize(content.heading, language)}
           </h2>
-          <p className="text-muted-foreground mx-auto max-w-xl text-lg">{text.description}</p>
+          <p className="text-muted-foreground mx-auto max-w-xl text-lg">
+            {localize(content.description, language)}
+          </p>
         </motion.div>
 
         {photos.length === 0 ? (
@@ -77,14 +62,15 @@ export function EventGallerySection() {
           <>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
               {visiblePhotos.map((photo) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={photo.id}
-                  src={photo.image_url}
-                  alt={photo.caption || ""}
-                  className="aspect-square w-full rounded-2xl object-cover"
-                  loading="lazy"
-                />
+                <div key={photo.id} className="group overflow-hidden rounded-2xl">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={eventPhotoSrc(photo.id)}
+                    alt={photo.caption || ""}
+                    className="aspect-square w-full object-cover transition-transform duration-500 ease-out motion-safe:group-hover:scale-105"
+                    loading="lazy"
+                  />
+                </div>
               ))}
             </div>
 

@@ -1,17 +1,16 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { Loader2, Upload, Trash2, Image as ImageIcon } from "lucide-react"
+import { Loader2, Upload, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
+import { eventPhotoSrc } from "@/lib/event-phase"
 
 interface EventPhoto {
   id: string
-  image_url: string
   caption: string | null
   display_order: number
   created_at: string
@@ -19,12 +18,9 @@ interface EventPhoto {
 
 const copy = {
   de: {
-    heading: "GALERIE",
-    subtitle: "Event-Fotos hochladen, die auf der Startseite gezeigt werden",
-    uploadTitle: "Foto hochladen",
+    uploadHint: "Fotos werden sofort hochgeladen bzw. gelöscht und brauchen kein Speichern.",
     captionLabel: "Bildunterschrift (optional)",
     captionPlaceholder: "z.B. Pitch-Finale Samstagabend",
-    choosePhoto: "Datei wählen",
     upload: "Hochladen",
     uploadSuccess: "Foto hochgeladen",
     uploadError: "Fehler beim Hochladen",
@@ -39,12 +35,9 @@ const copy = {
     deleteError: "Fehler beim Löschen"
   },
   en: {
-    heading: "GALLERY",
-    subtitle: "Upload event photos shown on the homepage",
-    uploadTitle: "Upload photo",
+    uploadHint: "Photos are uploaded and deleted right away and need no saving.",
     captionLabel: "Caption (optional)",
     captionPlaceholder: "e.g. Saturday night pitch finale",
-    choosePhoto: "Choose file",
     upload: "Upload",
     uploadSuccess: "Photo uploaded",
     uploadError: "Failed to upload",
@@ -60,7 +53,8 @@ const copy = {
   }
 } as const
 
-export function EventPhotosAdminPage() {
+// Embedded in the event phase admin page, next to the gallery texts
+export function EventPhotosManager() {
   const { language } = useLanguage()
   const text = copy[language]
 
@@ -138,20 +132,9 @@ export function EventPhotosAdminPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl font-bold">{text.heading}</h1>
-        <p className="text-muted-foreground mt-2">{text.subtitle}</p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <ImageIcon className="h-4 w-4" />
-            {text.uploadTitle}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+    <div className="space-y-4">
+      <div className="space-y-3 rounded-md border p-4">
+        <div className="grid gap-3 md:grid-cols-2">
           <Input
             key={fileInputKey}
             type="file"
@@ -162,7 +145,11 @@ export function EventPhotosAdminPage() {
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             placeholder={text.captionPlaceholder}
+            aria-label={text.captionLabel}
           />
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-muted-foreground text-xs">{text.uploadHint}</p>
           <Button
             onClick={() => void handleUpload()}
             disabled={uploading || !file}
@@ -170,11 +157,11 @@ export function EventPhotosAdminPage() {
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
             {text.upload}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <div className="space-y-3">
-        <h2 className="text-base font-bold">{text.listTitle}</h2>
+        <h3 className="text-sm font-semibold">{text.listTitle}</h3>
         {loading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -185,12 +172,14 @@ export function EventPhotosAdminPage() {
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
             {photos.map((photo) => (
               <div key={photo.id} className="group relative overflow-hidden rounded-xl border">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photo.image_url}
-                  alt={photo.caption || ""}
-                  className="aspect-square w-full object-cover"
-                />
+                <div className="overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={eventPhotoSrc(photo.id)}
+                    alt={photo.caption || ""}
+                    className="aspect-square w-full object-cover transition-transform duration-500 ease-out motion-safe:group-hover:scale-105"
+                  />
+                </div>
                 {photo.caption && <p className="bg-background/90 truncate p-2 text-xs">{photo.caption}</p>}
                 <Button
                   variant="destructive"

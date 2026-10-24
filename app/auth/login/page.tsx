@@ -11,11 +11,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Loader2, LogIn, Lock } from "lucide-react"
 import { toast } from "sonner"
+import { useEventPhase } from "@/lib/event-phase-context"
+import { POST_EVENT_LOCKED_ERROR } from "@/lib/event-phase"
 
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const from = searchParams.get("from") || "/dashboard"
+  // After the event only admins can sign in, so send them straight to the admin area
+  const isPostEvent = useEventPhase() === "post"
+  const from = searchParams.get("from") || (isPostEvent ? "/admin" : "/dashboard")
   const { login, verify2FA, user, isLoading } = useAuth()
   const { language } = useLanguage()
   const [email, setEmail] = useState("")
@@ -50,7 +54,9 @@ function LoginForm() {
       wrongCredentials: "Die eingegebene E-Mail-Adresse oder das Passwort ist nicht korrekt.",
       enterCode: "Bitte geben Sie den 2FA-Code ein",
       twoFaSuccess: "2FA erfolgreich verifiziert",
-      twoFaError: "Fehler bei der 2FA Verifizierung"
+      twoFaError: "Fehler bei der 2FA Verifizierung",
+      adminOnly: "Zentral Hack 2026 ist vorbei. Der Login ist nur noch für Admins offen.",
+      locked: "Die Plattform ist geschlossen. Nur Admins können sich noch einloggen."
     },
     en: {
       backHome: "Back to home",
@@ -76,7 +82,9 @@ function LoginForm() {
       wrongCredentials: "The email address or password you entered is incorrect.",
       enterCode: "Please enter the 2FA code",
       twoFaSuccess: "2FA verified successfully",
-      twoFaError: "2FA verification failed"
+      twoFaError: "2FA verification failed",
+      adminOnly: "Zentral Hack 2026 is over. Sign-in is only open to admins.",
+      locked: "The platform is closed. Only admins can still sign in."
     }
   }[language]
 
@@ -99,7 +107,12 @@ function LoginForm() {
       toast.success(t.twoFaSent)
     } catch (err) {
       const raw = err instanceof Error ? err.message : ""
-      const message = raw === "Unauthorized" ? t.wrongCredentials : raw || t.loginFailed
+      const message =
+        raw === "Unauthorized"
+          ? t.wrongCredentials
+          : raw === POST_EVENT_LOCKED_ERROR
+            ? t.locked
+            : raw || t.loginFailed
       setError(message)
       toast.error(message)
     } finally {
@@ -119,7 +132,8 @@ function LoginForm() {
       const destination = from.startsWith("/admin") && !canAccessAdmin ? "/dashboard" : from
       router.push(destination)
     } catch (err) {
-      const message = err instanceof Error ? err.message : t.twoFaError
+      const raw = err instanceof Error ? err.message : ""
+      const message = raw === POST_EVENT_LOCKED_ERROR ? t.locked : raw || t.twoFaError
       setError(message)
       toast.error(message)
     } finally {
@@ -142,7 +156,7 @@ function LoginForm() {
             <>
               <div className="mb-8 text-center">
                 <h1 className="text-foreground font-display mb-2 text-2xl font-bold">{t.title}</h1>
-                <p className="text-muted-foreground">{t.subtitle}</p>
+                <p className="text-muted-foreground">{isPostEvent ? t.adminOnly : t.subtitle}</p>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-6">
@@ -189,16 +203,18 @@ function LoginForm() {
                 </Button>
               </form>
 
-              <p className="text-muted-foreground mt-6 text-center text-sm">
-                {t.noAccount}{" "}
-                <Link href="/anmeldung" className="font-medium text-[#530A5D] hover:underline">
-                  {t.registerNow}
-                </Link>
-                <br />
-                <Link href="/auth/reset-password" className="font-medium text-[#530A5D] hover:underline">
-                  {t.forgotPassword}
-                </Link>
-              </p>
+              {!isPostEvent && (
+                <p className="text-muted-foreground mt-6 text-center text-sm">
+                  {t.noAccount}{" "}
+                  <Link href="/anmeldung" className="font-medium text-[#530A5D] hover:underline">
+                    {t.registerNow}
+                  </Link>
+                  <br />
+                  <Link href="/auth/reset-password" className="font-medium text-[#530A5D] hover:underline">
+                    {t.forgotPassword}
+                  </Link>
+                </p>
+              )}
             </>
           ) : (
             <>
