@@ -87,6 +87,11 @@
   --color-violet: #530a5d;
   --color-light-violet: #d5c2f7;
   --color-yellow: #e6ff17;
+
+  /* Podium colors for placements */
+  --color-gold: #f2c94c;
+  --color-silver: #cfd4da;
+  --color-bronze: #cd7f32;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

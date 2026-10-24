@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type CSSProperties } from "react"
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { ArrowRight, Trophy } from "lucide-react"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
@@ -76,12 +76,6 @@ function hexToRgb(hex: string) {
   }
 }
 
-function tintTowardsWhite(hex: string, ratio: number): string {
-  const { r, g, b } = hexToRgb(hex)
-  const mix = (channel: number) => Math.round(channel + (255 - channel) * ratio)
-  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`
-}
-
 // Same as --violet, the background of the results section
 const SECTION_BACKGROUND = "#530a5d"
 const SIMILAR_COLOR_DISTANCE = 60
@@ -100,28 +94,26 @@ function categoryHeaderStyle(color: string | null) {
   return { backgroundColor: normalized, color: getContrastForegroundColor(normalized) }
 }
 
-function rankBadgeStyle(rank: number, color: string | null): CSSProperties {
-  if (!color) {
-    if (rank === 1) return { backgroundColor: "var(--yellow)", color: "var(--violet)" }
-    if (rank === 2) return { backgroundColor: "var(--light-violet)", color: "var(--violet)" }
-    return { backgroundColor: "transparent", color: "var(--violet)", border: "2px solid var(--violet)" }
-  }
-  const normalized = normalizeHexColor(color)
-  if (rank === 1) return { backgroundColor: normalized, color: getContrastForegroundColor(normalized) }
-  if (rank === 2) {
-    const tint = tintTowardsWhite(normalized, 0.4)
-    return { backgroundColor: tint, color: normalized }
-  }
-  const tint = tintTowardsWhite(normalized, 0.8)
-  return { backgroundColor: tint, color: normalized, border: `2px solid ${normalized}` }
+// Podium colors are fixed, independent of the category color
+const RANK_BADGE_CLASSES: Record<number, string> = {
+  1: "bg-gold",
+  2: "bg-silver",
+  3: "bg-bronze"
 }
 
-function RankBadge({ rank, color }: { rank: number; color: string | null }) {
+// A sole winner gets a trophy instead of the number
+function isSoleWinner(group: LeaderboardGroup): boolean {
+  return group.placements.length === 1 && group.placements[0].rank === 1
+}
+
+function RankBadge({ rank, showTrophy }: { rank: number; showTrophy?: boolean }) {
   return (
     <span
-      className="font-display flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold"
-      style={rankBadgeStyle(rank, color)}>
-      {rank}
+      className={cn(
+        "font-display text-violet flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+        RANK_BADGE_CLASSES[rank] ?? "border-violet border-2"
+      )}>
+      {showTrophy ? <Trophy className="h-4 w-4" aria-label={String(rank)} /> : rank}
     </span>
   )
 }
@@ -169,13 +161,18 @@ function ChallengeCard({
       <div className="flex flex-1 flex-col gap-4 p-5">
         <div>
           <p className="font-display text-foreground text-lg leading-tight font-bold">{title}</p>
-          {group.sponsor_name && <p className="text-muted-foreground mt-1 text-xs">{group.sponsor_name}</p>}
+          {group.sponsor_name && (
+            <div className="bg-light-violet/40 text-violet mt-2 inline-flex max-w-full items-center gap-2 rounded-full px-3 py-1">
+              <span className="text-[10px] font-bold tracking-wider uppercase opacity-70">{text.sponsor}</span>
+              <span className="truncate text-sm font-bold">{group.sponsor_name}</span>
+            </div>
+          )}
         </div>
         {group.placements.length > 0 ? (
           <div className="flex flex-col gap-3">
             {group.placements.map((entry) => (
               <div key={entry.id} className="flex items-start gap-3">
-                <RankBadge rank={entry.rank} color={category.color} />
+                <RankBadge rank={entry.rank} showTrophy={isSoleWinner(group)} />
                 <div className="min-w-0 pt-1">
                   <p className="text-foreground text-sm font-semibold">{entry.name}</p>
                   {entry.members.length > 0 && (
@@ -278,7 +275,7 @@ function ChallengeDetailDialog({
               </p>
               {group.placements.length > 0 ? (
                 group.placements.map((entry) => (
-                  <PlacementDetail key={entry.id} entry={entry} color={category.color} />
+                  <PlacementDetail key={entry.id} entry={entry} soleWinner={isSoleWinner(group)} />
                 ))
               ) : (
                 <p className="text-muted-foreground rounded-xl border border-dashed px-4 py-5 text-sm">
@@ -293,14 +290,14 @@ function ChallengeDetailDialog({
   )
 }
 
-function PlacementDetail({ entry, color }: { entry: LeaderboardPlacement; color: string | null }) {
+function PlacementDetail({ entry, soleWinner }: { entry: LeaderboardPlacement; soleWinner: boolean }) {
   return (
     <div className="border-border flex gap-4 rounded-xl border p-4">
-      <RankBadge rank={entry.rank} color={color} />
+      <RankBadge rank={entry.rank} showTrophy={soleWinner} />
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-foreground font-semibold">{entry.name}</p>
-          {entry.rank === 1 && <Trophy className="text-violet h-4 w-4" />}
+          {entry.rank === 1 && !soleWinner && <Trophy className="text-violet h-4 w-4" />}
         </div>
         {entry.description && (
           <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">
