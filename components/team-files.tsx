@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { FileUp, Loader2, Trash2, ExternalLink, Lock } from "lucide-react"
 import { toast } from "sonner"
-import Github from "@/assets/icons/github.svg"
+import { FolderGit2 } from "lucide-react"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { uploadFileToBlob } from "@/lib/client-upload"
 
@@ -143,10 +143,10 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
     }
   }
 
-  // Add GitHub repo
+  // Add Git repo
   const handleAddGithub = async () => {
     if (!githubUrl) {
-      toast.error("Bitte geben Sie eine GitHub URL ein")
+      toast.error("Bitte geben Sie eine Repository URL ein")
       return
     }
 
@@ -173,9 +173,9 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
       setGithubUrl("")
       setGithubTitle("")
       setGithubDesc("")
-      toast.success("GitHub Repository hinzugefügt")
+      toast.success("Repository hinzugefügt")
     } catch (error) {
-      console.error("GitHub add error:", error)
+      console.error("Repository add error:", error)
       toast.error(error instanceof Error ? error.message : "Fehler beim Hinzufügen")
     } finally {
       setAddingGithub(false)
@@ -347,34 +347,34 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
         </CardContent>
       </Card>
 
-      {/* GitHub Repos */}
+      {/* Git Repos */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Github className="h-5 w-5" />
-            GitHub Repositories
+            <FolderGit2 className="h-5 w-5" />
+            Git Repositories
           </CardTitle>
-          <CardDescription>Verlinke GitHub Repositories</CardDescription>
+          <CardDescription>Verlinke Git Repositories (GitHub, GitLab, Bitbucket, …)</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Dialog>
             <DialogTrigger asChild>
               <Button className="w-full gap-2" disabled={submissionClosed}>
-                <Github className="h-4 w-4 fill-white" />
+                <FolderGit2 className="h-4 w-4" />
                 Repository hinzufügen
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>GitHub Repository hinzufügen</DialogTitle>
-                <DialogDescription>Verlinke ein GitHub Repository für dein Team</DialogDescription>
+                <DialogTitle>Git Repository hinzufügen</DialogTitle>
+                <DialogDescription>Verlinke ein Git Repository für dein Team</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="github-url">Repository URL *</Label>
                   <Input
                     id="github-url"
-                    placeholder="https://github.com/username/repo"
+                    placeholder="https://gitlab.com/username/repo"
                     value={githubUrl}
                     onChange={(e) => setGithubUrl(e.target.value)}
                   />
@@ -420,7 +420,7 @@ export function TeamFilesComponent({ teamId }: TeamFilesProps) {
               repos.map((repo) => (
                 <div key={repo.id} className="flex items-start justify-between rounded border p-3">
                   <div className="flex-1">
-                    <p className="text-sm font-medium">{repo.title || "GitHub Repo"}</p>
+                    <p className="text-sm font-medium">{repo.title || "Git Repo"}</p>
                     <p className="text-muted-foreground truncate text-xs">{repo.repository_url}</p>
                     {repo.description && (
                       <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">{repo.description}</p>
