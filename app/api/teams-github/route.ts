@@ -3,15 +3,19 @@ import { query } from "@/lib/db"
 import { successResponse, serverError } from "@/lib/api"
 import { verifyJWT } from "@/lib/auth"
 import { z } from "zod"
-import { isTeamSubmissionClosed, SUBMISSION_CLOSED_ERROR } from "@/lib/team-access"
+import { hasTeamAccess, isTeamSubmissionClosed, SUBMISSION_CLOSED_ERROR } from "@/lib/team-access"
+
+const INVALID_REPO_URL_ERROR =
+  "Bitte gib einen gültigen Repository-Link ein, der mit https:// beginnt (z.B. https://gitlab.com/username/repo)"
 
 const githubLinkSchema = z.object({
   repositoryUrl: z
     .string()
-    .url("Ungültige URL")
-    .regex(/github\.com/, "Muss eine GitHub URL sein"),
-  title: z.string().min(1).max(100).optional(),
-  description: z.string().max(500).optional()
+    .trim()
+    .url(INVALID_REPO_URL_ERROR)
+    .regex(/^https?:\/\//i, INVALID_REPO_URL_ERROR),
+  title: z.string().min(1).max(100, "Der Titel darf maximal 100 Zeichen lang sein").optional(),
+  description: z.string().max(500, "Die Beschreibung darf maximal 500 Zeichen lang sein").optional()
 })
 
 export async function POST(request: NextRequest) {
@@ -48,7 +52,10 @@ export async function POST(request: NextRequest) {
 
     if (!validation.success) {
       return new Response(
-        JSON.stringify({ error: "Validierungsfehler", details: validation.error.flatten() }),
+        JSON.stringify({
+          error: validation.error.issues[0]?.message ?? "Validierungsfehler",
+          details: validation.error.flatten()
+        }),
         { status: 400 }
       )
     }
@@ -77,8 +84,23 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const token = request.cookies.get("token")?.value
+    if (!token) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
+
+    const payload = verifyJWT(token)
+    if (!payload) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
+
+    const activeUser = await query("SELECT is_active FROM users WHERE id = $1", [payload.userId])
+    if (activeUser.rows.length === 0 || !activeUser.rows[0].is_active) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
+    }
+
     const teamId = request.nextUrl.searchParams.get("teamId")
     if (!teamId) return new Response(JSON.stringify({ error: "teamId parameter required" }), { status: 400 })
+
+    if (!(await hasTeamAccess(teamId, payload.userId, payload.role, payload.categoryId))) {
+      return new Response(JSON.stringify({ error: "Not a team member" }), { status: 403 })
+    }
 
     const result = await query(
       `SELECT id, repository_url, title, description, created_at
