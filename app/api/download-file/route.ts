@@ -111,6 +111,12 @@ export async function GET(request: NextRequest) {
         if (regCheck.rows.length === 0 && sponsorCheck.rows.length === 0) {
           return new NextResponse(JSON.stringify({ error: "Access denied" }), { status: 403 })
         }
+      } else if (
+        doc.category_id &&
+        payload.role === "category_partner" &&
+        doc.category_id !== payload.categoryId
+      ) {
+        return new NextResponse(JSON.stringify({ error: "Access denied" }), { status: 403 })
       }
 
       blobUrl = doc.file_path

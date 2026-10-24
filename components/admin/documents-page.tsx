@@ -332,7 +332,12 @@ export function DocumentsManagementPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => window.open(doc.file_path, "_blank")}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        window.open(`/api/download-file?fileId=${doc.id}&type=document`, "_blank")
+                      }>
                       {text.download}
                     </Button>
                     <Button
