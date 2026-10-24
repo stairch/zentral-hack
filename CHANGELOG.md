@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.18.0] - 2026-10-24
+
+### Added
+
+- Split saving and publishing post event page
+
+### Fixed
+
+- Admins couldn't change category admins
+
 ## [1.17.0] - 2026-10-24
 
 ### Added
