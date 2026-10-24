@@ -21,28 +21,17 @@ async function handleGet(req: AuthenticatedRequest) {
       return validationError("Team not found")
     }
 
-    const [notesResult, rankingResult] = await Promise.all([
-      query(
-        `SELECT n.id, n.content, n.created_at, n.author_id,
+    const notesResult = await query(
+      `SELECT n.id, n.content, n.created_at, n.author_id,
                 u.first_name AS author_first_name, u.last_name AS author_last_name, u.email AS author_email
          FROM team_notes n
          LEFT JOIN users u ON n.author_id = u.id
          WHERE n.team_id = $1
          ORDER BY n.created_at DESC`,
-        [teamId]
-      ),
-      query(
-        `SELECT r.rank, r.updated_at,
-                u.first_name AS updated_by_first_name, u.last_name AS updated_by_last_name,
-                u.email AS updated_by_email
-         FROM team_rankings r
-         LEFT JOIN users u ON r.updated_by = u.id
-         WHERE r.team_id = $1`,
-        [teamId]
-      )
-    ])
+      [teamId]
+    )
 
-    return successResponse({ notes: notesResult.rows, ranking: rankingResult.rows[0] || null })
+    return successResponse({ notes: notesResult.rows })
   } catch (error) {
     console.error("[Team Notes] GET Error:", error)
     return serverError()

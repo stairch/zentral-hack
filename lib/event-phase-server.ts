@@ -3,6 +3,9 @@ import {
   DEFAULT_EVENT_PHASE,
   EVENT_PHASE_SETTINGS_KEY,
   parseEventPhaseConfig,
+  rankingGroupKey,
+  type AdminRankingCategory,
+  type AdminRankingGroup,
   type EventPhaseConfig,
   type EventPhoto,
   type LeaderboardCategory,
@@ -62,33 +65,128 @@ interface PostEventData {
   photos: EventPhoto[]
 }
 
+// All categories with their ranking groups (one per challenge, plus one for teams without a challenge)
+export async function getRankingCategories(): Promise<AdminRankingCategory[]> {
+  const [categoriesResult, challengesResult, teamsResult, photosResult] = await Promise.all([
+    query(
+      `SELECT id, name, name_en, color, description, description_en, prize, prize_en
+       FROM categories
+       ORDER BY display_order ASC, name ASC`
+    ),
+    query(
+      `SELECT sc.id, sc.category_id, sc.challenge_title, sc.challenge_title_en,
+              sc.short_description, sc.short_description_en, sc.prize,
+              COALESCE(sco.company_name, sc.company_name) AS sponsor_name
+       FROM sponsor_challenges sc
+       LEFT JOIN sponsor_contacts sco ON sco.id = sc.sponsor_id
+       WHERE sc.status = 'published' OR sc.id IN (SELECT challenge_id FROM teams WHERE challenge_id IS NOT NULL)
+       ORDER BY COALESCE(sc.published_at, sc.updated_at) ASC, sc.created_at ASC`
+    ),
+    // 'leader' sorts before 'member', so team leaders come first
+    query(
+      `SELECT t.id, t.name, t.description, t.category_id, t.challenge_id, tr.rank,
+              COALESCE(
+                (SELECT array_agg(TRIM(CONCAT(u.first_name, ' ', u.last_name)) ORDER BY tm.role ASC, u.first_name)
+                 FROM team_members tm
+                 JOIN users u ON u.id = tm.user_id
+                 WHERE tm.team_id = t.id),
+                '{}'
+              ) AS members
+       FROM teams t
+       LEFT JOIN team_rankings tr ON tr.team_id = t.id
+       ORDER BY t.name ASC`
+    ),
+    query("SELECT id, category_id, challenge_id FROM event_photos WHERE category_id IS NOT NULL")
+  ])
+
+  const photoByGroup = new Map<string, string>(
+    photosResult.rows.map((photo) => [rankingGroupKey(photo.category_id, photo.challenge_id), photo.id])
+  )
+
+  const buildGroup = (
+    categoryId: string,
+    challengeId: string | null,
+    texts: Omit<AdminRankingGroup, "challenge_id" | "winner_photo_id" | "teams" | "ranked_team_ids">
+  ): AdminRankingGroup => {
+    const teams = teamsResult.rows.filter(
+      (team) => team.category_id === categoryId && (team.challenge_id ?? null) === challengeId
+    )
+    return {
+      challenge_id: challengeId,
+      ...texts,
+      winner_photo_id: photoByGroup.get(rankingGroupKey(categoryId, challengeId)) ?? null,
+      teams: teams.map(({ id, name, description, members }) => ({ id, name, description, members })),
+      ranked_team_ids: teams
+        .filter((team) => team.rank != null)
+        .sort((a, b) => a.rank - b.rank)
+        .map((team) => team.id)
+    }
+  }
+
+  return categoriesResult.rows.map((category) => {
+    const challenges = challengesResult.rows.filter((challenge) => challenge.category_id === category.id)
+    const groups = challenges.map((challenge) =>
+      buildGroup(category.id, challenge.id, {
+        title: challenge.challenge_title,
+        title_en: challenge.challenge_title_en,
+        description: challenge.short_description,
+        description_en: challenge.short_description_en,
+        sponsor_name: challenge.sponsor_name,
+        prize: challenge.prize,
+        prize_en: null
+      })
+    )
+
+    const hasTeamsWithoutChallenge = teamsResult.rows.some(
+      (team) => team.category_id === category.id && !team.challenge_id
+    )
+    if (challenges.length === 0 || hasTeamsWithoutChallenge) {
+      groups.push(
+        buildGroup(category.id, null, {
+          title: null,
+          title_en: null,
+          description: category.description,
+          description_en: category.description_en,
+          sponsor_name: null,
+          prize: category.prize,
+          prize_en: category.prize_en
+        })
+      )
+    }
+
+    return { id: category.id, name: category.name, name_en: category.name_en, color: category.color, groups }
+  })
+}
+
+// Public version: only ranked teams leave the server, groups without placements or photo are left out
+function toLeaderboardCategories(categories: AdminRankingCategory[]): LeaderboardCategory[] {
+  return categories.map(({ groups, ...category }) => ({
+    ...category,
+    groups: groups
+      .map(({ teams, ranked_team_ids, ...group }) => ({
+        ...group,
+        placements: ranked_team_ids.map((teamId, index) => ({
+          ...teams.find((team) => team.id === teamId)!,
+          rank: index + 1
+        }))
+      }))
+      .filter((group) => group.placements.length > 0 || group.winner_photo_id)
+  }))
+}
+
 // Everything the post-event landing page needs, loaded once on the server
 export async function getPostEventData(config: EventPhaseConfig): Promise<PostEventData> {
-  const [autoStats, categoriesResult, rankingsResult, photosResult] = await Promise.all([
+  const [autoStats, rankingCategories, photosResult] = await Promise.all([
     getAutomaticPostEventStats(),
-    config.leaderboard.enabled
-      ? query("SELECT id, name, name_en, color FROM categories ORDER BY display_order ASC, name ASC")
-      : null,
-    config.leaderboard.enabled
-      ? query(
-          `SELECT t.id, t.name, tr.rank, t.category_id
-           FROM team_rankings tr
-           JOIN teams t ON t.id = tr.team_id
-           WHERE tr.rank <= 3
-           ORDER BY tr.rank ASC`
-        )
-      : null,
+    config.leaderboard.enabled ? getRankingCategories() : null,
     config.gallery.enabled
-      ? query("SELECT id, caption FROM event_photos ORDER BY display_order ASC, created_at ASC")
+      ? query(
+          "SELECT id, caption FROM event_photos WHERE category_id IS NULL ORDER BY display_order ASC, created_at ASC"
+        )
       : null
   ])
 
-  const categories: LeaderboardCategory[] = (categoriesResult?.rows ?? []).map((category) => ({
-    ...category,
-    placements: (rankingsResult?.rows ?? [])
-      .filter((entry) => entry.category_id === category.id)
-      .map(({ id, name, rank }) => ({ id, name, rank }))
-  }))
+  const categories = rankingCategories ? toLeaderboardCategories(rankingCategories) : []
 
   return {
     stats: {

@@ -24,12 +24,58 @@ export function eventPhotoSrc(id: string): string {
   return `/api/event-photo?id=${id}`
 }
 
-export interface LeaderboardCategory {
+interface RankingTeam {
+  id: string
+  name: string
+  description: string | null
+  members: string[]
+}
+
+export interface LeaderboardPlacement extends RankingTeam {
+  rank: number
+}
+
+// Teams are ranked per challenge. Teams without a challenge form one group per category (challenge_id null),
+// which then uses the category's texts.
+interface RankingGroupBase {
+  challenge_id: string | null
+  title: string | null
+  title_en: string | null
+  description: string | null
+  description_en: string | null
+  sponsor_name: string | null
+  prize: string | null
+  prize_en: string | null
+  winner_photo_id: string | null
+}
+
+export interface LeaderboardGroup extends RankingGroupBase {
+  placements: LeaderboardPlacement[]
+}
+
+// Admin view: every team of the group, plus the ranked ones in order
+export interface AdminRankingGroup extends RankingGroupBase {
+  teams: RankingTeam[]
+  ranked_team_ids: string[]
+}
+
+interface RankingCategoryBase {
   id: string
   name: string
   name_en: string | null
   color: string | null
-  placements: { id: string; name: string; rank: number }[]
+}
+
+export interface LeaderboardCategory extends RankingCategoryBase {
+  groups: LeaderboardGroup[]
+}
+
+export interface AdminRankingCategory extends RankingCategoryBase {
+  groups: AdminRankingGroup[]
+}
+
+export function rankingGroupKey(categoryId: string, challengeId: string | null): string {
+  return challengeId ?? `category:${categoryId}`
 }
 
 export interface EventPhaseConfig {
