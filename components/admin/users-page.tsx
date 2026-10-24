@@ -264,7 +264,7 @@ const copy = {
 } as const
 
 export function UsersAdminPage() {
-  const { user: currentUser } = useAuth()
+  const { user: currentUser, refreshAuth } = useAuth()
   const { language } = useLanguage()
   const text = copy[language]
 
@@ -485,12 +485,14 @@ export function UsersAdminPage() {
       })
       if (res.ok) {
         const newName = categories.find((c) => c.id === newCategoryId)?.name || ""
+        const isSelfChange = categoryChangeUser.id === currentUser?.id
         setUsers((prev) =>
           prev.map((u) =>
             u.id === categoryChangeUser.id
               ? {
                   ...u,
-                  category_name: u.role === "user" ? newName : u.category_name,
+                  category_id: u.role === "user" || isSelfChange ? newCategoryId : u.category_id,
+                  category_name: u.role === "user" || isSelfChange ? newName : u.category_name,
                   registrations:
                     u.registrations?.map((r) =>
                       r.id === selectedRegistrationId
@@ -501,6 +503,8 @@ export function UsersAdminPage() {
               : u
           )
         )
+        // The own session carries the category that scopes the other admin pages
+        if (isSelfChange) await refreshAuth()
         toast.success(text.categoryUpdated)
         setCategoryDialogOpen(false)
         setCategoryChangeUser(null)
