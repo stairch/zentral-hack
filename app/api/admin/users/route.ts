@@ -164,9 +164,11 @@ async function handlePatch(req: AuthenticatedRequest) {
       registrationId
     ])
 
-    await query("UPDATE users SET category_id = $1 WHERE id = $2 AND role = 'user'", [
+    // A super admin moving their own registration also moves the category their admin views are scoped to
+    await query("UPDATE users SET category_id = $1 WHERE id = $2 AND (role = 'user' OR id = $3)", [
       categoryId,
-      registration.user_id
+      registration.user_id,
+      req.user?.userId ?? null
     ])
 
     // Teams belong to a category, so drop memberships in teams of the previous category
