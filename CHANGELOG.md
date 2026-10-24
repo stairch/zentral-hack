@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.16.0] - 2026-10-24
+
+### Added
+
+- Banners to landing page if logged in
+
+### Fixed
+
+- Super admins cannot change their category
+
 ## [1.15.2] - 2026-10-24
 
 ### Fixed
