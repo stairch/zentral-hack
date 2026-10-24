@@ -48,13 +48,14 @@ export async function getAllowedKindsForFolder(folder: string, user: JWTPayload)
 
 /**
  * Looks up a client-uploaded blob and makes sure it sits in the expected folder and is an allowed file.
+ * The allowed kinds come from getAllowedKindsForFolder, so the token route and the saving route share one rule set.
  * Invalid blobs are deleted again. Size and type come from the blob store, not from the client.
  */
 export async function verifyUploadedBlob(
   url: unknown,
   originalName: unknown,
   folder: string,
-  kinds: FileKind[]
+  user: JWTPayload
 ): Promise<
   | { valid: true; blob: { url: string; name: string; size: number; type: string } }
   | { valid: false; error: string }
@@ -67,6 +68,9 @@ export async function verifyUploadedBlob(
   ) {
     return { valid: false, error: "File required" }
   }
+
+  const kinds = await getAllowedKindsForFolder(folder, user)
+  if (!kinds) return { valid: false, error: "Upload not allowed" }
 
   let blob
   try {
