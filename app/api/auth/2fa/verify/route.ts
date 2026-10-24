@@ -1,7 +1,9 @@
 import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
 import { generateJWT, compareCode, isTwoFaBypassEnabled, JWTPayload } from "@/lib/auth"
-import { successResponse, validationError, serverError, unauthorizedError } from "@/lib/api"
+import { successResponse, validationError, serverError, unauthorizedError, errorResponse } from "@/lib/api"
+import { POST_EVENT_LOCKED_ERROR } from "@/lib/event-phase"
+import { isPostEventPhase } from "@/lib/event-phase-server"
 import { createRateLimiter } from "@/lib/rate-limit"
 
 const rateLimiter = createRateLimiter("twofa")
@@ -30,6 +32,11 @@ export async function POST(request: NextRequest) {
     }
 
     const user = userResult.rows[0]
+
+    // After the event only admins may sign in
+    if (user.role !== "admin" && (await isPostEventPhase())) {
+      return errorResponse(POST_EVENT_LOCKED_ERROR, 403)
+    }
 
     // Development-only: accept any code and consume no token when 2FA is bypassed.
     if (!isTwoFaBypassEnabled()) {

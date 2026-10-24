@@ -8,7 +8,8 @@ import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { BrandMark } from "@/components/brand-mark"
-import { LandingBanners } from "@/components/landing-banners"
+import { useEventPhase } from "@/lib/event-phase-context"
+import { LandingBanners } from "./landing-banners"
 
 const navItems = {
   de: [
@@ -24,6 +25,19 @@ const navItems = {
     { label: "Schedule", href: "/#schedule" },
     { label: "Partners", href: "/#partners" },
     { label: "FAQ", href: "/#faq" }
+  ]
+}
+
+const postEventNavItems = {
+  de: [
+    { label: "Sieger", href: "/#results" },
+    { label: "Galerie", href: "/#gallery" },
+    { label: "Partner", href: "/#partners" }
+  ],
+  en: [
+    { label: "Winners", href: "/#results" },
+    { label: "Gallery", href: "/#gallery" },
+    { label: "Partners", href: "/#partners" }
   ]
 }
 
@@ -53,8 +67,9 @@ export function Navigation({ showBanners = false }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { language, setLanguage } = useLanguage()
   const { user } = useAuth()
+  const isPostEvent = useEventPhase() === "post"
   const text = copy[language]
-  const items = navItems[language]
+  const items = (isPostEvent ? postEventNavItems : navItems)[language]
 
   useEffect(() => {
     const handleScroll = () => {
@@ -127,18 +142,20 @@ export function Navigation({ showBanners = false }: NavigationProps) {
                   </Button>
                 </Link>
               ) : (
-                <>
-                  <Link href="/anmeldung">
-                    <Button className="bg-violet hover:bg-violet/90 font-semibold text-white">
-                      {text.register}
-                    </Button>
-                  </Link>
-                  <Link href="/auth/login">
-                    <Button className="bg-secondary hover:bg-secondary/90 text-foreground/80 font-semibold">
-                      {text.login}
-                    </Button>
-                  </Link>
-                </>
+                !isPostEvent && (
+                  <>
+                    <Link href="/anmeldung">
+                      <Button className="bg-violet hover:bg-violet/90 font-semibold text-white">
+                        {text.register}
+                      </Button>
+                    </Link>
+                    <Link href="/auth/login">
+                      <Button className="bg-secondary hover:bg-secondary/90 text-foreground/80 font-semibold">
+                        {text.login}
+                      </Button>
+                    </Link>
+                  </>
+                )
               )}
             </motion.div>
           </div>
@@ -198,22 +215,24 @@ export function Navigation({ showBanners = false }: NavigationProps) {
                     </Button>
                   </Link>
                 ) : (
-                  <>
-                    <Link href="/anmeldung" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
-                      <Button
-                        size="lg"
-                        className="bg-violet hover:bg-violet/90 w-full font-semibold text-white">
-                        {text.register}
-                      </Button>
-                    </Link>
-                    <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
-                      <Button
-                        size="lg"
-                        className="bg-secondary hover:bg-secondary/90 text-foreground/80 w-full font-semibold">
-                        {text.login}
-                      </Button>
-                    </Link>
-                  </>
+                  !isPostEvent && (
+                    <>
+                      <Link href="/anmeldung" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
+                        <Button
+                          size="lg"
+                          className="bg-violet hover:bg-violet/90 w-full font-semibold text-white">
+                          {text.register}
+                        </Button>
+                      </Link>
+                      <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
+                        <Button
+                          size="lg"
+                          className="bg-secondary hover:bg-secondary/90 text-foreground/80 w-full font-semibold">
+                          {text.login}
+                        </Button>
+                      </Link>
+                    </>
+                  )
                 )}
               </motion.div>
             </div>

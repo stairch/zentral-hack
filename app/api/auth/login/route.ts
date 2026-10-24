@@ -8,7 +8,9 @@ import {
   isTwoFaBypassEnabled,
   JWTPayload
 } from "@/lib/auth"
-import { successResponse, validationError, serverError, unauthorizedError } from "@/lib/api"
+import { successResponse, validationError, serverError, unauthorizedError, errorResponse } from "@/lib/api"
+import { POST_EVENT_LOCKED_ERROR } from "@/lib/event-phase"
+import { isPostEventPhase } from "@/lib/event-phase-server"
 import { LoginSchema, validateRequest } from "@/lib/validation"
 import { createRateLimiter } from "@/lib/rate-limit"
 import { sendGeneral2FACodeEmail } from "@/lib/transactional-emails"
@@ -53,6 +55,11 @@ export async function POST(request: NextRequest) {
     const validPassword = await comparePassword(password, user.password_hash)
     if (!validPassword) {
       return unauthorizedError()
+    }
+
+    // After the event only admins may sign in
+    if (user.role !== "admin" && (await isPostEventPhase())) {
+      return errorResponse(POST_EVENT_LOCKED_ERROR, 403)
     }
 
     // Development-only: skip the whole 2FA challenge and log the user in directly.

@@ -8,6 +8,7 @@ import { BrandMark } from "@/components/brand-mark"
 import Instagram from "@/assets/icons/instagram.svg"
 import GitHub from "@/assets/icons/github.svg"
 import { Urls } from "@/lib/constants"
+import { useEventPhase } from "@/lib/event-phase-context"
 
 const footerLinks = {
   event: {
@@ -22,6 +23,18 @@ const footerLinks = {
       { label: "Categories", href: "/#categories" },
       { label: "Schedule", href: "/#schedule" },
       { label: "FAQ", href: "/#faq" }
+    ]
+  },
+  postEvent: {
+    de: [
+      { label: "Sieger", href: "/#results" },
+      { label: "Galerie", href: "/#gallery" },
+      { label: "Partner", href: "/#partners" }
+    ],
+    en: [
+      { label: "Winners", href: "/#results" },
+      { label: "Gallery", href: "/#gallery" },
+      { label: "Partners", href: "/#partners" }
     ]
   },
   legal: {
@@ -62,6 +75,7 @@ const copy = {
     legal: "RECHTLICHES",
     support: "SUPPORT",
     rights: "© 2026 Zentral Hack. Alle Rechte vorbehalten.",
+    admin: "Admin",
     madeWith: "Erstellt mit",
     by: "von",
     and: "und",
@@ -74,6 +88,7 @@ const copy = {
     legal: "LEGAL",
     support: "SUPPORT",
     rights: "© 2026 Zentral Hack. All rights reserved.",
+    admin: "Admin",
     madeWith: "Made with",
     by: "by",
     and: "and",
@@ -84,7 +99,9 @@ const copy = {
 export function Footer() {
   const { language } = useLanguage()
   const text = copy[language]
-  const eventLinks = footerLinks.event[language]
+  // Only admins can still sign in after the event, so the login moves from the navigation to the footer
+  const isPostEvent = useEventPhase() === "post"
+  const eventLinks = footerLinks[isPostEvent ? "postEvent" : "event"][language]
   const legalLinks = footerLinks.legal[language]
   const supportLinks = footerLinks.support[language]
 
@@ -171,7 +188,16 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 md:flex-row">
-          <p className="text-muted-foreground text-sm">{text.rights}</p>
+          <div className="flex items-center gap-4">
+            <p className="text-muted-foreground text-sm">{text.rights}</p>
+            {isPostEvent && (
+              <Link
+                href="/auth/login"
+                className="text-xs text-white/40 transition-colors hover:text-white/70">
+                {text.admin}
+              </Link>
+            )}
+          </div>
           <div className="text-muted-foreground flex items-center gap-1 text-xs">
             <div>
               {text.madeWith} <span className="text-red-500">♥</span> {text.by}

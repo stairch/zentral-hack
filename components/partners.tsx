@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react"
 import { motion, useInView } from "framer-motion"
 import { SponsorshipModal } from "./sponsorship-modal"
 import { useLanguage } from "@/lib/language-context"
+import { useEventPhase } from "@/lib/event-phase-context"
 import { Emails } from "@/lib/constants"
 import { getSponsorPackageByLanguage } from "@/lib/sponsorship-packages"
 import { type SponsorPackage } from "@/lib/sponsorship-packages"
@@ -291,6 +292,8 @@ export function Partners() {
   const [sponsors, setSponsors] = useState<Sponsor[]>([])
   const [sponsorPackageItems, setSponsorPackageItems] = useState<SponsorPackage[]>([])
   const { language } = useLanguage()
+  // Sponsorship requests are closed after the event, only the sponsor logos stay
+  const isPostEvent = useEventPhase() === "post"
 
   useEffect(() => {
     const fetchSponsorPackages = async () => {
@@ -425,58 +428,66 @@ export function Partners() {
             })}
           </div>
 
-          {/* Sponsor Tiers */}
-          <div className="mx-auto max-w-5xl">
-            <p className="text-muted-foreground mb-5 text-center font-medium tracking-widest uppercase">
-              {text.tierListsTitle}
-            </p>
-            <div className="flex w-full justify-center">
-              <div className="flex flex-wrap justify-center gap-3" onMouseLeave={() => setHoveredIndex(null)}>
-                {sponsorPackageItems.map((tier, index) => (
-                  <TierCard
-                    key={tier.id}
-                    tier={tier}
-                    index={index}
-                    isSpotlit={hoveredIndex === null || hoveredIndex === index}
-                    onHover={() => setHoveredIndex(index)}
-                    onOpen={() => {
-                      setSelectedPackage(tier)
-                      setSponsorshipModalOpen(true)
-                    }}
-                  />
-                ))}
+          {!isPostEvent && (
+            <>
+              {/* Sponsor Tiers */}
+              <div className="mx-auto max-w-5xl">
+                <p className="text-muted-foreground mb-5 text-center font-medium tracking-widest uppercase">
+                  {text.tierListsTitle}
+                </p>
+                <div className="flex w-full justify-center">
+                  <div
+                    className="flex flex-wrap justify-center gap-3"
+                    onMouseLeave={() => setHoveredIndex(null)}>
+                    {sponsorPackageItems.map((tier, index) => (
+                      <TierCard
+                        key={tier.id}
+                        tier={tier}
+                        index={index}
+                        isSpotlit={hoveredIndex === null || hoveredIndex === index}
+                        onHover={() => setHoveredIndex(index)}
+                        onOpen={() => {
+                          setSelectedPackage(tier)
+                          setSponsorshipModalOpen(true)
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* CTA */}
-          <motion.p
-            className="mt-12 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.8 }}>
-            <span className="text-muted-foreground mb-4">{text.ctaQuestion} • </span>
-            <a
-              href={`mailto:${Emails.infoZentralHack}`}
-              className="text-violet group inline-flex cursor-pointer items-center gap-2 font-semibold">
-              <span className="group-hover:underline">{text.ctaAction}</span>
-              <span
-                aria-hidden="true"
-                className="inline-block transition-transform duration-200 ease-out group-hover:translate-x-1">
-                →
-              </span>
-            </a>
-          </motion.p>
+              {/* CTA */}
+              <motion.p
+                className="mt-12 text-center"
+                initial={{ opacity: 0, y: 20 }}
+                animate={isHeaderInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ delay: 0.8 }}>
+                <span className="text-muted-foreground mb-4">{text.ctaQuestion} • </span>
+                <a
+                  href={`mailto:${Emails.infoZentralHack}`}
+                  className="text-violet group inline-flex cursor-pointer items-center gap-2 font-semibold">
+                  <span className="group-hover:underline">{text.ctaAction}</span>
+                  <span
+                    aria-hidden="true"
+                    className="inline-block transition-transform duration-200 ease-out group-hover:translate-x-1">
+                    →
+                  </span>
+                </a>
+              </motion.p>
+            </>
+          )}
         </div>
       </section>
 
       {/* Sponsorship Modal */}
-      <SponsorshipModal
-        isOpen={sponsorshipModalOpen}
-        onClose={() => setSponsorshipModalOpen(false)}
-        selectedPackage={selectedPackage}
-        allPackages={sponsorPackageItems}
-      />
+      {!isPostEvent && (
+        <SponsorshipModal
+          isOpen={sponsorshipModalOpen}
+          onClose={() => setSponsorshipModalOpen(false)}
+          selectedPackage={selectedPackage}
+          allPackages={sponsorPackageItems}
+        />
+      )}
     </>
   )
 }

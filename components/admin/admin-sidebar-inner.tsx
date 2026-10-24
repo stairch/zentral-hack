@@ -41,6 +41,7 @@ import {
   Contact,
   Globe,
   TriangleAlert,
+  Flag,
   type LucideIcon
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -75,6 +76,7 @@ const copy = {
     sponsors: "Sponsoren",
     roles: "Rollen",
     alertBanner: "Alert Banner",
+    eventPhase: "Event-Phase",
     announcements: "Ankündigungen",
     adminPanel: "Admin Panel",
     categoryAdmin: "Kategorien-Admin",
@@ -111,6 +113,7 @@ const copy = {
     sponsors: "Sponsors",
     roles: "Roles",
     alertBanner: "Alert Banner",
+    eventPhase: "Event Phase",
     announcements: "Announcements",
     adminPanel: "Admin Panel",
     categoryAdmin: "Category Admin",
@@ -257,12 +260,20 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
     },
     {
       id: "group-website",
-      href: "/admin/about",
+      href: "/admin/event-phase",
       label: text.website,
       icon: Globe,
       permissionKey: null,
       adminOnly: true,
       children: [
+        {
+          id: "event-phase",
+          href: "/admin/event-phase",
+          label: text.eventPhase,
+          icon: Flag,
+          permissionKey: "event-phase",
+          adminOnly: true
+        },
         {
           id: "about",
           href: "/admin/about",
