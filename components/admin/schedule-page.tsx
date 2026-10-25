@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Loader2, Plus, Trash2, Edit2, ChevronUp, ChevronDown, Moon, Sun } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
-import { LivePhaseNotice } from "@/components/admin/live-phase-notice"
+import { ContentVisibilityNotice } from "@/components/admin/content-visibility-notice"
 
 interface ScheduleItem {
   id: string
@@ -272,7 +272,7 @@ export function AdminSchedulePage() {
         <div>
           <h1 className="font-display text-3xl font-bold">{text.heading}</h1>
           <p className="text-muted-foreground mt-2">{text.subtitle}</p>
-          <LivePhaseNotice />
+          <ContentVisibilityNotice shownIn="live" className="mt-3" />
         </div>
         <Button onClick={() => openNew()} className="w-full shrink-0 sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />

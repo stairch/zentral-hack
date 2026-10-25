@@ -19,7 +19,7 @@ import { Plus, Loader2, Pencil, Trash2, GripVertical, HelpCircle, ChevronUp, Che
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { LivePhaseNotice } from "@/components/admin/live-phase-notice"
+import { ContentVisibilityNotice } from "@/components/admin/content-visibility-notice"
 
 interface FAQ {
   id: string
@@ -319,7 +319,7 @@ export function FAQAdminPage() {
         <div>
           <h1 className="text-foreground font-display text-3xl font-bold">{text.heading}</h1>
           <p className="text-muted-foreground mt-2">{text.subtitle}</p>
-          <LivePhaseNotice />
+          <ContentVisibilityNotice shownIn="live" className="mt-3" />
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>

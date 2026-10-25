@@ -4,6 +4,7 @@ import { verifyJWT } from "@/lib/auth"
 import AdminSidebar from "@/components/admin/admin-sidebar"
 import { ChangelogBanner } from "@/components/admin/changelog-banner"
 import { AdminLoadingGuard } from "@/components/admin/admin-loading-guard"
+import { WebsiteModeProvider } from "@/components/admin/website-mode-context"
 
 export const metadata = {
   title: "Admin | Zentral Hack 2026",
@@ -30,13 +31,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <AdminLoadingGuard>
-      <div className="bg-muted/30 min-h-screen">
-        <AdminSidebar />
-        <main className="lg:pl-64">
-          <ChangelogBanner />
-          <div className="container mx-auto px-4 py-8">{children}</div>
-        </main>
-      </div>
+      <WebsiteModeProvider>
+        <div className="bg-muted/30 min-h-screen">
+          <AdminSidebar />
+          <main className="lg:pl-64">
+            <ChangelogBanner />
+            <div className="container mx-auto px-4 py-8">{children}</div>
+          </main>
+        </div>
+      </WebsiteModeProvider>
     </AdminLoadingGuard>
   )
 }

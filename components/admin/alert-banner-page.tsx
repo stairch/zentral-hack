@@ -12,6 +12,7 @@ import { AlertTriangle, Check, Loader2, Save } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { cn } from "@/lib/utils"
+import { ContentVisibilityNotice } from "@/components/admin/content-visibility-notice"
 import {
   ALERT_BANNER_ICONS,
   ALERT_BANNER_SETTINGS_KEY,
@@ -197,6 +198,8 @@ export function AlertBannerAdminPage() {
         <h1 className="font-display text-3xl font-bold">{text.heading}</h1>
         <p className="text-muted-foreground mt-2">{text.subtitle}</p>
       </div>
+      {/* Banners are rendered on the live homepage and dashboard only */}
+      <ContentVisibilityNotice shownIn="live" />
 
       {loading ? (
         <div className="flex justify-center py-8">
