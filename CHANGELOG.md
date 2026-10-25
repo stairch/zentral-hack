@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.20.1] - 2026-10-25
+
+### Changed
+
+- Grant category admins access to dashboard on recap mode
+
 ## [1.20.0] - 2026-10-25
 
 ### Added
