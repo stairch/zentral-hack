@@ -20,10 +20,6 @@ import {
   Sparkles,
   MessageSquare,
   UserCog,
-  HelpCircle,
-  CalendarDays,
-  BarChart3,
-  Image,
   Trophy,
   ClipboardCheck,
   MessageCircle,
@@ -40,12 +36,18 @@ import {
   MailCheck,
   Contact,
   Globe,
-  TriangleAlert,
-  Flag,
+  ToggleRight,
   type LucideIcon
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BrandMark } from "@/components/brand-mark"
+import { WebsiteModeChip } from "@/components/admin/website-mode-chip"
+import {
+  LIVE_CONTENT_SECTIONS,
+  RECAP_CONTENT_SECTIONS,
+  WEBSITE_MODE_HREF,
+  type WebsiteContentSection
+} from "@/components/admin/website-content-sections"
 import { DEFAULT_CATEGORY_PARTNER_PERMISSIONS } from "@/lib/admin-permissions"
 import { Urls } from "@/lib/constants"
 
@@ -63,10 +65,8 @@ const copy = {
     challenges: "Challenges",
     challengeSubmissions: "Challenge Submissions",
     website: "Website Content",
-    about: "About Stats",
-    schedule: "Zeitplan",
-    partnerLogos: "Partner-Logos",
-    faqs: "FAQs",
+    liveSection: "Live-Seite",
+    recapSection: "Rückblick",
     emails: "Emails",
     emailsNotifications: "Benachrichtigungen",
     emailsNewsletter: "Newsletter",
@@ -75,8 +75,7 @@ const copy = {
     emailsContacts: "Kontakte",
     sponsors: "Sponsoren",
     roles: "Rollen",
-    alertBanner: "Alert Banner",
-    eventPhase: "Event-Phase",
+    websiteMode: "Website-Modus",
     announcements: "Ankündigungen",
     adminPanel: "Admin Panel",
     categoryAdmin: "Kategorien-Admin",
@@ -100,10 +99,8 @@ const copy = {
     challenges: "Challenges",
     challengeSubmissions: "Challenge Submissions",
     website: "Website Content",
-    about: "About Stats",
-    schedule: "Schedule",
-    partnerLogos: "Partner Logos",
-    faqs: "FAQs",
+    liveSection: "Live site",
+    recapSection: "Recap",
     emails: "Emails",
     emailsNotifications: "Notifications",
     emailsNewsletter: "Newsletter",
@@ -112,8 +109,7 @@ const copy = {
     emailsContacts: "Contacts",
     sponsors: "Sponsors",
     roles: "Roles",
-    alertBanner: "Alert Banner",
-    eventPhase: "Event Phase",
+    websiteMode: "Website Mode",
     announcements: "Announcements",
     adminPanel: "Admin Panel",
     categoryAdmin: "Category Admin",
@@ -132,6 +128,7 @@ interface AdminSidebarPropsType {
 
 // permissionKey: matches admin_roles.permissions entries to gate visibility for custom-role users.
 // children: optional one level of sub-navigation, rendered as a collapsible group.
+// section: optional sub-group label inside a group, shown above the first child of each section.
 interface NavItemType {
   id: string
   href: string
@@ -141,6 +138,7 @@ interface NavItemType {
   adminOnly: boolean
   external?: boolean
   isReleased?: boolean
+  section?: string
   children?: NavItemType[]
 }
 
@@ -164,6 +162,16 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
   const text = copy[language]
   const { hasUnseen, latestEntry, isMinorOrMajor } = useUnseenChangelog()
   const { hasNew: hasNewSponsors } = useNewSponsors()
+
+  const toContentNavItem = (item: WebsiteContentSection, section: string): NavItemType => ({
+    id: item.id,
+    href: item.href,
+    label: item.label[language],
+    icon: item.icon,
+    permissionKey: item.permissionKey,
+    adminOnly: true,
+    section
+  })
 
   const allNavItems: NavItemType[] = [
     {
@@ -260,60 +268,14 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
     },
     {
       id: "group-website",
-      href: "/admin/event-phase",
+      href: "/admin/about",
       label: text.website,
       icon: Globe,
       permissionKey: null,
       adminOnly: true,
       children: [
-        {
-          id: "event-phase",
-          href: "/admin/event-phase",
-          label: text.eventPhase,
-          icon: Flag,
-          permissionKey: "event-phase",
-          adminOnly: true
-        },
-        {
-          id: "about",
-          href: "/admin/about",
-          label: text.about,
-          icon: BarChart3,
-          permissionKey: "about",
-          adminOnly: true
-        },
-        {
-          id: "schedule",
-          href: "/admin/schedule",
-          label: text.schedule,
-          icon: CalendarDays,
-          permissionKey: "schedule",
-          adminOnly: true
-        },
-        {
-          id: "partner-logos",
-          href: "/admin/partner-logos",
-          label: text.partnerLogos,
-          icon: Image,
-          permissionKey: "partner-logos",
-          adminOnly: true
-        },
-        {
-          id: "faqs",
-          href: "/admin/faqs",
-          label: text.faqs,
-          icon: HelpCircle,
-          permissionKey: "faqs",
-          adminOnly: true
-        },
-        {
-          id: "alert-banner",
-          href: "/admin/alert-banner",
-          label: text.alertBanner,
-          icon: TriangleAlert,
-          permissionKey: "alert-banner",
-          adminOnly: true
-        }
+        ...LIVE_CONTENT_SECTIONS.map((item) => toContentNavItem(item, text.liveSection)),
+        ...RECAP_CONTENT_SECTIONS.map((item) => toContentNavItem(item, text.recapSection))
       ]
     },
     {
@@ -375,6 +337,14 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
           external: true
         }
       ]
+    },
+    {
+      id: "website-mode",
+      href: WEBSITE_MODE_HREF,
+      label: text.websiteMode,
+      icon: ToggleRight,
+      permissionKey: "event-phase",
+      adminOnly: true
     }
   ]
 
@@ -493,8 +463,20 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
         </button>
         {isOpen && (
           <div className="border-border mt-1 ml-4 space-y-1 border-l pl-2">
-            {children.map((child) => (
-              <NavLeaf key={child.href} item={child} nested />
+            {children.map((child, index) => (
+              // Keyed by id, the same page can be listed in several sections
+              <div key={child.id}>
+                {child.section && child.section !== children[index - 1]?.section && (
+                  <p
+                    className={cn(
+                      "text-muted-foreground px-4 pb-1 text-[11px] font-semibold tracking-wider uppercase",
+                      index === 0 ? "pt-1" : "pt-3"
+                    )}>
+                    {child.section}
+                  </p>
+                )}
+                <NavLeaf item={child} nested />
+              </div>
             ))}
           </div>
         )}
@@ -518,6 +500,8 @@ export default function AdminSidebarInner({ releasedItems }: AdminSidebarPropsTy
           </button>
         </div>
         <p className="text-muted-foreground mt-1 text-xs">{isAdmin ? text.adminPanel : text.categoryAdmin}</p>
+        {/* Only admins can open the website mode page */}
+        {isAdmin && <WebsiteModeChip onNavigate={() => setMobileMenuOpen(false)} />}
       </div>
 
       {/* Navigation */}

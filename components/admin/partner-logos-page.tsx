@@ -11,6 +11,7 @@ import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import Image from "next/image"
 import LogoGridPreview from "./logo-grid-preview"
+import { ContentVisibilityNotice } from "@/components/admin/content-visibility-notice"
 import { srcWithVersion } from "@/lib/helpers"
 
 interface PartnerLogo {
@@ -314,6 +315,8 @@ export function AdminPartnerLogosPage() {
         <div>
           <h1 className="font-display text-3xl font-bold">{text.heading}</h1>
           <p className="text-muted-foreground mt-2">{text.subtitle}</p>
+          {/* Co-organisers and partners are also part of the recap homepage */}
+          <ContentVisibilityNotice shownIn="both" className="mt-3" />
         </div>
         <Button onClick={openNew}>
           <Plus className="mr-2 h-4 w-4" />

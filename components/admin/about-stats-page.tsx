@@ -10,7 +10,7 @@ import { Loader2, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { LivePhaseNotice } from "@/components/admin/live-phase-notice"
+import { ContentVisibilityNotice } from "@/components/admin/content-visibility-notice"
 
 interface Stat {
   value: number
@@ -192,7 +192,7 @@ export function AboutStatsPage() {
         <div>
           <h1 className="font-display text-3xl font-bold">{text.heading}</h1>
           <p className="text-muted-foreground mt-2">{text.subtitle}</p>
-          <LivePhaseNotice />
+          <ContentVisibilityNotice shownIn="live" className="mt-3" />
         </div>
         <div className="flex items-center gap-2">
           {isDirty && (
