@@ -1,6 +1,7 @@
 import { query } from "@/lib/db"
 import { withCategoryPartnerAuth, AuthenticatedRequest } from "@/lib/middleware"
 import { successResponse, serverError, validationError } from "@/lib/api"
+import { sponsorNamesSql } from "@/lib/sponsor-challenge"
 
 type QueryValue = string | number | boolean | null | string[]
 
@@ -18,16 +19,15 @@ async function handleGet(req: AuthenticatedRequest) {
         sc.website, sc.logo_note,
         sc.challenge_title, sc.challenge_title_en, sc.short_description, sc.short_description_en,
         sc.difficulty, sc.team_size, sc.challenge_language,
-        sc.challenge_data, sc.prize, sc.sponsor_id,
+        sc.challenge_data, sc.prize, sc.sponsor_ids,
         sc.submission_enabled, sc.submission_description_required, sc.info_published, sc.submission_deadline,
         sc.published_at, sc.created_at, sc.updated_at,
         c.name AS category_name, c.id AS category_id, c.slug AS category_slug,
         u.email AS user_email, u.first_name, u.last_name,
-        sp.company_name AS sponsor_company_name
+        ${sponsorNamesSql("sc")} AS sponsor_names
       FROM sponsor_challenges sc
       JOIN categories c ON sc.category_id = c.id
       JOIN users u ON sc.user_id = u.id
-      LEFT JOIN sponsor_contacts sp ON sc.sponsor_id = sp.id
       WHERE 1=1
     `
     const values: QueryValue[] = []

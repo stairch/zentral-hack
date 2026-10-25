@@ -7,6 +7,7 @@ import {
   type ParticipantChallengeInfo
 } from "@/lib/challenge-submission"
 import { isTeamMember } from "@/lib/team-access"
+import { sponsorNamesSql } from "@/lib/sponsor-challenge"
 
 async function resolveCategoryId(userId: string): Promise<string | null> {
   const result = await query("SELECT category_id FROM registrations WHERE user_id = $1 LIMIT 1", [userId])
@@ -47,9 +48,8 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
       const infoResult = await query(
         `SELECT sc.id, sc.challenge_title, sc.challenge_title_en, sc.short_description, sc.short_description_en,
                 sc.company_name, sc.difficulty, sc.team_size, sc.challenge_language, sc.prize, sc.challenge_data,
-                sp.company_name AS sponsor_name
+                ${sponsorNamesSql("sc")} AS sponsor_names
          FROM sponsor_challenges sc
-         LEFT JOIN sponsor_contacts sp ON sc.sponsor_id = sp.id
          WHERE sc.id = $1 AND sc.info_published = true`,
         [submission.challenge_id]
       )

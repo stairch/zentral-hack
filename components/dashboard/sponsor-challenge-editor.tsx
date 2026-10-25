@@ -21,7 +21,8 @@ import {
   Send,
   Trash2,
   Trophy,
-  Upload
+  Upload,
+  X
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -68,8 +69,6 @@ interface SponsorOption {
   id: string
   company_name: string
 }
-
-const NO_SPONSOR = "none"
 
 function Field({
   label,
@@ -274,9 +273,13 @@ export function SponsorChallengeEditor({
       shortDescriptionHint: "Max. 2–3 Sätze – wird als Teaser angezeigt",
       prize: "Preisgeld / Preis",
       prizeHint: "Wird als Preis-Highlight auf der Challenge-Karte angezeigt",
-      sponsor: "Sponsor",
-      sponsorHint: "Verknüpft die Challenge mit einem bestätigten oder veröffentlichten Sponsor",
-      noSponsor: "Kein Sponsor",
+      sponsor: "Sponsoren",
+      sponsorHint:
+        "Verknüpft die Challenge mit einem oder mehreren bestätigten oder veröffentlichten Sponsoren",
+      addSponsor: "Sponsor hinzufügen",
+      noSponsorsLeft: "Keine weiteren Sponsoren verfügbar",
+      removeSponsor: (name: string) => `${name} entfernen`,
+      unknownSponsor: "Unbekannter Sponsor",
       challengeFormat: "Challenge-Format",
       difficulty: "Schwierigkeitsgrad",
       teamSize: "Empfohlene Teamgrösse",
@@ -422,9 +425,12 @@ export function SponsorChallengeEditor({
       shortDescriptionHint: "Max. 2–3 sentences – shown as a teaser",
       prize: "Prize / Reward",
       prizeHint: "Shown as a prize highlight on the challenge card",
-      sponsor: "Sponsor",
-      sponsorHint: "Links the challenge to a confirmed or published sponsor",
-      noSponsor: "No sponsor",
+      sponsor: "Sponsors",
+      sponsorHint: "Links the challenge to one or more confirmed or published sponsors",
+      addSponsor: "Add sponsor",
+      noSponsorsLeft: "No more sponsors available",
+      removeSponsor: (name: string) => `Remove ${name}`,
+      unknownSponsor: "Unknown sponsor",
       challengeFormat: "Challenge Format",
       difficulty: "Difficulty",
       teamSize: "Recommended team size",
@@ -556,7 +562,7 @@ export function SponsorChallengeEditor({
 
   const [formData, setFormData] = useState<SponsorChallengeData>(() => createEmptySponsorChallengeData())
   const [prize, setPrize] = useState("")
-  const [sponsorId, setSponsorId] = useState("")
+  const [sponsorIds, setSponsorIds] = useState<string[]>([])
   // Edited from the admin challenge list; kept here so saving the editor sends the current values back
   const [submissionEnabled, setSubmissionEnabled] = useState(false)
   const [submissionDescriptionRequired, setSubmissionDescriptionRequired] = useState(false)
@@ -596,7 +602,7 @@ export function SponsorChallengeEditor({
   function applyRecord(record: SponsorChallengeRecord) {
     setStatus(record.status)
     setPrize(record.prize || "")
-    setSponsorId(record.sponsor_id || "")
+    setSponsorIds(record.sponsor_ids ?? [])
     setSubmissionEnabled(Boolean(record.submission_enabled))
     setSubmissionDescriptionRequired(Boolean(record.submission_description_required))
     const normalized = normalizeSponsorChallengeData(record.challenge_data)
@@ -640,7 +646,7 @@ export function SponsorChallengeEditor({
       else {
         setStatus("draft")
         setPrize("")
-        setSponsorId("")
+        setSponsorIds([])
         setSubmissionEnabled(false)
         setSubmissionDescriptionRequired(false)
         setFormData(createEmptySponsorChallengeData())
@@ -656,7 +662,7 @@ export function SponsorChallengeEditor({
     setSelectedChallengeId("")
     setStatus("draft")
     setPrize("")
-    setSponsorId("")
+    setSponsorIds([])
     setSubmissionEnabled(false)
     setSubmissionDescriptionRequired(false)
     setFormData(createEmptySponsorChallengeData())
@@ -673,7 +679,7 @@ export function SponsorChallengeEditor({
     }
     if (!initialChallenge) {
       setStatus("draft")
-      setSponsorId("")
+      setSponsorIds([])
       setSubmissionEnabled(false)
       setSubmissionDescriptionRequired(false)
       setFormData(createEmptySponsorChallengeData())
@@ -776,6 +782,7 @@ export function SponsorChallengeEditor({
   }, [])
 
   const isPublished = status === "published"
+  const availableSponsors = sponsors.filter((s) => !sponsorIds.includes(s.id))
 
   const categorySpecificFields = useMemo(() => {
     switch (categorySlug) {
@@ -988,7 +995,7 @@ export function SponsorChallengeEditor({
           categoryId,
           challengeData: formData,
           prize: prize.trim() || null,
-          sponsorId: sponsorId || null,
+          sponsorIds,
           submissionEnabled,
           submissionDescriptionRequired
         })
@@ -1001,7 +1008,7 @@ export function SponsorChallengeEditor({
       const challenge = json.data?.challenge as SponsorChallengeRecord
       setStatus(challenge.status)
       setPrize(challenge.prize || "")
-      setSponsorId(challenge.sponsor_id || "")
+      setSponsorIds(challenge.sponsor_ids ?? [])
       setSubmissionEnabled(Boolean(challenge.submission_enabled))
       setSubmissionDescriptionRequired(Boolean(challenge.submission_description_required))
       setSelectedChallengeId(challenge.id)
@@ -1249,21 +1256,44 @@ export function SponsorChallengeEditor({
               </div>
             </Field>
             <Field label={t.sponsor} hint={t.sponsorHint}>
-              <Select
-                value={sponsorId || NO_SPONSOR}
-                onValueChange={(v) => setSponsorId(v === NO_SPONSOR ? "" : v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t.choose} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NO_SPONSOR}>{t.noSponsor}</SelectItem>
-                  {sponsors.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.company_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                {sponsorIds.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {sponsorIds.map((id) => {
+                      const name = sponsors.find((s) => s.id === id)?.company_name ?? t.unknownSponsor
+                      return (
+                        <Badge key={id} variant="secondary" className="gap-1 py-1 pr-1">
+                          {name}
+                          <button
+                            type="button"
+                            onClick={() => setSponsorIds((prev) => prev.filter((sid) => sid !== id))}
+                            className="hover:bg-muted-foreground/20 rounded-sm p-0.5"
+                            aria-label={t.removeSponsor(name)}>
+                            <X />
+                          </button>
+                        </Badge>
+                      )
+                    })}
+                  </div>
+                )}
+                <Select
+                  value=""
+                  onValueChange={(v) => setSponsorIds((prev) => (prev.includes(v) ? prev : [...prev, v]))}
+                  disabled={availableSponsors.length === 0}>
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={availableSponsors.length > 0 ? t.addSponsor : t.noSponsorsLeft}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSponsors.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.company_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </Field>
           </div>
         </CardContent>

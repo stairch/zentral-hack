@@ -1,4 +1,5 @@
 import { query } from "@/lib/db"
+import { sponsorNamesSql } from "@/lib/sponsor-challenge"
 import {
   DEFAULT_EVENT_PHASE,
   EVENT_PHASE_SETTINGS_KEY,
@@ -76,9 +77,11 @@ export async function getRankingCategories(): Promise<AdminRankingCategory[]> {
     query(
       `SELECT sc.id, sc.category_id, sc.challenge_title, sc.challenge_title_en,
               sc.short_description, sc.short_description_en, sc.prize,
-              COALESCE(sco.company_name, sc.company_name) AS sponsor_name
+              CASE WHEN cardinality(sc.sponsor_ids) = 0 AND sc.company_name IS NOT NULL
+                THEN ARRAY[sc.company_name]
+                ELSE ${sponsorNamesSql("sc")}
+              END AS sponsor_names
        FROM sponsor_challenges sc
-       LEFT JOIN sponsor_contacts sco ON sco.id = sc.sponsor_id
        WHERE sc.status = 'published' OR sc.id IN (SELECT challenge_id FROM teams WHERE challenge_id IS NOT NULL)
        ORDER BY COALESCE(sc.published_at, sc.updated_at) ASC, sc.created_at ASC`
     ),
@@ -131,7 +134,7 @@ export async function getRankingCategories(): Promise<AdminRankingCategory[]> {
         title_en: challenge.challenge_title_en,
         description: challenge.short_description,
         description_en: challenge.short_description_en,
-        sponsor_name: challenge.sponsor_name,
+        sponsor_names: challenge.sponsor_names,
         prize: challenge.prize,
         prize_en: null
       })
@@ -147,7 +150,7 @@ export async function getRankingCategories(): Promise<AdminRankingCategory[]> {
           title_en: null,
           description: category.description,
           description_en: category.description_en,
-          sponsor_name: null,
+          sponsor_names: [],
           prize: category.prize,
           prize_en: category.prize_en
         })

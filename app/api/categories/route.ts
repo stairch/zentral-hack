@@ -2,6 +2,7 @@ import { query } from "@/lib/db"
 import { successResponse, serverError } from "@/lib/api"
 import { buildCategorySelectClause, getAvailableCategoryColumns } from "@/lib/category-db"
 import { isMissingTableError } from "@/lib/db-errors"
+import { sponsorNamesSql } from "@/lib/sponsor-challenge"
 
 /**
  * GET /api/categories
@@ -41,14 +42,13 @@ export async function GET() {
                       'team_size', sch.team_size,
                       'challenge_language', sch.challenge_language,
                       'company_name', sch.company_name,
-                      'sponsor_name', sco.company_name,
+                      'sponsor_names', ${sponsorNamesSql("sch")},
                       'status', sch.status,
                       'updated_at', sch.updated_at
                     )
                     ORDER BY COALESCE(sch.published_at, sch.updated_at) DESC, sch.created_at DESC
                   ) AS challenges
            FROM sponsor_challenges sch
-           LEFT JOIN sponsor_contacts sco ON sco.id = sch.sponsor_id
            WHERE sch.category_id = c.id AND sch.status = 'published'
          ) sc ON TRUE
          ORDER BY c.display_order ASC, c.name ASC`

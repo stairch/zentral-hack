@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Trophy } from "lucide-react"
 import { useLanguage } from "@/lib/language-context"
 import { type ParticipantChallengeInfo } from "@/lib/challenge-submission"
+import { formatSponsorNames } from "@/lib/sponsor-challenge"
 
 const copy = {
   de: {
@@ -237,7 +238,9 @@ export function ChallengeInfo({ info }: { info: ParticipantChallengeInfo }) {
         {byline.length > 0 && <p className="text-muted-foreground text-xs">{byline.join(" · ")}</p>}
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-xl font-bold">{title}</h3>
-          {info.sponsor_name && <Badge variant="secondary">{text.poweredBy(info.sponsor_name)}</Badge>}
+          {info.sponsor_names.length > 0 && (
+            <Badge variant="secondary">{text.poweredBy(formatSponsorNames(info.sponsor_names))}</Badge>
+          )}
         </div>
         {shortDescription && <p className="text-sm leading-relaxed">{shortDescription}</p>}
         {prize?.trim() && (

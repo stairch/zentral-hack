@@ -283,7 +283,11 @@ function RankingGroupEditor({
       <AccordionTrigger className="items-center px-4 py-3 hover:no-underline">
         <span className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium">{title}</span>
-          {group.sponsor_name && <Badge variant="secondary">{group.sponsor_name}</Badge>}
+          {group.sponsor_names.map((name) => (
+            <Badge key={name} variant="secondary">
+              {name}
+            </Badge>
+          ))}
           {group.winner_photo_id && (
             <ImageIcon className="text-muted-foreground h-4 w-4" aria-label={text.winnerPhoto} />
           )}

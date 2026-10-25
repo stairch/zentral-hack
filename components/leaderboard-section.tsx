@@ -7,6 +7,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { useLanguage } from "@/lib/language-context"
+import { formatSponsorNames } from "@/lib/sponsor-challenge"
 import { normalizeHexColor, getContrastForegroundColor } from "@/lib/helpers"
 import { cn } from "@/lib/utils"
 import {
@@ -163,9 +164,9 @@ function ChallengeCard({
       <div className="flex flex-1 flex-col gap-4 p-5">
         <div>
           <p className="font-display text-foreground text-lg leading-tight font-bold">{title}</p>
-          {group.sponsor_name && (
+          {group.sponsor_names.length > 0 && (
             <p className="text-muted-foreground mt-1 truncate text-xs">
-              {text.presentedBy} {group.sponsor_name}
+              {text.presentedBy} {formatSponsorNames(group.sponsor_names)}
             </p>
           )}
         </div>
@@ -247,14 +248,14 @@ function ChallengeDetailDialog({
               </p>
             )}
 
-            {(group.sponsor_name || prize) && (
+            {(group.sponsor_names.length > 0 || prize) && (
               <div className="flex flex-col gap-2">
-                {group.sponsor_name && (
+                {group.sponsor_names.length > 0 && (
                   <div className="flex items-baseline gap-2">
                     <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                       {text.sponsor}
                     </span>
-                    <span className="text-sm font-medium">{group.sponsor_name}</span>
+                    <span className="text-sm font-medium">{formatSponsorNames(group.sponsor_names)}</span>
                   </div>
                 )}
                 {prize && (

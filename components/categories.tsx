@@ -15,7 +15,7 @@ import {
 } from "@/lib/category-config"
 import { useLanguage } from "@/lib/language-context"
 import { getContrastForegroundColor, isDarkContrastForegroundColor } from "@/lib/helpers"
-import { type SponsorChallengeData } from "@/lib/sponsor-challenge"
+import { formatSponsorNames, type SponsorChallengeData } from "@/lib/sponsor-challenge"
 import { BackgroundBeams } from "@/components/ui/background-beams"
 import PixelBlast from "@/components/ui/pixel-blast"
 
@@ -46,7 +46,7 @@ interface DisplayCategory {
     team_size: string | null
     challenge_language: string | null
     company_name: string | null
-    sponsor_name: string | null
+    sponsor_names: string[]
     status: string | null
     updated_at: string | null
     prize: string | null
@@ -615,9 +615,9 @@ export function Categories() {
                                       <p className="truncate font-semibold">
                                         {pickLocale(challenge.title, challenge.title_en)}
                                       </p>
-                                      {challenge.sponsor_name && (
+                                      {challenge.sponsor_names.length > 0 && (
                                         <Badge variant="secondary" className="shrink-0">
-                                          {text.poweredBy(challenge.sponsor_name)}
+                                          {text.poweredBy(formatSponsorNames(challenge.sponsor_names))}
                                         </Badge>
                                       )}
                                     </div>
@@ -770,9 +770,9 @@ export function Categories() {
                             <h2 className="font-display text-3xl leading-tight font-bold md:text-4xl">
                               {pickLocale(selectedChallenge?.title, selectedChallenge?.title_en)}
                             </h2>
-                            {selectedChallenge?.sponsor_name && (
+                            {selectedChallenge && selectedChallenge.sponsor_names.length > 0 && (
                               <Badge variant="secondary" className="mt-1.5 shrink-0">
-                                {text.poweredBy(selectedChallenge.sponsor_name)}
+                                {text.poweredBy(formatSponsorNames(selectedChallenge.sponsor_names))}
                               </Badge>
                             )}
                           </div>
