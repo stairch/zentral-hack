@@ -4,11 +4,12 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { Loader2, Upload, Trash2 } from "lucide-react"
+import { Loader2, Upload, Trash2, GripVertical } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { eventPhotoSrc } from "@/lib/event-phase"
 import { uploadEventPhoto } from "@/lib/client-upload"
+import { cn } from "@/lib/utils"
 
 interface EventPhoto {
   id: string
@@ -29,6 +30,9 @@ const copy = {
     uploadFailed: (n: number) => `${n} ${n === 1 ? "Foto konnte" : "Fotos konnten"} nicht hochgeladen werden`,
     uploadProgress: (done: number, total: number) => `${done} / ${total}`,
     listTitle: "Hochgeladene Fotos",
+    sortHint: "Ziehe die Fotos, um die Reihenfolge in der Galerie zu ändern.",
+    sortError: "Reihenfolge konnte nicht gespeichert werden",
+    dragHandle: "Foto verschieben",
     noPhotos: "Noch keine Fotos hochgeladen.",
     loadError: "Fehler beim Laden",
     deleteTitle: "Foto löschen?",
@@ -49,6 +53,9 @@ const copy = {
     uploadFailed: (n: number) => `${n} ${n === 1 ? "photo" : "photos"} could not be uploaded`,
     uploadProgress: (done: number, total: number) => `${done} / ${total}`,
     listTitle: "Uploaded photos",
+    sortHint: "Drag the photos to change their order in the gallery.",
+    sortError: "Failed to save the order",
+    dragHandle: "Move photo",
     noPhotos: "No photos uploaded yet.",
     loadError: "Failed to load",
     deleteTitle: "Delete photo?",
@@ -74,6 +81,8 @@ export function EventPhotosManager() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [fileInputKey, setFileInputKey] = useState(0)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
 
   useEffect(() => {
     void load()
@@ -136,6 +145,53 @@ export function EventPhotosManager() {
     }
   }
 
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDragId(id)
+    e.dataTransfer.effectAllowed = "move"
+  }
+
+  const handleDragOver = (e: React.DragEvent, id: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    if (id !== dragId) setDragOverId(id)
+  }
+
+  const handleDragEnd = () => {
+    setDragId(null)
+    setDragOverId(null)
+  }
+
+  const handleDrop = async (e: React.DragEvent, targetId: string) => {
+    e.preventDefault()
+    const sourceId = dragId
+    handleDragEnd()
+    if (!sourceId || sourceId === targetId) return
+    // The dragged photo takes the target's place
+    const reordered = [...photos]
+    const [moved] = reordered.splice(
+      photos.findIndex((p) => p.id === sourceId),
+      1
+    )
+    reordered.splice(
+      photos.findIndex((p) => p.id === targetId),
+      0,
+      moved
+    )
+    setPhotos(reordered)
+    try {
+      const res = await fetch("/api/admin/event-photos", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ orderedIds: reordered.map((p) => p.id) })
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      toast.error(text.sortError)
+      void load()
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="space-y-3 rounded-md border p-4">
@@ -168,7 +224,10 @@ export function EventPhotosManager() {
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold">{text.listTitle}</h3>
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold">{text.listTitle}</h3>
+          {photos.length > 1 && <p className="text-muted-foreground text-xs">{text.sortHint}</p>}
+        </div>
         {loading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -178,16 +237,35 @@ export function EventPhotosManager() {
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
             {photos.map((photo) => (
-              <div key={photo.id} className="group relative overflow-hidden rounded-xl border">
+              <div
+                key={photo.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, photo.id)}
+                onDragOver={(e) => handleDragOver(e, photo.id)}
+                onDragLeave={() => setDragOverId(null)}
+                onDrop={(e) => void handleDrop(e, photo.id)}
+                onDragEnd={handleDragEnd}
+                className={cn(
+                  "group relative cursor-grab overflow-hidden rounded-xl border transition-opacity select-none active:cursor-grabbing",
+                  dragId === photo.id && "opacity-40",
+                  dragOverId === photo.id && "border-primary ring-primary ring-2"
+                )}>
                 <div className="overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={eventPhotoSrc(photo.id, "thumbnail")}
                     alt={photo.caption || ""}
+                    draggable={false}
                     className="aspect-square w-full object-cover transition-transform duration-500 ease-out motion-safe:group-hover:scale-105"
                   />
                 </div>
                 {photo.caption && <p className="bg-background/90 truncate p-2 text-xs">{photo.caption}</p>}
+                <div
+                  aria-label={text.dragHandle}
+                  title={text.dragHandle}
+                  className="bg-secondary text-secondary-foreground absolute top-2 left-2 flex h-7 w-7 items-center justify-center rounded-md opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
+                  <GripVertical className="h-3.5 w-3.5" />
+                </div>
                 <Button
                   variant="destructive"
                   size="icon"
