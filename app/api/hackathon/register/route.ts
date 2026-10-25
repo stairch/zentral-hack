@@ -1,13 +1,20 @@
-import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
 import { sendRegisterConfirmationEmail } from "@/lib/transactional-emails"
 import { successResponse, validationError, serverError } from "@/lib/api"
 import { RegistrationSchema, validateRequest } from "@/lib/validation"
 import { addSubscriber } from "@/lib/resend"
 import { getCategoryRegistrationError } from "@/lib/category-db"
+import { withAuth, type AuthenticatedRequest } from "@/lib/middleware"
+import { createRateLimiter } from "@/lib/rate-limit"
 
-export async function POST(request: NextRequest) {
+const rateLimiter = createRateLimiter("signup")
+
+async function handlePost(request: AuthenticatedRequest) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await rateLimiter(request)
+    if (rateLimitResponse) return rateLimitResponse
+
     const body = await request.json()
 
     // Validate input
@@ -18,9 +25,6 @@ export async function POST(request: NextRequest) {
     }
 
     const {
-      email,
-      firstName,
-      lastName,
       university,
       studyProgram,
       semester,
@@ -30,17 +34,26 @@ export async function POST(request: NextRequest) {
       subscribeNewsletter
     } = validation.data
 
-    const userResult = await query("SELECT id FROM users WHERE email = $1", [email.toLowerCase()])
+    // Identity, name and email come from the session user, never from the request body
+    const userResult = await query(
+      "SELECT id, email, first_name, last_name, role, email_verified FROM users WHERE id = $1",
+      [request.user!.userId]
+    )
+    const user = userResult.rows[0]
 
-    if (userResult.rows.length === 0) {
-      return validationError("Benutzer nicht gefunden. Bitte melden Sie sich zuerst an.")
+    if (!user || !user.email_verified) {
+      return validationError("Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse")
     }
 
-    const userId = userResult.rows[0].id
+    if (user.role !== "user") {
+      return validationError("Nur Teilnehmende können sich für eine Kategorie anmelden")
+    }
+
+    const userId = user.id
 
     // Update profile with university details (allergies/dietary go into registrations table)
     await query(
-      `UPDATE profiles 
+      `UPDATE profiles
        SET university = $1, study_program = $2, semester = $3
        WHERE user_id = $4`,
       [university || null, studyProgram || null, semester || null, userId]
@@ -72,9 +85,9 @@ export async function POST(request: NextRequest) {
     const categoryName = catResult.rows[0]?.name || "Hackathon"
 
     // Send confirmation email
-    await sendRegisterConfirmationEmail(email, {
-      given_name: firstName,
-      family_name: lastName,
+    await sendRegisterConfirmationEmail(user.email, {
+      given_name: user.first_name,
+      family_name: user.last_name,
       category: categoryName,
       university: university || "—",
       study_program: studyProgram || "—",
@@ -83,10 +96,10 @@ export async function POST(request: NextRequest) {
       dietary_restrictions: dietaryRestrictions || "—"
     })
 
-    // Subscribe to newsletter if requested
+    // Subscribe to newsletter if requested (the address is verified via 2FA, so no separate opt-in mail)
     if (subscribeNewsletter) {
       try {
-        await addSubscriber(email, { firstName, lastName })
+        await addSubscriber(user.email, { firstName: user.first_name, lastName: user.last_name })
       } catch (error) {
         console.error("Newsletter subscription failed:", error)
       }
@@ -104,3 +117,5 @@ export async function POST(request: NextRequest) {
     return serverError("Registrierung fehlgeschlagen. Bitte versuchen Sie es später erneut.")
   }
 }
+
+export const POST = withAuth(handlePost)
