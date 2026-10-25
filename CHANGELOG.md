@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.19.2] - 2026-10-25
+
+### Fixed
+
+- Various design fixes
+
 ## [1.19.1] - 2026-10-25
 
 ### Fixed
