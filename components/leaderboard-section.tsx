@@ -27,6 +27,7 @@ const copy = {
     withoutChallenge: "Weitere Teams",
     winnerPhoto: (challenge: string) => `Sieger-Team der Challenge ${challenge}`,
     sponsor: "Partner",
+    presentedBy: "Presented by",
     prize: "Preis",
     placements: "Platzierungen"
   },
@@ -37,6 +38,7 @@ const copy = {
     withoutChallenge: "Other teams",
     winnerPhoto: (challenge: string) => `Winning team of the ${challenge} challenge`,
     sponsor: "Partner",
+    presentedBy: "Presented by",
     prize: "Prize",
     placements: "Placements"
   }
@@ -162,12 +164,9 @@ function ChallengeCard({
         <div>
           <p className="font-display text-foreground text-lg leading-tight font-bold">{title}</p>
           {group.sponsor_name && (
-            <div className="bg-light-violet/40 text-violet mt-2 inline-flex max-w-full items-center gap-2 rounded-full px-3 py-1">
-              <span className="text-[10px] font-bold tracking-wider uppercase opacity-70">
-                {text.sponsor}
-              </span>
-              <span className="truncate text-sm font-bold">{group.sponsor_name}</span>
-            </div>
+            <p className="text-muted-foreground mt-1 truncate text-xs">
+              {text.presentedBy} {group.sponsor_name}
+            </p>
           )}
         </div>
         {group.placements.length > 0 ? (

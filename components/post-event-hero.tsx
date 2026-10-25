@@ -29,7 +29,7 @@ export function PostEventHero({ hero, stats }: { hero: EventPhaseConfig["hero"];
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-secondary text-violet inline-block rounded-full px-5 py-2 text-sm font-semibold tracking-wide">
+          className="bg-secondary text-violet inline-block rounded-full px-5 py-2 text-xs font-semibold tracking-wide sm:text-sm">
           {localize(hero.date, language)}
         </motion.span>
 
@@ -37,7 +37,7 @@ export function PostEventHero({ hero, stats }: { hero: EventPhaseConfig["hero"];
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="font-display text-foreground max-w-3xl text-5xl font-bold uppercase sm:text-6xl">
+          className="font-display text-foreground max-w-3xl text-[32px] font-bold break-words uppercase sm:text-5xl md:text-6xl">
           {localize(hero.heading, language)}
           <br />
           <span className="text-violet">{localize(hero.headingAccent, language)}</span>
