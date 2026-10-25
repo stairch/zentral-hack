@@ -75,8 +75,11 @@ async function handlePost(req: AuthenticatedRequest) {
       await deleteBlob(previous.rows[0]?.thumbnail_url)
     }
 
-    const countResult = await query("SELECT COUNT(*)::integer AS count FROM event_photos")
-    const nextOrder = countResult.rows[0]?.count ?? 0
+    // After reordering and deleting, the count can be lower than the highest position
+    const orderResult = await query(
+      "SELECT COALESCE(MAX(display_order) + 1, 0)::integer AS next FROM event_photos WHERE category_id IS NULL"
+    )
+    const nextOrder = orderResult.rows[0]?.next ?? 0
 
     const result = await query(
       "INSERT INTO event_photos (image_url, thumbnail_url, caption, display_order, uploaded_by, category_id, challenge_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, caption, display_order, created_at",
@@ -112,9 +115,35 @@ async function handleDelete(req: AuthenticatedRequest) {
   }
 }
 
+async function handlePatch(req: AuthenticatedRequest) {
+  try {
+    const body = await req.json().catch(() => ({}))
+    const orderedIds: unknown = body.orderedIds
+    if (
+      !Array.isArray(orderedIds) ||
+      orderedIds.length === 0 ||
+      !orderedIds.every((id) => typeof id === "string")
+    ) {
+      return validationError("orderedIds is required")
+    }
+    // One statement, so the gallery never ends up half reordered
+    await query(
+      `UPDATE event_photos SET display_order = ordered.position - 1
+       FROM unnest($1::uuid[]) WITH ORDINALITY AS ordered(id, position)
+       WHERE event_photos.id = ordered.id AND event_photos.category_id IS NULL`,
+      [orderedIds]
+    )
+    return successResponse({ message: "Photos reordered" })
+  } catch (error) {
+    console.error("[Event Photos] PATCH Error:", error)
+    return serverError()
+  }
+}
+
 // Compressing a large camera photo can take a few seconds
 export const maxDuration = 60
 
 export const GET = withAdminAuth(handleGet)
 export const POST = withAdminAuth(handlePost)
+export const PATCH = withAdminAuth(handlePatch)
 export const DELETE = withAdminAuth(handleDelete)
