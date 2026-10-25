@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.20.0] - 2026-10-25
+
+### Added
+
+- Support for sorting post event gallery
+- Multiple partners per challenge
+
+### Changed
+
+- Redesign live and recap structure in admin panel
+
+### Fixed
+
+- Missing authentication on registration
+
 ## [1.19.2] - 2026-10-25
 
 ### Fixed
