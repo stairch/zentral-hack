@@ -44,7 +44,7 @@ interface RankingGroupBase {
   title_en: string | null
   description: string | null
   description_en: string | null
-  sponsor_name: string | null
+  sponsor_names: string[]
   prize: string | null
   prize_en: string | null
   winner_photo_id: string | null

@@ -66,7 +66,7 @@ export interface CategoryRecord {
     team_size: string | null
     challenge_language: string | null
     company_name: string | null
-    sponsor_name: string | null
+    sponsor_names: string[]
     status: string | null
     updated_at: string | null
     prize: string | null

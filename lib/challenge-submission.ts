@@ -31,7 +31,7 @@ export interface ParticipantChallengeInfo {
   short_description: string | null
   short_description_en: string | null
   company_name: string | null
-  sponsor_name: string | null
+  sponsor_names: string[]
   difficulty: string | null
   team_size: string | null
   challenge_language: string | null
@@ -68,7 +68,7 @@ type ParticipantChallengeRow = Pick<
   | "challenge_language"
   | "prize"
   | "challenge_data"
-> & { sponsor_name: string | null }
+> & { sponsor_names: string[] }
 
 export function toParticipantChallengeInfo(row: ParticipantChallengeRow): ParticipantChallengeInfo {
   const data = normalizeSponsorChallengeData(row.challenge_data)
@@ -79,7 +79,7 @@ export function toParticipantChallengeInfo(row: ParticipantChallengeRow): Partic
     short_description: row.short_description,
     short_description_en: row.short_description_en,
     company_name: row.company_name,
-    sponsor_name: row.sponsor_name,
+    sponsor_names: row.sponsor_names,
     difficulty: row.difficulty,
     team_size: row.team_size,
     challenge_language: row.challenge_language,

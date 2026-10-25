@@ -160,13 +160,31 @@ export interface SponsorChallengeRecord {
   team_size: string | null
   challenge_language: SponsorChallengeLanguage | null
   prize: string | null
-  sponsor_id: string | null
+  sponsor_ids: string[]
   challenge_data: SponsorChallengeData | null
   submission_enabled: boolean
   submission_description_required: boolean
   published_at: string | null
   created_at: string
   updated_at: string
+}
+
+// SQL expression for the company names of a challenge's sponsors, in the order they were assigned.
+// `alias` is the alias of sponsor_challenges in the surrounding query.
+export function sponsorNamesSql(alias: string): string {
+  return `COALESCE(
+    (SELECT array_agg(sp.company_name ORDER BY s.ord)
+     FROM unnest(${alias}.sponsor_ids) WITH ORDINALITY AS s(id, ord)
+     JOIN sponsor_contacts sp ON sp.id = s.id),
+    '{}'
+  )`
+}
+
+// "A", "A & B", "A, B & C"
+export function formatSponsorNames(names: string[] | null | undefined): string {
+  const list = (names ?? []).filter(Boolean)
+  if (list.length <= 1) return list[0] ?? ""
+  return `${list.slice(0, -1).join(", ")} & ${list[list.length - 1]}`
 }
 
 export function createEmptySponsorChallengeData(): SponsorChallengeData {

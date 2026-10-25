@@ -136,7 +136,7 @@ export async function GET(req: NextRequest) {
       difficulty: string | null
       team_size: string | null
       challenge_language: string | null
-      sponsor_id: string | null
+      sponsor_ids: string[]
       challenge_data: SponsorChallengeData
       published_at: string | null
       created_at: string
@@ -150,7 +150,7 @@ export async function GET(req: NextRequest) {
                   contact_email, contact_phone, website, logo_note,
                   challenge_title, challenge_title_en, short_description, short_description_en,
                   difficulty, team_size,
-                  challenge_language, sponsor_id, challenge_data, published_at, created_at, updated_at
+                  challenge_language, sponsor_ids, challenge_data, published_at, created_at, updated_at
            FROM sponsor_challenges
            WHERE user_id = $1 OR category_id = $2
            ORDER BY updated_at DESC

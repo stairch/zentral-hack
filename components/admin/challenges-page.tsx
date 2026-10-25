@@ -37,6 +37,7 @@ import { toast } from "sonner"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { SponsorChallengeEditor } from "@/components/dashboard/sponsor-challenge-editor"
+import { formatSponsorNames } from "@/lib/sponsor-challenge"
 
 interface Challenge {
   id: string
@@ -53,12 +54,12 @@ interface Challenge {
   contact_email: string | null
   challenge_data: Record<string, unknown> | null
   prize: string | null
-  sponsor_id: string | null
+  sponsor_ids: string[]
   submission_enabled: boolean
   submission_description_required: boolean
   info_published: boolean
   submission_deadline: string | null
-  sponsor_company_name: string | null
+  sponsor_names: string[]
   published_at: string | null
   created_at: string
   updated_at: string
@@ -153,7 +154,7 @@ const copy = {
     labelTeamSize: "Teamgrösse",
     labelLanguage: "Sprache",
     labelPrize: "Preisgeld",
-    labelSponsor: "Sponsor",
+    labelSponsor: "Sponsoren",
     labelStatus: "Status",
     labelSubmitted: "Eingereicht",
     labelDescription: "Kurzbeschreibung (DE)",
@@ -251,7 +252,7 @@ const copy = {
     labelTeamSize: "Team Size",
     labelLanguage: "Language",
     labelPrize: "Prize",
-    labelSponsor: "Sponsor",
+    labelSponsor: "Sponsors",
     labelStatus: "Status",
     labelSubmitted: "Submitted",
     labelDescription: "Short Description (DE)",
@@ -863,7 +864,10 @@ export function AdminChallengesPage() {
             <div className="space-y-4 text-sm">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Detail label={text.labelCompany} value={detailChallenge.company_name} />
-                <Detail label={text.labelSponsor} value={detailChallenge.sponsor_company_name} />
+                <Detail
+                  label={text.labelSponsor}
+                  value={formatSponsorNames(detailChallenge.sponsor_names) || null}
+                />
                 <Detail label={text.labelCategory} value={detailChallenge.category_name} />
                 <Detail label={text.labelContact} value={detailChallenge.contact_email} />
                 <Detail label={text.labelUser} value={detailChallenge.user_email} />
