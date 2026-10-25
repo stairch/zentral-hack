@@ -46,9 +46,6 @@ export const LoginSchema = z.object({
 
 // Registration/Team Schemas
 export const RegistrationSchema = z.object({
-  firstName: z.string().min(1).max(50),
-  lastName: z.string().min(1).max(50),
-  email: emailSchema,
   categoryId: z.string().uuid(),
   university: z.string().max(100).optional(),
   studyProgram: z.string().max(100).optional(),
