@@ -9,7 +9,7 @@ import {
   JWTPayload
 } from "@/lib/auth"
 import { successResponse, validationError, serverError, unauthorizedError, errorResponse } from "@/lib/api"
-import { POST_EVENT_LOCKED_ERROR } from "@/lib/event-phase"
+import { POST_EVENT_LOCKED_ERROR, canSignInAfterEvent } from "@/lib/event-phase"
 import { isPostEventPhase } from "@/lib/event-phase-server"
 import { LoginSchema, validateRequest } from "@/lib/validation"
 import { createRateLimiter } from "@/lib/rate-limit"
@@ -57,8 +57,8 @@ export async function POST(request: NextRequest) {
       return unauthorizedError()
     }
 
-    // After the event only admins may sign in
-    if (user.role !== "admin" && (await isPostEventPhase())) {
+    // After the event only admins and category admins may sign in
+    if (!canSignInAfterEvent(user.role) && (await isPostEventPhase())) {
       return errorResponse(POST_EVENT_LOCKED_ERROR, 403)
     }
 

@@ -29,7 +29,7 @@ const copy = {
       },
       post: {
         description:
-          "Rückblick-Startseite. Login, Anmeldung, Uploads und alle anderen Aktionen sind gesperrt, nur Admins können sich noch einloggen."
+          "Rückblick-Startseite. Login, Anmeldung, Uploads und alle anderen Aktionen sind gesperrt, nur Admins und Kategorien-Admins können sich noch einloggen."
       }
     },
     current: "Aktiv",
@@ -47,7 +47,7 @@ const copy = {
       post: {
         title: "Rückblick-Modus aktivieren?",
         description:
-          "Die Startseite zeigt danach den Rückblick. Logins, Anmeldung und Uploads sowie alle anderen Aktionen werden gesperrt. Alle ausser Admins werden sofort ausgeloggt. Das bleibt so, bis du wieder auf „Live“ umschaltest.",
+          "Die Startseite zeigt danach den Rückblick. Logins, Anmeldung und Uploads sowie alle anderen Aktionen werden gesperrt. Alle ausser Admins und Kategorien-Admins werden sofort ausgeloggt. Das bleibt so, bis du wieder auf „Live“ umschaltest.",
         label: "Sperren und Rückblick aktivieren"
       }
     },
@@ -63,7 +63,7 @@ const copy = {
       },
       post: {
         description:
-          "Recap homepage. Login, registration, uploads and every other action are locked, only admins can still sign in."
+          "Recap homepage. Login, registration, uploads and every other action are locked, only admins and category admins can still sign in."
       }
     },
     current: "Active",
@@ -81,7 +81,7 @@ const copy = {
       post: {
         title: "Activate recap mode?",
         description:
-          "The homepage then shows the recap. Logins, registration, uploads and every other action are locked. Everyone except admins is signed out immediately. This stays until you switch back to “Live”.",
+          "The homepage then shows the recap. Logins, registration, uploads and every other action are locked. Everyone except admins and category admins is signed out immediately. This stays until you switch back to “Live”.",
         label: "Lock and activate recap"
       }
     },
@@ -200,7 +200,7 @@ export function WebsiteModePage() {
         </div>
       )}
 
-      {/* Every switch is confirmed, switching to recap locks the platform for everyone but admins */}
+      {/* Every switch is confirmed, switching to recap locks the platform for everyone but admins and category admins */}
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}

@@ -208,5 +208,11 @@ export function localize(text: LocalizedText, language: "de" | "en"): string {
 // Response shown by the API while the platform is locked after the event
 export const POST_EVENT_LOCKED_ERROR = "Zentral Hack 2026 is over. The platform is closed."
 
+const POST_EVENT_SIGN_IN_ROLES = ["admin", "category_partner"]
+
+export function canSignInAfterEvent(role: string | undefined): boolean {
+  return !!role && POST_EVENT_SIGN_IN_ROLES.includes(role)
+}
+
 // Request header set by proxy.ts so server components can read the phase without another query
 export const EVENT_PHASE_HEADER = "x-event-phase"

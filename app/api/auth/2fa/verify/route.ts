@@ -2,7 +2,7 @@ import { NextRequest } from "next/server"
 import { query } from "@/lib/db"
 import { generateJWT, compareCode, isTwoFaBypassEnabled, JWTPayload } from "@/lib/auth"
 import { successResponse, validationError, serverError, unauthorizedError, errorResponse } from "@/lib/api"
-import { POST_EVENT_LOCKED_ERROR } from "@/lib/event-phase"
+import { POST_EVENT_LOCKED_ERROR, canSignInAfterEvent } from "@/lib/event-phase"
 import { isPostEventPhase } from "@/lib/event-phase-server"
 import { createRateLimiter } from "@/lib/rate-limit"
 
@@ -33,8 +33,8 @@ export async function POST(request: NextRequest) {
 
     const user = userResult.rows[0]
 
-    // After the event only admins may sign in
-    if (user.role !== "admin" && (await isPostEventPhase())) {
+    // After the event only admins and category admins may sign in
+    if (!canSignInAfterEvent(user.role) && (await isPostEventPhase())) {
       return errorResponse(POST_EVENT_LOCKED_ERROR, 403)
     }
 

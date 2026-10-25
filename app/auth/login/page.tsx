@@ -55,8 +55,9 @@ function LoginForm() {
       enterCode: "Bitte geben Sie den 2FA-Code ein",
       twoFaSuccess: "2FA erfolgreich verifiziert",
       twoFaError: "Fehler bei der 2FA Verifizierung",
-      adminOnly: "Zentral Hack 2026 ist vorbei. Der Login ist nur noch für Admins offen.",
-      locked: "Die Plattform ist geschlossen. Nur Admins können sich noch einloggen."
+      adminOnly:
+        "Zentral Hack 2026 ist vorbei. Der Login ist nur noch für Admins und Kategorien-Admins offen.",
+      locked: "Die Plattform ist geschlossen. Nur Admins und Kategorien-Admins können sich noch einloggen."
     },
     en: {
       backHome: "Back to home",
@@ -83,8 +84,8 @@ function LoginForm() {
       enterCode: "Please enter the 2FA code",
       twoFaSuccess: "2FA verified successfully",
       twoFaError: "2FA verification failed",
-      adminOnly: "Zentral Hack 2026 is over. Sign-in is only open to admins.",
-      locked: "The platform is closed. Only admins can still sign in."
+      adminOnly: "Zentral Hack 2026 is over. Sign-in is only open to admins and category admins.",
+      locked: "The platform is closed. Only admins and category admins can still sign in."
     }
   }[language]
 
