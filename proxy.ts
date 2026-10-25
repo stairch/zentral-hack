@@ -1,10 +1,10 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { verifyJWT } from "@/lib/auth"
-import { EVENT_PHASE_HEADER, POST_EVENT_LOCKED_ERROR } from "@/lib/event-phase"
+import { EVENT_PHASE_HEADER, POST_EVENT_LOCKED_ERROR, canSignInAfterEvent } from "@/lib/event-phase"
 import { getEventPhaseConfig } from "@/lib/event-phase-server"
 
-// Still reachable for non-admins after the event, so admins can sign in and everyone can sign out
+// Still reachable for everyone after the event, so admins and category admins can sign in and everyone can sign out
 const POST_EVENT_ALLOWED_API = ["/api/auth/login", "/api/auth/2fa/verify", "/api/auth/logout"]
 // GET endpoints that still write (e.g. confirmation links), locked like any other write
 const POST_EVENT_CLOSED_GET_API = ["/api/newsletter/confirm"]
@@ -39,10 +39,10 @@ export async function proxy(request: NextRequest) {
   if (isPostEvent) {
     // lib/middleware.ts prefers the Bearer header over the cookie, so check whichever it would use
     const sessionToken = bearer ?? token
-    const isAdmin = !!sessionToken && verifyJWT(sessionToken)?.role === "admin"
+    const keepsSession = !!sessionToken && canSignInAfterEvent(verifyJWT(sessionToken)?.role)
 
-    if (!isAdmin) {
-      // After the event only admins keep a session; everyone else is treated as signed out
+    if (!keepsSession) {
+      // After the event only admins and category admins keep a session; everyone else is treated as signed out
       if (token) {
         request.cookies.delete("token")
         token = undefined
